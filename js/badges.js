@@ -16,15 +16,15 @@
     lightning: { shape: 'bolt', cols: ['#d6e8ff', '#9fb8ff', '#ffffff'] },
     fireworks: { shape: 'star', cols: ['#ff6b9a', '#ffd36b', '#6bffb2', '#6bb8ff', '#c08bff'] },
     confetti: { shape: 'rect', cols: ['#ff5fa8', '#ffd24a', '#4de1ff', '#6bff9e', '#b36bff'] },
-    bubbles: { shape: 'ring', cols: ['#7fd8ff', '#c9f1ff', '#ffffff'] },
+    bubbles: { shape: 'ring', cols: ['#2fa4e0', '#e060b8', '#7a6ae0', '#27b89c'] },
     coins: { shape: 'coin', cols: ['#ffc83d'] },
     leaves: { shape: 'leaf', cols: ['#ff8a3d', '#e8542c', '#ffc83d', '#c4541c'] },
     neon: { shape: 'ring2', cols: ['#3dffd0', '#ff3dc8', '#ffffff'] },
     snow: { shape: 'flake', cols: ['#ffffff', '#bfe8ff'] },
-    thunder: { shape: 'bolt', cols: ['#ffe65a', '#9fb8ff', '#ffffff'] },
+    thunder: { shape: 'bolt', cols: ['#ffffff', '#9fb8ff', '#fff3a0'] },
     ink: { shape: 'blob', cols: ['#a56bff', '#5a2ab8', '#e0c8ff'] },
     supernova: { shape: 'star', cols: ['#fff2a8', '#ffffff', '#ff9ad8'], rings: true },
-    dragonfire: { shape: 'flame', cols: ['#ff7a2a', '#ffd24a', '#ff3d2e'] },
+    dragonfire: { shape: 'flame', cols: ['#ffd24a', '#ff8a1e', '#fff0b0'] },
   };
   const f1 = (n) => +n.toFixed(1);
   const SHAPES = {
@@ -34,7 +34,7 @@
     petal: (s, c) => `<ellipse rx="${f1(s * 0.62)}" ry="${f1(s * 0.3)}" fill="${c}"/>`,
     tri: (s, c) => `<path d="M0 ${f1(-s * 0.62)}L${f1(s * 0.5)} ${f1(s * 0.4)}L${f1(-s * 0.5)} ${f1(s * 0.4)}Z" fill="${c}"/>`,
     star: (s, c) => { let d = ''; for (let k = 0; k < 10; k++) { const r = k % 2 ? s * 0.28 : s * 0.7, a = k * 0.6283 - 1.5708; d += (k ? 'L' : 'M') + f1(Math.cos(a) * r) + ' ' + f1(Math.sin(a) * r); } return `<path d="${d}Z" fill="${c}"/>`; },
-    ring: (s, c) => `<circle r="${f1(s * 0.5)}" fill="${c}" fill-opacity=".18" stroke="${c}" stroke-width="1.6"/><circle cx="${f1(-s * 0.18)}" cy="${f1(-s * 0.2)}" r="${f1(s * 0.1)}" fill="#fff" fill-opacity=".9"/>`,
+    ring: (s, c) => `<circle r="${f1(s * 0.5)}" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-width="2.2"/><circle cx="${f1(-s * 0.18)}" cy="${f1(-s * 0.2)}" r="${f1(s * 0.1)}" fill="#fff" fill-opacity=".9"/>`,
     ring2: (s, c) => `<circle r="${f1(s * 0.5)}" fill="none" stroke="${c}" stroke-width="2.4"/>`,
     coin: (s, c) => `<circle r="${f1(s * 0.55)}" fill="${c}" stroke="#a8620a" stroke-width="1.2"/><circle r="${f1(s * 0.36)}" fill="none" stroke="#fff3b0" stroke-width="1.4"/>`,
     leaf: (s, c) => `<path d="M${f1(-s * 0.6)} 0Q0 ${f1(-s * 0.7)} ${f1(s * 0.6)} 0Q0 ${f1(s * 0.7)} ${f1(-s * 0.6)} 0Z" fill="${c}"/><path d="M${f1(-s * 0.6)} 0H${f1(s * 0.5)}" stroke="#fff" stroke-opacity=".5" stroke-width="1"/>`,
