@@ -92,6 +92,7 @@ node tests/sim.js       # time-stepped bots: pacing, run length, Coin income and
 node tests/spin.js      # 1,000 reel landings land exactly on the winning card (no browser)
 node tests/stress.js    # a bot plays the real UI (Rush, Chill, Daily, pause, End Run); DOM must equal engine state
 node tests/flow.js      # every chest opens end to end, equip, a finished set cannot be opened, back out, reduced motion
+node tests/coach.js     # tip cards: once each, never in a run, replayable, what's-new for returning players
 node tests/chests.js    # each chest's parts move on hold and burst (the fuse needle included); records a video and a frame sheet
 node tests/spinperf.js  # frame time of the reel under a 4x CPU throttle
 node tests/audio.js [--quick]   # offline renders: peaks, loudness, pitch, timbre, music structure, never-late scheduler (~4 min)

@@ -345,3 +345,54 @@ visual review with a written shortfall list fixed to empty before a phase closes
 - Loudness targets (-16 LUFS platform figure): https://developers.meta.com/vr/documentation/unreal/audio-loudness-meter-overview/
 - Balancing music and effects: https://krotos.studio/blog/how-to-balance-music-and-sound-effects
 - Adaptive loudness on mobile: https://audiomediainternational.com/mobile-loudness-an-adaptive-approach/
+
+---
+
+## 18. Status: what shipped (Update 3 "Carnival")
+
+Everything in sections 1 to 15 is built. Where the build differs from the plan, or a target was missed, it is listed here.
+
+### Delivered
+- **Cosmetics:** 28 new items (10 skins, 10 pops, 4 boards, 4 fuses) for 58 in total, each with its own look and, from Epic up,
+  a signature moment. All of them were reviewed on the board, as badges in every shine, and in the reveal; Series 1 and 2 are untouched.
+- **Chest rules:** a chest never repeats an item (odds renormalised over what is unowned), every 8th chest of a type gives an
+  Epic or better, a finished set says Complete, Golden Chests pay 600 Coins when nothing Epic or better is left.
+  Trade-up and selling are removed; Update 2 saves are migrated (duplicates collapse to one copy and are refunded, with a notice).
+- **Economy:** run Coins are `14 * sqrt(score / 50,000)` plus a stage bonus, plus the daily and first-run bonuses; chests cost
+  350 / 300 / 450 / 300; Boosts cost 25 / 15 / 20 and Double Coins was removed because it would have paid for itself.
+- **Modes:** the fuse stops speeding up after stage 8, pops of 3+ pay at least 1.4 s from stage 6, Last Spark gives one 2.5 s
+  window to relight the fuse, a reshuffle gives 2 s back, the best score is shown under the score all run, and results show the gap,
+  a near-miss line, par (the average of the last five runs) and a Beat it button.
+- **Chests and spin:** five rebuilt, detailed chests made of independent parts with idle life; the hold and burst move every named part
+  (including the fuse chest's needle, which was broken). The reel is built from still badges and one transform per frame.
+- **Menus:** first-time tip cards on every screen (once each, never during a run, replayable from Profile), a purchase sheet for
+  Boosts that shows each price, the total and the balance after, a horizontal Pop Pass track with a next-reward spotlight and a reward
+  sheet, dark silhouettes for items you have not found, volume sliders, a what's-new card for returning players.
+- **Audio:** every effect is rebuilt (pentatonic pops, a low-passed SFX bus, loudness-tested), and an adaptive soundtrack was added:
+  menu and run arrangements that crossfade on bar lines, stems per stage, a tense low-fuse layer, a key lift in Rush, ducking under big moments.
+
+### Measured results
+| Check | Result |
+|---|---|
+| Hours to own every item (sim bots) | casual 16.6, average 10.1, sharp 7.8 (a chest every 25 / 16 / 12 minutes) |
+| Same, buying one Boost every run | 32.0 / 14.7 / 10.2 |
+| Run length (sim) | 126 to 134 s average for every skill level; Last Spark saves the run in 37% to 55% of runs |
+| Reel frame time, 4x throttle, software rendering | 44 to 53 ms, against 165 ms (sideways) and 324 ms (vertical) before |
+| Run idle frame time, same setup | Classic 105 ms before, 39 ms after the blurred background was replaced by a static glow |
+| Audio | every pop under 220 ms and under 0.32 peak, music 7 dB under the loudest pop, no gaps or clicks over a 10-minute render |
+| Tests | logic, engine, spin, sim, stress (reduced and full), flow, chests, coach, moments (all 23 moment items), lifecycle, touch, audio |
+
+### Differences from the plan, and why
+- **Hours to finish (plan: 35 / 22 / 14).** The plan's table disagreed with its own Coin figures. The numbers above come from the
+  bots with the shipped prices; a chest every 12 to 25 minutes keeps opening feel frequent, and the last items of each set still
+  take longest because the odds are renormalised over fewer and fewer unowned items.
+- **Reel frame time (plan: under 16 ms).** This environment has no GPU, so a bare page already takes about 17 ms per frame; the
+  useful comparison is the before and after above. The cause was found and fixed: animated card previews and per-card clips
+  and filters made the compositor draw each card as its own surface every frame.
+- **Claim moment.** The Pop Pass pays rewards when a level is reached, so the claim moment is the level-up row with its reward on the
+  results screen; the Pass screen itself centers the track on the next reward and shows a reward sheet when a tier is tapped.
+- **Confirmation for Boosts.** The Start button turns into "Pay N and start", which is the confirmation; nothing is charged before it is pressed.
+- **Not implemented from the plan:** gumdrop, wood, bubble and bean moments (those items have no signature moment, so their
+  descriptions only describe their look), and the pop moments do not play in the chest-reveal preview (the particle recipe does).
+- **Not verified:** Safari and Firefox (only Chromium was available), real phone frame times, and how the music sounds to a listener
+  (only measured). The 10-minute render of a session is written by `node tests/audio.js` for listening.
