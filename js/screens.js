@@ -45,9 +45,9 @@
     const bar = live.map((r) => `<div class="ob-seg" style="--rc:${r.rarity.color};flex:${r.pct}">${r.pct >= 8 ? `<span>${Math.round(r.pct)}%</span>` : ''}</div>`).join('');
     const list = live.map((r) => `<div class="odds-row" style="--rc:${r.rarity.color}">
         <i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>${r.missing === 0 ? `You own all ${r.total}` : `${r.missing} of ${r.total} left to find`}</small></div>
-        <div class="od-pct"><b>${fmtPct(r.pct)}</b><small>1 in ${r.oneIn}</small></div></div>`).join('') + done.map((r) => `<div class="odds-row done" style="--rc:${r.rarity.color}"><i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>You own all ${r.total}</small></div><div class="od-pct"><b>${BR.icon('check')}</b></div></div>`).join('');
+        <div class="od-pct"><b>${fmtPct(r.pct)}</b>${oneIn(r)}</div></div>`).join('') + done.map((r) => `<div class="odds-row done" style="--rc:${r.rarity.color}"><i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>You own all ${r.total}</small></div><div class="od-pct"><b>${BR.icon('check')}</b></div></div>`).join('');
     const inside = rows.filter((r) => r.total > 0).map((r) => `<div class="inside-grp" style="--rc:${r.rarity.color}"><h4>${r.rarity.name}</h4><div class="inside-items">${r.items.map((x) => `<div class="inside-item ${P.owns(x.id) ? 'own' : ''}">${P.owns(x.id) ? BR.icon('check') : ''}<span>${x.name}</span></div>`).join('')}</div></div>`).join('');
-    const chips = opts.compact ? `<div class="odds-chips">${live.map((r) => `<div class="oc" style="--rc:${r.rarity.color}"><b>${fmtPct(r.pct)}</b><span>${r.rarity.name}</span><small>1 in ${r.oneIn}</small></div>`).join('')}</div>` : '';
+    const chips = opts.compact ? `<div class="odds-chips">${live.map((r) => `<div class="oc" style="--rc:${r.rarity.color}"><b>${fmtPct(r.pct)}</b><span>${r.rarity.name}</span>${oneIn(r, true)}</div>`).join('')}</div>` : '';
     return `<div class="odds ${opts.compact ? 'compact' : ''}">
       <p class="odds-sentence">${BR.oddsSentence(chestId, type, P.ownedIds(), opts.pityIn)}</p>
       <div class="odds-bar" role="img" aria-label="Odds bar">${bar}</div>${chips}
@@ -55,12 +55,19 @@
       <button class="odds-more" data-act="toggle-inside">See everything inside <i>${BR.icon('arrow')}</i></button>
       <div class="inside">${inside}</div>`}</div>`;
   };
+  /** "1 in N" only reads well for rare odds: 60% is not "1 in 2". */
+  const oneIn = (r, chip) => (r.pct < 20 && r.oneIn > 1 ? `<small>1 in ${r.oneIn}</small>` : (chip ? '<small>&nbsp;</small>' : ''));
+  /** Open or close the full item list and bring it into view, so the tap visibly does something. */
+  const toggleInside = (odds) => {
+    odds.classList.toggle('open');
+    if (odds.classList.contains('open')) setTimeout(() => { const el = odds.querySelector('.inside'); if (el) el.scrollIntoView({ block: 'start', behavior: BR.reducedMotion ? 'auto' : 'smooth' }); }, 60);
+  };
   const fmtPct = (p) => (p >= 10 ? Math.round(p) : p.toFixed(p < 1 ? 1 : 0)) + '%';
 
   BR.showOdds = function (chestId) {
     let type = BR.CHESTS[chestId].type;
     const sh = BR.Sheet.open({ title: `${BR.CHESTS[chestId].name} odds`, body: `<div class="chest-mini">${BR.chestSVG(chestId)}</div>${BR.oddsHTML(chestId, type || 'skin', { pityIn: P.chestStatus(chestId).pityIn })}` });
-    sh.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) sh.el.querySelector('.odds').classList.toggle('open'); });
+    sh.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) toggleInside(sh.el.querySelector('.odds')); });
   };
 
   /* ------------------------------------------------------------------ Home */
@@ -315,7 +322,7 @@
     if (r.kind === 'item') { const it = BR.itemById[r.itemId]; title = it.name; desc = it.desc; tags = `<span class="tag rar" style="--rc:${R(it.rarity).color}">${R(it.rarity).name}</span><span class="tag">${BR.ITEM_TYPES[it.type].name}</span>`; }
     else if (r.kind === 'chest') desc = BR.CHESTS[r.chest].blurb;
     else desc = 'Coins go into your balance right away.';
-    BR.Sheet.open({ title: esc(title), body: `<div class="detail"><div class="reward-big">${rewardArt(r, r.kind === 'item' ? 168 : 120)}</div><div class="detail-tags"><span class="tag gold">Pop Pass level ${tier}</span>${tags}</div><p class="detail-desc">${esc(desc)}</p><div class="detail-where"><small>${tier < P.level ? 'Claimed' : tier === P.level ? 'Up next' : 'Locked'}</small><b>${state}</b></div></div>` });
+    BR.Sheet.open({ title: esc(title), body: `<div class="detail"><div class="reward-big">${rewardArt(r, r.kind === 'item' ? 168 : 120)}</div><div class="detail-tags"><span class="tag gold">Pass level ${tier + 1}</span>${tags}</div><p class="detail-desc">${esc(desc)}</p><div class="detail-where"><small>${tier < P.level ? 'Claimed' : tier === P.level ? 'Up next' : 'Locked'}</small><b>${state}</b></div></div>` });
   };
   /** Bigger preview for the detail sheet: a live mini board for skins/pops/boards, a burning fuse for fuses. */
   BR.detailPreview = function (item, inst) {
@@ -357,18 +364,18 @@
       const tiers = BR.PASS.map((t) => {
         const state = t.tier < L ? 'claimed' : t.tier === L ? 'next' : 'locked';
         const mark = state === 'claimed' ? `<i class="pt-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="pt-lk">${BR.icon('lock')}</i>` : '<span class="pt-now">Next</span>';
-        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}"><span class="pt-n"><b>${t.tier}</b></span>
+        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}"><span class="pt-n"><b>${t.tier + 1}</b></span>
           <div class="pt-card">${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${BR.rewardLabel(t)}</span>${mark}</div></div>`;
       }).join('');
       return `<article class="pass-hero stg">
           <div class="ph-head"><div><span class="ph-season">${S3.label}</span><h2 class="display">Pop Pass</h2><small>Free. Every level pays the next reward.</small></div>
             <div class="ph-lvl">${ringSVG(P.xp / need, 64, 6)}<b>${L}</b></div></div>
           <div class="ph-next"><div class="phn-art">${rewardArt(next, next.kind === 'coins' ? 64 : 92)}</div>
-            <div class="phn-txt"><small>Next reward, level ${L}</small><b class="display">${BR.rewardLabel(next)}</b>
+            <div class="phn-txt"><small>Next reward · Pass level ${L + 1}</small><b class="display">${BR.rewardLabel(next)}</b>
               <div class="bar tall cyan"><i style="width:${(P.xp / need) * 100}%"></i></div><small class="num">${fmt(need - P.xp)} XP to go</small></div></div>
           <p class="ph-how">XP comes from every run, mission and trophy.</p>
         </article>
-        <div class="track-wrap stg"><div class="track" id="passTrack">${tiers}<div class="pt more"><span class="pt-n"><b>+</b></span><div class="pt-card"><span class="pt-coin" style="--sz:52px">${BR.coin()}</span><span class="pt-label">Every level after 30</span></div></div></div></div>`;
+        <div class="track-wrap stg"><div class="track" id="passTrack">${tiers}<div class="pt more"><span class="pt-n"><b>+</b></span><div class="pt-card"><span class="pt-coin" style="--sz:52px">${BR.coin()}</span><span class="pt-label">Every level after ${BR.CFG.passTiers + 1}</span></div></div></div></div>`;
     },
     trophiesHTML() {
       const got = S().profile.trophies;
@@ -463,7 +470,7 @@
         BR.audio.ui(); BR.haptic('tap'); BR.App.openChest(id);
       }
     });
-    Shop.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) e.target.closest('.odds').classList.toggle('open'); });
+    Shop.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) toggleInside(e.target.closest('.odds')); });
     bind(Collection, (t) => {
       if (t.dataset.type && t.closest('#colSeg')) { Collection.type = t.dataset.type; Collection.filter = null; BR.audio.ui(); BR.Router.rerender(); Collection.placeThumb(); return; }
       if (t.dataset.rar) { Collection.filter = Collection.filter === t.dataset.rar ? null : t.dataset.rar; BR.audio.ui(); BR.Router.rerender(); return; }

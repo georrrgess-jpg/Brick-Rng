@@ -16,7 +16,7 @@
 /* ---------- Home ---------- */
 .logo { display: flex; flex-direction: column; align-items: center; padding: 4px 0 6px; position: relative; }
 .logo-pop { display: flex; gap: 8px; font-size: min(17vw, 70px); }
-.lb { position: relative; width: 1em; height: 1em; left: auto; top: auto; transform: none; animation: lbBounce 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * 0.18s); }
+.logo .lb { position: relative; width: 1em; height: 1em; left: auto; top: auto; transform: none; animation: lbBounce 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * 0.18s); }
 .lb .face { box-shadow: inset 0 0.03em 0 rgba(255, 255, 255, 0.6), inset 0 -0.07em 0 rgba(0, 0, 0, 0.22), 0 0.09em 0 rgba(0, 0, 0, 0.35), 0 0.2em 0.3em rgba(0, 0, 0, 0.45); }
 .lb .ltr { position: absolute; inset: 0; display: grid; place-items: center; font: 700 0.56em var(--f-display); color: #fff; text-shadow: 0 0.04em 0 rgba(0, 0, 0, 0.3); z-index: 2; padding-bottom: 0.04em; }
 .lb .stud { display: none; }
@@ -250,8 +250,8 @@
 .rw-ico.item { overflow: visible; background: transparent; border: 0; width: 48px; height: 48px; }
 .rw-ico.item .bdg { --bs: 48px; }
 .rw-ico.chest { width: 54px; height: 50px; overflow: visible; background: transparent; }
-.reward-big { display: grid; place-items: center; padding: 8px 0 6px; }
-.reward-big .pt-coin, .reward-big .pt-chest { transform: scale(1.4); transform-origin: center; }
+.reward-big { display: grid; place-items: center; padding: 14px 0 10px; min-height: 150px; }
+.reward-big .pt-chest { width: 150px; }
 
 /* Pop Pass */
 .pass-hero { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: var(--r-l); background: radial-gradient(ellipse 80% 70% at 85% 0%, rgba(255, 61, 139, 0.45), transparent 70%), linear-gradient(135deg, #3a1a78, #6a1d6a 70%, #8a2a5c); border: 1px solid var(--line-2); overflow: hidden; box-shadow: var(--sh-2); }

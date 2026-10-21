@@ -85,7 +85,8 @@ bricks on their own, the Series 3 board scenes, `color-mix`, saving, and the aud
   keeps its 65 bricks after you leave a run.
 - The run's frame loop keeps ticking on every menu screen, and two timers rewrite every Coin counter every 1.2 and 1.5 seconds
   even when nothing changed.
-- A chest flow leaves one extra entry in the browser history, so Back needs an extra press afterwards.
+- (A chest flow seemed to leave an extra browser-history entry; checked during the build: `history.length` only counts entries behind the
+  current one and the next push discards them, so this was a measurement artifact, not a bug.)
 - No memory leak: the JS heap levels off at 3.5MB over 20 runs.
 
 ---

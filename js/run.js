@@ -95,6 +95,7 @@
       this.armed = null; this.buffered = null; this.popsThisRun = 0; this.tutorial = !!o.tutorial; this.warned = false; this.hb = 0;
       this.el.classList.toggle('chill', engine.chill);
       this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
+      $('bomb').getAnimations().forEach((a) => a.cancel()); $('bomb').classList.remove('gone');   // the fuse-out explosion leaves the bomb gone; every run starts with it back
       this.bestBase = S().best[this.mode] || 0; this.beatFired = false; this.chillStars = 0;
       $('warnVignette').classList.remove('on');
       const rush = !engine.chill;
@@ -657,7 +658,7 @@
         this.fx.flash('#ffffff', 0.9, 700);
         this.fx.explosion(bomb.left + bomb.width / 2, bomb.top + bomb.height / 2, '#ff7a4d', 1.8);
         this.fx.shake($('app'), 22, 900);
-        $('bomb').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.8)', opacity: 0.9, offset: 0.25 }, { transform: 'scale(0.2)', opacity: 0 }], { duration: 650, fill: 'forwards', easing: 'ease-out' });
+        $('bomb').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.8)', opacity: 0.9, offset: 0.25 }, { transform: 'scale(0.2)', opacity: 0 }], { duration: 650, easing: 'ease-out' }).onfinish = () => $('bomb').classList.add('gone');
         this.callout('FUSE OUT!', '#ff4d6d');
         await sleep(this.view.reduced ? 250 : 900);
         await this.view.crumble();
@@ -706,7 +707,7 @@
       const titles = { fuse: 'FUSE OUT!', moves: 'OUT OF MOVES', ended: 'RUN OVER' };
       const canShop = BR.CHEST_ORDER.some((id) => P.canOpen(id));
       const mis = r.missions.map((m) => `<div class="res-mis rev ${m.justDone ? 'done' : ''}"><div class="t"><span>${m.justDone ? BR.icon('check', 'ck') + ' ' : ''}${BR.esc(m.mission.text)}</span><b>${m.justDone ? '+' + m.mission.reward + ' Coins' : fmt(m.after) + '/' + fmt(m.mission.target)}</b></div><div class="bar ${m.weekly ? 'gold' : 'green'}"><i data-to="${(m.after / m.mission.target) * 100}" style="width:${(m.before / m.mission.target) * 100}%"></i></div></div>`).join('');
-      const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pop Pass reward</small></span><span class="lu-rw">${BR.rewardChip(u.paid ? { kind: 'coins', amount: u.paid } : u.reward)}</span></div>`).join('');
+      const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pass level ${u.level} reward</small></span><span class="lu-rw">${BR.rewardChip(u.paid ? { kind: 'coins', amount: u.paid } : u.reward)}</span></div>`).join('');
       const trophies = r.trophies.map((t) => `<div class="lvl-up rev"><span class="lu-n">${BR.icon('trophy')}</span><span class="lu-t"><b>${t.name}</b><small>Trophy earned · +${t.coins} Coins</small></span></div>`).join('');
       let chase = '';
       if (r.isBest && sum.score > 0) chase = `<div class="new-best rev">New best</div>${r.prevBest > 0 ? `<div class="res-gap rev good">${fmt(sum.score - r.prevBest)} more than your old best</div>` : ''}`;

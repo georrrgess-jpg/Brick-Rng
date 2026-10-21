@@ -39,7 +39,7 @@
     gift: '<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9v11M3.5 9h17v-3h-17zM12 6c-1-3-5-3-5 0M12 6c1-3 5-3 5 0"/>',
   };
   BR.icons = I;
-  BR.icon = (name, cls) => `<svg viewBox="0 0 24 24" class="${cls || ''}" aria-hidden="true">${I[name] || ''}</svg>`;
+  BR.icon = (name, cls) => `<svg viewBox="0 0 24 24" class="ico ${cls || ''}" aria-hidden="true">${I[name] || ''}</svg>`;
   BR.powerIcon = (id) => `<svg viewBox="0 0 24 24" aria-hidden="true">${BR.BOOSTERS[id].icon}</svg>`;
 
   /** Shared gradients so every coin looks identical. */
@@ -160,6 +160,8 @@
 
   /* ---------- toasts ---------- */
   BR.toast = function (msg, kind = '') {
+    // a chest opening owns the screen: toasts wait until it closes instead of covering its title
+    if (document.body.classList.contains('in-opening')) { (BR._heldToasts = BR._heldToasts || []).push([msg, kind]); return; }
     const t = BR.el(`<div class="toast ${kind}">${msg}</div>`);
     const box = $('toasts');
     while (box.children.length > 2) box.firstChild.remove();

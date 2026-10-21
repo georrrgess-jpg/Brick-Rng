@@ -39,6 +39,8 @@ body {
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; touch-action: manipulation; }
 button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
 svg { display: block; }
+/* every icon is a line icon unless its context says otherwise (so an icon dropped into a new place can never render as a solid blob) */
+svg.ico { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 [hidden] { display: none !important; }
 h1, h2, h3, h4, p { margin: 0; }
 .num { font-variant-numeric: tabular-nums; }

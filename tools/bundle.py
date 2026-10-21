@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Bundle Pop Rush into one self-contained HTML page (for hosts that take a single file, like Artifacts).
 Fonts become data URIs; the manifest, icons and service worker are dropped (a hosted page does not need them).
-Usage: python3 tools/bundle.py out.html"""
+Usage: python3 tools/bundle.py out.html          (a fragment: the Artifact host adds the document skeleton)
+       python3 tools/bundle.py out.html --full   (a complete document with a doctype, for opening the file directly)"""
 import base64, pathlib, re, sys
 
 root = pathlib.Path(__file__).resolve().parent.parent
@@ -24,7 +25,28 @@ js = '\n'.join((root / s).read_text() for s in scripts)
 # a hosted single page has no service worker or install prompt
 js = js.replace("navigator.serviceWorker.register('sw.js')", "Promise.reject(new Error('no sw'))")
 
-out = f'''<title>Pop Rush</title>
+if '--full' in sys.argv:
+    out = f'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0716">
+<title>Pop Rush</title>
+<style>
+{css}
+</style>
+</head>
+<body>
+{body}
+<script>
+{js}
+</script>
+</body>
+</html>
+'''
+else:
+    out = f'''<title>Pop Rush</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 {css}

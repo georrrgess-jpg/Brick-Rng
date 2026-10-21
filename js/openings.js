@@ -508,7 +508,7 @@
       const inst = drop.inst || { shine: drop.shine, seed: drop.seed, counter: drop.counter, uid: null };
       const rv = this.rv;
       rv.style.setProperty('--rc', R.color);
-      rv.className = 'rv';
+      rv.className = 'rv' + (level >= 3 ? ' has-banner' : '');   // the banner already names a Legendary or Mythic, so the card does not repeat it
       this.root.classList.remove('spinning'); this.root.classList.add('revealing');
       if (this.demo) this.demo.stop();
       const shineTag = inst.shine && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
@@ -582,7 +582,7 @@
       box.innerHTML = `
         ${inst.uid ? `<button class="btn btn-xl" data-a="equip" ${equipped ? 'disabled' : ''}>${equipped ? 'Equipped' : 'Equip'}</button>` : ''}
         <div class="row">
-          <button class="btn btn-dark" data-a="done">${again ? 'Done' : 'Continue'}</button>
+          <button class="btn btn-dark" data-a="done">Done</button>
           ${again ? '<button class="btn btn-green" data-a="again">Open another</button>' : ''}
         </div>`;
       box.onclick = (e) => {
@@ -623,6 +623,7 @@
       if (!fromBack && this.backEntry) BR.Back.release(this.backEntry);
       this.root.classList.remove('on');
       document.body.classList.remove('in-opening');
+      setTimeout(() => { (BR._heldToasts || []).splice(0).forEach(([m, k]) => BR.toast(m, k)); }, 700);
       setTimeout(() => { this.root.remove(); const l = document.getElementById('layer-opening'); if (!l.children.length) l.style.pointerEvents = 'none'; }, 450);
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
       BR.Router.rerender();
