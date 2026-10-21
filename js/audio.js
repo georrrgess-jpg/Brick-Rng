@@ -103,9 +103,6 @@
     },
     shatterBonus() { noise({ dur: 0.7, vol: 0.2, from: 6000, to: 200 }); tone({ f: 200, to: 50, type: 'sine', dur: 0.5, vol: 0.3 }); },
     // Geode opening
-    geodeDrop() { tone({ f: 90, to: 40, type: 'sine', dur: 0.4, vol: 0.4, at: 0.3 }); noise({ dur: 0.3, vol: 0.2, from: 1500, to: 100, at: 0.3 }); },
-    crack(i) { const k = i + 1; tone({ f: 110 / k, to: 40, type: 'sine', dur: 0.3, vol: 0.35 + k * 0.05 }); noise({ dur: 0.18 + k * 0.05, vol: 0.2 + k * 0.05, from: 7000, to: 600, type: 'highpass' }); tone({ f: 500 * k, to: 900 * k, type: 'triangle', dur: 0.25, vol: 0.06 }); },
-    rockShatter() { noise({ dur: 0.9, vol: 0.45, from: 7000, to: 120, q: 0.6 }); tone({ f: 120, to: 32, type: 'sine', dur: 0.8, vol: 0.5 }); },
 
     // ----- Pop Rush: fuse, Rush Mode, stages, chests -----
     heartbeat(level = 1) { tone({ f: 70, to: 45, type: 'sine', dur: 0.14, vol: 0.34 * level }); tone({ f: 62, to: 40, type: 'sine', dur: 0.16, vol: 0.28 * level, at: 0.16 }); },

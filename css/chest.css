@@ -194,3 +194,4 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
 .reel-h .rc-art { transform: scale(1.12); }
 .op-chest .c-cracks { filter: drop-shadow(0 0 3px #9fe8ff) drop-shadow(0 0 7px rgba(159, 232, 255, 0.8)); }
 .op-chest .c-needle { transform-box: view-box; transform-origin: 100px 106px; }
+.rv:not(.on), .rv:not(.on) * { pointer-events: none !important; }

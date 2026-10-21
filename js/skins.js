@@ -2,6 +2,7 @@
 (function () {
   const BR = (window.BR = window.BR || {});
 
+  const clampX = (x, b) => Math.max(b.left + 20, Math.min(b.right - 20, x));
   BR.Skins = {
     pop: 'classic',
     popShine: 'plain',
@@ -37,6 +38,97 @@
       this.moments = {};
       [sk, po, bo, fu].forEach((x) => { if (x.item.moment) this.moments[x.item.moment] = true; });
       root.classList.toggle('has-nova', !!this.moments.nova);
+    },
+
+
+    /* ------------------------------------------------------------------ signature moments
+       Each one is short (under 600ms) and only draws on the effects layer, so it never slows a tap. */
+    popCount: 0,
+    onEvent(type, d) {
+      const M = this.moments;
+      if (!M || !Object.keys(M).length || BR.reducedMotion) return;
+      const fx = BR.App.fx, rnd = (a, b) => a + Math.random() * (b - a);
+      if (type === 'pop' || type === 'demo') {
+        let cells, n, view, pt;
+        if (type === 'demo') {
+          const rects = d.cells.map((el) => el.getBoundingClientRect());
+          cells = rects.map((r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 }));
+          n = 8; pt = (c) => c;
+        } else {
+          view = d.view; const p = d.res.plan; n = p.n;
+          cells = p.primary.slice(0, 9).map((q) => view.pagePoint(q.r, q.c));
+        }
+        const col = (i) => BR.PALETTE[(d.res && d.res.plan.color != null ? d.res.plan.color : i) % 7];
+        this.popCount++;
+        if (M.lava && n >= 4) cells.forEach((q) => {
+          for (let i = 0; i < 3; i++) fx.emit({ kind: 'spark', x: q.x + rnd(-10, 10), y: q.y, vx: rnd(-70, 70), vy: rnd(-420, -200), g: 520, drag: 0.6, size: rnd(2.6, 5), max: rnd(0.45, 0.8), color: ['#ff9a3d', '#ffcf3f', '#ff4d2e'][i % 3] });
+          fx.ring(q.x, q.y, '#ff7a2a', 34 + n * 3, 0.4, 3);
+        });
+        if (M.nova && n >= 3) cells.forEach((q) => {
+          for (let i = 0; i < 4; i++) {
+            const a = rnd(0, 6.283), sp = rnd(260, 520);
+            fx.emit({ shape: 'star', x: q.x, y: q.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0, drag: 2.4, size: rnd(6, 11), max: rnd(0.4, 0.7), rot: rnd(0, 6), vr: rnd(-6, 6), color: '#ffffff' });
+            fx.emit({ kind: 'spark', x: q.x, y: q.y, vx: Math.cos(a) * sp * 0.7, vy: Math.sin(a) * sp * 0.7, g: 0, drag: 3, size: rnd(2, 3.4), max: rnd(0.4, 0.7), color: '#9ff0ff' });
+          }
+        });
+        if (M.aurora && n >= 4) cells.forEach((q, i) => fx.emit({ kind: 'spark', x: q.x + rnd(-12, 12), y: q.y, vx: rnd(-30, 30), vy: rnd(-120, -50), g: -30, drag: 0.8, size: rnd(9, 16), max: rnd(0.8, 1.2), color: ['#7affd9', '#b07aff', '#ff7ad9'][i % 3] }));
+        if (M.heart && n >= 3) cells.forEach((q) => {
+          const R = ['#ff6bd6', '#6bf0ff', '#fff36b', '#a56bff', '#6bffb2'];
+          for (let i = 0; i < 4; i++) { const a = rnd(0, 6.283), sp = rnd(120, 300); fx.emit({ kind: 'spark', x: q.x, y: q.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 80, drag: 2, size: rnd(2, 3.6), max: rnd(0.4, 0.7), color: R[i % 5] }); }
+          fx.ring(q.x, q.y, R[(Math.random() * 5) | 0], 40, 0.4, 3);
+        });
+        if (M.fireworks && n >= 8 && view) {
+          const b = view.boardEl.getBoundingClientRect(), c0 = cells[0];
+          const cols = ['#ff6b9a', '#ffd36b', '#6bffb2', '#6bb8ff', '#c08bff'];
+          BR.audio.launch();
+          fx.firework(c0.x, c0.y, clampX(c0.x + rnd(-80, 80), b), Math.max(60, b.top - rnd(40, 140)), cols[(Math.random() * 5) | 0], ['peony', 'ring', 'willow', 'star'][(Math.random() * 4) | 0]);
+          if (n >= 12) setTimeout(() => fx.firework(b.left + b.width * rnd(0.2, 0.8), b.bottom, b.left + b.width * rnd(0.2, 0.8), Math.max(60, b.top - 60), cols[(Math.random() * 5) | 0], 'peony'), 140);
+        }
+        if (M.thunder && type === 'pop' && (n >= 7 || this.popCount % 5 === 0)) this.lightning(d.view.boardEl, cells[0]);
+      } else if (type === 'line') {
+        if (M.scan) this.scan(d.view.boardEl);
+        if (M.thunder) this.lightning(d.view.boardEl, null);
+      } else if (type === 'rushStart') {
+        const run = d.run.el;
+        run.classList.toggle('tint-plasma', !!M.plasma);
+        if (M.dragon) this.roar(d.run);
+        if (M.plasma) { BR.audio.crackle(); }
+      } else if (type === 'rushEnd') {
+        d.run.el.classList.remove('tint-plasma');
+        if (M.ice) {
+          const r = document.getElementById('fuseFill').getBoundingClientRect();
+          fx.shards(r.left + r.width * 0.6, r.top + r.height / 2, '#dff7ff', 18, 1.1, { shape: 'tri', size: 4, spread: 6, life: 0.6 });
+          BR.audio.glassBreak();
+        }
+      } else if (type === 'stageUp') {
+        if (M.dragon) fx.flash('#ff7a2a', 0.2, 320);
+      }
+    },
+    lightning(boardEl, at) {
+      const fx = BR.App.fx, b = boardEl.getBoundingClientRect();
+      const x = at ? at.x : b.left + b.width * (0.2 + Math.random() * 0.6);
+      fx.bolt(x + (Math.random() - 0.5) * 60, 0, x, b.top + b.height * (0.2 + Math.random() * 0.3), '#cfe0ff');
+      const bg = document.getElementById('bg');
+      let el = bg.querySelector('.bolt-flash');
+      if (!el) { el = document.createElement('i'); el.className = 'bolt-flash'; bg.appendChild(el); }
+      el.style.setProperty('--bx', ((x / window.innerWidth) * 100).toFixed(0) + '%');
+      el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+      BR.audio.crackle();
+    },
+    scan(boardEl) {
+      let el = boardEl.querySelector('.scan-line');
+      if (!el) { el = document.createElement('i'); el.className = 'scan-line'; boardEl.appendChild(el); }
+      el.animate([{ top: '-24%', opacity: 1 }, { top: '100%', opacity: 1 }], { duration: 560, easing: 'cubic-bezier(0.4,0,0.6,1)' });
+      BR.audio.whoosh();
+    },
+    roar(run) {
+      const fx = BR.App.fx, b = run.view.boardEl.getBoundingClientRect(), bomb = document.getElementById('bomb').getBoundingClientRect();
+      fx.shake(document.getElementById('app'), 12, 520);
+      BR.audio.boom();
+      let el = run.view.boardEl.parentNode.querySelector('.fire-sweep');
+      if (!el) { el = document.createElement('i'); el.className = 'fire-sweep'; run.view.boardEl.parentNode.appendChild(el); }
+      el.animate([{ transform: 'translateX(-60%)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: 'translateX(110%)', opacity: 0.9, offset: 0.8 }, { transform: 'translateX(130%)', opacity: 0 }], { duration: 900, easing: 'cubic-bezier(0.3,0.6,0.4,1)' });
+      for (let i = 0; i < 22; i++) fx.emit({ kind: 'spark', x: bomb.left + bomb.width / 2, y: bomb.top + bomb.height / 2, vx: Math.random() * 640 + 80, vy: (Math.random() - 0.5) * 220, g: -60, drag: 1.5, size: 3 + Math.random() * 4, max: 0.5 + Math.random() * 0.5, color: ['#ff4d2e', '#ff9a3d', '#ffd24a'][i % 3] });
     },
 
     brickHTML(color) {

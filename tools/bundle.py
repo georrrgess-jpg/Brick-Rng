@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
-"""Bundle the game into one self-contained HTML file (for hosts that take a single page).
+"""Bundle Pop Rush into one self-contained HTML page (for hosts that take a single file, like Artifacts).
+Fonts become data URIs; the manifest, icons and service worker are dropped (a hosted page does not need them).
 Usage: python3 tools/bundle.py out.html"""
-import re, sys, pathlib
+import base64, pathlib, re, sys
+
 root = pathlib.Path(__file__).resolve().parent.parent
 html = (root / 'index.html').read_text()
-css = (root / 'css/styles.css').read_text() + '\n' + (root / 'css/skins.css').read_text()
-# dark single-look game: declare it, keep the board comfortably inside the side gutters
-css = css.replace(':root {\n  --bg0', ':root {\n  color-scheme: dark;\n  --bg0', 1)
-css = css.replace('min(94vw,', 'min(92vw,')
+
+def font_uri(path):
+    return 'data:font/woff2;base64,' + base64.b64encode((root / path).read_bytes()).decode()
+
+css_files = re.findall(r'<link rel="stylesheet" href="([^"]+)">', html)
+css = ''
+for f in css_files:
+    text = (root / f).read_text()
+    text = re.sub(r"url\('\.\./(fonts/[^']+)'\)", lambda m: f"url('{font_uri(m.group(1))}')", text)
+    css += text + '\n'
+
 body = re.search(r'<body>(.*?)<script src=', html, re.S).group(1)
+body = re.sub(r'<noscript>.*?</noscript>', '', body, flags=re.S)
 scripts = re.findall(r'<script src="([^"]+)"></script>', html)
 js = '\n'.join((root / s).read_text() for s in scripts)
-out = f'''<title>Shardfall</title>
+# a hosted single page has no service worker or install prompt
+js = js.replace("navigator.serviceWorker.register('sw.js')", "Promise.reject(new Error('no sw'))")
+
+out = f'''<title>Pop Rush</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
 {css}
-.screen{{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}
 </style>
 {body}
 <script>

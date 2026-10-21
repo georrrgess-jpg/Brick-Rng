@@ -292,6 +292,7 @@
       this.root.classList.remove('spinning', 'revealing', 'bursting');
       this.reelWrap.classList.remove('on');
       this.rv.classList.remove('on');
+      this.rv.querySelectorAll('.rv-info, .rv-actions').forEach((x) => x.classList.remove('on'));
       this.skipEl.classList.remove('on');
       // fresh chest art every time
       this.chestBox.className = 'op-chest';
@@ -362,10 +363,10 @@
 
     holdLoop(now) {
       if (this.state !== 'holding') return;
-      const dt = Math.min(0.12, (now - this.lastT) / 1000); this.lastT = now;
+      const dt = clamp((now - this.lastT) / 1000, 0, 0.12); this.lastT = now;
       this.time = (this.time || 0) + dt;
       this.hold = this.pressed ? this.hold + dt / HOLD_TIME : this.hold - dt * 2.4;
-      if (this.hold <= 0) { this.hold = 0; this.state = 'ready'; this.setHold(0); this.shake.style.transform = ''; this.ritual.hold(this.svg, 0, 0, this.ctx()); this.chestBox.classList.add('idle'); return; }
+      if (!this.pressed && this.hold <= 0) { this.hold = 0; this.state = 'ready'; this.setHold(0); this.shake.style.transform = ''; this.ritual.hold(this.svg, 0, 0, this.ctx()); this.chestBox.classList.add('idle'); return; }
       const p = clamp(this.hold, 0, 1);
       this.setHold(p);
       const a = p * p;
