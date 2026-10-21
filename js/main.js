@@ -80,8 +80,19 @@
       on('btnAgain', () => { this.ui.overlay('gameover', false); this.startRun(); });
       on('btnGoMenu', () => { this.ui.overlay('gameover', false); this.toMenu(); });
       on('btnSound', () => { const s = this.store.data.settings; s.sound = !s.sound; this.store.save(); this.applySettings(); if (s.sound) this.audio.ui(); });
-      on('btnResetData', () => {
-        if (window.confirm('Reset best score and collection?')) { this.store.reset(); this.applySettings(); this.ui.setBest(0); this.ui.renderCollection(); }
+      on('btnResetData', (e) => {
+        // Two-tap confirm (browsers and embedded viewers may suppress confirm()).
+        const btn = e.currentTarget;
+        if (btn.dataset.armed !== '1') {
+          btn.dataset.armed = '1';
+          btn.textContent = 'Tap again to erase everything';
+          clearTimeout(this.resetTimer);
+          this.resetTimer = setTimeout(() => { btn.dataset.armed = ''; btn.textContent = 'Reset all progress'; }, 3500);
+          return;
+        }
+        clearTimeout(this.resetTimer);
+        btn.dataset.armed = ''; btn.textContent = 'Reset all progress';
+        this.store.reset(); this.applySettings(); this.ui.setBest(0); this.ui.renderCollection();
       });
 
       const bindToggle = (id, key) => $(id).addEventListener('change', (e) => { this.store.data.settings[key] = e.target.checked; this.store.save(); this.applySettings(); this.audio.ui(); });
@@ -454,8 +465,10 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', () => {
+  const boot = () => {
     const app = new App();
     window.__brick = app; // handy for debugging / tests
-  });
+  };
+  if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
