@@ -60,9 +60,14 @@
     get enabled() { return enabled; },
 
     /** Pop pitch climbs with group size so bigger plays literally sound bigger. */
-    pop(n, streak) {
+    pop(n, streak, flavor) {
       const i = Math.min(PENTA.length - 1, Math.max(0, n - 2) + Math.min(streak, 3));
       const f = 330 * Math.pow(2, PENTA[i] / 12);
+      if (flavor === 'ember') noise({ dur: 0.22, vol: 0.13, from: 3000, to: 300, type: 'bandpass', q: 0.9 });
+      else if (flavor === 'petal') tone({ f: f * 2, type: 'sine', dur: 0.5, vol: 0.07, at: 0.02 });
+      else if (flavor === 'glass') { tone({ f: 2400 + i * 140, type: 'sine', dur: 0.3, vol: 0.07 }); noise({ dur: 0.12, vol: 0.09, from: 9000, to: 3000, type: 'highpass' }); }
+      else if (flavor === 'pixel') [0, 1, 2].forEach((k) => tone({ f: f * (2 + k * 0.5), type: 'square', dur: 0.06, vol: 0.05, at: k * 0.045 }));
+      else if (flavor === 'lightning') { noise({ dur: 0.22, vol: 0.14, from: 8000, to: 400, type: 'bandpass', q: 1.4 }); tone({ f: 900, to: 140, type: 'sawtooth', dur: 0.2, vol: 0.05 }); }
       tone({ f: f * 0.96, to: f * 1.08, type: 'triangle', dur: 0.18, vol: 0.24 });
       tone({ f: f * 2, type: 'sine', dur: 0.12, vol: 0.09, at: 0.01 });
       noise({ dur: 0.07, vol: 0.13, from: 6000, to: 900, type: 'highpass' });
@@ -82,7 +87,23 @@
     start() { [0, 4, 7].forEach((s, i) => tone({ f: 330 * Math.pow(2, s / 12), type: 'triangle', dur: 0.3, vol: 0.14, at: i * 0.07 })); },
     lowFuel() { tone({ f: 880, type: 'square', dur: 0.08, vol: 0.05 }); tone({ f: 880, type: 'square', dur: 0.08, vol: 0.05, at: 0.13 }); },
 
-    // ----- crate -----
+    // ----- rounds, boosters, progression -----
+    roundClear() { [0, 4, 7, 12].forEach((s, i) => tone({ f: 392 * Math.pow(2, s / 12), type: 'triangle', dur: 0.5, vol: 0.15, at: i * 0.09 })); tone({ f: 1568, type: 'sine', dur: 0.8, vol: 0.07, at: 0.4 }); },
+    xpTick(i = 0) { tone({ f: 700 + Math.min(i, 10) * 55, type: 'sine', dur: 0.07, vol: 0.07 }); },
+    levelUp() { [0, 4, 7, 12, 16, 19].forEach((s, i) => tone({ f: 440 * Math.pow(2, s / 12), type: 'triangle', dur: 0.45, vol: 0.13, at: i * 0.07 })); },
+    boosterGain() { [0, 7, 12].forEach((s, i) => tone({ f: 880 * Math.pow(2, s / 12), type: 'sine', dur: 0.2, vol: 0.09, at: i * 0.05 })); },
+    boosterArm() { tone({ f: 500, to: 900, type: 'triangle', dur: 0.12, vol: 0.09 }); },
+    boosterUse(type) {
+      if (type === 'hammer') { tone({ f: 160, to: 40, type: 'sine', dur: 0.4, vol: 0.4 }); noise({ dur: 0.35, vol: 0.25, from: 4000, to: 200 }); }
+      else if (type === 'beam') { noise({ dur: 0.5, vol: 0.2, from: 400, to: 8000, type: 'bandpass', q: 1.6 }); tone({ f: 300, to: 1800, type: 'sawtooth', dur: 0.4, vol: 0.08 }); }
+      else { [0, 4, 7, 12, 16].forEach((s, i) => tone({ f: 660 * Math.pow(2, s / 12), type: 'sine', dur: 0.35, vol: 0.1, at: i * 0.04 })); noise({ dur: 0.4, vol: 0.12, from: 6000, to: 1500, type: 'highpass' }); }
+    },
+    shatterBonus() { noise({ dur: 0.7, vol: 0.2, from: 6000, to: 200 }); tone({ f: 200, to: 50, type: 'sine', dur: 0.5, vol: 0.3 }); },
+    // Geode opening
+    geodeDrop() { tone({ f: 90, to: 40, type: 'sine', dur: 0.4, vol: 0.4, at: 0.3 }); noise({ dur: 0.3, vol: 0.2, from: 1500, to: 100, at: 0.3 }); },
+    crack(i) { const k = i + 1; tone({ f: 110 / k, to: 40, type: 'sine', dur: 0.3, vol: 0.35 + k * 0.05 }); noise({ dur: 0.18 + k * 0.05, vol: 0.2 + k * 0.05, from: 7000, to: 600, type: 'highpass' }); tone({ f: 500 * k, to: 900 * k, type: 'triangle', dur: 0.25, vol: 0.06 }); },
+    rockShatter() { noise({ dur: 0.9, vol: 0.45, from: 7000, to: 120, q: 0.6 }); tone({ f: 120, to: 32, type: 'sine', dur: 0.8, vol: 0.5 }); },
+    // ----- crate (legacy names reused by the Geode reel) -----
     crateDrop() { tone({ f: 110, to: 45, type: 'sine', dur: 0.35, vol: 0.3, at: 0.35 }); noise({ dur: 0.25, vol: 0.18, from: 1200, to: 100, at: 0.35 }); },
     chargeUp(dur = 1) {
       tone({ f: 120, to: 760, type: 'sawtooth', dur, vol: 0.09, attack: 0.1 });

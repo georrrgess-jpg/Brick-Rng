@@ -1,20 +1,19 @@
-// Headless engine simulation: invariants + balance numbers. Run: node tests/sim.js
+// Headless engine simulation: invariants + balance for Rounds. Run: node tests/sim.js
 global.window = global;
-for (const f of ['rng', 'board', 'cores', 'engine']) require('../js/' + f + '.js');
+for (const f of ['rng', 'board', 'config', 'boosters', 'engine']) require('../js/' + f + '.js');
 const BR = global.BR;
 
 function check(e, label) {
-  const B = e.board;
-  const ids = new Set();
+  const B = e.board, ids = new Set();
   for (let r = 0; r < B.rows; r++) for (let c = 0; c < B.cols; c++) {
     const b = B.grid[r][c];
     if (!b) throw new Error(label + ': hole at ' + r + ',' + c);
     if (ids.has(b.id)) throw new Error(label + ': dup id');
     ids.add(b.id);
-    if (b.color < 0 || b.color >= B.colorCount) throw new Error(label + ': bad color ' + b.color);
+    if (b.color < 0 || b.color >= B.colorCount) throw new Error(label + ': bad color');
   }
-  if (!B.hasMove(e.wild())) throw new Error(label + ': no move');
-  if (e.fuel < 0 || e.fuel > BR.CFG.maxFuel) throw new Error(label + ': fuel ' + e.fuel);
+  if (!B.hasMove(null)) throw new Error(label + ': no move');
+  if (e.movesLeft < 0) throw new Error(label + ': negative moves');
   if (!Number.isFinite(e.score)) throw new Error(label + ': score NaN');
 }
 
@@ -24,45 +23,44 @@ function allTaps(e) {
   return out;
 }
 
-function run(policy, seed, forcedCore) {
+function run(policy, seed, maxRounds = 40) {
   const e = new BR.Engine({ seed });
-  const stats = { pops: 0, crates: 0, n: 0 };
-  while (!e.over && stats.pops < 600) {
+  let boosters = 0, guard = 0;
+  while (!e.over && guard++ < 4000) {
+    // use boosters smartly when available (greedy bot only)
+    if (policy !== 'random') {
+      for (const t of BR.BOOSTER_ORDER) {
+        if (e.inv[t] > 0 && e.movesLeft > 0) {
+          let best = null, bn = 0;
+          for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const n = e.boosterCells(t, r, c).length; if (n > bn) { bn = n; best = { r, c }; } }
+          if (best && bn >= 8) { e.applyBooster(t, best.r, best.c); boosters++; check(e, 'booster'); }
+        }
+      }
+    }
+    if (e.roundCleared()) {
+      e.shatter(); check(e, 'shatter');
+      if (e.round >= maxRounds) break;
+      e.nextRound();
+      continue;
+    }
+    if (e.movesLeft <= 0) { e.over = true; break; }
     const taps = allTaps(e);
     if (!taps.length) throw new Error('no taps but hasMove');
-    let p;
-    if (policy === 'random') p = e.rng.pick(taps);
-    else if (policy === 'greedy' || policy === 'nocore') p = taps.reduce((a, b) => (b.points > a.points ? b : a));
-    else p = taps.reduce((a, b) => (b.net * 1000 + b.points > a.net * 1000 + a.points ? b : a));
+    const p = policy === 'random' ? e.rng.pick(taps) : taps.reduce((a, b) => (b.points > a.points ? b : a));
     const res = e.commit(p);
     if (!res) throw new Error('commit null');
-    check(e, policy + '#' + seed + ' pop ' + stats.pops);
-    stats.pops++; stats.n += p.n;
-    while (e.takeCrate()) {
-      stats.crates++;
-      const core = forcedCore ? BR.coreById[forcedCore] : e.rollCrate();
-      if (policy === 'nocore') e.scrap(core);
-      else if (e.rng.chance(0.7)) e.equip(core); else e.scrap(core);
-    }
-    if (e.fuel <= 0) e.over = true;
+    check(e, policy + '#' + seed);
   }
-  return { score: e.score, pops: stats.pops, crates: stats.crates, avgN: stats.n / stats.pops, maxCombo: e.maxCombo, over: e.over };
+  return { rounds: e.roundsCleared, score: e.score, pops: e.pops, boosters };
 }
 
-function summarize(name, runs) {
-  const avg = (k) => (runs.reduce((a, r) => a + r[k], 0) / runs.length).toFixed(1);
-  console.log(name.padEnd(14), 'score', avg('score').padStart(8), 'pops', avg('pops').padStart(6), 'crates', avg('crates').padStart(5), 'avgGroup', avg('avgN'), 'ended', runs.filter((r) => r.over).length + '/' + runs.length);
-}
-
-for (const policy of ['random', 'greedy', 'nocore']) {
+const avg = (a, k) => (a.reduce((s, r) => s + r[k], 0) / a.length).toFixed(1);
+const dist = (a) => { const m = {}; a.forEach((r) => (m[r.rounds] = (m[r.rounds] || 0) + 1)); return Object.keys(m).sort((x, y) => x - y).map((k) => k + ':' + m[k]).join(' '); };
+for (const policy of ['random', 'greedy']) {
   const runs = [];
-  for (let s = 1; s <= 120; s++) runs.push(run(policy, s * 7919));
-  summarize(policy, runs);
+  for (let s = 1; s <= 200; s++) runs.push(run(policy, s * 7919));
+  console.log(policy.padEnd(8), 'roundsCleared avg', avg(runs, 'rounds').padStart(5), 'score', avg(runs, 'score').padStart(9), 'boosters', avg(runs, 'boosters'));
+  console.log('         distribution (rounds:runs)', dist(runs));
 }
-console.log('--- per-core (greedy policy, core forced every crate) ---');
-for (const core of BR.CORES) {
-  const runs = [];
-  for (let s = 1; s <= 40; s++) runs.push(run('greedy', s * 104729, core.id));
-  summarize(core.id, runs);
-}
-console.log('invariants held for all runs');
+console.log('goals', [1, 2, 3, 4, 5, 6, 8, 10, 12].map((r) => r + ':' + BR.goalFor(r)).join(' '));
+console.log('invariants held');

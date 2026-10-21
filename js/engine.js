@@ -1,4 +1,4 @@
-/* Game rules engine: pure state + deterministic-by-seed. The UI only replays the results it returns. */
+/* Rules engine (pure logic, deterministic by seed): Rounds, scoring, Boosters, shatter bonus. */
 (function () {
   const G = typeof window !== 'undefined' ? window : globalThis;
   const BR = (G.BR = G.BR || {});
@@ -17,43 +17,36 @@
       this.board = new BR.Board(CFG.rows, CFG.cols, 5, this.rng);
       this.board.randomFill();
       this.score = 0;
-      this.fuel = CFG.startFuel;
+      this.round = 1;
+      this.movesLeft = CFG.movesPerRound;
+      this.goal = BR.goalFor(1);
+      this.roundScore = 0;
       this.streak = 0;
       this.maxCombo = 0;
       this.pops = 0;
       this.bricksPopped = 0;
       this.biggest = 0;
+      this.roundsCleared = 0;
       this.charge = 0;
-      this.need = CFG.firstCrate;
-      this.cratesOpened = 0;
-      this.coresPulled = 0;
-      this.core = null;
-      this.coreState = {};
+      this.boosterCursor = 0;
+      this.inv = { hammer: 1, beam: 0, prism: 0 };
+      this.roundStats = { lines: 0, big: 0 };
       this.over = false;
     }
 
-    wild() { return this.core && this.core.wild ? this.core.wild(this) : null; }
-    gravityDir() { return this.core && this.core.gravity ? this.core.gravity(this) : 'down'; }
-    bestGroup() { return this.board.bestGroup(this.wild()); }
+    roundCleared() { return this.roundScore >= this.goal; }
+    outOfMoves() { return this.movesLeft <= 0 && !this.roundCleared(); }
+    bestGroup() { return this.board.bestGroup(null); }
 
-    /** Describe what tapping r,c would do, without changing anything. Returns null if not a legal tap. */
+    /** What tapping r,c would do (null if it is not a legal tap). Never changes state. */
     plan(r, c) {
       const B = this.board;
-      if (!B.get(r, c)) return null;
-      const primary = B.groupAt(r, c, this.wild());
+      if (!B.get(r, c) || this.movesLeft <= 0) return null;
+      const primary = B.groupAt(r, c, null);
       if (primary.length < 2) return null;
       const n = primary.length;
       const k = (p) => p.r * B.cols + p.c;
-      const core = this.core;
-      const ctx = { engine: this, board: B, rng: this.rng, r, c, primary, n };
-
       const taken = new Set(primary.map(k));
-      const extras = [];
-      for (const p of (core && core.extras ? core.extras(ctx) : []) || []) {
-        if (!B.get(p.r, p.c) || taken.has(k(p))) continue;
-        taken.add(k(p));
-        extras.push({ r: p.r, c: p.c });
-      }
 
       // Edge-to-edge span = Line Blast: also clears the tapped row / column.
       let minR = 99, maxR = -1, minC = 99, maxC = -1;
@@ -61,54 +54,102 @@
       const lineH = minC === 0 && maxC === B.cols - 1;
       const lineV = minR === 0 && maxR === B.rows - 1;
       const lineCells = [];
-      const addLine = (p) => { if (!taken.has(k(p))) { taken.add(k(p)); lineCells.push(p); } };
+      const addLine = (p) => { if (!taken.has(k(p)) && B.get(p.r, p.c)) { taken.add(k(p)); lineCells.push(p); } };
       if (lineH) for (let cc = 0; cc < B.cols; cc++) addLine({ r, c: cc });
       if (lineV) for (let rr = 0; rr < B.rows; rr++) addLine({ r: rr, c });
       const line = lineH || lineV;
 
-      const x = extras.length;
-      let cost = 1;
-      if (core && core.fuelCost) cost = core.fuelCost(ctx, cost);
-      let refund = n >= 8 ? 2 : n >= 5 ? 1 : 0;
-      if (core && core.fuelRefund) refund = core.fuelRefund(ctx, refund);
-      if (line) refund += 3;
-
       const streakAfter = n >= 4 ? this.streak + 1 : 0;
       const combo = n >= 4 ? BR.comboMult(streakAfter) : 1;
-      const coreMult = core && core.scoreMult ? core.scoreMult(ctx) : 1;
-      const base = 10 * n * n + 20 * x + (line ? 500 : 0);
-      const points = Math.round(base * combo * coreMult);
-
+      const base = 10 * n * n + (line ? 500 : 0);
+      const points = Math.round(base * combo);
       return {
-        r, c, n, x, primary, extras, lineCells, line, lineH, lineV,
-        cells: primary.concat(extras, lineCells),
-        cost, refund, net: refund - cost,
-        streakAfter, combo, coreMult, points,
-        color: primary.color,
-        version: B.version,
+        kind: 'pop', r, c, n, primary, extras: [], lineCells, line, lineH, lineV,
+        cells: primary.concat(lineCells), streakAfter, combo, points,
+        color: primary.color, version: B.version,
       };
     }
 
-    /** Apply a plan. Returns everything the renderer needs to replay the turn. */
+    /** Spend one move on a planned tap. Returns everything the renderer needs. */
     commit(plan) {
-      if (this.over) return null;
+      if (this.over || this.movesLeft <= 0) return null;
       if (!plan || plan.version !== this.board.version) plan = plan && this.plan(plan.r, plan.c);
       if (!plan) return null;
-      const B = this.board;
-      const core = this.core;
-      const fuelBefore = this.fuel;
-      const comboBefore = this.streak;
-
-      this.fuel = Math.max(0, Math.min(BR.CFG.maxFuel, this.fuel - plan.cost + plan.refund));
+      this.movesLeft--;
       this.streak = plan.streakAfter;
       this.maxCombo = Math.max(this.maxCombo, this.streak);
       this.score += plan.points;
-      this.charge += plan.points;
+      this.roundScore += plan.points;
       this.pops++;
       this.biggest = Math.max(this.biggest, plan.n);
+      if (plan.line) this.roundStats.lines++;
+      if (plan.n >= 10) this.roundStats.big++;
 
+      const res = this._clear(plan.cells, { r: plan.r, c: plan.c });
+      const gain = plan.n >= 4 ? (plan.n - 2) * 4 + this.streak : 0;
+      res.plan = plan;
+      res.kind = 'pop';
+      res.boostersGained = this._addCharge(gain);
+      return res;
+    }
+
+    boosterCells(type, r, c) {
+      const b = BR.BOOSTERS[type];
+      if (!b || !this.board.get(r, c)) return [];
+      return b.cells(this.board, r, c);
+    }
+
+    /** Use a Booster on r,c. Costs no move. */
+    applyBooster(type, r, c) {
+      if (this.over || !(this.inv[type] > 0)) return null;
+      const cells = this.boosterCells(type, r, c);
+      if (!cells.length) return null;
+      this.inv[type]--;
+      const points = cells.length * BR.BOOSTERS[type].perBrick;
+      this.score += points;
+      this.roundScore += points;
+      const res = this._clear(cells, { r, c });
+      res.kind = 'booster';
+      res.type = type;
+      res.plan = { kind: 'booster', n: cells.length, points, r, c, primary: cells, combo: 1, line: false };
+      res.boostersGained = [];
+      return res;
+    }
+
+    /** Round-clear payoff: leftover moves shatter a patch of bricks for bonus points. */
+    shatter() {
+      const left = Math.max(0, this.movesLeft);
+      const bonus = left * BR.CFG.shatterPerMove;
+      const all = [];
+      for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) all.push({ r, c });
+      this.rng.shuffle(all);
+      const cells = left > 0 ? all.slice(0, Math.min(36, left * 3)) : [];
+      this.score += bonus;
+      const res = this._clear(cells, { r: 3, c: 3 });
+      res.kind = 'shatter';
+      res.bonus = bonus;
+      res.movesLeft = left;
+      res.plan = { kind: 'shatter', n: cells.length, points: bonus, r: 3, c: 3, primary: cells, combo: 1, line: false };
+      return res;
+    }
+
+    nextRound() {
+      this.roundsCleared++;
+      this.round++;
+      this.movesLeft = BR.CFG.movesPerRound;
+      this.goal = BR.goalFor(this.round);
+      this.roundScore = 0;
+      this.streak = 0;
+      this.roundStats = { lines: 0, big: 0 };
+      if (this.round >= BR.CFG.seventhColorRound) this.board.colorCount = 7;
+      else if (this.round >= BR.CFG.sixthColorRound) this.board.colorCount = 6;
+    }
+
+    /* ---- internals ---- */
+    _clear(cells, tap) {
+      const B = this.board;
       const removed = [];
-      for (const p of plan.cells) {
+      for (const p of cells) {
         const b = B.grid[p.r][p.c];
         if (!b) continue;
         removed.push({ id: b.id, r: p.r, c: p.c, color: b.color });
@@ -116,47 +157,30 @@
       }
       this.bricksPopped += removed.length;
       B.version++;
-
-      if (core && core.onCommit) core.onCommit({ engine: this, plan, n: plan.n });
-      const dir = this.gravityDir();
-      const { moves, spawns } = B.settle(dir);
-      const recolors = core && core.afterRefill ? core.afterRefill({ engine: this, board: B, rng: this.rng, plan }) || [] : [];
-      const shuffle = B.ensureMove(this.wild());
-
-      return { plan, tap: { r: plan.r, c: plan.c }, removed, moves, spawns, recolors, shuffle, dir, fuelBefore, fuelAfter: this.fuel, comboBefore };
+      const { moves, spawns } = B.settle('down');
+      const shuffle = B.ensureMove(null);
+      return { tap, removed, moves, spawns, recolors: [], shuffle, dir: 'down', movesLeft: this.movesLeft };
     }
 
-    crateReady() { return this.charge >= this.need; }
-    /** Consume one crate worth of charge; returns false if none is ready. */
-    takeCrate() {
-      if (!this.crateReady()) return false;
-      this.charge -= this.need;
-      this.need = Math.round(this.need * BR.CFG.crateGrowth);
-      this.cratesOpened++;
-      if (this.cratesOpened >= BR.CFG.seventhColorAfter) this.board.colorCount = 7;
-      else if (this.cratesOpened >= BR.CFG.sixthColorAfter) this.board.colorCount = 6;
-      return true;
-    }
-
-    /** Roll the next crate result (decided up front; the reel animation only reveals it). */
-    rollCrate() {
-      const rarity = this.rng.weighted(BR.RARITIES, (r) => r.weight);
-      const pool = BR.CORES.filter((c) => c.rarity === rarity.id);
-      return this.rng.pick(pool);
-    }
-
-    equip(core) {
-      this.core = core;
-      this.coreState = {};
-      this.coresPulled++;
-      if (core.onEquip) core.onEquip(this);
-    }
-
-    scrap(core) {
-      const gain = BR.rarityById[core.rarity].scrap;
-      this.coresPulled++;
-      this.fuel = Math.min(BR.CFG.maxFuel, this.fuel + gain);
-      return gain;
+    _addCharge(gain) {
+      const gained = [];
+      if (gain <= 0) return gained;
+      this.charge += gain;
+      const order = BR.BOOSTER_ORDER;
+      while (this.charge >= BR.CFG.chargeNeeded) {
+        let best = null;
+        for (let i = 0; i < order.length; i++) {
+          const t = order[(this.boosterCursor + i) % order.length];
+          if (this.inv[t] >= BR.CFG.boosterCap) continue;
+          if (best === null || this.inv[t] < this.inv[best]) best = t;
+        }
+        if (best === null) { this.charge = BR.CFG.chargeNeeded - 1; break; }
+        this.inv[best]++;
+        this.boosterCursor = (order.indexOf(best) + 1) % order.length;
+        gained.push(best);
+        this.charge -= BR.CFG.chargeNeeded;
+      }
+      return gained;
     }
   };
 })();

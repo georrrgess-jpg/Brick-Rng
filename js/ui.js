@@ -1,28 +1,37 @@
-/* HUD + screens + overlays + small DOM effects (floating text, callouts, combo badge). */
+/* HUD, screens, overlays and small DOM effects (floating text, callouts, combo badge, XP bars). */
 (function () {
   const BR = (window.BR = window.BR || {});
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
+  BR.fmt = fmt;
 
-  BR.icon = (core) => `<svg viewBox="0 0 24 24" aria-hidden="true">${core.icon}</svg>`;
+  BR.svgIcon = (inner) => `<svg viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
 
   class UI {
     constructor() {
       this.el = {
-        screens: { menu: $('menu'), game: $('game'), collection: $('collection') },
+        screens: { menu: $('menu'), game: $('game'), vault: $('vault') },
         score: $('score'), best: $('best'), menuBest: $('menuBest'),
-        fuelStat: $('fuelStat'), fuelVal: $('fuelVal'), fuelBar: $('fuelBar'),
-        meter: $('crateMeter'), meterFill: $('meterFill'), meterText: $('meterText'), meterIcon: $('meterIcon'),
+        movesStat: $('movesStat'), movesVal: $('movesVal'), roundLbl: $('roundLbl'),
+        goalBar: $('goalBar'), goalFill: $('goalFill'), goalText: $('goalText'),
+        chargeFill: $('chargeFill'), slots: $('slots'),
         combo: $('combo'), comboX: $('comboX'),
-        layer: $('fxlayer'), coreSlot: $('coreSlot'), gravityTag: $('gravityTag'), hint: $('hint'),
-        collGrid: $('collGrid'), collProgress: $('collProgress'), collCount: $('collCount'),
-        gameCol: $('gameCol'),
+        layer: $('fxlayer'), hint: $('hint'), aim: $('aimBanner'), wrap: $('boardWrap'),
       };
-      this.shown = { score: 0, fuel: 0 };
       this.numAnim = new WeakMap();
       this.current = null;
       this.comboVisible = false;
       this.hintTimer = 0;
+      this.buildSlots();
+    }
+
+    buildSlots() {
+      this.el.slots.innerHTML = BR.BOOSTER_ORDER.map((id) => {
+        const b = BR.BOOSTERS[id];
+        return `<button class="bslot empty" data-b="${id}" aria-label="${b.name}: ${b.desc}">${BR.svgIcon(b.icon)}<span class="bname">${b.name}</span><em class="bcount">0</em></button>`;
+      }).join('');
+      this.slotEls = {};
+      this.el.slots.querySelectorAll('.bslot').forEach((el) => { this.slotEls[el.dataset.b] = el; });
     }
 
     /* ---------- screens & overlays ---------- */
@@ -39,7 +48,7 @@
     /* ---------- numbers ---------- */
     countTo(el, to, dur = 600, from = null) {
       const prev = this.numAnim.get(el);
-      if (prev) cancelAnimationFrame(prev.raf);
+      if (prev && prev.raf) cancelAnimationFrame(prev.raf);
       const start = from != null ? from : prev ? prev.value : parseInt(el.textContent.replace(/\D/g, ''), 10) || 0;
       if (start === to || BR.reducedMotion) { el.textContent = fmt(to); this.numAnim.set(el, { value: to }); return; }
       const t0 = performance.now();
@@ -54,36 +63,50 @@
       state.raf = requestAnimationFrame(tick);
       this.numAnim.set(el, state);
     }
-    bump(el) {
-      el.classList.remove('bump');
-      void el.offsetWidth;
-      el.classList.add('bump');
-    }
+    bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 
-    /* ---------- HUD ---------- */
+    /* ---------- run HUD ---------- */
     setScore(v, animate = true) {
       if (animate) { this.countTo(this.el.score, v, 650); this.bump(this.el.score); }
       else { this.el.score.textContent = fmt(v); this.numAnim.set(this.el.score, { value: v }); }
-      this.shown.score = v;
     }
     setBest(v) { this.el.best.textContent = fmt(v); this.el.menuBest.textContent = fmt(v); }
-    setFuel(v, animate = true) {
-      const prev = this.shown.fuel;
-      this.el.fuelVal.textContent = v;
-      this.el.fuelBar.style.width = Math.max(2, (v / BR.CFG.maxFuel) * 100) + '%';
-      this.el.fuelStat.classList.toggle('low', v <= 6);
-      this.el.fuelStat.classList.toggle('mid', v > 6 && v <= 12);
-      if (animate && v !== prev) this.bump(this.el.fuelVal);
-      this.shown.fuel = v;
+    setRound(n) { this.el.roundLbl.textContent = 'Round ' + n; }
+    setMoves(n, animate = true) {
+      const prev = this.el.movesVal.textContent;
+      this.el.movesVal.textContent = n;
+      this.el.movesStat.classList.toggle('low', n <= 3 && n > 0);
+      if (animate && String(n) !== prev) this.bump(this.el.movesVal);
     }
-    setMeter(charge, need, animate = true) {
-      const k = Math.max(0, Math.min(1, charge / need));
-      if (!animate) { this.el.meterFill.style.transition = 'none'; }
-      this.el.meterFill.style.width = (k * 100).toFixed(1) + '%';
-      if (!animate) { void this.el.meterFill.offsetWidth; this.el.meterFill.style.transition = ''; }
-      const ready = k >= 1;
-      this.el.meter.classList.toggle('ready', ready);
-      this.el.meterText.textContent = ready ? 'Crate ready!' : `Next crate  ${fmt(charge)} / ${fmt(need)}`;
+    setGoal(progress, goal, animate = true) {
+      const k = Math.max(0, Math.min(1, progress / goal));
+      if (!animate) this.el.goalFill.style.transition = 'none';
+      this.el.goalFill.style.width = (k * 100).toFixed(1) + '%';
+      if (!animate) { void this.el.goalFill.offsetWidth; this.el.goalFill.style.transition = ''; }
+      this.el.goalText.textContent = progress >= goal ? 'Goal reached!' : `${fmt(progress)} / ${fmt(goal)}`;
+      this.el.goalBar.classList.toggle('done', progress >= goal);
+    }
+    setCharge(charge, animate = true) {
+      const k = Math.max(0, Math.min(1, charge / BR.CFG.chargeNeeded));
+      if (!animate) this.el.chargeFill.style.transition = 'none';
+      this.el.chargeFill.style.width = (k * 100).toFixed(1) + '%';
+      if (!animate) { void this.el.chargeFill.offsetWidth; this.el.chargeFill.style.transition = ''; }
+    }
+    renderBoosters(inv, armed, gained) {
+      for (const id of BR.BOOSTER_ORDER) {
+        const el = this.slotEls[id];
+        el.querySelector('.bcount').textContent = inv[id];
+        el.classList.toggle('empty', inv[id] <= 0);
+        el.classList.toggle('armed', armed === id);
+        if (gained && gained.includes(id)) { el.classList.remove('gain'); void el.offsetWidth; el.classList.add('gain'); }
+      }
+    }
+    aimBanner(text, color) {
+      this.el.aim.textContent = text || '';
+      this.el.aim.style.setProperty('--bc', color || '');
+      this.el.aim.classList.toggle('show', !!text);
+      this.el.wrap.classList.toggle('aiming', !!text);
+      this.el.wrap.style.setProperty('--bc', color || '');
     }
 
     setCombo(streak, mult, popped) {
@@ -101,33 +124,7 @@
       }
     }
 
-    setCore(engine, flash = false) {
-      const slot = this.el.coreSlot;
-      const core = engine.core;
-      if (!core) {
-        slot.className = 'core-slot empty';
-        slot.innerHTML = `<div class="core-ico"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
-          <div class="core-txt"><div class="core-name">No Core equipped</div><div class="core-desc">Fill the crate meter to pull a Core that rewrites the rules.</div></div>`;
-        this.el.gravityTag.classList.remove('show');
-        return;
-      }
-      const r = BR.rarityById[core.rarity];
-      slot.className = 'core-slot';
-      slot.style.setProperty('--rc', r.color);
-      const badge = core.badge ? `<span class="core-badge" id="coreBadge">${core.badge(engine)}</span>` : '';
-      slot.innerHTML = `<div class="core-ico">${BR.icon(core)}</div>
-        <div class="core-txt"><div class="core-name">${core.name}<span class="core-tag">${r.name}</span>${badge}</div><div class="core-desc">${core.desc}</div></div>`;
-      this.el.gravityTag.classList.toggle('show', engine.gravityDir() === 'up');
-      if (flash) { slot.classList.remove('flash'); void slot.offsetWidth; slot.classList.add('flash'); }
-    }
-    refreshCoreBadge(engine) {
-      const b = $('coreBadge');
-      if (b && engine.core && engine.core.badge) b.textContent = engine.core.badge(engine);
-    }
-
     /* ---------- floating text ---------- */
-    _layerPos(el, x, y) { el.style.left = x + 'px'; el.style.top = y + 'px'; }
-
     floatText(text, x, y, { size = 22, color = '#fff', glow = null, rise = 56, dur = 950, delay = 0 } = {}) {
       const el = document.createElement('div');
       el.className = 'float';
@@ -135,15 +132,14 @@
       el.style.fontSize = size + 'px';
       el.style.color = color;
       if (glow) el.style.setProperty('--fc', glow);
-      this._layerPos(el, x, y);
+      el.style.left = x + 'px'; el.style.top = y + 'px';
       this.el.layer.appendChild(el);
-      const reduced = BR.reducedMotion;
       const a = el.animate([
         { transform: 'translate(-50%,-50%) scale(0.4)', opacity: 0 },
         { transform: 'translate(-50%,-62%) scale(1.18)', opacity: 1, offset: 0.16 },
         { transform: 'translate(-50%,-68%) scale(1)', opacity: 1, offset: 0.4 },
         { transform: `translate(-50%,calc(-50% - ${rise}px)) scale(0.96)`, opacity: 0 },
-      ], { duration: reduced ? 600 : dur, delay, easing: 'cubic-bezier(0.2,0.7,0.3,1)', fill: 'both' });
+      ], { duration: BR.reducedMotion ? 600 : dur, delay, easing: 'cubic-bezier(0.2,0.7,0.3,1)', fill: 'both' });
       a.onfinish = () => el.remove();
     }
 
@@ -171,26 +167,36 @@
     }
     hideHint() { clearTimeout(this.hintTimer); this.el.hint.classList.remove('show'); }
 
-    /* ---------- collection ---------- */
-    renderCollection() {
-      const store = BR.Storage.data.collection;
-      const total = BR.CORES.length;
-      const found = BR.CORES.filter((c) => store[c.id]).length;
-      this.el.collProgress.textContent = `${found}/${total} found`;
-      this.el.collCount.textContent = `${found}/${total}`;
-      const order = BR.RARITIES.map((r) => r.id);
-      const sorted = BR.CORES.slice().sort((a, b) => order.indexOf(a.rarity) - order.indexOf(b.rarity));
-      this.el.collGrid.innerHTML = sorted.map((core, i) => {
-        const r = BR.rarityById[core.rarity];
-        const own = store[core.id];
-        return `<div class="ccard ${own ? '' : 'locked'}" style="--rc:${r.color};--i:${i}">
-          ${own ? `<span class="cnt">x${own.count}</span>` : ''}
-          <div class="core-ico">${own ? BR.icon(core) : '<svg viewBox="0 0 24 24"><path d="M9.5 9a2.7 2.7 0 1 1 3.6 2.5c-.8.4-1.1.9-1.1 1.7M12 17h.01"/></svg>'}</div>
-          <h3>${own ? core.name : '???'}</h3>
-          <span class="core-tag">${r.name}</span>
-          <p>${own ? core.desc : 'Pull this Core from a crate to reveal it.'}</p>
-        </div>`;
-      }).join('');
+    /* ---------- XP + profile ---------- */
+    xpBar(fillId, textId, levelId, level, xp, need, animate = true) {
+      const fill = $(fillId);
+      if (!animate) fill.style.transition = 'none';
+      fill.style.width = Math.min(100, (xp / need) * 100).toFixed(1) + '%';
+      if (!animate) { void fill.offsetWidth; fill.style.transition = ''; }
+      $(textId).textContent = `${fmt(xp)} / ${fmt(need)}`;
+      $(levelId).textContent = 'Lv ' + level;
+    }
+
+    /** Render XP rows with a staggered reveal and a tick sound per row. */
+    renderRows(container, rows, audio) {
+      container.innerHTML = rows.map((r, i) => `<div class="rc-row" style="--i:${i}"><span>${r.label}</span><b>+${fmt(r.xp)} XP</b></div>`).join('');
+      if (audio && !BR.reducedMotion) rows.forEach((_, i) => setTimeout(() => audio.xpTick(i), 90 + i * 110));
+    }
+
+    refreshMenu() {
+      const P = BR.Progress;
+      const need = P.need, xp = P.xp;
+      $('menuLevel').textContent = P.level;
+      $('lcTitle').textContent = 'Level ' + P.level;
+      const nextSeries = (P.level + 1) % BR.CFG.geodeSeriesEvery === 0;
+      $('lcSub').textContent = `${fmt(need - xp)} XP to your next ${nextSeries ? 'Series ' : ''}Geode`;
+      $('ringFg').style.strokeDashoffset = (169.65 * (1 - Math.min(1, xp / need))).toFixed(2);
+      const n = P.geodeCount();
+      $('geodeBadge').textContent = n;
+      $('btnGeodes').classList.toggle('has', n > 0);
+      const c = P.counts();
+      $('vaultCount').textContent = `${c.found}/${c.total}`;
+      $('shardCount').textContent = fmt(P.shards);
     }
 
     /* ---------- menu decoration ---------- */
@@ -201,7 +207,7 @@
         const d = document.createElement('div');
         d.className = 'mb brick';
         d.dataset.c = i % 7;
-        d.innerHTML = '<div class="face"><i class="stud"></i></div>';
+        d.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
         const s = 26 + Math.random() * 38;
         d.style.cssText = `left:${Math.random() * 96}%;top:${40 + Math.random() * 55}%;--s:${s}px;font-size:${s}px;--d:${9 + Math.random() * 8}s;--delay:${-Math.random() * 14}s;--r0:${(Math.random() - 0.5) * 50}deg;--r1:${(Math.random() - 0.5) * 140}deg`;
         host.appendChild(d);

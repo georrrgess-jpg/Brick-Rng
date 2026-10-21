@@ -28,7 +28,6 @@
       this.cell = 40;
       this.bricks = new Map();
       this.gen = 0;
-      this.wild = null;
       this.reduced = false;
 
       this.chip = document.createElement('div');
@@ -78,8 +77,7 @@
       const el = document.createElement('div');
       el.className = 'brick';
       el.dataset.c = b.color;
-      el.innerHTML = '<div class="face"><i class="stud"></i></div>';
-      if (this.wild != null && b.color === this.wild) el.classList.add('wild');
+      el.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
       const rec = { b: { id: b.id, color: b.color }, el, face: el.firstChild, r: atR, c };
       this._place(rec);
       this.field.appendChild(el);
@@ -94,11 +92,6 @@
       this.bricks.clear();
       this.setHighlight(null);
       this.hideHint();
-    }
-
-    setWild(color) {
-      this.wild = color;
-      this.bricks.forEach((rec) => rec.el.classList.toggle('wild', color != null && rec.b.color === color));
     }
 
     /** Move a brick with constant-acceleration fall, a tiny rebound and a squash on landing. */
@@ -202,11 +195,11 @@
       mark(plan.primary, 'hl');
       this.field.classList.add('has-hl');
 
-      // preview chip: points + fuel delta, floating above the group
-      const net = plan.net;
-      const fuelCls = net > 0 ? 'plus' : net < 0 ? 'minus' : 'zero';
-      const fuelTxt = net > 0 ? `+${net}` : net < 0 ? `${net}` : '±0';
-      this.chip.innerHTML = `<span>+${plan.points.toLocaleString()}</span><span class="fuel ${fuelCls}">${fuelTxt} fuel</span>`;
+      // preview chip: points, plus combo / Line Blast tags
+      const tags = [];
+      if (plan.line) tags.push('<span class="fuel plus">LINE BLAST</span>');
+      else if (plan.combo > 1) tags.push(`<span class="fuel plus">x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}</span>`);
+      this.chip.innerHTML = `<span>+${plan.points.toLocaleString()}</span>${tags.join('')}`;
       let minR = 99, maxR = -1, sumC = 0;
       plan.primary.forEach((p) => { minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r); sumC += p.c; });
       const top = this.layerPoint(minR, sumC / plan.primary.length);
@@ -217,6 +210,24 @@
       let y = top.y - this.cell * 0.5 - ch / 2 - 6;
       if (y < ch / 2 + 2) y = bot.y + this.cell * 0.5 + ch / 2 + 6;
       this.chip.style.transform = `translate(${x - cw / 2}px, ${y - ch / 2}px)`;
+      this.chip.classList.add('show');
+    }
+
+    /** Highlight an arbitrary cell set (Booster aim preview). */
+    setCellHighlight(cells, label) {
+      if (this._hl) this._hl.forEach((el) => el.classList.remove('hl', 'hlx'));
+      this._hl = [];
+      if (!cells || !cells.length) { this.field.classList.remove('has-hl'); this.chip.classList.remove('show'); return; }
+      const pos = this._posMap();
+      cells.forEach((p) => { const rec = pos.get(p.r * this.cols + p.c); if (rec) { rec.el.classList.add('hl'); this._hl.push(rec.el); } });
+      this.field.classList.add('has-hl');
+      let sr = 0, sc = 0;
+      cells.forEach((p) => { sr += p.r; sc += p.c; });
+      const mid = this.layerPoint(sr / cells.length, sc / cells.length);
+      this.chip.innerHTML = `<span>${label}</span>`;
+      const cw = this.chip.offsetWidth || 90, ch = this.chip.offsetHeight || 28, ww = this.wrap.clientWidth;
+      const x = Math.max(cw / 2 + 4, Math.min(ww - cw / 2 - 4, mid.x));
+      this.chip.style.transform = `translate(${x - cw / 2}px, ${Math.max(2, mid.y - ch - this.cell * 0.9)}px)`;
       this.chip.classList.add('show');
     }
 
@@ -257,6 +268,7 @@
       const total = res.removed.length;
 
       // 1) pop wave, rippling out from the tapped brick
+      const originPt = this.pagePoint(tap.r, tap.c);
       let maxDelay = 0;
       const perBrick = total > 28 ? 3 : total > 14 ? 5 : total > 6 ? 7 : 9;
       for (const p of res.removed) {
@@ -266,7 +278,7 @@
         const dist = Math.abs(p.r - tap.r) + Math.abs(p.c - tap.c);
         const delay = this.reduced ? 0 : Math.min(dist * 17, 150);
         maxDelay = Math.max(maxDelay, delay);
-        this._pop(rec, delay, p, perBrick);
+        this._pop(rec, delay, p, perBrick, originPt);
       }
       await sleep(this.reduced ? 100 : maxDelay + 90);
       if (!alive()) return false;
@@ -296,7 +308,7 @@
       return true;
     }
 
-    _pop(rec, delay, p, shardCount) {
+    _pop(rec, delay, p, shardCount, origin) {
       const pal = BR.PALETTE[p.color];
       const sgn = Math.random() < 0.5 ? -1 : 1;
       if (rec.face.animate) {
@@ -311,9 +323,9 @@
       }
       setTimeout(() => {
         const pt = this.pagePoint(p.r, p.c);
-        const color = rec.el.classList.contains('wild') ? BR.PALETTE[(Math.random() * 5) | 0].glow : pal.glow;
-        this.fx.shards(pt.x, pt.y, color, shardCount, 0.9);
-        this.fx.sparks(pt.x, pt.y, pal.hi, Math.ceil(shardCount / 3), 0.8, 0.5);
+        const sk = BR.Skins;
+        this.fx.pop(sk.burst, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.burstFinish);
+        if (sk.burst === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);
       }, delay + 70);
     }
 
@@ -335,8 +347,7 @@
         setTimeout(() => {
           rec.b.color = it.color;
           rec.el.dataset.c = it.color;
-          rec.el.classList.toggle('wild', this.wild != null && it.color === this.wild);
-        }, delay + dur / 2);
+          }, delay + dur / 2);
       });
       return sleep(maxEnd + 30);
     }

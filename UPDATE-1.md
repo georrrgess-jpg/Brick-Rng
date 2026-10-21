@@ -222,3 +222,19 @@ three are data, which is what makes the Vault expandable without engine work.
 - No keys, no purchases. Geodes come only from XP levels and Shards.
 - Cores are retired; three of them live on as Boosters.
 - Facet, Burst and Arena rarities share one 60/25/10/4/1 table so the odds screen stays one line.
+
+---
+
+## 13. Implementation status (built)
+
+All seven build steps are implemented. Where the build differs from the schematic:
+
+- **Prism Booster** clears every brick of the tapped color (simpler to read than a one-tap wildcard).
+- **Move bonus** shatters a random patch of bricks (up to 36) and scores 100 per leftover move, played as one
+  animation rather than one auto-pop per move.
+- **Series Geodes** are opened before normal Geodes. Fusion results go straight into the Vault.
+- **Shape hints** now default to off; they remain a setting for colour-blind play.
+- **New players** start with one welcome Geode so the opening is discoverable immediately.
+- **Trackers** show on the Vault card, the results screen and in the Vault (not on individual studs).
+- Item files: `config.js`, `boosters.js`, `items.js`, `progress.js`, `skins.js`, `geode.js`, `vault.js`
+  (the plan's `cores.js` and `crate.js` are gone).
