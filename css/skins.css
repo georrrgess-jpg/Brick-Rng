@@ -10,20 +10,12 @@
 
 /* ---------- Finishes (Facet sheen) ---------- */
 [data-shine="glossy"] .sheen { opacity: 0.8; background: linear-gradient(115deg, transparent 26%, rgba(255, 255, 255, 0.6) 43%, transparent 58%); }
-[data-shine="holo"] .sheen {
-  opacity: 0.6; mix-blend-mode: overlay;
-  background: linear-gradient(115deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #ff6bd6); background-size: 300% 300%;
-  animation: holoShift 4.5s linear infinite;
-}
-[data-shine="prism"] .sheen {
-  opacity: 0.85; mix-blend-mode: overlay;
-  background:
-    radial-gradient(circle at 22% 28%, #fff 0 1px, transparent 2.2px), radial-gradient(circle at 72% 62%, #fff 0 1px, transparent 2.2px), radial-gradient(circle at 48% 82%, #fff 0 1px, transparent 2.2px),
-    conic-gradient(from 0deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #6bffb2, #ff6bd6);
-  animation: prismSpin 5s linear infinite;
-}
+[data-shine="holo"] .sheen { opacity: 0.6; mix-blend-mode: overlay; overflow: hidden; }
+[data-shine="holo"] .sheen::before { content: ''; position: absolute; inset: -60%; background: linear-gradient(115deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #ff6bd6, #6bf0ff); animation: holoSlide 4.5s ease-in-out infinite alternate; }
+[data-shine="prism"] .sheen { opacity: 0.85; mix-blend-mode: overlay; overflow: hidden; background: radial-gradient(circle at 22% 28%, #fff 0 1px, transparent 2.2px), radial-gradient(circle at 72% 62%, #fff 0 1px, transparent 2.2px), radial-gradient(circle at 48% 82%, #fff 0 1px, transparent 2.2px); }
+[data-shine="prism"] .sheen::before { content: ''; position: absolute; inset: -50%; background: conic-gradient(from 0deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #6bffb2, #ff6bd6); animation: spinR 5s linear infinite; }
 @keyframes holoShift { to { background-position: 300% 300%; } }
-@keyframes prismSpin { to { filter: hue-rotate(360deg); } }
+@keyframes holoSlide { from { transform: translate3d(-22%, -22%, 0); } to { transform: translate3d(22%, 22%, 0); } }
 
 /* ---------- Facets ---------- */
 /* Candy */
@@ -43,39 +35,43 @@
 .skin-neon .stud { background: transparent; border: 0.045em solid var(--hi); box-shadow: 0 0 0.12em var(--glow), inset 0 0 0.1em var(--glow); }
 /* Magma */
 .skin-lava .face { background: radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.14), transparent 40%), linear-gradient(160deg, #2a1418, #0e0709); box-shadow: inset 0 0 0.3em color-mix(in srgb, var(--glow) 65%, transparent), 0 0.05em 0 #000, 0 0 0.2em color-mix(in srgb, var(--glow) 50%, transparent); }
-.skin-lava .deco { opacity: 0.9; background: linear-gradient(118deg, transparent 46%, var(--glow) 49.5%, transparent 53%), linear-gradient(28deg, transparent 66%, var(--hi) 68.5%, transparent 71%); filter: drop-shadow(0 0 0.04em var(--glow)); animation: lavaBreath 2.6s ease-in-out infinite; }
+.skin-lava .deco { opacity: 0.9; background: linear-gradient(118deg, transparent 46%, var(--glow) 49.5%, transparent 53%), linear-gradient(28deg, transparent 66%, var(--hi) 68.5%, transparent 71%); animation: lavaBreath 2.6s ease-in-out infinite; }
 .skin-lava .stud { background: radial-gradient(circle at 40% 35%, var(--hi), var(--glow) 55%, transparent 75%); box-shadow: 0 0 0.16em var(--glow); }
-@keyframes lavaBreath { 50% { opacity: 0.45; filter: drop-shadow(0 0 0.08em var(--glow)) brightness(1.4); } }
+@keyframes lavaBreath { 50% { opacity: 0.4; } }
 /* Circuit */
 .skin-circuit .face { border-radius: 16%; background: linear-gradient(160deg, #0d2020, #08121a); border: 0.025em solid color-mix(in srgb, var(--glow) 70%, #000); box-shadow: inset 0 0 0.16em color-mix(in srgb, var(--glow) 40%, transparent), 0 0.05em 0 #02080a, 0 0.1em 0.12em rgba(0, 0, 0, 0.45); }
 .skin-circuit .deco { opacity: 0.8; background: repeating-linear-gradient(0deg, transparent 0 0.15em, color-mix(in srgb, var(--glow) 45%, transparent) 0.15em 0.165em), repeating-linear-gradient(90deg, transparent 0 0.21em, color-mix(in srgb, var(--glow) 30%, transparent) 0.21em 0.225em); -webkit-mask-image: radial-gradient(circle, transparent 28%, #000 60%); mask-image: radial-gradient(circle, transparent 28%, #000 60%); animation: circuitPulse 3s ease-in-out infinite; }
 .skin-circuit .stud { border-radius: 18%; background: linear-gradient(160deg, color-mix(in srgb, var(--hi) 70%, #000), color-mix(in srgb, var(--lo) 80%, #000)); box-shadow: 0 0 0.14em var(--glow), inset 0 0 0 0.03em var(--hi); }
 @keyframes circuitPulse { 50% { opacity: 0.35; } }
 /* Aurora (Celestial) */
-.skin-aurora .face { background: linear-gradient(var(--ang, 160deg), var(--hi), color-mix(in srgb, var(--glow) 50%, #7affd9), var(--lo), color-mix(in srgb, var(--hi) 60%, #ff7ad9), var(--hi)); background-size: 320% 320%; animation: auroraDrift 7s ease-in-out infinite; box-shadow: inset 0 0.03em 0 rgba(255, 255, 255, 0.6), inset 0 -0.07em 0 rgba(0, 0, 0, 0.18), 0 0.055em 0 color-mix(in srgb, var(--lo) 55%, #000), 0 0 0.26em color-mix(in srgb, var(--glow) 55%, transparent); }
-.skin-aurora .deco { opacity: 1; background: radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.9) 0 1.2px, transparent 2.4px), radial-gradient(circle at 78% 70%, rgba(255, 255, 255, 0.8) 0 1px, transparent 2.2px), radial-gradient(circle at 60% 20%, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px); animation: twinkle 2.4s ease-in-out infinite; }
+.skin-aurora .face { background: linear-gradient(var(--ang, 160deg), var(--hi), color-mix(in srgb, var(--lo) 70%, #7affd9)); box-shadow: inset 0 0.03em 0 rgba(255, 255, 255, 0.6), inset 0 -0.07em 0 rgba(0, 0, 0, 0.18), 0 0.055em 0 color-mix(in srgb, var(--lo) 55%, #000), 0 0.12em 0.14em rgba(0, 0, 0, 0.4), 0 0 0.3em rgba(150, 255, 220, 0.3); }
+.skin-aurora .deco { opacity: 1; overflow: hidden; background: radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.9) 0 1.2px, transparent 2.4px), radial-gradient(circle at 78% 70%, rgba(255, 255, 255, 0.8) 0 1px, transparent 2.2px), radial-gradient(circle at 60% 20%, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px); }
+.skin-aurora .deco::before { content: ''; position: absolute; inset: -45%; background: conic-gradient(from 0deg, rgba(122, 255, 217, 0.7), rgba(176, 122, 255, 0.6), rgba(255, 122, 217, 0.6), rgba(122, 255, 217, 0.7)); animation: spinR 9s linear infinite; mix-blend-mode: soft-light; opacity: 0.8; }
 .skin-aurora .stud { background: radial-gradient(circle at 34% 28%, #fff, rgba(255, 255, 255, 0.35) 55%, transparent 72%); box-shadow: 0 0 0.18em rgba(255, 255, 255, 0.8); }
-@keyframes auroraDrift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
 @keyframes twinkle { 50% { opacity: 0.25; } }
 
 /* Supernova (Mythic): a dark star-core that pulses; the stud is a star */
-.skin-nova .face { background: radial-gradient(circle at 50% 46%, #fff 0 5%, var(--hi) 16%, color-mix(in srgb, var(--glow) 55%, #14082a) 52%, #0a0518 100%); border: 0.03em solid color-mix(in srgb, var(--hi) 75%, #fff); box-shadow: 0 0 0.3em var(--glow), 0 0 0.9em color-mix(in srgb, var(--glow) 45%, transparent), inset 0 0 0.28em color-mix(in srgb, var(--hi) 70%, transparent); animation: novaPulse 2.4s ease-in-out infinite alternate; }
-.skin-nova .stud { width: 52%; height: 52%; border-radius: 0; background: #fff; clip-path: polygon(50% 0, 61% 36%, 100% 50%, 61% 64%, 50% 100%, 39% 64%, 0 50%, 39% 36%); box-shadow: none; filter: drop-shadow(0 0 0.1em #fff) drop-shadow(0 0 0.2em var(--glow)); animation: novaSpin 7s linear infinite; }
-.skin-nova .deco { opacity: 1; background: radial-gradient(circle at 18% 22%, #fff 0 0.8px, transparent 1.8px), radial-gradient(circle at 82% 74%, #fff 0 0.8px, transparent 1.8px), radial-gradient(circle at 76% 20%, rgba(255, 255, 255, 0.9) 0 0.6px, transparent 1.4px); animation: twinkle 2.2s ease-in-out infinite; }
-.field .skin-nova.brick:nth-child(3n) .face, .skin-nova .brick:nth-child(3n) .face { animation-delay: -0.8s; } .skin-nova .brick:nth-child(5n) .face { animation-delay: -1.5s; } .skin-nova .brick:nth-child(7n) .face { animation-delay: -2.1s; }
-@keyframes novaPulse { to { box-shadow: 0 0 0.5em var(--glow), 0 0 1.3em color-mix(in srgb, var(--glow) 60%, transparent), inset 0 0 0.4em color-mix(in srgb, var(--hi) 85%, transparent); filter: brightness(1.18); } }
-@keyframes novaSpin { to { transform: translate(-50%, -50%) rotate(90deg) scale(1.1); } }
+.skin-nova .face { background: radial-gradient(circle at 50% 46%, #fff 0 5%, var(--hi) 16%, color-mix(in srgb, var(--glow) 55%, #14082a) 52%, #0a0518 100%); border: 0.03em solid color-mix(in srgb, var(--hi) 75%, #fff); box-shadow: 0 0 0.3em var(--glow), 0 0 0.9em color-mix(in srgb, var(--glow) 45%, transparent), inset 0 0 0.28em color-mix(in srgb, var(--hi) 70%, transparent); }
+.skin-nova .stud { width: 52%; height: 52%; border-radius: 0; background: #fff; clip-path: polygon(50% 0, 61% 36%, 100% 50%, 61% 64%, 50% 100%, 39% 64%, 0 50%, 39% 36%); box-shadow: none; filter: drop-shadow(0 0 0.1em #fff) drop-shadow(0 0 0.2em var(--glow)); }
+.skin-nova .deco { opacity: 1; background: radial-gradient(circle at 18% 22%, #fff 0 0.8px, transparent 1.8px), radial-gradient(circle at 82% 74%, #fff 0 0.8px, transparent 1.8px), radial-gradient(circle at 76% 20%, rgba(255, 255, 255, 0.9) 0 0.6px, transparent 1.4px); }
+.skin-nova .deco::before { content: ''; position: absolute; inset: -25%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--glow) 80%, #fff), transparent 66%); opacity: 0.2; animation: novaGlow 2.4s ease-in-out infinite alternate; }
+
+.skin-nova .brick:nth-child(3n) .deco::before { animation-delay: -0.8s; } .skin-nova .brick:nth-child(5n) .deco::before { animation-delay: -1.5s; } .skin-nova .brick:nth-child(7n) .deco::before { animation-delay: -2.1s; }
+@keyframes novaGlow { to { opacity: 0.75; } }
 /* Chrome (Rush Pass tier 25): mirror metal with a shine that sweeps across */
 .skin-chrome .face { background: linear-gradient(var(--ang, 160deg), #fff 0, color-mix(in srgb, var(--hi) 72%, #eef2fb) 16%, color-mix(in srgb, var(--lo) 78%, #4d5672) 46%, #fff 54%, color-mix(in srgb, var(--hi) 70%, #d6def0) 72%, color-mix(in srgb, var(--lo) 82%, #323a54) 100%); box-shadow: inset 0 0.03em 0 #fff, inset 0 -0.07em 0 rgba(0, 0, 0, 0.3), 0 0.055em 0 #2a3148, 0 0.12em 0.14em rgba(0, 0, 0, 0.45); overflow: hidden; }
 .skin-chrome .stud { background: radial-gradient(circle at 34% 28%, #fff 0 12%, color-mix(in srgb, var(--hi) 45%, #d3dbef) 40%, color-mix(in srgb, var(--lo) 55%, #3b4360) 100%); box-shadow: inset 0 -0.03em 0 rgba(0, 0, 0, 0.35), 0 0.03em 0.06em rgba(0, 0, 0, 0.55); }
-.skin-chrome .deco { opacity: 1; background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.85) 50%, transparent 62%); background-size: 260% 100%; background-position: 140% 0; animation: chromeSweep 3.6s ease-in-out infinite; }
-.skin-chrome .brick:nth-child(3n) .deco { animation-delay: -1.2s; } .skin-chrome .brick:nth-child(4n) .deco { animation-delay: -2.4s; } .skin-chrome .brick:nth-child(7n) .deco { animation-delay: -0.5s; }
-@keyframes chromeSweep { 0% { background-position: 140% 0; } 45%, 100% { background-position: -40% 0; } }
+.skin-chrome .deco { opacity: 1; overflow: hidden; }
+.skin-chrome .deco::before { content: ''; position: absolute; top: 0; bottom: 0; left: -70%; width: 60%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent); transform: skewX(-20deg); animation: chromeSweep 3.6s ease-in-out infinite; }
+.skin-chrome .brick:nth-child(3n) .deco::before { animation-delay: -1.2s; } .skin-chrome .brick:nth-child(4n) .deco::before { animation-delay: -2.4s; } .skin-chrome .brick:nth-child(7n) .deco::before { animation-delay: -0.5s; }
+@keyframes chromeSweep { 0% { transform: translateX(0) skewX(-20deg); } 45%, 100% { transform: translateX(380%) skewX(-20deg); } }
 /* Prism Heart (Rush Pass tier 30): see-through crystal with a rainbow rim */
 .skin-heart .face { background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0, transparent 28%), conic-gradient(from var(--ang, 160deg) at 50% 56%, rgba(255, 255, 255, 0.6), transparent 12%, rgba(255, 255, 255, 0.28) 30%, transparent 44%, rgba(255, 255, 255, 0.5) 62%, transparent 76%, rgba(255, 255, 255, 0.4) 90%, rgba(255, 255, 255, 0.6)), linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 88%, #fff), var(--lo)); border: 0.03em solid rgba(255, 255, 255, 0.85); box-shadow: 0 0 0.3em color-mix(in srgb, var(--glow) 65%, transparent), inset 0 0 0.28em rgba(255, 255, 255, 0.45), 0 0.05em 0 color-mix(in srgb, var(--lo) 60%, #000); }
-.skin-heart .deco { opacity: 0.55; mix-blend-mode: screen; background: linear-gradient(60deg, transparent 34%, rgba(255, 107, 214, 0.55) 40%, rgba(107, 240, 255, 0.55) 50%, rgba(255, 243, 107, 0.5) 60%, transparent 66%), linear-gradient(120deg, rgba(255, 255, 255, 0.5), transparent 28%); background-size: 240% 240%, 100% 100%; animation: heartShift 5s ease-in-out infinite alternate; }
+.skin-heart .deco { opacity: 0.6; overflow: hidden; background: linear-gradient(120deg, rgba(255, 255, 255, 0.5), transparent 28%); }
+.skin-heart .deco::before { content: ''; position: absolute; inset: -50%; mix-blend-mode: screen; background: linear-gradient(60deg, transparent 34%, rgba(255, 107, 214, 0.34) 40%, rgba(107, 240, 255, 0.34) 50%, rgba(255, 243, 107, 0.3) 60%, transparent 66%); animation: heartSlide 5s ease-in-out infinite alternate; }
 .skin-heart .stud { width: 44%; height: 44%; border-radius: 0; background: linear-gradient(135deg, #fff, color-mix(in srgb, var(--hi) 55%, #fff) 45%, var(--lo)); clip-path: polygon(50% 100%, 6% 44%, 6% 22%, 24% 4%, 50% 18%, 76% 4%, 94% 22%, 94% 44%); box-shadow: none; filter: drop-shadow(0 0 0.1em rgba(255, 255, 255, 0.9)); top: 50%; }
-@keyframes heartShift { from { background-position: 0% 0%, 0 0; } to { background-position: 100% 100%, 0 0; } }
+@keyframes heartSlide { from { transform: translate3d(-20%, -20%, 0); } to { transform: translate3d(20%, 20%, 0); } }
 .skin-chrome .brick, .skin-heart .brick, .skin-nova .brick { contain: layout; }
 
 /* ---------- Boards ---------- */
@@ -246,3 +242,7 @@
 .run.tint-plasma.rushing .rush-glow { box-shadow: 0 0 0 3px rgba(190, 130, 255, 0.95), 0 0 56px 10px rgba(150, 80, 255, 0.8), inset 0 0 60px rgba(150, 80, 255, 0.45); animation: none; }
 .run.tint-plasma.rushing .field { filter: saturate(1.15) brightness(1.04); }
 .run.tint-plasma.rushing .board::before { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(120, 60, 255, 0.28)); mix-blend-mode: screen; }
+
+/* low-end phones and reduced motion: freeze every per-brick animation */
+html.low-end .deco::before, html.low-end .sheen::before, html.low-end .deco, html.low-end .scene-fx, html.low-end .board::after { animation: none !important; }
+html.low-end .blob { animation: none; }
