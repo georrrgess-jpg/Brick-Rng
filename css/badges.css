@@ -1,0 +1,59 @@
+/* ===================================================================
+   Item badges: a bright rarity-framed icon per item (see js/badges.js).
+   Size is one variable: --bs. Everything inside is in em, so a badge scales from a 56px chip to a 200px hero.
+   =================================================================== */
+.bdg { --bs: 72px; --k: 0.6; position: relative; flex: none; width: var(--bs); height: var(--bs); font-size: calc(var(--bs) / 8); border-radius: 1.5em; overflow: hidden; isolation: isolate; box-shadow: 0 0.35em 0.9em rgba(0, 0, 0, 0.45), 0 0 1.2em color-mix(in srgb, var(--rc) 40%, transparent); contain: layout paint; transform: translateZ(0); }
+.bdg-bg { position: absolute; inset: 0; z-index: 0; border-radius: inherit; background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--rc) 45%, #fff) 0, var(--rc) 42%, color-mix(in srgb, var(--rc) 55%, #0c0620) 100%); }
+.bdg-art { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; animation: bdgFloat 3.6s ease-in-out infinite; }
+.bdg-edge { position: absolute; inset: 0; z-index: 5; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 0.2em color-mix(in srgb, var(--rc) 55%, #000), inset 0 0.18em 0.1em 0.2em rgba(255, 255, 255, 0.38); }
+@keyframes bdgFloat { 50% { transform: translateY(-0.28em); } }
+
+/* rarity: the higher it is, the more the frame has going on */
+.bdg.r1 .bdg-bg { background: radial-gradient(circle at 50% 28%, #e6efff 0, #9fb4e6 44%, #4a5a8c 100%); }
+.bdg.r2 .bdg-bg { background: radial-gradient(circle at 50% 28%, #bfe0ff 0, #3d9bff 44%, #1a3f9e 100%); }
+.bdg.r3 .bdg-bg { background: radial-gradient(circle at 50% 28%, #e6c8ff 0, #a85cff 44%, #4a1f9e 100%); }
+.bdg.r4 .bdg-bg, .bdg.r5 .bdg-bg { inset: 0.24em; border-radius: 1.28em; }
+.bdg.r4 .bdg-bg { background: radial-gradient(circle at 50% 28%, #fff1b0 0, #ffb21e 44%, #a8520a 100%); }
+.bdg.r5 .bdg-bg { background: radial-gradient(circle at 50% 28%, #ffd0dc 0, #ff3d6a 44%, #7a0f3a 100%); }
+.bdg.r4::before, .bdg.r5::before { content: ''; position: absolute; inset: -50%; z-index: -1; animation: spinR 8s linear infinite; }
+.bdg.r4::before { background: conic-gradient(from 0deg, #fff1b0, #ff9a1e, #fff7d0, #e08a0a, #fff1b0); }
+.bdg.r5::before { background: conic-gradient(from 0deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #6bffb2, #ff6bd6); }
+.bdg.r4 .bdg-edge, .bdg.r5 .bdg-edge { box-shadow: inset 0 0 0 0.12em rgba(255, 255, 255, 0.6); }
+.bdg.r4 { box-shadow: 0 0.35em 0.9em rgba(0, 0, 0, 0.45), 0 0 1.6em rgba(255, 176, 46, 0.7); }
+.bdg.r5 { box-shadow: 0 0.35em 0.9em rgba(0, 0, 0, 0.45), 0 0 1.8em rgba(255, 61, 106, 0.75), 0 0 3em rgba(165, 107, 255, 0.4); }
+.bdg-rays { position: absolute; inset: -40%; z-index: 1; background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.42) 0 5deg, transparent 5deg 18deg); animation: spinR 20s linear infinite; opacity: 0.55; }
+.bdg-gleam { position: absolute; z-index: 4; top: 0; bottom: 0; left: 0; width: 42%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent); animation: bdgGleam 3.8s ease-in-out infinite; pointer-events: none; }
+@keyframes bdgGleam { 0%, 50% { transform: translateX(-140%) skewX(-18deg); } 100% { transform: translateX(300%) skewX(-18deg); } }
+.bdg-twinkle { position: absolute; z-index: 4; width: 1.1em; height: 1.1em; background: #fff; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); animation: twinkleS 2.2s ease-in-out infinite; }
+.bdg-twinkle.t1 { left: 14%; top: 16%; } .bdg-twinkle.t2 { right: 16%; top: 30%; animation-delay: -0.8s; width: 0.8em; height: 0.8em; } .bdg-twinkle.t3 { left: 26%; bottom: 14%; animation-delay: -1.4s; width: 0.7em; height: 0.7em; }
+@keyframes twinkleS { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+.bdg.still *, .bdg.still::before { animation: none !important; }
+.bdg.still .bdg-gleam { transform: translateX(150%) skewX(-18deg); opacity: 0.5; }
+
+/* ---- skins: a hero brick in front of two others ---- */
+.bdg-bricks { position: relative; width: 6em; height: 5.2em; margin-top: 0.3em; }
+.bk { position: absolute; filter: drop-shadow(0 0.22em 0.2em rgba(0, 0, 0, 0.5)); }
+.bk .brick { position: relative; left: auto; top: auto; width: 1em; height: 1em; transform: none; will-change: auto; }
+.bk.b1 { left: 0; top: 0.5em; font-size: 2.7em; transform: rotate(-10deg); }
+.bk.b2 { right: 0; top: 0.1em; font-size: 2.7em; transform: rotate(9deg); }
+.bk.b3 { left: 50%; bottom: 0; font-size: 3.5em; transform: translateX(-50%) rotate(-3deg); }
+/* ---- pops: the particles around a bright core ---- */
+.pa { width: 7.6em; height: 7.6em; overflow: visible; filter: drop-shadow(0 0 0.4em rgba(255, 255, 255, 0.55)); }
+.pa-r1 { animation: spinR 16s linear infinite; } .pa-r2 { animation: spinR 11s linear infinite reverse; } .pa-core { animation: paPulse 1.7s ease-in-out infinite; }
+@keyframes paPulse { 50% { transform: scale(1.22); } }
+/* ---- boards: the scene with a framed board in it ---- */
+.bdg-scene { position: absolute; inset: 0.55em; border-radius: 1.1em; overflow: hidden; background: var(--a-bg); border: 0.15em solid var(--a-frame); display: grid; place-items: center; box-shadow: 0 0 1em var(--a-glow); }
+.bdg-bgrid { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, 1fr); font-size: calc(var(--bs) * 0.17); padding: 0.18em; border-radius: 0.32em; background: var(--a-board); border: 0.07em solid var(--a-frame); box-shadow: 0 0 0.8em var(--a-glow); }
+.bdg-bgrid .brick { position: relative; left: auto; top: auto; width: 1em; height: 1em; transform: none; will-change: auto; }
+.bdg-scene .scene-fx { display: block; height: 900px; }
+/* ---- fuses: the lit bomb and fuse on a glow ---- */
+.bdg-fuse { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+.fz-glow { position: absolute; width: 8em; height: 8em; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--g) 85%, #fff 10%), transparent 66%); animation: paPulse 1.8s ease-in-out infinite; }
+.bdg-fuse .mini-fuse { position: relative; transform: scale(var(--k)); transform-origin: center; }
+/* ---- locked ---- */
+.bdg.locked .bdg-art { filter: brightness(0) opacity(0.4); animation: none; }
+.bdg.locked .bdg-bg { filter: saturate(0.35) brightness(0.55); }
+.bdg.locked::before, .bdg.locked .bdg-gleam { display: none; }
+.bdg-q { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; font: 700 3.4em var(--f-display); color: rgba(255, 255, 255, 0.55); text-shadow: 0 0.06em 0 rgba(0, 0, 0, 0.5); }
+/* reduced motion and low-end phones: badges hold still */
+html.reduced .bdg *, html.reduced .bdg::before, html.low-end .bdg *, html.low-end .bdg::before { animation: none !important; }

@@ -1,30 +1,34 @@
-/* Persistence (schema v3): settings, scores, profile (level, XP, Coins, chests, items, missions).
+/* Persistence (schema v4): settings, scores, profile (level, XP, Coins, chests, items, missions).
    Migrates Update 1 (Shardfall v2) saves. Every localStorage access is guarded. */
 (function () {
   const G = typeof window !== 'undefined' ? window : globalThis;
   const BR = (G.BR = G.BR || {});
-  const KEY = 'poprush.v3';
+  const KEY = 'poprush.v4';
+  const V3_KEY = 'poprush.v3';
   const RUN_KEY = 'poprush.run';
   const V2_KEY = 'shardfall.v2';
 
   const prefersReduced = (() => { try { return G.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
 
   const defaults = () => ({
-    v: 3,
+    v: 4,
     best: { rush: 0, daily: 0, chill: 0 },
     bestStage: { rush: 0, daily: 0, chill: 0 },
     runs: 0,
     seenTutorial: false,
     lastDay: '',
     installNudged: false,
-    settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, reduced: prefersReduced, perf: 'auto' },
+    settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, reduced: prefersReduced, perf: 'auto', musicVol: 0.7, sfxVol: 1 },
+    seen: {},                       // coach cards and one-time hints already shown
+    recent: { rush: [], daily: [], chill: [] }, // last scores per mode (for the score to beat)
     daily: { day: '', score: 0, stage: 0 },
     profile: {
       level: 1, xp: 0, coins: BR.CFG ? BR.CFG.startCoins : 200,
       chests: { brick: 1, pop: 0, board: 0, fuse: 0, golden: 0 }, // one welcome chest so the opening is easy to find
-      vault: [], // { uid, itemId, shine, seed, counter }
+      vault: [], // { uid, itemId, shine, seed }  (one entry per item: chests never give duplicates)
+      pity: { skin: 0, pop: 0, board: 0, fuse: 0 }, // chests opened since the last Epic or better, per type
       loadout: { skin: 'default', pop: 'default', board: 'default', fuse: 'default' },
-      seq: 0, opened: 0, passTier: 0,
+      seq: 0, opened: 0, passTier: 0, passClaimed: 0,
       missions: { day: '', list: [], rerolls: 0, week: '', weekly: null },
       trophies: {},
       stats: { runs: 0, bricks: 0, rushes: 0, bigPops: 0, powerups: 0, lineBlasts: 0, stages: 0, coinsEarned: 0, chests: 0, dailyRuns: 0, bestCombo: 0, maxGroup: 0, defused: 0 },
@@ -44,7 +48,6 @@
   }
 
   const SHINE_MAP = { matte: 'plain', gloss: 'glossy', holo: 'holo', prism: 'prism' };
-  const COUNTER_MAP = { 'Bricks popped': 'Bricks popped', 'Biggest group': 'Biggest pop', 'Rounds cleared': 'Stages reached' };
   const TYPE_MAP = { facet: 'skin', burst: 'pop', arena: 'board' };
 
   /** Update 1 -> Update 2: Shards become Coins, unopened Geodes become Coins, items keep their ids. */
@@ -64,20 +67,47 @@
     pr.chests = { brick: 0, pop: 0, board: 0, fuse: 0, golden: 0 };
     pr.vault = (op.vault || []).filter((i) => BR.itemById[i.itemId]).map((i) => ({
       uid: i.uid, itemId: i.itemId, shine: SHINE_MAP[i.finish] || 'plain', seed: i.seed || 0,
-      counter: i.tracker ? { stat: COUNTER_MAP[i.tracker.stat] || i.tracker.stat, value: i.tracker.value || 0 } : null,
     }));
     pr.seq = op.seq || 0;
     pr.opened = op.opened || 0;
     const lo = op.loadout || {};
     for (const k of Object.keys(lo)) { const t = TYPE_MAP[k]; if (t) pr.loadout[t] = lo[k] === 'default' || pr.vault.some((i) => i.uid === lo[k]) ? lo[k] : 'default'; }
     pr.passTier = Math.max(0, pr.level - 1); // tiers below the current level count as claimed
-    return d;
+    return normalize(d, 0).data;
+  }
+
+  /**
+   * Update 3: a chest never gives the same item twice. Collapse any duplicates in an older save into one copy each
+   * (the equipped copy wins) and refund their old sell value so nobody loses Coins. Returns { data, refund }.
+   */
+  function normalize(d, extraRefund) {
+    const pr = d.profile;
+    const equipped = new Set(Object.values(pr.loadout || {}));
+    const seen = new Map(); let refund = extraRefund || 0;
+    const vault = [];
+    const sorted = (pr.vault || []).slice().sort((a, b) => (equipped.has(b.uid) ? 1 : 0) - (equipped.has(a.uid) ? 1 : 0));
+    for (const inst of sorted) {
+      const item = BR.itemById && BR.itemById[inst.itemId];
+      if (!item) continue;
+      if (seen.has(inst.itemId)) { refund += BR.rarityById[item.rarity].refund; const keep = seen.get(inst.itemId); for (const k of Object.keys(pr.loadout || {})) if (pr.loadout[k] === inst.uid) pr.loadout[k] = keep.uid; continue; }
+      const clean = { uid: inst.uid, itemId: inst.itemId, shine: inst.shine || 'plain', seed: inst.seed || 0 };
+      seen.set(inst.itemId, clean); vault.push(clean);
+    }
+    pr.vault = vault;
+    pr.coins = (pr.coins || 0) + refund;
+    pr.pity = Object.assign({ skin: 0, pop: 0, board: 0, fuse: 0 }, pr.pity || {});
+    if (BR.xpForLevel) pr.xp = Math.min(pr.xp || 0, BR.xpForLevel(pr.level || 1) - 1);
+    if (refund > 0) d.notice = { kind: 'dupes', coins: refund };
+    d.v = 4;
+    return { data: d, refund };
   }
 
   function load() {
     const d = defaults();
     const cur = read(KEY);
     if (cur) return deepMerge(d, cur);
+    const v3 = read(V3_KEY);
+    if (v3 && BR.itemById) return normalize(deepMerge(d, v3), 0).data;
     const v2 = read(V2_KEY);
     if (v2 && BR.itemById) return migrateV2(v2);
     return d;
@@ -97,5 +127,6 @@
     clearRun() { try { G.localStorage && G.localStorage.removeItem(RUN_KEY); } catch (e) { /* ignore */ } },
     _defaults: defaults,
     _migrateV2: migrateV2,
+    _normalize: normalize,
   };
 })();

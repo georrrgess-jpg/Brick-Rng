@@ -6,16 +6,16 @@
   const M = () => BR.Storage.data.profile.missions;
 
   const T = {
-    bricks: { type: 'sum', text: (n) => `Pop ${n} bricks`, targets: [150, 250, 400], reward: [60, 80, 100], get: (s) => s.bricks },
-    color: { type: 'sum', text: (n, m) => `Pop ${n} ${BR.COLOR_NAMES[m.color]} bricks`, targets: [30, 45, 60], reward: [70, 85, 100], get: (s, m) => s.colors[m.color] || 0 },
-    stage: { type: 'max', text: (n) => `Reach stage ${n}`, targets: [4, 5, 6], reward: [80, 100, 130], get: (s, m, mode) => (mode === 'chill' ? 0 : s.stage) },
-    rushRun: { type: 'max', text: (n) => `Trigger Rush Mode ${n} times in one run`, targets: [2, 3, 4], reward: [100, 120, 150], get: (s) => s.rushes },
-    big: { type: 'max', text: (n) => `Pop a group of ${n} or more`, targets: [8, 10, 12], reward: [70, 90, 120], get: (s) => s.biggest },
-    power: { type: 'sum', text: (n) => `Use ${n} power-ups`, targets: [3, 5, 8], reward: [70, 90, 120], get: (s) => s.powerUsed },
-    lines: { type: 'sum', text: (n) => `Make ${n} Line Blast${n > 1 ? 's' : ''}`, targets: [1, 2, 3], reward: [90, 110, 140], get: (s) => s.lineBlasts },
-    defuse: { type: 'sum', text: (n) => `Defuse ${n} Fuse bricks`, targets: [2, 3, 5], reward: [80, 100, 130], get: (s) => s.defused || 0, minBest: 4 },
-    runs: { type: 'sum', text: (n) => `Play ${n} runs`, targets: [2, 3, 4], reward: [50, 60, 80], get: () => 1 },
-    dailyScore: { type: 'max', text: (n) => `Score ${n.toLocaleString('en-US')} in Daily Rush`, targets: [60000, 120000, 200000], reward: [100, 120, 150], get: (s, m, mode) => (mode === 'daily' ? s.score : 0) },
+    bricks: { type: 'sum', text: (n) => `Pop ${n} bricks`, targets: [150, 250, 400], reward: [25, 30, 40], get: (s) => s.bricks },
+    color: { type: 'sum', text: (n, m) => `Pop ${n} ${BR.COLOR_NAMES[m.color]} bricks`, targets: [30, 45, 60], reward: [30, 35, 40], get: (s, m) => s.colors[m.color] || 0 },
+    stage: { type: 'max', text: (n) => `Reach stage ${n}`, targets: [4, 5, 6], reward: [30, 40, 50], get: (s, m, mode) => (mode === 'chill' ? 0 : s.stage) },
+    rushRun: { type: 'max', text: (n) => `Trigger Rush Mode ${n} times in one run`, targets: [2, 3, 4], reward: [40, 50, 60], get: (s) => s.rushes },
+    big: { type: 'max', text: (n) => `Pop a group of ${n} or more`, targets: [8, 10, 12], reward: [30, 35, 45], get: (s) => s.biggest },
+    power: { type: 'sum', text: (n) => `Use ${n} power-ups`, targets: [3, 5, 8], reward: [30, 35, 45], get: (s) => s.powerUsed },
+    lines: { type: 'sum', text: (n) => `Make ${n} Line Blast${n > 1 ? 's' : ''}`, targets: [1, 2, 3], reward: [35, 45, 55], get: (s) => s.lineBlasts },
+    defuse: { type: 'sum', text: (n) => `Defuse ${n} Fuse bricks`, targets: [2, 3, 5], reward: [30, 40, 50], get: (s) => s.defused || 0, minBest: 4 },
+    runs: { type: 'sum', text: (n) => `Play ${n} runs`, targets: [2, 3, 4], reward: [20, 25, 30], get: () => 1 },
+    dailyScore: { type: 'max', text: (n) => `Score ${n.toLocaleString('en-US')} in Daily Rush`, targets: [60000, 120000, 200000], reward: [40, 50, 60], get: (s, m, mode) => (mode === 'daily' ? s.score : 0) },
   };
   const WEEKLY = {
     weeklyStage: { type: 'max', text: () => 'Reach stage 8', target: 8, get: (s, m, mode) => (mode === 'chill' ? 0 : s.stage) },
@@ -54,7 +54,7 @@
         const kind = rng.pick(Object.keys(WEEKLY));
         const w = WEEKLY[kind];
         m.week = week;
-        m.weekly = { id: kind, kind, text: w.text(), target: w.target, progress: 0, reward: 400, chest: 'golden', done: false };
+        m.weekly = { id: kind, kind, text: w.text(), target: w.target, progress: 0, reward: 250, chest: 'golden', done: false };
         BR.Storage.save();
       }
       return m;
@@ -93,7 +93,7 @@
         if (mission.progress >= mission.target) {
           mission.done = true; justDone = true;
           BR.Progress.earn(mission.reward);
-          if (mission.chest) BR.Progress.addChest(mission.chest, 1);
+          if (mission.chest) mission.chestCoins = BR.Progress.addChest(mission.chest, 1);
         }
         if (mission.progress !== before || justDone) out.push({ mission, before, after: mission.progress, justDone, weekly: !!weekly });
       };

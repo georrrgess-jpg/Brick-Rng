@@ -1,4 +1,4 @@
-/* Progression (pure logic over Storage): XP, levels, Coins, chests, items, Trade-up, Rush Pass, Trophies. */
+/* Progression (pure logic over Storage): XP, levels, Coins, chests, items, Pop Pass, Trophies. */
 (function () {
   const G = typeof window !== 'undefined' ? window : globalThis;
   const BR = (G.BR = G.BR || {});
@@ -18,29 +18,34 @@
     earn(n) { n = Math.max(0, Math.round(n)); P().coins += n; P().stats.coinsEarned += n; BR.Storage.saveSoon(); return n; },
     spend(n) { if (P().coins < n) return false; P().coins -= n; BR.Storage.saveSoon(); return true; },
 
-    /** Coins for a finished run. Daily Rush and the Double Coins boost add +1x each. */
+    /**
+     * Coins for a finished run: square-root of the score plus a small bonus per cleared stage (capped).
+     * `opts.firstOfDay` adds a one-off bonus, Daily Rush adds a flat bonus. Returns the rows for the results screen.
+     */
     runCoins(summary, opts = {}) {
-      const base = Math.floor(summary.score / BR.CFG.coinsPerScore);
+      const C = BR.CFG.coin;
+      const points = Math.round(C.scale * Math.sqrt(Math.max(0, summary.score) / C.ref));
       let stages = 0;
-      for (let s = 1; s <= summary.stagesCleared; s++) stages += BR.CFG.coinsPerStage * s;
-      const mult = 1 + (opts.daily ? 1 : 0) + (opts.double ? 1 : 0);
-      return { base, stages, mult, total: (base + stages) * mult };
+      for (let s = 1; s <= Math.min(summary.stagesCleared, C.stageCap); s++) stages += C.stageStep * s;
+      const daily = opts.daily ? C.dailyBonus : 0;
+      const first = opts.firstOfDay ? C.firstOfDay : 0;
+      return { points, stages, daily, first, total: points + stages + daily + first };
     },
 
     /* ---------- XP, levels, Rush Pass ---------- */
     runXpRows(summary, opts = {}) {
       const rows = [];
-      const pts = Math.floor(summary.score / 250);
+      const pts = Math.floor(summary.score / 600);
       if (pts > 0) rows.push({ label: 'Points scored', xp: pts });
       let st = 0;
-      for (let s = 1; s <= summary.stagesCleared; s++) st += 40 + 8 * s;
+      for (let s = 1; s <= summary.stagesCleared; s++) st += 20 + 4 * s;
       if (st) rows.push({ label: `${summary.stagesCleared} stage${summary.stagesCleared > 1 ? 's' : ''} cleared`, xp: st });
-      if (summary.rushes) rows.push({ label: `Rush Mode x${summary.rushes}`, xp: 20 * summary.rushes });
-      if (summary.lineBlasts) rows.push({ label: `Line Blast x${summary.lineBlasts}`, xp: 25 * summary.lineBlasts });
-      if (summary.bigPops) rows.push({ label: `Pops of 10+ x${summary.bigPops}`, xp: 15 * summary.bigPops });
-      if (opts.daily) rows.push({ label: 'Daily Rush', xp: 100 });
-      if (opts.isBest) rows.push({ label: 'New best score', xp: 200 });
-      if (opts.firstOfDay) rows.push({ label: 'First run of the day', xp: 150 });
+      if (summary.rushes) rows.push({ label: `Rush Mode x${summary.rushes}`, xp: 10 * summary.rushes });
+      if (summary.lineBlasts) rows.push({ label: `Line Blast x${summary.lineBlasts}`, xp: 10 * summary.lineBlasts });
+      if (summary.bigPops) rows.push({ label: `Pops of 10+ x${summary.bigPops}`, xp: 6 * summary.bigPops });
+      if (opts.daily) rows.push({ label: 'Daily Rush', xp: 60 });
+      if (opts.isBest) rows.push({ label: 'New best score', xp: 80 });
+      if (opts.firstOfDay) rows.push({ label: 'First run of the day', xp: 60 });
       return rows;
     },
 
@@ -62,32 +67,62 @@
       return { gained: amount, from, level: p.level, xp: p.xp, need: BR.xpForLevel(p.level), ups };
     },
 
-    /** Pay out a reward object (coins / chest / item). */
+    /** Pay out a reward object (coins / chest / item). Items you already own pay Coins instead. */
     grant(r) {
       if (r.kind === 'coins') this.earn(r.amount);
       else if (r.kind === 'chest') this.addChest(r.chest, 1);
-      else if (r.kind === 'item') this.keep({ itemId: r.itemId, shine: r.shine || 'plain', seed: 7, counter: null });
+      else if (r.kind === 'item') {
+        if (this.owns(r.itemId)) this.earn(BR.CFG.goldenFallback / 2);
+        else this.keep({ itemId: r.itemId, shine: r.shine || 'plain', seed: 7 });
+      }
       save();
     },
 
     /* ---------- Chests ---------- */
     chestCount(id) { return P().chests[id] || 0; },
     totalChests() { return Object.values(P().chests).reduce((a, b) => a + b, 0); },
-    addChest(id, n = 1) { P().chests[id] = (P().chests[id] || 0) + n; save(); },
-    /** Can this chest be opened right now (owned, or affordable)? */
-    canOpen(id) { const c = BR.CHESTS[id]; return this.chestCount(id) > 0 || (c.cost != null && P().coins >= c.cost); },
+    /** Add chests. A Golden Chest with nothing left to find pays Coins instead (returns the Coins, else 0). */
+    addChest(id, n = 1) {
+      if (id === 'golden' && BR.goldenTypes(this.ownedIds()).length === 0) { this.earn(BR.CFG.goldenFallback * n); save(); return BR.CFG.goldenFallback * n; }
+      P().chests[id] = (P().chests[id] || 0) + n; save();
+      return 0;
+    },
+    /** Status of a chest for the Shop and the opening screen. */
+    chestStatus(id) {
+      const c = BR.CHESTS[id], owned = this.ownedIds();
+      if (c.golden) return { complete: BR.goldenTypes(owned).length === 0, left: 0, types: BR.goldenTypes(owned), pityIn: null };
+      const left = BR.unowned(id, null, owned).length;
+      const since = (P().pity || {})[c.type] || 0;
+      const hasEpic = BR.unowned(id, null, owned).some((x) => BR.rarityById[x.rarity].level >= 3);
+      return { complete: left === 0, left, total: BR.chestPool(id).length, pityIn: hasEpic ? Math.max(1, BR.CFG.pityEvery - since) : null };
+    },
+    /** Can this chest be opened right now (owned or affordable, and something left to find)? */
+    canOpen(id) {
+      const c = BR.CHESTS[id], st = this.chestStatus(id);
+      if (st.complete) return false;
+      return this.chestCount(id) > 0 || (c.cost != null && P().coins >= c.cost);
+    },
 
     /**
-     * Take a chest (from inventory first, otherwise pay) and roll its drop.
+     * Take a chest (from inventory first, otherwise pay) and roll its drop, which is always an item you do not own.
      * Called at the burst moment of the opening, so backing out early never costs anything.
      */
     openChest(id, type) {
-      const c = BR.CHESTS[id];
+      const c = BR.CHESTS[id], t = c.type || type;
+      if (!t) return null;
+      const owned = this.ownedIds();
+      if (BR.unowned(id, t, owned).length === 0) return null;
+      if (c.golden && !BR.goldenTypes(owned).includes(t)) return null;
       if (this.chestCount(id) > 0) P().chests[id]--;
       else if (c.cost == null || !this.spend(c.cost)) return null;
-      const drop = BR.rollChest(rng(), id, type);
+      const pity = P().pity || (P().pity = {});
+      const since = pity[t] || 0;
+      const force = !c.golden && since >= BR.CFG.pityEvery - 1;
+      const drop = BR.rollChest(rng(), id, t, owned, { pity: force });
+      if (!drop) return null;
+      pity[t] = BR.rarityById[drop.rarity].level >= 3 ? 0 : since + 1;
       drop.chest = id;
-      drop.dup = this.owns(drop.itemId);
+      drop.pityHit = force && BR.rarityById[drop.rarity].level >= 3;
       P().opened++; P().stats.chests++;
       save();
       return drop;
@@ -97,20 +132,12 @@
     owns(itemId) { return P().vault.some((i) => i.itemId === itemId); },
     ownedIds() { return Array.from(new Set(P().vault.map((i) => i.itemId))); },
     keep(drop) {
-      const inst = { uid: 'i' + (++P().seq).toString(36), itemId: drop.itemId, shine: drop.shine, seed: drop.seed || 0, counter: drop.counter ? Object.assign({}, drop.counter) : null };
+      const have = P().vault.find((i) => i.itemId === drop.itemId);
+      if (have) return have; // never two copies of one item
+      const inst = { uid: 'i' + (++P().seq).toString(36), itemId: drop.itemId, shine: drop.shine, seed: drop.seed || 0 };
       P().vault.push(inst);
       save();
       return inst;
-    },
-    /** Sell a drop that has not been kept. */
-    sellDrop(drop) { const n = BR.rarityById[drop.rarity].sell; this.earn(n); save(); return n; },
-    sellInstance(uid) {
-      const inst = this.instance(uid);
-      if (!inst || this.isEquipped(uid)) return 0;
-      const n = BR.rarityById[BR.itemById[inst.itemId].rarity].sell;
-      P().vault = P().vault.filter((i) => i.uid !== uid);
-      this.earn(n); save();
-      return n;
     },
     instance(uid) { return P().vault.find((i) => i.uid === uid) || null; },
     itemOf(inst) { return BR.itemById[inst.itemId]; },
@@ -127,52 +154,21 @@
     },
     isEquipped(uid) { return Object.values(P().loadout).includes(uid); },
 
-    /* ---------- Trade-up: 5 items of one rarity and type -> 1 of the next ---------- */
-    canTradeUp(uids) {
-      const n = BR.CFG.tradeUpCount;
-      if (uids.length !== n) return { ok: false, reason: `Pick ${n} items` };
-      if (new Set(uids).size !== n) return { ok: false, reason: 'Pick different items' };
-      const insts = uids.map((u) => this.instance(u));
-      if (insts.some((i) => !i)) return { ok: false, reason: 'Item missing' };
-      if (uids.some((u) => this.isEquipped(u))) return { ok: false, reason: 'Take it off first' };
-      const items = insts.map((i) => this.itemOf(i));
-      if (new Set(items.map((x) => x.rarity)).size !== 1) return { ok: false, reason: 'Same rarity only' };
-      if (new Set(items.map((x) => x.type)).size !== 1) return { ok: false, reason: 'Same type only' };
-      const idx = BR.RARITIES.findIndex((r) => r.id === items[0].rarity);
-      if (idx >= BR.RARITIES.length - 1) return { ok: false, reason: 'Mythic is the top' };
-      return { ok: true, rarityIndex: idx + 1, type: items[0].type };
-    },
-    tradeUp(uids) {
-      const chk = this.canTradeUp(uids);
-      if (!chk.ok) return null;
-      P().vault = P().vault.filter((i) => !uids.includes(i.uid));
-      const chestId = BR.ITEM_TYPES[chk.type].chest;
-      const drop = BR.rollChest(rng(), chestId, chk.type, chk.rarityIndex);
-      drop.chest = chestId; drop.dup = false; drop.fromTradeUp = true;
-      drop.inst = this.keep(drop);
-      return drop;
-    },
-
     /* ---------- run bookkeeping ---------- */
-    /** Feed run stats to equipped items that carry a Counter, and to the lifetime stats. */
+    /** Feed run stats to the lifetime stats. */
     trackRun(sum, mode) {
       const st = P().stats;
       st.runs++; st.bricks += sum.bricks; st.rushes += sum.rushes; st.bigPops += sum.bigPops; st.powerups += sum.powerUsed;
       st.lineBlasts += sum.lineBlasts; st.stages += sum.stagesCleared; st.defused += sum.defused || 0;
       st.bestCombo = Math.max(st.bestCombo, sum.maxCombo); st.maxGroup = Math.max(st.maxGroup, sum.biggest);
       if (mode === 'daily') st.dailyRuns++;
-      const bump = (type, fn) => { const e = this.equipped(type); if (e.inst && e.inst.counter) fn(e.inst.counter); };
-      bump('skin', (c) => { c.value += sum.bricks; });
-      bump('pop', (c) => { c.value = Math.max(c.value, sum.biggest); });
-      bump('board', (c) => { c.value += sum.stagesCleared + 1; });
-      bump('fuse', (c) => { c.value += sum.rushes; });
       save();
     },
 
     /* ---------- Trophies ---------- */
     checkTrophies() {
       const p = P(), got = [];
-      const ctx = { profile: p, stats: p.stats, owned: new Set(p.vault.map((i) => i.itemId)), bestStage: Math.max(S().bestStage.rush, S().bestStage.daily, S().bestStage.chill) };
+      const ctx = { profile: p, stats: p.stats, owned: new Set(p.vault.map((i) => i.itemId)), bestScore: Math.max(S().best.rush, S().best.daily), bestStage: Math.max(S().bestStage.rush, S().bestStage.daily, S().bestStage.chill) };
       for (const t of BR.TROPHIES) {
         if (p.trophies[t.id]) continue;
         if (t.test(ctx)) { p.trophies[t.id] = Date.now(); this.earn(t.coins); got.push(t); }

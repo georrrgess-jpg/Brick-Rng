@@ -1,4 +1,4 @@
-// Pure-logic tests: items, odds, drops, XP/levels, Pass, Coins, chests, Trade-up, missions, migration.
+// Pure-logic tests: items, live odds, no-duplicate drops, pity, completion, XP/levels, Pass, Coins, chests, missions, migrations.
 global.window = global;
 const mem = {};
 global.localStorage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } };
@@ -8,43 +8,80 @@ const assert = require('assert');
 const P = BR.Progress;
 
 // ---- catalogue
-assert.strictEqual(BR.ITEMS.length, 30);
-assert.strictEqual(BR.DROP_ITEMS.length, 28, '28 chest items, 2 pass exclusives');
+assert.strictEqual(BR.ITEMS.length - BR.DROP_ITEMS.length, 2, 'two pass exclusives');
+assert(new Set(BR.ITEMS.map((x) => x.id)).size === BR.ITEMS.length, 'item ids are unique');
 for (const t of BR.TYPE_ORDER) for (const r of BR.RARITIES) assert(BR.DROP_ITEMS.some((x) => x.type === t && x.rarity === r.id), `pool exists: ${t}/${r.id}`);
 assert(!BR.DROP_ITEMS.some((x) => x.pass));
 
-// ---- odds sum to 100 and read sensibly
+// ---- live odds sum to 100, and read sensibly
 for (const id of ['brick', 'pop', 'board', 'fuse', 'golden']) {
   const rows = BR.chestOdds(id, id === 'golden' ? 'skin' : null, []);
   assert(Math.abs(rows.reduce((a, r) => a + r.pct, 0) - 100) < 1e-9, 'odds sum to 100 for ' + id);
 }
 const rows = BR.chestOdds('brick', null, []);
 assert.deepStrictEqual(rows.map((r) => r.oneIn), [2, 4, 10, 25, 100]);
-console.log('sentence:', BR.oddsSentence('brick'), '|', BR.oddsSentence('golden'));
+console.log('sentence:', BR.oddsSentence('brick', null, []), '|', BR.oddsSentence('golden'));
 
-// ---- drop statistics
-const rng = BR.makeRng(7), N = 60000, tally = {}, shine = {}, types = {}; let counters = 0;
+// ---- drop statistics on a fresh collection (the first chest follows the printed odds)
+const rng = BR.makeRng(7), N = 60000, tally = {}, shine = {};
 for (let i = 0; i < N; i++) {
-  const d = BR.rollChest(rng, 'brick');
+  const d = BR.rollChest(rng, 'brick', null, []);
   assert.strictEqual(d.type, 'skin'); assert(!BR.itemById[d.itemId].pass);
-  tally[d.rarity] = (tally[d.rarity] || 0) + 1; shine[d.shine] = (shine[d.shine] || 0) + 1; if (d.counter) counters++;
+  tally[d.rarity] = (tally[d.rarity] || 0) + 1; shine[d.shine] = (shine[d.shine] || 0) + 1;
 }
 const pc = (n) => (n / N) * 100;
-assert(Math.abs(pc(tally.common) - 60) < 1 && Math.abs(pc(tally.mythic) - 1) < 0.4 && Math.abs(pc(counters) - 10) < 1 && Math.abs(pc(shine.plain) - 55) < 1.5);
+assert(Math.abs(pc(tally.common) - 60) < 1 && Math.abs(pc(tally.mythic) - 1) < 0.4 && Math.abs(pc(shine.plain) - 55) < 1.5);
 const g = { epic: 0, legendary: 0, mythic: 0, other: 0 };
-for (let i = 0; i < N; i++) { const d = BR.rollChest(rng, 'golden', 'pop'); assert.strictEqual(d.type, 'pop'); g[d.rarity in g ? d.rarity : 'other']++; }
+for (let i = 0; i < N; i++) { const d = BR.rollChest(rng, 'golden', 'pop', []); assert.strictEqual(d.type, 'pop'); g[d.rarity in g ? d.rarity : 'other']++; }
 assert.strictEqual(g.other, 0, 'golden is epic or better');
 assert(Math.abs(pc(g.epic) - 70) < 1.2 && Math.abs(pc(g.mythic) - 5) < 0.6);
-for (const t of BR.TYPE_ORDER) assert.strictEqual(BR.rollChest(rng, BR.ITEM_TYPES[t].chest, null, 4).rarity, 'mythic');
 console.log('odds ok', JSON.stringify(Object.fromEntries(Object.entries(tally).map(([k, v]) => [k, +pc(v).toFixed(1)]))));
+
+// ---- no duplicates: opening a chest type until it is complete gives every item exactly once, in any order
+for (const [chest, type] of [['brick', 'skin'], ['pop', 'pop'], ['board', 'board'], ['fuse', 'fuse']]) {
+  const owned = new Set(), total = BR.chestPool(chest).length, order = [];
+  const r = BR.makeRng(99);
+  for (let i = 0; i < total; i++) {
+    const d = BR.rollChest(r, chest, null, owned);
+    assert(d && !owned.has(d.itemId), `no duplicate from ${chest} at chest ${i + 1}`);
+    assert.strictEqual(BR.itemById[d.itemId].type, type);
+    owned.add(d.itemId); order.push(BR.itemById[d.itemId].rarity);
+  }
+  assert.strictEqual(BR.rollChest(r, chest, null, owned), null, chest + ' is complete');
+  assert(BR.chestComplete(chest, owned));
+  assert.strictEqual(BR.oddsSentence(chest, null, owned), 'You own everything in this chest. Nice.');
+}
+// once the Commons are gone the odds renormalize over what is left
+{
+  const owned = new Set(BR.chestPool('brick').filter((x) => x.rarity === 'common').map((x) => x.id));
+  const live = BR.chestOdds('brick', null, owned);
+  assert.strictEqual(live[0].pct, 0); assert(Math.abs(live.reduce((a, r) => a + r.pct, 0) - 100) < 1e-9);
+  assert(Math.abs(live[1].pct - (25 / 40) * 100) < 1e-9, 'rare is 25/40 once commons are gone');
+}
+// forced Epic+ (pity)
+{
+  const r = BR.makeRng(5);
+  for (let i = 0; i < 2000; i++) { const d = BR.rollChest(r, 'brick', null, [], { pity: true }); assert(BR.rarityById[d.rarity].level >= 3, 'pity gives epic or better'); }
+}
+// golden only offers types with missing Epic+ items
+{
+  const owned = new Set(BR.DROP_ITEMS.filter((x) => x.type !== 'fuse' && BR.rarityById[x.rarity].golden > 0).map((x) => x.id));
+  assert.deepStrictEqual(BR.goldenTypes(owned), ['fuse']);
+  for (let i = 0; i < 300; i++) assert.strictEqual(BR.rollChest(BR.makeRng(i + 1), 'golden', 'fuse', owned).type, 'fuse');
+  BR.DROP_ITEMS.forEach((x) => owned.add(x.id));
+  assert.deepStrictEqual(BR.goldenTypes(owned), []);
+}
 
 // ---- Coins and XP
 assert.strictEqual(P.coins, 200);
 assert(P.spend(50) && P.coins === 150 && !P.spend(1000));
-const rc = P.runCoins({ score: 172000, stagesCleared: 5 }, { daily: true, double: true });
-assert.strictEqual(rc.mult, 3); assert.strictEqual(rc.base, 286); assert.strictEqual(rc.stages, 12 * 15);
-assert.strictEqual(BR.xpForLevel(1), 400);
-let res = P.addXp(399); assert.strictEqual(res.ups.length, 0);
+const rc = P.runCoins({ score: 200000, stagesCleared: 5 }, { daily: true, firstOfDay: true });
+assert.strictEqual(rc.points, 28); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 78);
+assert(P.runCoins({ score: 0, stagesCleared: 0 }).total === 0, 'an empty run pays nothing');
+assert(P.runCoins({ score: 450000, stagesCleared: 12 }).total < 4 * P.runCoins({ score: 54000, stagesCleared: 3 }).total, 'sharp players earn well under 4x a casual player');
+assert(P.runCoins({ score: 1e9, stagesCleared: 30 }).stages === 36, 'stage bonus is capped');
+assert.strictEqual(BR.xpForLevel(1), 500);
+let res = P.addXp(499); assert.strictEqual(res.ups.length, 0);
 res = P.addXp(1); assert.strictEqual(res.ups.length, 1); assert.strictEqual(P.level, 2);
 assert.strictEqual(res.ups[0].tier, 1); assert.strictEqual(res.ups[0].reward.kind, 'coins');
 const coinsBefore = P.coins;
@@ -55,32 +92,40 @@ assert(P.owns('f_chrome') && P.owns('f_heart'), 'pass exclusives granted');
 assert(P.chestCount('golden') >= 1 && P.chestCount('fuse') >= 1, 'pass chests granted');
 assert(P.coins > coinsBefore);
 
-// ---- opening
-const bricks0 = P.chestCount('brick');
-const drop = P.openChest('brick');
-assert(drop && P.chestCount('brick') === bricks0 - 1, 'inventory chest consumed first');
-const c0 = P.coins; BR.Storage.data.profile.chests.board = 0;
-const d2 = P.openChest('board'); assert(d2 && P.coins === c0 - 400, 'paid with Coins when none owned');
-BR.Storage.data.profile.coins = 10; BR.Storage.data.profile.chests.pop = 0;
-assert.strictEqual(P.openChest('pop'), null, 'cannot open without Coins'); assert(!P.canOpen('pop'));
-const inst = P.keep(d2); P.equip(inst.uid); assert.strictEqual(P.equipped('board').inst.uid, inst.uid);
-assert.strictEqual(P.sellInstance(inst.uid), 0, 'cannot sell equipped');
-P.equip('default', 'board'); assert(P.sellInstance(inst.uid) > 0);
+// ---- opening through Progress: inventory first, then Coins; drops are always new; pity; completion
+{
+  const pr = BR.Storage.data.profile;
+  pr.coins = 5000; pr.vault.length = 0; pr.chests = { brick: 1, pop: 0, board: 0, fuse: 0, golden: 0 }; pr.pity = { skin: 0, pop: 0, board: 0, fuse: 0 };
+  const d = P.openChest('brick');
+  assert(d && P.chestCount('brick') === 0 && pr.coins === 5000, 'inventory chest consumed first, no Coins spent');
+  assert(!d.dup && d.counter === undefined);
+  P.keep(d); assert.strictEqual(pr.vault.length, 1); P.keep(d); assert.strictEqual(pr.vault.length, 1, 'keep never makes a second copy');
+  const before = P.coins; const d2 = P.openChest('board'); assert(d2 && P.coins === before - BR.CHESTS.board.cost, 'paid with Coins when none owned'); P.keep(d2);
+  pr.coins = 10; assert.strictEqual(P.openChest('pop'), null, 'cannot open without Coins'); assert(!P.canOpen('pop'));
+  const inst = P.keep(d2); P.equip(inst.uid); assert.strictEqual(P.equipped('board').inst.uid, inst.uid);
+  assert(!P.sellInstance && !P.tradeUp && !P.canTradeUp, 'selling and Trade-up are gone');
+  // open every brick chest until complete: all new, pity fires, then the chest is complete
+  pr.coins = 1e6; pr.vault.length = 0; pr.pity.skin = 0;
+  const total = BR.chestPool('brick').length; let sinceEpic = 0, maxGap = 0;
+  for (let i = 0; i < total; i++) {
+    assert(P.canOpen('brick'));
+    const x = P.openChest('brick'); assert(x && !P.owns(x.itemId), 'new item every time'); P.keep(x);
+    if (BR.rarityById[x.rarity].level >= 3) sinceEpic = 0; else { sinceEpic++; maxGap = Math.max(maxGap, sinceEpic); }
+  }
+  assert(maxGap <= BR.CFG.pityEvery - 1 || P.chestStatus('brick').pityIn === null, 'pity: never more than 7 chests without an Epic or better while one is left');
+  assert(!P.canOpen('brick') && P.chestStatus('brick').complete, 'a complete chest cannot be opened'); assert.strictEqual(P.openChest('brick'), null);
+  assert.strictEqual(pr.coins, 1e6 - total * BR.CHESTS.brick.cost, 'every open cost exactly one chest');
+  // a Golden Chest with nothing Epic+ left pays Coins
+  BR.DROP_ITEMS.forEach((x) => P.keep({ itemId: x.id, shine: 'plain' }));
+  const c1 = pr.coins; assert.strictEqual(P.addChest('golden', 1), BR.CFG.goldenFallback); assert.strictEqual(pr.coins, c1 + BR.CFG.goldenFallback); assert.strictEqual(P.chestCount('golden'), 0);
+  // pass items you already own pay Coins
+  P.keep({ itemId: 'f_chrome', shine: 'plain' }); const c2 = pr.coins; P.grant({ kind: 'item', itemId: 'f_chrome' }); assert.strictEqual(pr.coins, c2 + BR.CFG.goldenFallback / 2);
+  pr.vault.length = 0; pr.loadout = { skin: 'default', pop: 'default', board: 'default', fuse: 'default' };
+}
 
-// ---- trade-up
-const pr = BR.Storage.data.profile; pr.vault.length = 0; pr.loadout = { skin: 'default', pop: 'default', board: 'default', fuse: 'default' };
-const ids = []; for (let i = 0; i < 5; i++) ids.push(P.keep({ itemId: 'f_candy', shine: 'plain', seed: i, counter: null }).uid);
-assert(P.canTradeUp(ids).ok);
-const fused = P.tradeUp(ids); assert.strictEqual(fused.rarity, 'rare'); assert.strictEqual(fused.type, 'skin'); assert.strictEqual(pr.vault.length, 1);
-const mixed = ['a', 'b', 'c', 'd', 'e'];
-assert(!P.canTradeUp(mixed).ok);
-const mix = [P.keep({ itemId: 'f_candy', shine: 'plain' }).uid, P.keep({ itemId: 'b_ember', shine: 'plain' }).uid, P.keep({ itemId: 'f_slate', shine: 'plain' }).uid, P.keep({ itemId: 'f_candy', shine: 'plain' }).uid, P.keep({ itemId: 'f_slate', shine: 'plain' }).uid];
-assert(!P.canTradeUp(mix).ok, 'different types cannot be traded up together');
-
-// ---- counters and trophies
-const t = P.keep({ itemId: 'f_neon', shine: 'glossy', seed: 1, counter: { stat: 'Bricks popped', value: 0 } });
-P.equip(t.uid); P.trackRun({ bricks: 120, biggest: 9, stagesCleared: 3, rushes: 2, bigPops: 1, powerUsed: 2, lineBlasts: 0, maxCombo: 3, defused: 1 }, 'rush');
-assert.strictEqual(P.instance(t.uid).counter.value, 120);
+// ---- trophies
+const pr = BR.Storage.data.profile;
+P.trackRun({ bricks: 120, biggest: 9, stagesCleared: 3, rushes: 2, bigPops: 1, powerUsed: 2, lineBlasts: 0, maxCombo: 3, defused: 1 }, 'rush');
 const earned = P.checkTrophies(); assert(earned.some((x) => x.id === 'first_run') && earned.some((x) => x.id === 'first_rush'));
 assert(P.checkTrophies().length === 0, 'trophies pay once');
 
@@ -105,9 +150,25 @@ mem['shardfall.v2'] = JSON.stringify({ v: 2, best: 12345, runs: 9, seenTutorial:
     vault: [{ uid: 'i1', itemId: 'f_lava', finish: 'holo', seed: 77, tracker: { stat: 'Rounds cleared', value: 12 } }, { uid: 'i2', itemId: 'b_bolt', finish: 'gloss', seed: 0, tracker: null }, { uid: 'i3', itemId: 'gone_item', finish: 'matte', seed: 0, tracker: null }],
     loadout: { facet: 'i1', burst: 'default', arena: 'i-missing' } } });
 delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
-const mg = BR.Storage.data;
-assert.strictEqual(mg.v, 3); assert.strictEqual(mg.best.chill, 12345); assert.strictEqual(mg.runs, 9); assert.strictEqual(mg.settings.sound, false);
+let mg = BR.Storage.data;
+assert.strictEqual(mg.v, 4); assert.strictEqual(mg.best.chill, 12345); assert.strictEqual(mg.runs, 9); assert.strictEqual(mg.settings.sound, false);
 assert.strictEqual(mg.profile.level, 6); assert.strictEqual(mg.profile.coins, 480 + 600 + 600 + 200);
-assert.strictEqual(mg.profile.vault.length, 2, 'unknown items dropped'); assert.strictEqual(mg.profile.vault[0].shine, 'holo'); assert.strictEqual(mg.profile.vault[0].counter.stat, 'Stages reached');
+assert.strictEqual(mg.profile.vault.length, 2, 'unknown items dropped'); assert.strictEqual(mg.profile.vault[0].shine, 'holo'); assert(!('counter' in mg.profile.vault[0]));
 assert.strictEqual(mg.profile.loadout.skin, 'i1'); assert.strictEqual(mg.profile.loadout.board, 'default'); assert.strictEqual(mg.profile.passTier, 5);
+
+// ---- migration from Update 2 (v3): duplicates collapse to one copy, the equipped copy survives, old sell value refunded
+for (const k of Object.keys(mem)) delete mem[k];
+mem['poprush.v3'] = JSON.stringify({ v: 3, best: { rush: 5000, daily: 0, chill: 0 }, runs: 4, settings: { sound: true },
+  profile: { level: 3, xp: 100000, coins: 500, chests: { brick: 1, pop: 0, board: 0, fuse: 0, golden: 0 }, seq: 6, opened: 6, passTier: 2,
+    vault: [{ uid: 'a', itemId: 'f_candy', shine: 'plain', seed: 1, counter: null }, { uid: 'b', itemId: 'f_candy', shine: 'holo', seed: 2, counter: { stat: 'Bricks popped', value: 9 } },
+      { uid: 'c', itemId: 'f_lava', shine: 'plain', seed: 3, counter: null }, { uid: 'd', itemId: 'f_lava', shine: 'plain', seed: 4, counter: null }, { uid: 'e', itemId: 'b_ember', shine: 'glossy', seed: 0, counter: null }],
+    loadout: { skin: 'b', pop: 'default', board: 'default', fuse: 'default' } } });
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+mg = BR.Storage.data;
+assert.strictEqual(mg.v, 4); assert.strictEqual(mg.profile.vault.length, 3, 'one copy per item');
+assert.strictEqual(mg.profile.vault.find((i) => i.itemId === 'f_candy').uid, 'b', 'the equipped copy is kept');
+assert.strictEqual(mg.profile.loadout.skin, 'b');
+assert.strictEqual(mg.profile.coins, 500 + 40 + 600, 'duplicates refunded: one Common and one Legendary'); assert.deepStrictEqual(mg.notice, { kind: 'dupes', coins: 640 });
+assert(mg.profile.xp < BR.xpForLevel(3), 'xp clamped to the new level curve'); assert.deepStrictEqual(mg.profile.pity, { skin: 0, pop: 0, board: 0, fuse: 0 });
+assert.strictEqual(mg.profile.chests.brick, 1, 'unopened chests survive'); assert(!('counter' in mg.profile.vault[0]));
 console.log('logic tests passed');

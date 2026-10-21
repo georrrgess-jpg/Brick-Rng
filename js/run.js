@@ -94,7 +94,8 @@
       this.clock = false; this.busy = true; this.paused = false; this.modal = false; this.over = false; this.leaving = false;
       this.armed = null; this.buffered = null; this.popsThisRun = 0; this.tutorial = !!o.tutorial; this.warned = false; this.hb = 0;
       this.el.classList.toggle('chill', engine.chill);
-      this.el.classList.remove('rushing');
+      this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
+      this.bestBase = S().best[this.mode] || 0; this.beatFired = false; this.chillStars = 0;
       $('warnVignette').classList.remove('on');
       const rush = !engine.chill;
       this.view.tune = { fall: rush ? 0.82 : 1, pop: rush ? 0.75 : 1 };
@@ -138,10 +139,41 @@
         const events = e.tick(dt);
         for (const ev of events) {
           if (ev.type === 'rushEnd') this.rushEnd();
+          else if (ev.type === 'spark') this.sparkStart();
           else if (ev.type === 'fuseOut') this.endRun('fuse');
         }
+        if (e.spark > 0) this.sparkTick();
       }
       if (!e.chill) this.hudFuse(dt);
+    },
+
+    /** Last Spark: the fuse hit zero. One short window to land a pop of 4 or more. */
+    sparkStart() {
+      const e = this.engine;
+      this.el.classList.add('sparking');
+      $('lastSpark').classList.add('on');
+      BR.audio.lastSpark && BR.audio.lastSpark(); BR.haptic('boom');
+      this.fx.flash('#ff4d6d', 0.3, 360); this.fx.shake($('app'), 10, 360);
+      if (BR.Music && BR.Music.duck) BR.Music.duck(true);
+      this.hideHint(); this.view.showHint(e.bestGroup());
+    },
+    sparkTick() {
+      const e = this.engine;
+      $('lsFill').style.transform = `scaleX(${Math.max(0, e.spark / BR.CFG.fuse.spark).toFixed(3)})`;
+      this.hb -= 0.016;
+      if (this.hb <= 0) { BR.audio.heartbeat(1); BR.haptic('tick'); this.hb = 0.3; }
+    },
+    sparkEnd(saved) {
+      this.el.classList.remove('sparking');
+      $('lastSpark').classList.remove('on');
+      this.view.hideHint();
+      if (BR.Music && BR.Music.duck) BR.Music.duck(false);
+      if (saved) {
+        BR.audio.lastSparkSave && BR.audio.lastSparkSave(); BR.haptic('win');
+        this.callout('RELIT!', '#ffd66b'); this.fx.flash('#ffd66b', 0.3, 400);
+        const r = $('spark').getBoundingClientRect(); this.fx.explosion(r.left + r.width / 2, r.top + r.height / 2, '#ffb02e', 1.2);
+        this.fuseFloat(`+${BR.CFG.fuse.sparkFuse}s`, '#ffe58a');
+      }
     },
 
     hudFuse(dt) {
@@ -194,6 +226,22 @@
     setScore(v, animate = true) {
       const el = $('score');
       if (animate) BR.countTo(el, v, 450); else { el.textContent = fmt(v); BR.countTo(el, v, 0, v); }
+      this.bestRefresh(v, animate);
+    },
+    /** The score to beat: a bar under the score that fills toward your best, pulses when it is close, turns gold when beaten. */
+    bestRefresh(score, announce) {
+      const base = this.bestBase, el = $('bestLine');
+      if (!(base > 0)) { el.className = 'best-line none'; return; }
+      const f = Math.min(1, score / base);
+      $('bestFill').style.width = (f * 100).toFixed(1) + '%';
+      if (score >= base) {
+        el.className = 'best-line beat'; $('bestText').textContent = 'NEW BEST!';
+        if (!this.beatFired && announce !== false) {
+          this.beatFired = true;
+          BR.audio.newBest(); BR.haptic('win'); this.callout('NEW BEST!', '#ffd66b'); this.fx.confetti(['#ffd66b', '#ff3d8b', '#3de1ff', '#fff'], 50, -20);
+        }
+      } else if (f >= 0.8) { el.className = 'best-line close'; $('bestText').textContent = `${fmt(base - score)} to beat`; }
+      else { el.className = 'best-line'; $('bestText').textContent = `BEST ${fmt(base)}`; }
     },
     setMult(slam) {
       const e = this.engine, m = e.chill ? 1 : BR.stageMult(e.stage);
@@ -441,6 +489,9 @@
         if (res.bursts && res.bursts.length) { BR.audio.burstFuse(); setTimeout(() => this.fuseFloat(`-${res.bursts.length * BR.CFG.fuse.burstPenalty}s`, '#ff4d6d'), 150); this.callout('FUSE BRICK!', '#ff4d6d'); }
         if (res.rushStart) this.rushStart();
         if (res.stageUp) this.stageUp(res.stageUp);
+        if (res.spark) this.sparkStart();
+        else if (this.el.classList.contains('sparking') && e.spark <= 0) this.sparkEnd(!!res.sparkSave);
+        if (res.shuffleRefund) this.fuseFloat(`+${res.shuffleRefund}s`, '#c4b5ff');
       }
       if (BR.Skins.onEvent) BR.Skins.onEvent('pop', { res, view, run: this });
       if (p.line && BR.Skins.onEvent) BR.Skins.onEvent('line', { res, view, run: this });
@@ -507,7 +558,9 @@
       const e = this.engine, view = this.view;
       view.setHighlight(null); view.hideHint();
       BR.audio.roundClear(); this.fx.flash('#ffe9a8', 0.25, 600);
-      this.callout(`Round ${e.stage} clear!`, '#ffd66b');
+      const left = e.movesLeft, stars = left >= 8 ? 3 : left >= 4 ? 2 : 1;
+      this.callout(`Round ${e.stage} clear!  ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`, '#ffd66b');
+      this.chillStars = (this.chillStars || 0) + stars;
       await sleep(view.reduced ? 200 : 900);
       if (token !== this.token) return;
       if (e.movesLeft > 0) {
@@ -585,7 +638,7 @@
       const token = this.token;
       this.over = true; this.ending = true; this.clock = false; this.busy = true;
       this.clearHover(); this.view.hideHint(); this.hideHint(); this.aimBanner(''); this.armed = null;
-      $('warnVignette').classList.remove('on'); this.el.classList.remove('rushing');
+      $('warnVignette').classList.remove('on'); this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
       if (BR.Music) BR.Music.stop();
       const e = this.engine;
       if (reason === 'fuse') {
@@ -615,14 +668,18 @@
     finalize(sum, reason, silent) {
       const st = S(), P = BR.Progress, mode = this.mode, e = this.engine;
       const daily = mode === 'daily';
-      const coins = P.runCoins(sum, { daily, double: !!this.boosts.doubleCoins });
+      const today = BR.dayKey();
+      const firstOfDay = st.lastDay !== today; if (firstOfDay) st.lastDay = today;
+      const coins = P.runCoins(sum, { daily, firstOfDay });
       P.earn(coins.total);
-      const isBest = sum.score > st.best[mode];
+      const prevBest = st.best[mode];
+      const isBest = sum.score > prevBest;
+      const rec = (st.recent[mode] = st.recent[mode] || []);
+      const par = rec.length ? Math.round(rec.reduce((a, b) => a + b, 0) / rec.length) : 0;
+      rec.push(sum.score); while (rec.length > 5) rec.shift();
       if (isBest) st.best[mode] = sum.score;
       st.bestStage[mode] = Math.max(st.bestStage[mode], sum.stage);
       if (daily) { st.daily.score = sum.score; st.daily.stage = sum.stage; }
-      const today = BR.dayKey();
-      const firstOfDay = st.lastDay !== today; if (firstOfDay) st.lastDay = today;
       st.runs++;
       const rows = P.runXpRows(sum, { daily, isBest: isBest && sum.score > 0, firstOfDay });
       const xp = P.addXp(rows.reduce((a, r) => a + r.xp, 0));
@@ -631,7 +688,7 @@
       const trophies = P.checkTrophies();
       BR.Storage.save();
       void e; void reason; void silent;
-      return { coins, isBest, rows, xp, missions, trophies, daily };
+      return { coins, isBest, rows, xp, missions, trophies, daily, prevBest, par };
     },
 
     showResults(sum, r, reason) {
@@ -640,17 +697,25 @@
       const titles = { fuse: 'FUSE OUT!', moves: 'OUT OF MOVES', ended: 'RUN OVER' };
       const canShop = BR.CHEST_ORDER.some((id) => P.canOpen(id));
       const mis = r.missions.map((m) => `<div class="res-mis rev ${m.justDone ? 'done' : ''}"><div class="t"><span>${m.justDone ? BR.icon('check', 'ck') + ' ' : ''}${BR.esc(m.mission.text)}</span><b>${m.justDone ? '+' + m.mission.reward + ' Coins' : fmt(m.after) + '/' + fmt(m.mission.target)}</b></div><div class="bar ${m.weekly ? 'gold' : 'green'}"><i data-to="${(m.after / m.mission.target) * 100}" style="width:${(m.before / m.mission.target) * 100}%"></i></div></div>`).join('');
-      const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Rush Pass reward: ${BR.rewardLabel(u.reward)}</small></span></div>`).join('');
+      const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pop Pass reward: ${BR.rewardLabel(u.reward)}</small></span></div>`).join('');
       const trophies = r.trophies.map((t) => `<div class="lvl-up rev"><span class="lu-n">${BR.icon('trophy')}</span><span class="lu-t"><b>${t.name}</b><small>Trophy earned · +${t.coins} Coins</small></span></div>`).join('');
+      let chase = '';
+      if (r.isBest && sum.score > 0) chase = `<div class="new-best rev">New best</div>${r.prevBest > 0 ? `<div class="res-gap rev good">${fmt(sum.score - r.prevBest)} more than your old best</div>` : ''}`;
+      else if (r.prevBest > 0) {
+        const gap = r.prevBest - sum.score, near = sum.score >= r.prevBest * 0.85;
+        chase = `<div class="res-gap rev ${near ? 'near' : ''}">${near ? `So close: ${fmt(gap)} short of your best` : `Your best is ${fmt(r.prevBest)}`}</div>`;
+      }
+      if (mode === 'daily' && r.par > 0) chase += `<div class="res-gap rev ${sum.score >= r.par ? 'good' : ''}">${sum.score >= r.par ? 'Above' : 'Below'} your par of ${fmt(r.par)}</div>`;
+      const beatIt = !r.isBest && r.prevBest > 0 && mode !== 'daily';
       const html = `<div class="results" id="results"><div class="res-scroll">
           <div class="res-title out rev">${titles[reason] || 'RUN OVER'}</div>
           <div class="res-sub rev">${mode === 'daily' ? 'Daily Rush' : mode === 'chill' ? 'Chill' : 'Rush'} · Stage ${sum.stage} · ${Math.floor(sum.time / 60)}:${String(Math.floor(sum.time % 60)).padStart(2, '0')}</div>
           <div class="res-score rev"><small>Score</small><b id="resScore">0</b></div>
-          ${r.isBest && sum.score > 0 ? '<div class="new-best rev">New best</div>' : ''}
+          ${chase}
           <div class="res-chips rev"><div class="res-chip"><b>${sum.stagesCleared}</b><small>Stages cleared</small></div><div class="res-chip"><b>${sum.biggest}</b><small>Biggest pop</small></div><div class="res-chip"><b>${sum.rushes}</b><small>Rush Modes</small></div></div>
           <div class="res-card rev"><h3>Coins <span class="coins-total">${BR.coin()}<b id="resCoins">0</b></span></h3>
-            <div class="res-row"><span>Points</span><b>${r.coins.base}</b></div><div class="res-row"><span>Stages cleared</span><b>${r.coins.stages}</b></div>
-            ${r.coins.mult > 1 ? `<div class="res-row"><span>${r.daily ? 'Daily Rush' : ''}${r.daily && this.boosts.doubleCoins ? ' + ' : ''}${this.boosts.doubleCoins ? 'Double Coins' : ''}</span><b>x${r.coins.mult}</b></div>` : ''}</div>
+            <div class="res-row"><span>Points</span><b>${r.coins.points}</b></div><div class="res-row"><span>Stages cleared</span><b>${r.coins.stages}</b></div>
+            ${r.coins.daily ? `<div class="res-row"><span>Daily Rush</span><b>+${r.coins.daily}</b></div>` : ''}${r.coins.first ? `<div class="res-row"><span>First run of the day</span><b>+${r.coins.first}</b></div>` : ''}</div>
           ${mis ? `<div class="res-card rev"><h3>Missions</h3>${mis}</div>` : ''}
           <div class="res-card rev"><h3>XP <span class="muted num">+${fmt(r.rows.reduce((a, x) => a + x.xp, 0))}</span></h3>
             ${r.rows.map((x) => `<div class="res-row"><span>${BR.esc(x.label)}</span><b>+${fmt(x.xp)}</b></div>`).join('')}
@@ -658,7 +723,7 @@
           ${ups}${trophies}
         </div>
         <div class="res-actions rev">
-          ${mode === 'daily' ? `<button class="btn btn-xl" data-r="share">${BR.icon('share')} Share result</button>` : `<button class="btn btn-xl" data-r="again">${BR.icon('play')} Play again</button>`}
+          ${mode === 'daily' ? `<button class="btn btn-xl" data-r="share">${BR.icon('share')} Share result</button>` : `<button class="btn btn-xl" data-r="again">${BR.icon('play')} ${beatIt ? 'Beat it' : 'Play again'}</button>`}
           <div class="row">${canShop ? `<button class="btn btn-gold" data-r="shop">${BR.icon('gift')} Open a chest</button>` : ''}<button class="btn btn-dark" data-r="home">Home</button></div>
         </div></div>`;
       const host = $('layer-overlays');

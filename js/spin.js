@@ -90,18 +90,16 @@
   BR.Spin = { P, REDUCED, solve, at, crossings, frictionEnd, solveLaunch };
 
   /* ------------------------------------------------------------------ DOM reel */
-  if (typeof document === 'undefined') return;
-
-  const RARITY_ORDER = () => BR.RARITIES;
-
   /**
-   * Reel: builds a strip of item cards inside `host`, spins it to `targetIndex`, and reports ticks.
+   * Reel: builds a strip of item cards inside `host`, spins it to `target`, and reports edge ticks.
+   * Built to be cheap: cards are still badges (no animation), the strip moves with one transform per frame, and
+   * nothing is filtered or tilted, so a spin costs about the same as a static page.
    *   o.orient    'h' | 'v'
-   *   o.cards     array of { item, inst? }  (the real item previews)
+   *   o.cards     array of { item, inst }  (the real items)
    *   o.target    index in cards that must end under the marker
    *   o.jitter    -0.35..0.35 of a card: where inside the winning card the marker lands
    *   o.reduced   shorter, calmer spin
-   *   o.onTick(speed01, index)   o.onLand()
+   *   o.onTick(speed01, index, skipping)   o.onLand()
    */
   class Reel {
     constructor(host, o) {
@@ -116,16 +114,21 @@
       host.classList.add('reel', this.h ? 'reel-h' : 'reel-v');
       this.strip = document.createElement('div');
       this.strip.className = 'reel-strip';
+      const frag = document.createDocumentFragment();
       this.cardEls = o.cards.map((c) => {
-        const it = c.item;
+        const it = c.item, R = BR.rarityById[it.rarity];
         const el = document.createElement('div');
         el.className = 'rc';
-        el.style.setProperty('--rc', BR.rarityById[it.rarity].color);
-        el.innerHTML = `<i class="rc-glow"></i><div class="rc-art">${BR.Skins.previewHTML(it, c.inst || null)}</div><div class="rc-name">${it.name}</div><i class="rc-bar"></i>`;
-        this.strip.appendChild(el);
+        el.style.setProperty('--rc', R.color);
+        el.innerHTML = `${BR.Badge.html(it, c.inst || null, { size: this.h ? 104 : 84, still: true })}<div class="rc-txt"><b class="rc-name">${it.name}</b><span class="rc-rar">${R.name}</span></div>`;
+        frag.appendChild(el);
         return el;
       });
+      this.strip.appendChild(frag);
       host.appendChild(this.strip);
+      this.speedFx = document.createElement('i');
+      this.speedFx.className = 'reel-speed';
+      host.appendChild(this.speedFx);
       this.marker = document.createElement('div');
       this.marker.className = 'reel-marker';
       this.marker.innerHTML = '<i></i><i></i>';
@@ -136,9 +139,7 @@
       const r = this.host.getBoundingClientRect();
       this.vp = this.h ? r.width : r.height;
       const first = this.cardEls[0], second = this.cardEls[1];
-      const a = first.getBoundingClientRect(), b = second ? second.getBoundingClientRect() : a;
-      // pitch from layout (offset difference is unaffected by transforms because we read offsetLeft/Top)
-      this.pitch = this.h ? (second ? second.offsetLeft - first.offsetLeft : a.width) : (second ? second.offsetTop - first.offsetTop : a.height);
+      this.pitch = this.h ? (second ? second.offsetLeft - first.offsetLeft : first.offsetWidth) : (second ? second.offsetTop - first.offsetTop : first.offsetHeight);
       this.size = this.h ? first.offsetWidth : first.offsetHeight;
       this.pad = this.h ? first.offsetLeft : first.offsetTop;
       this.markerX = this.vp / 2;
@@ -159,8 +160,8 @@
       const base = this.reduced ? REDUCED : P;
       const params = Object.assign({}, base, { c: base.c * this.sc, vSwitch: base.vSwitch * this.sc });
       this.tab = solve({ distance: dist, short: (6 + Math.random() * 10) * this.sc, params });
-      this.t = 0; this.time = 0; this.scale = 1; this.skipping = false; this.done = false;
-      this.lastIdx = -1; this.lastTick = 0; this.speed = 0;
+      this.t = 0; this.scale = 1; this.skipping = false; this.done = false;
+      this.lastIdx = -1; this.speed = 0;
       this.x = this.startX;
       this.apply(0);
       this.markAt();
@@ -169,24 +170,23 @@
     }
     skip() {
       if (this.done || this.skipping) return;
-      this.skipping = true; this.skipT0 = this.t;
+      this.skipping = true;
     }
     stop() { cancelAnimationFrame(this.raf); this.done = true; }
 
     loop(now) {
       if (this.done) return;
-      let dt = Math.min(0.05, (now - this.prev) / 1000); this.prev = now;
+      const dt = Math.min(0.05, Math.max(0, (now - this.prev) / 1000)); this.prev = now;
       if (this.skipping) this.scale = Math.min(9, this.scale + dt * 38);
       this.t += dt * this.scale;
       const s = at(this.tab, this.t);
       this.x = this.startX + s.x;
-      // crossing ticks (the strip can cross several edges in one frame at the very top speed)
-      const idx = Math.floor((this.x - this.startX + this.startX + this.markerX - this.pad) / this.pitch);
+      const idx = Math.floor((this.x + this.markerX - this.pad) / this.pitch);
       if (idx !== this.lastIdx) {
         if (this.lastIdx >= 0 && this.o.onTick) this.o.onTick(Math.min(1, Math.abs(s.v) / this.sc / 3000), idx, this.skipping);
         this.lastIdx = idx;
       }
-      this.speed = Math.abs(s.v) * (this.skipping ? 1 : 1);
+      this.speed = Math.abs(s.v);
       this.apply(s.v);
       this.markAt();
       if (s.done) { this.done = true; this.apply(0); this.markAt(); this.cardEls[this.o.target].classList.add('win'); if (this.o.onLand) this.o.onLand(); return; }
@@ -194,30 +194,10 @@
     }
 
     apply(vRaw) {
-      const v = vRaw / (this.sc || 1);
-      const spd = Math.min(1, Math.abs(v) / 2600);
-      const axis = this.h ? 'X' : 'Y';
-      this.strip.style.transform = `translate${axis}(${(-this.x).toFixed(2)}px)`;
-      const flat = this.reduced || BR.lowEnd;
-      if (!flat) {
-        const blur = Math.max(0, (Math.abs(v) - 1500) / 1000);
-        this.strip.style.filter = blur > 0.05 ? `blur(${Math.min(2.2, blur).toFixed(2)}px)` : '';
-        // tilt the cards near the marker toward/away from the viewer
-        const amp = 8 + 16 * spd;
-        const first = Math.max(0, Math.floor((this.x + this.markerX - this.pad) / this.pitch) - 4);
-        const last = Math.min(this.cardEls.length - 1, first + 9);
-        for (let i = this.vis0 != null ? Math.min(this.vis0, first) : first; i <= (this.vis1 != null ? Math.max(this.vis1, last) : last); i++) {
-          const el = this.cardEls[i]; if (!el) continue;
-          if (i < first || i > last) { el.style.transform = ''; continue; }
-          const centre = this.pad + i * this.pitch + this.size / 2 - this.x;
-          const d = (centre - this.markerX) / this.pitch;
-          const ad = Math.min(3, Math.abs(d));
-          const rot = (this.h ? -1 : 1) * d * amp;
-          const sc = 1 - Math.min(0.2, ad * 0.045);
-          el.style.transform = `translateZ(${(-ad * 26).toFixed(1)}px) ${this.h ? 'rotateY' : 'rotateX'}(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
-        }
-        this.vis0 = first; this.vis1 = last;
-      }
+      const v = Math.abs(vRaw) / (this.sc || 1);
+      this.strip.style.transform = this.h ? `translate3d(${(-this.x).toFixed(2)}px,0,0)` : `translate3d(0,${(-this.x).toFixed(2)}px,0)`;
+      // one opacity change stands in for motion blur: faint speed streaks fade in with the strip's speed
+      if (this.speedFx) this.speedFx.style.opacity = Math.min(0.85, Math.max(0, (v - 900) / 2200)).toFixed(2);
     }
     markAt() {
       const i = Math.floor((this.x + this.markerX - this.pad) / this.pitch);

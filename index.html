@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/run.css">
 <link rel="stylesheet" href="css/chest.css">
 <link rel="stylesheet" href="css/skins.css">
+<link rel="stylesheet" href="css/badges.css">
 </head>
 <body>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -45,7 +46,7 @@
         <header class="run-top">
           <button class="icon-btn" id="btnPause" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
           <div class="stage-tag" id="stageTag"><span>Stage</span><b id="stageNum">1</b></div>
-          <div class="score-box"><span class="lbl">Score</span><b id="score">0</b></div>
+          <div class="score-box"><span class="lbl">Score</span><b id="score">0</b><div class="best-line" id="bestLine"><i id="bestFill"></i><span id="bestText">BEST 0</span></div></div>
         </header>
 
         <div class="fuse" id="fuse" aria-label="Fuse" data-fuse-host>
@@ -74,6 +75,7 @@
           <div class="combo" id="combo" aria-live="polite"><b id="comboX">x2</b><span>COMBO</span></div>
           <div class="aim-banner" id="aimBanner"></div>
           <div class="hint" id="hint" role="status"></div>
+          <div class="last-spark" id="lastSpark" aria-live="assertive"><b>LAST SPARK!</b><span>Pop 4 or more to relight the fuse</span><i class="ls-bar"><u id="lsFill"></u></i></div>
           <div class="rush-glow" id="rushGlow"></div>
         </div>
 
@@ -122,6 +124,7 @@
 <script src="js/music.js"></script>
 <script src="js/fx.js"></script>
 <script src="js/skins.js"></script>
+<script src="js/badges.js"></script>
 <script src="js/view.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/chestart.js"></script>

@@ -35,13 +35,14 @@
       this.streak = 0;
       this.maxCombo = 0;
       this.time = 0;
-      this.rush = { meter: 0, active: false, left: 0, lastPop: -99 };
+      this.rush = { meter: this.boosts.rushStart ? 60 : 0, active: false, left: 0, lastPop: this.boosts.rushStart ? 0 : -99 };
       this.charge = 0;
       this.cursor = 0;
       this.inv = { hammer: this.boosts.headStart || this.startHammer ? 1 : 0, beam: 0, prism: 0 };
       this.stats = { pops: 0, bricks: 0, biggest: 0, bigPops: 0, lineBlasts: 0, powerUsed: 0, rushes: 0, stagesCleared: 0, fuseBursts: 0, defused: 0, colors: [0, 0, 0, 0, 0, 0, 0], stageLines: 0, stageBig: 0 };
       this.over = false;
       this.endReason = null;
+      this.sparkUsed = false; this.spark = 0; // Last Spark: one save per run
       if (snap) this._restore(snap);
       this._colorsForStage();
     }
@@ -67,11 +68,21 @@
         r.meter = Math.max(0, r.meter - C.rush.drain * dt);
       }
       if (this.freeze > 0) this.freeze = Math.max(0, this.freeze - dt);
-      else if (!r.active) {
+      else if (!r.active && !(this.spark > 0)) {
         this.fuse -= dt * this.burn;
-        if (this.fuse <= 0) { this.fuse = 0; this.over = true; this.endReason = 'fuse'; ev.push({ type: 'fuseOut' }); }
+        if (this.fuse <= 0) { this.fuse = 0; this._fuseZero(ev); }
+      }
+      if (this.spark > 0 && !this.over) {
+        this.spark -= dt;
+        if (this.spark <= 0) { this.spark = 0; this.over = true; this.endReason = 'fuse'; ev.push({ type: 'fuseOut' }); }
       }
       return ev;
+    }
+
+    /** The fuse reached zero: the first time, Last Spark holds the board still for a moment; after that the run ends. */
+    _fuseZero(ev) {
+      if (!this.sparkUsed) { this.sparkUsed = true; this.spark = BR.CFG.fuse.spark; ev.push({ type: 'spark' }); return; }
+      this.over = true; this.endReason = 'fuse'; ev.push({ type: 'fuseOut' });
     }
 
     /* ---------- planning a tap ---------- */
@@ -99,7 +110,7 @@
       return {
         kind: 'pop', r, c, n, primary, extras: [], lineCells, line, lineH, lineV,
         cells: primary.concat(lineCells), streakAfter, combo, points,
-        timeGain: this.chill ? 0 : BR.popTime(n) + (line ? BR.CFG.fuse.lineBonus : 0),
+        timeGain: this.chill ? 0 : BR.popTime(n, this.stage) + (line ? BR.CFG.fuse.lineBonus : 0),
         color: primary.color, version: B.version,
       };
     }
@@ -140,6 +151,7 @@
       }
 
       const res = this._clear(cells, { r: plan.r, c: plan.c });
+      if (!this.chill && res.shuffle && res.shuffle.length) { this.fuse = Math.min(this.fuseMax, this.fuse + C.fuse.shuffleRefund); res.shuffleRefund = C.fuse.shuffleRefund; }
       res.plan = plan; res.kind = 'pop';
       res.comboBefore = comboBefore; res.bursts = bursts; res.ticks = ticks; res.defused = defused;
       res.timeGain = plan.timeGain; res.events = ev;
@@ -165,7 +177,18 @@
       }
       res.boostersGained = this._addCharge(plan.n >= 4 ? (plan.n - 2) * 4 + this.streak : 0);
       this._afterScore(res);
-      if (!this.chill && this.fuse <= 0) { this.fuse = 0; this.over = true; this.endReason = 'fuse'; res.fuseOut = true; }
+      if (!this.chill) {
+        if (this.spark > 0) {
+          if (this.fuse < 0) this.fuse = 0;
+          // a pop during Last Spark: 4+ bricks relight the fuse, anything else just buys the time it pays
+          if (plan.n >= 4) { this.fuse = Math.max(this.fuse, BR.CFG.fuse.sparkFuse); res.sparkSave = true; this.stats.sparkSaves = (this.stats.sparkSaves || 0) + 1; }
+          if (this.fuse > 0) this.spark = 0;
+        } else if (this.fuse <= 0) {
+          this.fuse = 0;
+          const ev2 = []; this._fuseZero(ev2);
+          if (this.over) res.fuseOut = true; else res.spark = true;
+        }
+      }
       return res;
     }
 
@@ -224,12 +247,12 @@
       return {
         v: 1, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
         inv: Object.assign({}, this.inv), charge: this.charge, stats: JSON.parse(JSON.stringify(this.stats)),
-        maxCombo: this.maxCombo, colors: this.board.grid.map((row) => row.map((b) => b.color)),
+        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, colors: this.board.grid.map((row) => row.map((b) => b.color)),
       };
     }
     _restore(s) {
       this.stage = s.stage; this.score = s.score; this.inv = Object.assign({}, s.inv); this.charge = s.charge || 0;
-      this.stats = Object.assign(this.stats, s.stats); this.maxCombo = s.maxCombo || 0;
+      this.stats = Object.assign(this.stats, s.stats); this.maxCombo = s.maxCombo || 0; this.sparkUsed = !!s.sparkUsed;
       this.goal = this.chill ? BR.chillGoal(this.stage) : BR.stageGoal(this.stage);
       for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) this.board.grid[r][c].color = s.colors[r][c];
       this.board.version++;
@@ -243,7 +266,7 @@
         mode: this.mode, score: this.score, stage: this.stage, stagesCleared: s.stagesCleared, time: this.time,
         pops: s.pops, bricks: s.bricks, biggest: s.biggest, bigPops: s.bigPops, lineBlasts: s.lineBlasts,
         powerUsed: s.powerUsed, rushes: s.rushes, colors: s.colors.slice(), maxCombo: this.maxCombo,
-        stageScore: this.stageScore, stageLines: s.stageLines, stageBig: s.stageBig, defused: s.defused,
+        stageScore: this.stageScore, stageLines: s.stageLines, stageBig: s.stageBig, defused: s.defused, sparkSaves: s.sparkSaves || 0,
       };
     }
 

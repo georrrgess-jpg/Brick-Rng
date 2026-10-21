@@ -35,14 +35,15 @@
     const chest = BR.CHESTS[chestId];
     const rows = BR.chestOdds(chestId, type, P.ownedIds());
     const live = rows.filter((r) => r.pct > 0);
+    const done = rows.filter((r) => r.pct === 0 && r.total > 0);
     const bar = live.map((r) => `<div class="ob-seg" style="--rc:${r.rarity.color};flex:${r.pct}">${r.pct >= 8 ? `<span>${Math.round(r.pct)}%</span>` : ''}</div>`).join('');
     const list = live.map((r) => `<div class="odds-row" style="--rc:${r.rarity.color}">
-        <i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>${r.total} item${r.total === 1 ? '' : 's'} · ${r.missing === 0 ? 'you own them all' : `${r.missing} left to find`}</small></div>
-        <div class="od-pct"><b>${fmtPct(r.pct)}</b><small>1 in ${r.oneIn}</small></div></div>`).join('');
-    const inside = live.map((r) => `<div class="inside-grp" style="--rc:${r.rarity.color}"><h4>${r.rarity.name}</h4><div class="inside-items">${r.items.map((x) => `<div class="inside-item ${P.owns(x.id) ? 'own' : ''}">${P.owns(x.id) ? BR.icon('check') : ''}<span>${x.name}</span></div>`).join('')}</div></div>`).join('');
+        <i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>${r.missing === 0 ? `You own all ${r.total}` : `${r.missing} of ${r.total} left to find`}</small></div>
+        <div class="od-pct"><b>${fmtPct(r.pct)}</b><small>1 in ${r.oneIn}</small></div></div>`).join('') + done.map((r) => `<div class="odds-row done" style="--rc:${r.rarity.color}"><i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>You own all ${r.total}</small></div><div class="od-pct"><b>${BR.icon('check')}</b></div></div>`).join('');
+    const inside = rows.filter((r) => r.total > 0).map((r) => `<div class="inside-grp" style="--rc:${r.rarity.color}"><h4>${r.rarity.name}</h4><div class="inside-items">${r.items.map((x) => `<div class="inside-item ${P.owns(x.id) ? 'own' : ''}">${P.owns(x.id) ? BR.icon('check') : ''}<span>${x.name}</span></div>`).join('')}</div></div>`).join('');
     const chips = opts.compact ? `<div class="odds-chips">${live.map((r) => `<div class="oc" style="--rc:${r.rarity.color}"><b>${fmtPct(r.pct)}</b><span>${r.rarity.name}</span><small>1 in ${r.oneIn}</small></div>`).join('')}</div>` : '';
     return `<div class="odds ${opts.compact ? 'compact' : ''}">
-      <p class="odds-sentence">${BR.oddsSentence(chestId)}</p>
+      <p class="odds-sentence">${BR.oddsSentence(chestId, type, P.ownedIds(), opts.pityIn)}</p>
       <div class="odds-bar" role="img" aria-label="Odds bar">${bar}</div>${chips}
       ${opts.compact ? '' : `<div class="odds-rows">${list}</div>
       <button class="odds-more" data-act="toggle-inside">See everything inside <i>${BR.icon('arrow')}</i></button>
@@ -52,7 +53,7 @@
 
   BR.showOdds = function (chestId) {
     let type = BR.CHESTS[chestId].type;
-    const sh = BR.Sheet.open({ title: `${BR.CHESTS[chestId].name} odds`, body: `<div class="chest-mini">${BR.chestSVG(chestId)}</div>${BR.oddsHTML(chestId, type || 'skin')}` });
+    const sh = BR.Sheet.open({ title: `${BR.CHESTS[chestId].name} odds`, body: `<div class="chest-mini">${BR.chestSVG(chestId)}</div>${BR.oddsHTML(chestId, type || 'skin', { pityIn: P.chestStatus(chestId).pityIn })}` });
     sh.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) sh.el.querySelector('.odds').classList.toggle('open'); });
   };
 
@@ -100,8 +101,8 @@
           <button class="mode-card daily ${dailyDone ? 'done' : ''}" data-act="play-daily">
             <span class="mc-ico"><span class="cal"><small>${new Date().toLocaleString('en-US', { month: 'short' })}</small><b>${new Date().getDate()}</b></span></span>
             <span class="mc-title display">Daily Rush</span>
-            <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : 'Same board for everyone. Double Coins.'}</span>
-            <span class="tag ${dailyDone ? '' : 'gold'}">${dailyDone ? BR.icon('check') + ' Come back tomorrow' : 'x2 Coins'}</span>
+            <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : 'Same board for everyone. Bonus Coins.'}</span>
+            <span class="tag ${dailyDone ? '' : 'gold'}">${dailyDone ? BR.icon('check') + ' Come back tomorrow' : '+15 Coins'}</span>
           </button>
           <button class="mode-card chill ${chillOpen ? '' : 'locked'}" data-act="play-chill">
             <span class="mc-ico">${BR.icon('leaf')}</span>
@@ -112,7 +113,7 @@
         </div>
         ${owned ? `<button class="banner stg" data-act="go-shop"><span class="bn-ico">${BR.icon('gift')}</span><span class="bn-txt"><b>You have ${owned} chest${owned > 1 ? 's' : ''} to open</b><small>Free to open. Tap to see.</small></span><span class="bn-go">${BR.icon('arrow')}</span></button>` : ''}
         <button class="card pass-card stg" data-act="go-pass">
-          <div class="pc-head"><span class="pc-title display">Rush Pass</span><span class="tag">Level ${P.level}</span></div>
+          <div class="pc-head"><span class="pc-title display">Pop Pass</span><span class="tag">Level ${P.level}</span></div>
           <div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next reward</small><div class="bar"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small>${fmt(P.need - P.xp)} XP to go</small></div></div>
         </button>
         <button class="card mission-card stg" data-act="go-missions">
@@ -128,74 +129,90 @@
   };
 
   /* ------------------------------------------------------------------ Ready sheet (boosts) */
+  const BOOST_ICON = { longFuse: 'clock', headStart: 'bolt', rushStart: 'fire' };
+  /**
+   * The step before a run. Boosts are a purchase: each card shows its price, the summary shows the total and what
+   * you will have left, and the button says how many Coins it takes. Nothing is charged until you press it.
+   */
   BR.readySheet = function (mode) {
     const picked = new Set();
     const cfg = BR.CFG.boosts;
-    const titles = { rush: ['Rush', 'Keep the fuse lit. Pop fast. Chain big pops for Rush Mode.'], daily: ['Daily Rush', 'Everyone gets the same board today. One try, double Coins.'], chill: ['Chill', '20 moves a round. Reach the goal. No clock.'] };
-    const boostHTML = mode === 'chill' || mode === 'daily' ? '' : `<div class="boosts"><h3 class="sec-title">Boosts <small>Last for one run</small></h3>
-        ${Object.values(cfg).map((b) => `<button class="boost" data-boost="${b.id}"><span class="bo-ico">${BR.icon(b.id === 'longFuse' ? 'clock' : b.id === 'headStart' ? 'bolt' : 'star')}</span><span class="bo-txt"><b>${b.name}</b><small>${b.desc}</small></span><span class="bo-cost">${BR.coin()}<b>${b.cost}</b></span><i class="bo-check">${BR.icon('check')}</i></button>`).join('')}
-        <p class="tiny">Boosts are charged when the run starts.</p></div>`;
-    const sh = BR.Sheet.open({ title: titles[mode][0], body: `<p class="ready-sub">${titles[mode][1]}</p>${boostHTML}<div class="ready-total" hidden><span>Boosts cost</span><b>${BR.coin()}<span id="boostTotal">0</span></b></div>` });
-    const start = BR.el(`<div class="sheet-actions"><button class="btn btn-xl" id="goBtn">${BR.icon('play')} Start</button></div>`);
+    const titles = { rush: ['Before you start', 'Keep the fuse lit. Pop fast. Chain big pops for Rush Mode.'], daily: ['Daily Rush', 'Everyone gets the same board today. One try, bonus Coins. No Boosts, so scores compare fairly.'], chill: ['Chill', '20 moves a round. Reach the goal. No clock, no Boosts.'] };
+    const boostHTML = mode !== 'rush' ? '' : `<div class="boosts">
+        <div class="bo-head"><h3 class="sec-title">Boosts <small>Pay once, last one run</small></h3><span class="pill gold bal">${BR.coin()}<b class="num" id="boBal">${fmt(P.coins)}</b></span></div>
+        ${Object.values(cfg).map((b) => `<button class="boost ${b.cost > P.coins ? 'short' : ''}" data-boost="${b.id}" aria-pressed="false"><span class="bo-ico">${BR.icon(BOOST_ICON[b.id])}</span><span class="bo-txt"><b>${b.name}</b><small>${b.desc}</small></span><span class="bo-price">${BR.coin()}<b>${b.cost}</b></span><i class="bo-check">${BR.icon('check')}</i></button>`).join('')}
+        <div class="bo-sum" id="boSum" hidden></div>
+        <p class="tiny">Boosts cost Coins. Skip them and the run is free.</p></div>`;
+    const sh = BR.Sheet.open({ title: titles[mode][0], body: `<p class="ready-sub">${titles[mode][1]}</p>${boostHTML}` });
+    const start = BR.el(`<div class="sheet-actions"><button class="btn btn-xl" id="goBtn">${BR.icon('play')} <span id="goLabel">Start</span></button></div>`);
     sh.el.appendChild(start);
     const total = () => [...picked].reduce((a, id) => a + cfg[id].cost, 0);
     const refresh = () => {
-      const t = total();
-      sh.el.querySelector('.ready-total').hidden = !picked.size;
-      sh.el.querySelector('#boostTotal').textContent = t;
-      sh.el.querySelectorAll('.boost').forEach((b) => { b.classList.toggle('on', picked.has(b.dataset.boost)); });
+      const t = total(), sum = sh.el.querySelector('#boSum');
+      if (sum) {
+        sum.hidden = !picked.size;
+        sum.innerHTML = `<div><span>${picked.size} Boost${picked.size > 1 ? 's' : ''}</span><b>${BR.coin()} ${t}</b></div><div><span>You will have</span><b>${BR.coin()} ${fmt(P.coins - t)}</b></div>`;
+      }
+      sh.el.querySelectorAll('.boost').forEach((b) => { const on = picked.has(b.dataset.boost); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.classList.toggle('short', !on && cfg[b.dataset.boost].cost + t > P.coins); });
+      const go = sh.el.querySelector('#goBtn'); go.classList.toggle('pay', t > 0);
+      sh.el.querySelector('#goLabel').innerHTML = t > 0 ? `Pay ${BR.coin()} ${t} and start` : 'Start';
     };
     sh.el.addEventListener('click', (e) => {
       const b = e.target.closest('.boost');
       if (!b) return;
       const id = b.dataset.boost;
       if (picked.has(id)) picked.delete(id);
-      else { picked.add(id); if (total() > P.coins) { picked.delete(id); BR.toast('Not enough Coins for that boost', 'bad'); BR.haptic('err'); BR.audio.deny(); return; } }
+      else { picked.add(id); if (total() > P.coins) { picked.delete(id); BR.toast(`You need ${cfg[id].cost - (P.coins - total())} more Coins for that Boost`, 'bad'); BR.haptic('err'); BR.audio.deny(); return; } }
       BR.audio.ui(); BR.haptic('tick'); refresh();
     });
     start.querySelector('button').addEventListener('click', () => {
       const chosen = {};
       picked.forEach((id) => { chosen[id] = true; });
-      if (total() > 0) P.spend(total());
+      const t = total();
+      if (t > 0) { if (!P.spend(t)) { BR.toast('Not enough Coins', 'bad'); return; } BR.audio.coin && BR.audio.coin(1); BR.toast(`Paid ${t} Coins for ${[...picked].map((id) => cfg[id].name).join(' and ')}`, 'good'); }
       sh.close();
       setTimeout(() => BR.App.startRun({ mode, boosts: chosen }), 250);
     });
+    refresh();
+    if (BR.Coach) BR.Coach.show('boosts');
   };
 
-  const live0 = (odds) => { const l = odds.filter((r) => r.pct > 0), a = l[0], b = l[l.length - 1]; return `${a.rarity.name} ${Math.round(a.pct)}% · ${b.rarity.name} ${Math.round(b.pct)}%`; };
+  const live0 = (odds) => { const l = odds.filter((r) => r.pct > 0); if (!l.length) return 'Complete'; const a = l[0], b = l[l.length - 1]; if (a === b) return `${a.rarity.name} 100%`; return `${a.rarity.name} ${Math.round(a.pct)}% · ${b.rarity.name} ${Math.round(b.pct)}%`; };
 
   /* ------------------------------------------------------------------ Shop */
   const Shop = {
     render() {
       const order = (P.chestCount('golden') ? ['golden'] : []).concat(BR.CHEST_ORDER);
       const cards = order.map((id) => {
-        const c = BR.CHESTS[id], n = P.chestCount(id), can = P.canOpen(id);
-        const odds = BR.chestOdds(id, c.type || 'skin', []);
+        const c = BR.CHESTS[id], n = P.chestCount(id), can = P.canOpen(id), st = P.chestStatus(id);
+        const odds = BR.chestOdds(id, c.type || 'skin', P.ownedIds());
         const mini = odds.filter((r) => r.pct > 0).map((r) => `<i style="flex:${r.pct};background:${r.rarity.color}"></i>`).join('');
-        const action = n > 0
-          ? `<button class="btn btn-green btn-sm" data-act="open" data-chest="${id}">Open free${n > 1 ? ` <b>x${n}</b>` : ''}</button>`
-          : c.cost != null ? `<button class="btn btn-gold btn-sm ${can ? '' : 'short'}" data-act="open" data-chest="${id}">${BR.coin()} ${c.cost}</button>` : '';
-        return `<article class="chest-card stg cc-${id}" style="--ac:${c.accent}">
+        let action;
+        if (st.complete) action = `<span class="btn btn-dark btn-sm done-badge">${BR.icon('check')} Complete</span>`;
+        else if (n > 0) action = `<button class="btn btn-green btn-sm" data-act="open" data-chest="${id}">Open free${n > 1 ? ` <b>x${n}</b>` : ''}</button>`;
+        else action = c.cost != null ? `<button class="btn btn-gold btn-sm ${can ? '' : 'short'}" data-act="open" data-chest="${id}">${BR.coin()} ${c.cost}</button>` : '';
+        const left = c.golden ? '' : st.complete ? `<small class="cc-left">You own all ${st.total} ${c.sub}</small>` : `<small class="cc-left">${st.left} of ${st.total} ${c.sub} left to find${st.pityIn ? ` · Epic or better in ${st.pityIn}` : ''}</small>`;
+        return `<article class="chest-card stg cc-${id} ${st.complete ? 'complete' : ''}" style="--ac:${c.accent}">
           <div class="cc-art"><span class="cc-halo"></span>${BR.chestSVG(id)}${n > 0 ? `<em class="cc-badge">${n}</em>` : ''}</div>
           <div class="cc-info">
             <div class="cc-top"><h3 class="display">${c.name}</h3><button class="info-btn" data-act="odds" data-chest="${id}" aria-label="Odds for ${c.name}">${BR.icon('info')}</button></div>
             <span class="tag" style="--rc:${c.accent}">${c.sub}</span>
             <p class="cc-blurb">${c.blurb}</p>
-            <div class="odds-mini" title="Odds"><div class="om-bar">${mini}</div><small>${live0(odds)}</small></div>
+            <div class="odds-mini" title="Odds"><div class="om-bar">${mini}</div><small>${live0(odds)}</small></div>${left}
             <div class="cc-act">${action}</div>
           </div></article>`;
       }).join('');
       this.el.innerHTML = `${topbar('Shop')}<div class="scroll">
-        <p class="shop-intro stg">Every chest holds one item. The odds are always shown, and Coins come from playing.</p>
+        <p class="shop-intro stg">Every chest holds one item you do not own yet. The odds are always shown, and Coins come from playing.</p>
         ${cards}
         <h2 class="sec-title stg">Run boosts <small>Pick them before a run</small></h2>
-        <div class="boost-info stg">${Object.values(BR.CFG.boosts).map((b) => `<div class="bi"><span class="bo-ico">${BR.icon(b.id === 'longFuse' ? 'clock' : b.id === 'headStart' ? 'bolt' : 'star')}</span><b>${b.name}</b><small>${b.desc}</small><span class="bo-cost">${BR.coin()}<b>${b.cost}</b></span></div>`).join('')}</div>
+        <div class="boost-info stg">${Object.values(BR.CFG.boosts).map((b) => `<div class="bi"><span class="bo-ico">${BR.icon(BOOST_ICON[b.id])}</span><b>${b.name}</b><small>${b.desc}</small><span class="bo-cost">${BR.coin()}<b>${b.cost}</b></span></div>`).join('')}</div>
         <h2 class="sec-title stg">How to earn Coins</h2>
         <div class="card card-pad earn stg"><ul>
           <li><span>${BR.icon('play')}</span>Finish runs: points and every stage you clear</li>
-          <li><span>${BR.icon('sun')}</span>Daily Rush pays double</li>
+          <li><span>${BR.icon('sun')}</span>Daily Rush adds a bonus, and so does your first run each day</li>
           <li><span>${BR.icon('missions')}</span>Daily and weekly missions</li>
-          <li><span>${BR.icon('swap')}</span>Sell extra copies from your Collection</li>
+          <li><span>${BR.icon('trophy')}</span>Trophies and the Pop Pass</li>
         </ul></div>
       </div>`;
     },
@@ -203,7 +220,7 @@
 
   /* ------------------------------------------------------------------ Collection */
   const Collection = {
-    type: 'skin', filter: null, trade: null,
+    type: 'skin', filter: null,
     render() {
       const type = this.type;
       const have = (t) => new Set(S().profile.vault.filter((i) => BR.itemById[i.itemId].type === t).map((i) => i.itemId)).size;
@@ -214,11 +231,10 @@
       this.el.innerHTML = `${topbar('Collection')}<div class="scroll">
         <div class="seg stg" id="colSeg">${segs}<i class="thumb"></i></div>
         <div class="col-head stg"><div class="eq-now" style="--rc:${R(eq.item.rarity).color}"><span class="eq-prev">${BR.Skins.previewHTML(eq.item, eq.inst)}</span><span class="eq-txt"><small>Equipped</small><b class="display">${eq.item.name}</b></span></div>
-          <button class="btn btn-dark btn-sm" data-act="trade">${BR.icon('swap')} Trade up</button></div>
+          <div class="col-prog" aria-label="Collected">${ringSVG(have(type) / total(type), 52, 6)}<b>${have(type)}<small>/${total(type)}</small></b></div></div>
         <div class="filters stg">${filters}</div>
         <div class="col-grid stg" id="colGrid">${this.gridHTML()}</div>
-        <p class="tiny center">Tap an item to see it. Trade up turns 5 items into 1 of the next rarity.</p>
-        ${this.trade ? this.tradeBar() : ''}
+        <p class="tiny center">Tap an item to see it or equip it. Every chest gives something new.</p>
       </div>`;
       this.placeThumb();
     },
@@ -233,33 +249,21 @@
       const byR = (a, b) => order.indexOf(b.rarity) - order.indexOf(a.rarity) || a.name.localeCompare(b.name);
       const out = [];
       let i = 0;
-      const sel = this.trade ? this.trade.sel : null;
-      const lockR = sel && sel.size ? BR.itemById[P.instance([...sel][0]).itemId].rarity : null;
       const def = BR.DEFAULTS[type];
-      if (!this.trade && (!this.filter || this.filter === def.rarity)) out.push(card(def, null, { i: i++, eq: P.equipped(type).inst === null }));
+      if (!this.filter || this.filter === def.rarity) out.push(card(def, null, { i: i++, eq: P.equipped(type).inst === null }));
       const owned = vault.map((inst) => ({ inst, item: BR.itemById[inst.itemId] })).filter((x) => x.item.type === type).sort((a, b) => byR(a.item, b.item));
       for (const o of owned) {
         if (this.filter && this.filter !== o.item.rarity) continue;
         const eqd = P.isEquipped(o.inst.uid);
-        const dim = this.trade && (eqd || (lockR && o.item.rarity !== lockR) || o.item.rarity === 'mythic');
-        out.push(card(o.item, o.inst, { i: i++, eq: eqd, sel: sel && sel.has(o.inst.uid), dim }));
+        out.push(card(o.item, o.inst, { i: i++, eq: eqd }));
       }
-      if (!this.trade) {
-        const have = new Set(owned.map((o) => o.item.id));
-        for (const item of BR.itemsOfType(type).sort(byR)) {
-          if (have.has(item.id) || (this.filter && this.filter !== item.rarity)) continue;
-          out.push(card(item, null, { i: i++, locked: true }));
-        }
+      const have = new Set(owned.map((o) => o.item.id));
+      for (const item of BR.itemsOfType(type).sort(byR)) {
+        if (have.has(item.id) || (this.filter && this.filter !== item.rarity)) continue;
+        out.push(card(item, null, { i: i++, locked: true }));
       }
       if (!out.length) return `<div class="empty-state col-span">${BR.icon('collection')}<p>Nothing here yet.<br>Open chests in the Shop to fill your collection.</p></div>`;
       return out.join('');
-    },
-    tradeBar() {
-      const sel = [...this.trade.sel], chk = P.canTradeUp(sel);
-      const first = sel.length ? BR.itemById[P.instance(sel[0]).itemId] : null;
-      const next = first ? BR.RARITIES[Math.min(4, BR.RARITIES.findIndex((r) => r.id === first.rarity) + 1)] : null;
-      return `<div class="trade-bar"><div class="tb-text">${first ? `Trade <b>${sel.length}/5</b> ${R(first.rarity).name} for one <b style="color:${next.color}">${next.name}</b>` : 'Pick 5 items of the same rarity'}</div>
-        <div class="tb-btns"><button class="btn btn-text" data-act="trade-cancel">Cancel</button><button class="btn btn-sm" data-act="trade-go" ${chk.ok ? '' : 'disabled'}>Trade</button></div></div>`;
     },
     onRetap() { this.el.querySelector('.scroll').scrollTo({ top: 0, behavior: 'smooth' }); },
     onShow() { this.placeThumb(); },
@@ -267,12 +271,11 @@
   function card(item, inst, o) {
     const r = R(item.rarity);
     const shine = inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
-    const ctr = inst && inst.counter ? `<span class="tag counter">${fmt(inst.counter.value)}</span>` : '';
-    if (o.locked) return `<div class="icard locked" style="--rc:${r.color};--i:${o.i}"><div class="ic-prev"><span class="q">?</span></div><b class="ic-name">???</b><span class="tag rar" style="--rc:${r.color}">${r.name}</span><small class="ic-hint">${BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name}${item.pass ? ' · Rush Pass' : ''}</small></div>`;
-    return `<div class="icard ${o.eq ? 'eq' : ''} ${o.sel ? 'sel' : ''} ${o.dim ? 'dim' : ''}" data-uid="${inst ? inst.uid : 'default'}" data-type="${item.type}" style="--rc:${r.color};--i:${o.i}">
-      ${o.eq ? `<span class="eq-flag">${BR.icon('check')}</span>` : ''}${o.sel ? `<span class="sel-flag">${BR.icon('check')}</span>` : ''}
+    if (o.locked) return `<div class="icard locked" style="--rc:${r.color};--i:${o.i}"><div class="ic-prev"><span class="q">?</span></div><b class="ic-name">???</b><span class="tag rar" style="--rc:${r.color}">${r.name}</span><small class="ic-hint">${BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name}${item.pass ? ' · Pop Pass' : ''}</small></div>`;
+    return `<div class="icard ${o.eq ? 'eq' : ''}" data-uid="${inst ? inst.uid : 'default'}" data-type="${item.type}" style="--rc:${r.color};--i:${o.i}">
+      ${o.eq ? `<span class="eq-flag">${BR.icon('check')}</span>` : ''}
       <div class="ic-prev">${BR.Skins.previewHTML(item, inst)}</div><b class="ic-name">${esc(item.name)}</b>
-      <div class="ic-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span>${shine}${ctr}</div></div>`;
+      <div class="ic-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span>${shine}</div></div>`;
   }
 
   /* item detail sheet */
@@ -282,16 +285,13 @@
     if (!item) return;
     const r = R(item.rarity);
     const equipped = inst ? P.isEquipped(inst.uid) : P.equipped(item.type).inst === null;
-    const sellPrice = inst ? r.sell : 0;
-    const where = item.pass ? 'Rush Pass reward' : item.isDefault ? 'Always yours' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name;
+    const where = item.pass ? 'Pop Pass reward' : item.isDefault ? 'Always yours' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name;
     const body = `<div class="detail" style="--rc:${r.color}">
         <div class="detail-prev"><span class="dp-glow"></span><div class="hero-host"></div></div>
         <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">${BR.ITEM_TYPES[item.type].name}</span>${inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : ''}</div>
         <p class="detail-desc">${esc(item.desc)}</p>
-        ${inst && inst.counter ? `<div class="detail-counter"><small>${esc(inst.counter.stat)}</small><b class="num">${fmt(inst.counter.value)}</b></div>` : ''}
         <div class="detail-where"><small>Comes from</small><b>${where}</b></div></div>`;
     const actions = [{ label: equipped ? 'Equipped' : 'Equip', cls: equipped ? 'btn-dark' : 'btn-green', disabled: equipped, onClick: () => { P.equip(inst ? inst.uid : 'default', item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap'); BR.toast(`${esc(item.name)} equipped`, 'good'); BR.Router.rerender(); } }];
-    if (inst && !equipped) actions.push({ label: `Sell for ${BR.coin()} ${sellPrice}`, cls: 'btn-dark', onClick: () => { P.sellInstance(inst.uid); BR.audio.scrap(); BR.toast(`Sold for ${sellPrice} Coins`, 'good'); BR.Router.rerender(); } });
     let demo = null;
     const sheet = BR.Sheet.open({ title: esc(item.name), body, actions, onClose: () => { if (demo) demo.stop(); } });
     demo = BR.Openings.demo(sheet.body.querySelector('.hero-host'), item, inst || { shine: 'plain', seed: 0 }, { silent: true, power: 1.2 });
@@ -308,7 +308,7 @@
     tab: 'daily',
     render() {
       const m = BR.Missions.ensure();
-      const seg = ['daily', 'pass', 'trophies'].map((t) => `<button data-tab="${t}" class="${t === this.tab ? 'on' : ''}">${{ daily: 'Daily', pass: 'Rush Pass', trophies: 'Trophies' }[t]}</button>`).join('');
+      const seg = ['daily', 'pass', 'trophies'].map((t) => `<button data-tab="${t}" class="${t === this.tab ? 'on' : ''}">${{ daily: 'Daily', pass: 'Pop Pass', trophies: 'Trophies' }[t]}</button>`).join('');
       let body = '';
       if (this.tab === 'daily') {
         body = `<div class="reset-note stg">${BR.icon('clock')} New missions in ${resetsIn()}</div>
@@ -334,7 +334,7 @@
         const state = t.tier < P.level ? 'claimed' : t.tier === P.level ? 'next' : 'locked';
         return `<div class="tier ${state}" data-tier="${t.tier}"><span class="t-node"><b>${t.tier}</b></span><div class="t-card">${BR.rewardChip(t)}${state === 'claimed' ? `<i class="t-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="t-lk">${BR.icon('lock')}</i>` : `<span class="tag hot">Next</span>`}</div></div>`;
       }).join('');
-      return `<article class="card pass-head stg"><div><span class="display ph-t">Rush Pass</span><small>Free. One reward for every level.</small></div><div class="ph-lvl">${ringSVG(P.xp / P.need, 64, 6)}<b>${P.level}</b></div></article>
+      return `<article class="card pass-head stg"><div><span class="display ph-t">Pop Pass</span><small>Free. One reward for every level.</small></div><div class="ph-lvl">${ringSVG(P.xp / P.need, 64, 6)}<b>${P.level}</b></div></article>
         <div class="xp-line stg"><div class="bar tall cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.xp)} / ${fmt(P.need)} XP to level ${P.level + 1}</small></div>
         <div class="tiers stg">${tiers}<div class="tier more"><span class="t-node"><b>+</b></span><div class="t-card"><span class="rw-txt"><b>Every level after 30</b> 100 Coins</span></div></div></div>`;
     },
@@ -425,27 +425,11 @@
     });
     Shop.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) e.target.closest('.odds').classList.toggle('open'); });
     bind(Collection, (t) => {
-      if (t.dataset.type && t.closest('#colSeg')) { Collection.type = t.dataset.type; Collection.filter = null; Collection.trade = null; BR.audio.ui(); BR.Router.rerender(); Collection.placeThumb(); return; }
+      if (t.dataset.type && t.closest('#colSeg')) { Collection.type = t.dataset.type; Collection.filter = null; BR.audio.ui(); BR.Router.rerender(); Collection.placeThumb(); return; }
       if (t.dataset.rar) { Collection.filter = Collection.filter === t.dataset.rar ? null : t.dataset.rar; BR.audio.ui(); BR.Router.rerender(); return; }
       const a = t.dataset.act;
       if (common(a, t)) return;
-      if (a === 'trade') { Collection.trade = { sel: new Set() }; BR.audio.ui(); BR.Router.rerender(); BR.toast('Pick 5 items of one rarity'); return; }
-      if (a === 'trade-cancel') { Collection.trade = null; BR.audio.ui(); BR.Router.rerender(); return; }
-      if (a === 'trade-go') {
-        const uids = [...Collection.trade.sel];
-        const drop = P.tradeUp(uids);
-        Collection.trade = null;
-        if (drop) { BR.Router.rerender(); BR.App.tradeReveal(drop); }
-        return;
-      }
-      if (t.dataset.uid) {
-        if (Collection.trade) {
-          const uid = t.dataset.uid, sel = Collection.trade.sel;
-          if (t.classList.contains('dim')) { BR.toast('That one cannot be traded', 'bad'); return; }
-          if (sel.has(uid)) sel.delete(uid); else if (sel.size < BR.CFG.tradeUpCount) sel.add(uid);
-          BR.audio.ui(); BR.haptic('tick'); BR.Router.rerender();
-        } else { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(t.dataset.uid, t.dataset.type); }
-      }
+      if (t.dataset.uid) { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(t.dataset.uid, t.dataset.type); }
     });
     bind(Missions, (t) => {
       if (t.dataset.tab) { Missions.tab = t.dataset.tab; BR.audio.ui(); BR.Router.rerender(); Missions.placeThumb(); Missions.onShow(); return; }
