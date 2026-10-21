@@ -28,17 +28,57 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .op-pedestal { position: absolute; left: 50%; bottom: -7%; width: 138%; height: 26%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--ac) 60%, transparent), transparent 68%); filter: blur(2px); opacity: calc(0.55 + var(--hold) * 0.45); }
 .op-pedestal::after { content: ''; position: absolute; inset: 22% 14%; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--ac) 80%, #fff); opacity: 0.6; box-shadow: 0 0 22px var(--ac); }
 .op-shake { position: absolute; inset: 0; will-change: transform; }
-.op-chest { position: absolute; inset: 0; transform-origin: 50% 90%; filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.55)) brightness(calc(1 + var(--hold) * 0.45)); }
-.op-chest .chest-svg { width: 100%; height: 100%; overflow: visible; }
-.op-chest .chest-svg g, .op-chest .chest-svg ellipse { transform-box: fill-box; transform-origin: center; }
+.op-chest { position: absolute; inset: 0; transform-origin: 50% 90%; }
 .op-chest.drop { animation: chestDrop 0.95s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
 @keyframes chestDrop { 0% { transform: translateY(-120vh) rotate(-8deg) scale(0.9); } 55% { transform: translateY(0) rotate(2deg) scale(1.06, 0.94); } 68% { transform: translateY(-5%) rotate(-1deg) scale(0.98, 1.03); } 82% { transform: translateY(0) scale(1.02, 0.98); } 100% { transform: none; } }
-.op-chest.idle { animation: chestBob 3s ease-in-out infinite; }
-@keyframes chestBob { 50% { transform: translateY(-2.5%) rotate(0.6deg); } }
-.op-chest .c-glow { opacity: calc(0.15 + var(--hold) * 0.85); }
-.op-chest .c-glints { animation: glints 2.4s ease-in-out infinite; } @keyframes glints { 50% { opacity: 0.2; transform: scale(0.7); } }
-.op-ground-dust { position: absolute; left: 50%; bottom: 0; width: 10px; height: 10px; pointer-events: none; }
-.op-ground-dust i { position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 70%); opacity: 0; }
+.op-chest.idle { animation: opBob 3s ease-in-out infinite; }
+@keyframes opBob { 50% { transform: translateY(-2.5%) rotate(0.6deg); } }
+
+/* ---------- the chest itself: a stack of parts, see js/chestart.js ---------- */
+.chest { position: relative; width: 100%; aspect-ratio: 200 / 180; }
+.op-chest .chest { position: absolute; inset: 0; aspect-ratio: auto; }
+.chest .cp { position: absolute; inset: 0; pointer-events: none; transform-origin: 50% 56%; }
+.chest .cp svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.chest .cz-shadow { position: absolute; left: 8%; right: 8%; bottom: 0; height: 9%; border-radius: 50%; background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55), transparent 70%); }
+.chest .cp-glow, .chest .cp-leak, .chest .cp-frost, .chest .cp-cracks { opacity: 0; }
+.chest .cp-needle { transform: rotate(-120deg); }
+.op-chest .cp-glow { opacity: calc(0.12 + var(--hold) * 0.88); }
+.op-chest .cp-leak { opacity: calc(var(--hold) * 0.95); }
+.op-chest .cp-frost { opacity: calc(var(--hold) * 0.55); }
+.op-chest .cp-needle { transform: rotate(calc(-120deg + var(--hold) * 240deg)); }
+.chest .cp-cracks path { stroke-dasharray: 100; stroke-dashoffset: 100; }
+.chest .cp-cracks g { filter: drop-shadow(0 0 3px #9fe8ff); }
+.chest .tw { opacity: 0; }
+/* idle life: only while the chest is waiting (the hold takes over the transforms) */
+.op-chest.idle .tw { animation: twk 2.6s ease-in-out infinite; }
+.op-chest.idle .tw2 { animation-delay: -0.9s; } .op-chest.idle .tw3 { animation-delay: -1.7s; } .op-chest.idle .tw4 { animation-delay: -0.4s; }
+@keyframes twk { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+.op-chest.idle .chest-brick .cp-lid { animation: lidBreath 3.2s ease-in-out infinite; }
+@keyframes lidBreath { 50% { transform: translateY(-1.2%); } }
+.op-chest.idle .chest-pop .c-spark { animation: sparkFlick 0.28s steps(2) infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes sparkFlick { 50% { transform: scale(1.35); } }
+.op-chest.idle .chest-pop .cf { animation: confettiUp 3.2s ease-out infinite; }
+.chest-pop .cf { position: absolute; left: 50%; top: 40%; width: 5%; height: 3%; border-radius: 1px; opacity: 0; }
+.chest-pop .cf1 { background: #ffd24a; margin-left: -14%; animation-delay: 0s; } .chest-pop .cf2 { background: #3de1ff; margin-left: 4%; animation-delay: -1.1s; } .chest-pop .cf3 { background: #6bff9e; margin-left: 16%; animation-delay: -2.1s; } .chest-pop .cf4 { background: #ff5fa8; margin-left: -4%; animation-delay: -0.6s; }
+@keyframes confettiUp { 0% { opacity: 0; transform: translateY(0) rotate(0deg); } 12% { opacity: 1; } 100% { opacity: 0; transform: translateY(-420%) translateX(60%) rotate(260deg); } }
+.op-chest.idle .chest-board .gl-streak { animation: glStreak 4.2s ease-in-out infinite; }
+@keyframes glStreak { 0%, 55% { transform: translateX(-60px) skewX(-18deg); } 100% { transform: translateX(170px) skewX(-18deg); } }
+.op-chest.idle .chest-board .tile { animation: tileGlint 3.4s ease-in-out infinite; }
+.op-chest.idle .chest-board .t2, .op-chest.idle .chest-board .t6 { animation-delay: -1.1s; } .op-chest.idle .chest-board .t4 { animation-delay: -2.2s; }
+@keyframes tileGlint { 0%, 100% { opacity: 1; } 50% { opacity: 0.72; } }
+.op-chest.idle .chest-fuse .cp-needle { animation: needleIdle 1.6s ease-in-out infinite; }
+@keyframes needleIdle { 0%, 100% { transform: rotate(-120deg); } 50% { transform: rotate(-108deg); } }
+.op-chest.idle .chest-fuse .c-spark { animation: sparkFlick 0.28s steps(2) infinite; transform-box: fill-box; transform-origin: center; }
+.chest-fuse .vp { position: absolute; top: 66%; width: 7%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%); opacity: 0; }
+.chest-fuse .vp1 { left: 18%; } .chest-fuse .vp2 { left: 75%; }
+.op-chest.idle .chest-fuse .vp { animation: ventPuff 2.6s ease-out infinite; } .op-chest.idle .chest-fuse .vp2 { animation-delay: -1.3s; }
+@keyframes ventPuff { 0% { opacity: 0; transform: translate(0, 0) scale(0.4); } 15% { opacity: 0.8; } 100% { opacity: 0; transform: translate(-60%, -280%) scale(2.2); } }
+.op-chest.idle .chest-fuse .vp2 { --dx: 1; }
+.op-chest.idle .chest-golden .cp-glow { animation: gGlow 2.6s ease-in-out infinite; }
+@keyframes gGlow { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.32; } }
+.op-chest.idle .chest-golden .cp-leak { animation: gLeak 2.2s ease-in-out infinite; }
+@keyframes gLeak { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.8; } }
+.op-chest.idle .chest-brick .cp-glow, .op-chest.idle .chest-pop .cp-glow, .op-chest.idle .chest-board .cp-glow, .op-chest.idle .chest-fuse .cp-glow { opacity: 0.14; }
 .op-chest.gone { animation: chestAway 0.55s cubic-bezier(0.5, 0, 0.8, 0.4) both; }
 @keyframes chestAway { to { transform: translateY(8%) scale(0.5); opacity: 0; } }
 .op-steam { position: absolute; inset: 0; pointer-events: none; } .op-steam i { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%); opacity: 0; }

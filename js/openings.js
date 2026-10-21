@@ -78,117 +78,131 @@
   }
 
   /* ===================================================================== rituals */
-  /** Per-chest hold visuals (p = 0..1) and burst. All of them work on the SVG parts named in chestart.js. */
+  /* Each ritual moves the chest's parts (see js/chestart.js): hold(ch, p, t, ctx) every frame while pressed, burst(ch, c) once.
+     `ch` is the .chest element; parts are found by data-p. Everything is a CSS transform or opacity on a part div. */
+  const part = (ch, name) => ch.querySelector(`[data-p="${name}"]`);
+  const parts = (ch, name) => Array.from(ch.querySelectorAll(`[data-p="${name}"]`));
+  const fly = (el, kf, ms, ease) => el && el.animate(kf, { duration: ms, fill: 'forwards', easing: ease || 'cubic-bezier(0.3,0.6,0.4,1)' });
+  const fade = (el, ms, delay = 0) => el && el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, delay, fill: 'forwards' });
+  const rattle = (t, p, k = 1) => Math.sin(t * 61) * p * p * k;
+
   const Rituals = {
     brick: {
-      init(svg) { svg.querySelectorAll('.c-piece').forEach((el) => { el._r = rnd(0, 6.28); }); },
-      hold(svg, p, t) {
-        svg.querySelectorAll('.c-piece').forEach((el, i) => { const a = p * p * 2.2; el.style.transform = `translate(${(Math.sin(t * 61 + i * 2.3) * a).toFixed(2)}px, ${(Math.cos(t * 53 + i * 1.7) * a).toFixed(2)}px)`; });
-        const lid = svg.querySelector('.c-lid'); if (lid) lid.style.transform = `translateY(${(-p * p * 7).toFixed(1)}px)`;
+      init() { },
+      hold(ch, p, t) {
+        parts(ch, 'piece').forEach((el, i) => { const a = p * p * 2.4; el.style.transform = `translate(${(Math.sin(t * 61 + i * 2.3) * a).toFixed(2)}px, ${(Math.cos(t * 53 + i * 1.7) * a).toFixed(2)}px)`; });
+        const lid = part(ch, 'lid'); if (lid) lid.style.transform = `translate(${(rattle(t, p, 1.2)).toFixed(2)}px, ${(-p * p * 9).toFixed(1)}px) rotate(${(Math.sin(t * 47) * p * p * 1.1).toFixed(2)}deg)`;
       },
-      burst(svg, c) {
-        svg.querySelectorAll('.c-piece').forEach((el) => {
-          const dx = rnd(-230, 230), dy = -rnd(150, 330), r = rnd(-420, 420);
+      burst(ch, c) {
+        parts(ch, 'piece').forEach((el) => {
+          const dx = rnd(-250, 250), dy = -rnd(160, 340), r = rnd(-480, 480);
           el.style.transform = '';
-          el.animate([{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${dx * 0.6}px, ${dy}px) rotate(${r * 0.5}deg)`, offset: 0.4, easing: 'cubic-bezier(0.4,0,0.9,0.6)' }, { transform: `translate(${dx}px, ${dy + 560}px) rotate(${r}deg)`, opacity: 0 }], { duration: rnd(900, 1300), fill: 'forwards', easing: 'cubic-bezier(0.2,0.7,0.4,1)' });
+          fly(el, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${dx * 0.6}px, ${dy}px) rotate(${r * 0.5}deg)`, offset: 0.4, easing: 'cubic-bezier(0.4,0,0.9,0.6)' }, { transform: `translate(${dx}px, ${dy + 600}px) rotate(${r}deg)`, opacity: 0 }], rnd(900, 1300), 'cubic-bezier(0.2,0.7,0.4,1)');
         });
-        const lid = svg.querySelector('.c-lid');
-        if (lid) { lid.style.transform = ''; lid.animate([{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-230px) rotate(-26deg)', opacity: 1, offset: 0.5 }, { transform: 'translateY(260px) rotate(-60deg)', opacity: 0 }], { duration: 1200, fill: 'forwards', easing: 'cubic-bezier(0.3,0.6,0.4,1)' }); }
-        const base = svg.querySelector('.c-body > rect');
-        if (base) base.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.06, 0.9)', opacity: 1, offset: 0.2 }, { transform: 'scale(0.7, 0.1)', opacity: 0 }], { duration: 520, fill: 'forwards', easing: 'ease-in' });
+        const lid = part(ch, 'lid');
+        if (lid) { lid.style.transform = ''; fly(lid, [{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-250px) rotate(-24deg)', opacity: 1, offset: 0.5 }, { transform: 'translateY(300px) rotate(-62deg)', opacity: 0 }], 1250); }
+        ['body', 'straps', 'leak'].forEach((n) => { const el = part(ch, n); if (el) fly(el, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.05, 0.92)', opacity: 1, offset: 0.2 }, { transform: 'scale(0.8, 0.3) translateY(10%)', opacity: 0 }], 650, 'ease-in'); });
         c.explode('#ff6a4d', '#ffc83d', 1.2);
         BR.audio.brickBurst();
       },
     },
     pop: {
-      init(svg) {
-        const w = svg.querySelector('.c-fusewire');
-        if (w) { w._len = w.getTotalLength(); w.style.strokeDasharray = `${w._len} ${w._len}`; }
+      init(ch) {
+        ch.querySelectorAll('.c-fusewire').forEach((w) => { w._len = w.getTotalLength(); w.style.strokeDasharray = `${w._len} ${w._len}`; w.style.strokeDashoffset = 0; });
       },
-      hold(svg, p, t) {
-        const w = svg.querySelector('.c-fusewire'); if (!w) return;
-        const rem = w._len * (1 - p);
-        w.style.strokeDasharray = `${rem} ${w._len}`;
+      hold(ch, p, t) {
+        const ws = ch.querySelectorAll('.c-fusewire'); if (!ws.length) return;
+        const w = ws[0], rem = w._len * (1 - p);
+        ws.forEach((x) => { x.style.strokeDasharray = `${rem} ${w._len}`; });
         const pt = w.getPointAtLength(rem);
-        svg.querySelectorAll('.c-spark, .c-spark2').forEach((s) => { s.setAttribute('cx', pt.x); s.setAttribute('cy', pt.y); s.setAttribute('r', (s.classList.contains('c-spark2') ? 10 : 6) * (1 + p * 0.8 + Math.sin(t * 40) * 0.12)); });
-        const body = svg.querySelector('.c-body'); if (body) body.style.transform = `scale(${1 + p * p * 0.03}, ${1 - p * p * 0.02})`;
+        ch.querySelectorAll('.c-spark, .c-spark2').forEach((s) => { s.setAttribute('cx', pt.x); s.setAttribute('cy', pt.y); s.setAttribute('r', (s.classList.contains('c-spark2') ? 10 : 6) * (1 + p * 0.8 + Math.sin(t * 40) * 0.14)); });
+        const l = part(ch, 'half-l'), r = part(ch, 'half-r'), lid = part(ch, 'lid');
+        const sp = p * p * 3.2, sh = Math.sin(t * 50) * p * p * 1.2;
+        if (l) l.style.transform = `translate(${(-sp + sh).toFixed(2)}px, 0) scale(${1 + p * p * 0.02}, ${1 - p * p * 0.015})`;
+        if (r) r.style.transform = `translate(${(sp + sh).toFixed(2)}px, 0) scale(${1 + p * p * 0.02}, ${1 - p * p * 0.015})`;
+        if (lid) lid.style.transform = `translate(${sh.toFixed(2)}px, ${(-p * p * 6).toFixed(1)}px)`;
       },
-      burst(svg, c) {
-        const L = svg.querySelector('.c-left'), R = svg.querySelector('.c-right'), lid = svg.querySelector('.c-lid');
-        const go = (el, kf) => el && el.animate(kf, { duration: 1100, fill: 'forwards', easing: 'cubic-bezier(0.2,0.7,0.3,1)' });
-        const body = svg.querySelector('.c-body');
-        if (body) { body.style.transform = ''; body.animate([{ opacity: 1 }, { opacity: 1, offset: 0.2 }, { opacity: 0 }], { duration: 700, fill: 'forwards' }); }
-        go(L, [{ transform: 'translate(0,0) rotate(0)' }, { transform: 'translate(-110px, 30px) rotate(-22deg)', opacity: 0 }]);
-        go(R, [{ transform: 'translate(0,0) rotate(0)' }, { transform: 'translate(110px, 30px) rotate(22deg)', opacity: 0 }]);
-        go(lid, [{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-200px) rotate(40deg)', opacity: 0 }]);
+      burst(ch, c) {
+        const l = part(ch, 'half-l'), r = part(ch, 'half-r'), lid = part(ch, 'lid');
+        [l, r, lid].forEach((el) => { if (el) el.style.transform = ''; });
+        fly(l, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: 'translate(-70px,-30px) rotate(-14deg)', opacity: 1, offset: 0.3 }, { transform: 'translate(-190px, 150px) rotate(-38deg)', opacity: 0 }], 1100, 'cubic-bezier(0.2,0.7,0.3,1)');
+        fly(r, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: 'translate(70px,-30px) rotate(14deg)', opacity: 1, offset: 0.3 }, { transform: 'translate(190px, 150px) rotate(38deg)', opacity: 0 }], 1100, 'cubic-bezier(0.2,0.7,0.3,1)');
+        fly(lid, [{ transform: 'translateY(0) rotate(0)', opacity: 1 }, { transform: 'translateY(-240px) rotate(40deg)', opacity: 1, offset: 0.45 }, { transform: 'translateY(200px) rotate(90deg)', opacity: 0 }], 1200, 'cubic-bezier(0.2,0.8,0.3,1)');
         c.explode('#ff3d8b', '#ffd24a', 1.1);
         BR.audio.bang();
-        const r = c.rect;
-        const cols = ['#ff6b9a', '#ffd36b', '#6bffb2', '#6bb8ff', '#c08bff'];
-        for (let i = 0; i < 4; i++) setTimeout(() => { BR.audio.launch(); fx().firework(r.x, r.y, r.x + rnd(-120, 120), r.y - rnd(150, 300), cols[i % 5], ['peony', 'ring', 'star', 'willow'][i]); }, 120 + i * 140);
+        const rc = c.rect, cols = ['#ff6b9a', '#ffd36b', '#6bffb2', '#6bb8ff', '#c08bff'];
+        for (let i = 0; i < 4; i++) setTimeout(() => { BR.audio.launch(); fx().firework(rc.x, rc.y, rc.x + rnd(-120, 120), rc.y - rnd(150, 300), cols[i % 5], ['peony', 'ring', 'star', 'willow'][i]); }, 120 + i * 140);
       },
     },
     board: {
-      init(svg) { svg.querySelectorAll('.c-cracks path').forEach((p) => { p.style.strokeDasharray = 100; p.style.strokeDashoffset = 100; }); },
-      hold(svg, p, t) {
-        const fr = svg.querySelector('.c-frost'); if (fr) fr.style.opacity = clamp(p * 0.9, 0, 0.5).toFixed(2);
-        const q = clamp((p - 0.2) / 0.8, 0, 1);
-        svg.querySelectorAll('.c-cracks path').forEach((el, i) => { el.style.strokeDashoffset = 100 * (1 - clamp(q * 1.6 - i * 0.18, 0, 1)); });
-        const lid = svg.querySelector('.c-lid'); if (lid) lid.style.transform = `translate(${(Math.sin(t * 70) * p * p * 1.6).toFixed(2)}px, 0)`;
+      init() { },
+      hold(ch, p, t) {
+        // frost comes from --hold in css; the cracks draw themselves in from the middle
+        const q = clamp((p - 0.18) / 0.82, 0, 1);
+        ch.querySelectorAll('.cp-cracks path').forEach((el, i) => { el.style.strokeDashoffset = (100 * (1 - clamp(q * 1.7 - i * 0.2, 0, 1))).toFixed(1); });
+        const cr = part(ch, 'cracks'); if (cr) cr.style.opacity = q > 0 ? 1 : 0;
+        const g = part(ch, 'glass'), f = part(ch, 'frost'), b = part(ch, 'board');
+        const sh = `translate(${(Math.sin(t * 70) * p * p * 1.8).toFixed(2)}px, ${(-p * p * 3).toFixed(1)}px)`;
+        [g, f, cr].forEach((el) => { if (el) el.style.transform = sh; });
+        if (b) b.style.transform = `translateY(${(-p * p * 2).toFixed(1)}px) scale(${1 + p * 0.04})`;
       },
-      burst(svg, c) {
-        const lid = svg.querySelector('.c-lid');
-        if (lid) { lid.style.transform = ''; lid.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, fill: 'forwards' }); }
-        // glass shards as real DOM pieces
+      burst(ch, c) {
+        const g = part(ch, 'glass'), f = part(ch, 'frost'), cr = part(ch, 'cracks'), b = part(ch, 'board'), body = part(ch, 'body');
+        [g, f, cr, b].forEach((el) => { if (el) el.style.transform = ''; });
+        [g, f, cr].forEach((el) => fade(el, 130));
+        if (b) fly(b, [{ transform: 'translateY(0) scale(1)', opacity: 1 }, { transform: 'translateY(-70px) scale(1.25)', opacity: 1, offset: 0.35 }, { transform: 'translateY(-40px) scale(0.2)', opacity: 0 }], 900, 'ease-out');
+        if (body) fly(body, [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 1, transform: 'translateY(2%)', offset: 0.3 }, { opacity: 0, transform: 'translateY(10%) scale(0.9)' }], 800, 'ease-in');
         const wrap = c.wrap, box = wrap.getBoundingClientRect();
-        for (let i = 0; i < 22; i++) {
-          const s = document.createElement('i'); s.className = 'op-shard';
-          const sx = box.width * rnd(0.22, 0.78), sy = box.height * rnd(0.3, 0.55);
-          s.style.left = sx + 'px'; s.style.top = sy + 'px'; s.style.width = rnd(14, 34) + 'px'; s.style.height = rnd(16, 38) + 'px';
-          wrap.appendChild(s);
+        for (let i = 0; i < 24; i++) {
+          const sh = document.createElement('i'); sh.className = 'op-shard';
+          const sx = box.width * rnd(0.2, 0.8), sy = box.height * rnd(0.26, 0.58);
+          sh.style.left = sx + 'px'; sh.style.top = sy + 'px'; sh.style.width = rnd(14, 34) + 'px'; sh.style.height = rnd(16, 38) + 'px';
+          wrap.appendChild(sh);
           const dx = (sx - box.width / 2) * rnd(1.4, 3.2) + rnd(-40, 40), dy = -rnd(60, 240);
-          s.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) rotate(${rnd(-300, 300)}deg)`, opacity: 1, offset: 0.45, easing: 'cubic-bezier(0.4,0,0.9,0.6)' }, { transform: `translate(${dx * 1.3}px, ${dy + 520}px) rotate(${rnd(-540, 540)}deg)`, opacity: 0 }], { duration: rnd(900, 1300), fill: 'forwards', easing: 'cubic-bezier(0.2,0.7,0.4,1)' }).onfinish = () => s.remove();
+          sh.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) rotate(${rnd(-300, 300)}deg)`, opacity: 1, offset: 0.45, easing: 'cubic-bezier(0.4,0,0.9,0.6)' }, { transform: `translate(${dx * 1.3}px, ${dy + 520}px) rotate(${rnd(-540, 540)}deg)`, opacity: 0 }], { duration: rnd(900, 1300), fill: 'forwards', easing: 'cubic-bezier(0.2,0.7,0.4,1)' }).onfinish = () => sh.remove();
         }
-        const r = c.rect;
-        fx().shards(r.x, r.y - 20, '#dff7ff', 30, 1.3, { shape: 'tri', size: 5, spread: 9, life: 0.7, g: 1300 });
-        fx().ring(r.x, r.y - 10, '#bfe9ff', 190, 0.7, 6);
+        const rc = c.rect;
+        fx().shards(rc.x, rc.y - 20, '#dff7ff', 30, 1.3, { shape: 'tri', size: 5, spread: 9, life: 0.7, g: 1300 });
+        fx().ring(rc.x, rc.y - 10, '#bfe9ff', 190, 0.7, 6);
         c.explode('#4aa8ff', '#ffffff', 1.0);
         BR.audio.glassBreak();
       },
     },
     fuse: {
-      init(svg) { },
-      hold(svg, p, t, ctx) {
-        const nd = svg.querySelector('.c-needle'); if (nd) nd.style.transform = `rotate(${(-120 + p * 240 + Math.sin(t * 30) * p * 4).toFixed(1)}deg)`;
-        const lid = svg.querySelector('.c-lid'); if (lid) lid.style.transform = `translateY(${(-p * p * 4 + Math.sin(t * 60) * p * 1.2).toFixed(1)}px)`;
-        // steam from the vents, faster as pressure rises
-        ctx.steamT = (ctx.steamT || 0) + 1;
-        if (p > 0.18 && Math.random() < p * 0.35) ctx.steam(Math.random() < 0.5 ? 0.12 : 0.88, 0.62, 0.4 + p);
+      init() { },
+      hold(ch, p, t, ctx) {
+        const nd = part(ch, 'needle'); if (nd) nd.style.transform = `rotate(${(-120 + p * 240 + Math.sin(t * 30) * p * 5).toFixed(1)}deg)`;
+        const lid = part(ch, 'lid'); if (lid) lid.style.transform = `translate(${(Math.sin(t * 62) * p * p * 1.4).toFixed(2)}px, ${(-p * p * 5).toFixed(1)}px)`;
+        const body = part(ch, 'body'); if (body) body.style.transform = `scale(${1 + p * p * 0.025}, ${1 - p * p * 0.02})`;
+        // steam from the side vents, faster as the pressure rises
+        if (p > 0.15 && Math.random() < p * 0.4) ctx.steam(Math.random() < 0.5 ? 0.2 : 0.8, 0.66, 0.4 + p);
       },
-      burst(svg, c) {
-        const nd = svg.querySelector('.c-needle'); if (nd) nd.style.transform = 'rotate(125deg)';
-        const lid = svg.querySelector('.c-lid');
-        if (lid) { lid.style.transform = ''; lid.animate([{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-330px) rotate(360deg)', opacity: 1, offset: 0.45, easing: 'cubic-bezier(0.2,0.8,0.4,1)' }, { transform: 'translateY(200px) rotate(760deg)', opacity: 0 }], { duration: 1300, fill: 'forwards', easing: 'linear' }); }
-        for (let i = 0; i < 9; i++) setTimeout(() => c.steam(rnd(0.3, 0.7), 0.3, 1.6), i * 40);
+      burst(ch, c) {
+        const nd = part(ch, 'needle'); if (nd) { nd.style.transform = 'rotate(128deg)'; }
+        const lid = part(ch, 'lid'), body = part(ch, 'body');
+        if (lid) { lid.style.transform = ''; fly(lid, [{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-340px) rotate(360deg)', opacity: 1, offset: 0.45, easing: 'cubic-bezier(0.2,0.8,0.4,1)' }, { transform: 'translateY(220px) rotate(780deg)', opacity: 0 }], 1300, 'linear'); }
+        if (body) { body.style.transform = ''; fly(body, [{ transform: 'scale(1,1)', opacity: 1 }, { transform: 'scale(1.1, 0.92)', opacity: 1, offset: 0.2 }, { transform: 'scale(0.7, 0.2) translateY(30%)', opacity: 0 }], 700, 'ease-in'); }
+        if (nd) fade(nd, 400, 150);
+        for (let i = 0; i < 10; i++) setTimeout(() => c.steam(rnd(0.25, 0.75), 0.4, 1.6), i * 40);
         c.explode('#ffb02e', '#ffe58a', 1.2);
         BR.audio.steam(); BR.audio.boom();
       },
     },
     golden: {
       init() { },
-      hold(svg, p, t) {
-        const lid = svg.querySelector('.c-lid'); if (lid) lid.style.transform = `translateY(${(-p * p * 6).toFixed(1)}px) rotate(${(Math.sin(t * 50) * p * 0.8).toFixed(2)}deg)`;
-        const g = svg.querySelector('.c-glints'); if (g) g.style.transform = `scale(${1 + p * 0.8})`;
+      hold(ch, p, t) {
+        const lid = part(ch, 'lid'); if (lid) lid.style.transform = `translate(${(Math.sin(t * 53) * p * p * 1.2).toFixed(2)}px, ${(-p * p * 10).toFixed(1)}px) rotate(${(Math.sin(t * 50) * p * 0.9).toFixed(2)}deg)`;
+        const g = part(ch, 'glints'); if (g) g.style.transform = `scale(${1 + p * 0.25})`;
       },
-      burst(svg, c) {
-        const lid = svg.querySelector('.c-lid');
-        if (lid) { lid.style.transform = ''; lid.animate([{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-260px) rotate(-30deg)', opacity: 1, offset: 0.5 }, { transform: 'translateY(280px) rotate(-70deg)', opacity: 0 }], { duration: 1300, fill: 'forwards', easing: 'cubic-bezier(0.3,0.6,0.4,1)' }); }
-        const base = svg.querySelector('.c-body');
-        if (base) base.animate([{ opacity: 1, filter: 'brightness(1)' }, { opacity: 1, filter: 'brightness(2.6)', offset: 0.25 }, { opacity: 0, filter: 'brightness(4)' }], { duration: 750, fill: 'forwards' });
+      burst(ch, c) {
+        const lid = part(ch, 'lid'), body = part(ch, 'body'), leak = part(ch, 'leak');
+        if (lid) { lid.style.transform = ''; fly(lid, [{ transform: 'translateY(0) rotate(0)' }, { transform: 'translateY(-280px) rotate(-30deg)', opacity: 1, offset: 0.5 }, { transform: 'translateY(300px) rotate(-70deg)', opacity: 0 }], 1300); }
+        if (body) fly(body, [{ opacity: 1, filter: 'brightness(1)' }, { opacity: 1, filter: 'brightness(2.4)', offset: 0.25 }, { opacity: 0, filter: 'brightness(4)' }], 760, 'ease-out');
+        fade(leak, 300);
         c.explode('#ffd24a', '#ffffff', 1.5);
         fx().confetti(['#ffd24a', '#fff0a8', '#ffb21e', '#ffffff'], 90, -20);
-        const r = c.rect;
-        for (let i = 0; i < 14; i++) setTimeout(() => { BR.audio.coin(i); fx().sparks(r.x + rnd(-60, 60), r.y - rnd(0, 120), '#ffe58a', 8, 1.2, 0.8); }, i * 50);
+        const rc = c.rect;
+        for (let i = 0; i < 14; i++) setTimeout(() => { BR.audio.coin(i); fx().sparks(rc.x + rnd(-60, 60), rc.y - rnd(0, 120), '#ffe58a', 8, 1.2, 0.8); }, i * 50);
         BR.audio.bang();
       },
     },
@@ -251,7 +265,7 @@
       this.root = root;
       const q = (s) => root.querySelector(s);
       Object.assign(this, {
-        chestBox: q('.op-chest'), shake: q('.op-shake'), wrap: q('.op-chest-wrap'), svg: q('.chest-svg'), holdEl: q('[data-hold]'),
+        chestBox: q('.op-chest'), shake: q('.op-shake'), wrap: q('.op-chest-wrap'), svg: q('.chest'), holdEl: q('[data-hold]'),
         label: q('[data-label]'), sub: q('[data-sub]'), reelWrap: q('.op-reel'), reelHost: q('.reel-host'), skipEl: q('[data-skip]'), rv: q('[data-rv]'),
       });
       document.body.classList.add('in-opening');
@@ -298,7 +312,7 @@
       // fresh chest art every time
       this.chestBox.className = 'op-chest';
       this.chestBox.innerHTML = BR.chestSVG(this.id);
-      this.svg = this.chestBox.querySelector('.chest-svg');
+      this.svg = this.chestBox.querySelector('.chest');
       this.ritual = Rituals[this.id];
       this.ritual.init(this.svg);
       this.refreshFoot();
@@ -424,7 +438,7 @@
       if (reduced()) { this.chestBox.classList.add('gone'); await sleep(250); }
       else {
         this.ritual.burst(this.svg, c);
-        const glow = this.svg.querySelector('.c-glow');
+        const glow = this.svg.querySelector('[data-p="glow"]');
         if (glow) glow.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 1, transform: 'scale(1.7)', offset: 0.4 }, { opacity: 0, transform: 'scale(2.2)' }], { duration: 900, fill: 'forwards' });
         await sleep(800);
         this.chestBox.classList.add('gone');
