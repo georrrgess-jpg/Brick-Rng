@@ -27,7 +27,8 @@
     applySettings() {
       const s = BR.Storage.data.settings;
       BR.audio.setEnabled(s.sound);
-      if (BR.Music) BR.Music.setEnabled(s.music);
+      if (BR.audio.setVolume) BR.audio.setVolume(s.sfxVol == null ? 1 : s.sfxVol);
+      if (BR.Music) { BR.Music.setEnabled(s.music); if (BR.Music.setVolume) BR.Music.setVolume(s.musicVol == null ? 0.7 : s.musicVol); }
       document.documentElement.classList.toggle('shapes', s.shapes);
       document.documentElement.classList.toggle('reduced', s.reduced);
       BR.reducedMotion = s.reduced;
@@ -69,7 +70,8 @@
 
     bindGlobal() {
       // first touch unlocks audio
-      ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => BR.audio.unlock(), { once: true, passive: true }));
+      // (the browser only lets sound start after a tap, so the menu music starts on the first one)
+      ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { BR.audio.unlock(); if (BR.Router.current !== 'run' && BR.Music) BR.Music.start('menu'); }, { once: true, passive: true }));
       // prevent pinch / double-tap zoom and context menus on long press
       document.addEventListener('contextmenu', (e) => e.preventDefault());
       document.addEventListener('gesturestart', (e) => e.preventDefault());

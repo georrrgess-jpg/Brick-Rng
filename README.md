@@ -64,7 +64,10 @@ css/badges.css      item badges (rarity frame and art, the still version used in
 css/coach.css       the first-time tip cards
 js/rng.js board.js config.js boosters.js items.js chests.js engine.js storage.js pass.js progress.js missions.js
                     pure logic, runs in Node (tests use it)
-js/audio.js music.js fx.js    synthesized sound and music, canvas particles, fireworks
+js/audio.js         every sound effect, synthesized: pentatonic pops, a quiet low-passed SFX bus, loudness-tested
+js/music.js         adaptive soundtrack: menu and run arrangements that crossfade on bar lines, stems that join per stage,
+                    a tense low-fuse layer, a Rush key lift, ducking under big moments, no repeat within 10 minutes
+js/fx.js            canvas particles, fireworks
 js/skins.js         applies the loadout, previews, signature moments (Series 3 plugs in via handlers)
 js/s3-skins.js s3-pops.js s3-scenes.js   Series 3 moments and pop recipes
 js/badges.js        the item badge (used in the reel, Collection, Pass, reveals)
@@ -91,6 +94,7 @@ node tests/stress.js    # a bot plays the real UI (Rush, Chill, Daily, pause, En
 node tests/flow.js      # every chest opens end to end, equip, a finished set cannot be opened, back out, reduced motion
 node tests/chests.js    # each chest's parts move on hold and burst (the fuse needle included); records a video and a frame sheet
 node tests/spinperf.js  # frame time of the reel under a 4x CPU throttle
+node tests/audio.js [--quick]   # offline renders: peaks, loudness, pitch, timbre, music structure, never-late scheduler (~4 min)
 node tests/badgesheet.js <dir>   # every item as a badge, in every shine, for review
 node tests/moments.js   # every signature moment plays without errors
 node tests/gallery.js <dir> [type]   # screenshots every skin, board and fuse for review

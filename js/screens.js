@@ -488,10 +488,11 @@
     Profile.el.addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value / 100; S().settings[k] = v; e.target.parentNode.querySelector('b').textContent = Math.round(v * 100);
-      if (BR.audio && BR.audio.setVolumes) BR.audio.setVolumes(); else if (BR.App && BR.App.applySettings) BR.App.applySettings();
+      BR.App.applySettings();
     });
     Profile.el.addEventListener('change', (e) => {
       if (e.target.dataset.vol) { BR.Storage.save(); if (BR.audio && BR.audio.ui) BR.audio.ui(); return; }
+      if (e.target.dataset.set === 'music' && e.target.checked && BR.Music) setTimeout(() => BR.Music.start('menu'), 50);
       const k = e.target.dataset.set;
       if (!k) return;
       S().settings[k] = e.target.checked; BR.Storage.save(); BR.App.applySettings(); BR.audio.ui(); BR.haptic('tap');

@@ -190,6 +190,12 @@
       fuse.classList.toggle('crit', crit);
       fuse.classList.toggle('frozen', frozen);
       $('warnVignette').classList.toggle('on', crit && !this.paused);
+      // the music turns tense when the fuse is low, and the last ten seconds tick once a second
+      if (BR.Music && BR.Music.setLow) BR.Music.setLow(f <= BR.CFG.fuse.lowFrac && !frozen && !e.over && this.clock && !this.paused);
+      if (this.clock && !this.paused && !frozen && !e.over && e.fuse > 0 && e.fuse < 10) {
+        const sec = Math.ceil(e.fuse);
+        if (sec !== this.tickSec) { this.tickSec = sec; if (BR.audio.fuseTick) BR.audio.fuseTick(sec); }
+      } else this.tickSec = 0;
       // heartbeat + one-time warning
       if (crit && this.clock && !this.paused) {
         this.hb -= dt;
@@ -547,7 +553,7 @@
       setTimeout(() => this.hudStageBar(), 60);
       this.fx.flash('#ffffff', 0.35, 500); this.fx.shake($('app'), 10, 420);
       this.warned = false;
-      if (BR.Music) BR.Music.setStage(e.stage);
+      if (BR.Music) { BR.Music.setStage(e.stage); BR.Music.stageUp(); }
       this.saveSnap();
       const C = BR.CFG.stage;
       if (info.to === C.sixthColor || info.to === C.seventhColor) setTimeout(() => this.hint('A <b>new brick color</b> joins the board', 3000), 900);
@@ -628,7 +634,6 @@
     },
     exitToHome() {
       this.over = true; this.clock = false; this.token++;
-      if (BR.Music) BR.Music.stop();
       BR.Router.go('home');
     },
 
@@ -731,6 +736,7 @@
       host.appendChild(node);
       host.style.pointerEvents = 'auto';
       this.resultsEl = node;
+      if (BR.Music && BR.Music.resultsSting) BR.Music.resultsSting();
       requestAnimationFrame(() => node.classList.add('on'));
       BR.Router.setTabs(false);
       // choreography
@@ -780,7 +786,6 @@
       n.classList.remove('on');
       setTimeout(() => { n.remove(); $('layer-overlays').style.pointerEvents = 'none'; }, 400);
       this.resultsEl = null; this.modal = false; this.ending = false;
-      if (BR.Music) BR.Music.stop();
     },
     /** Share a Daily Rush result: an image if the device can share files, otherwise text. */
     async share(sum) {
