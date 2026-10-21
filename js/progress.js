@@ -1,4 +1,4 @@
-/* Progression (pure logic over Storage): XP, levels, Geodes, Shards, Vault, Fusion, loadout, Trackers. */
+/* Progression (pure logic over Storage): XP, levels, Coins, chests, items, Trade-up, Rush Pass, Trophies. */
 (function () {
   const G = typeof window !== 'undefined' ? window : globalThis;
   const BR = (G.BR = G.BR || {});
@@ -8,19 +8,43 @@
   let rngCounter = 0;
   const rng = () => BR.makeRng((Date.now() ^ (++rngCounter * 2654435761)) >>> 0);
 
-  const todayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
-
   BR.Progress = {
     get level() { return P().level; },
     get xp() { return P().xp; },
     get need() { return BR.xpForLevel(P().level); },
-    get shards() { return P().shards; },
-    geodeCount() { return P().geodes.normal + P().geodes.series; },
+    get coins() { return P().coins; },
 
-    /**
-     * Add XP. Each level-up grants one Geode (a Series Geode on every 5th level).
-     * Returns what happened so the UI can animate it.
-     */
+    /* ---------- Coins ---------- */
+    earn(n) { n = Math.max(0, Math.round(n)); P().coins += n; P().stats.coinsEarned += n; BR.Storage.saveSoon(); return n; },
+    spend(n) { if (P().coins < n) return false; P().coins -= n; BR.Storage.saveSoon(); return true; },
+
+    /** Coins for a finished run. Daily Rush and the Double Coins boost add +1x each. */
+    runCoins(summary, opts = {}) {
+      const base = Math.floor(summary.score / BR.CFG.coinsPerScore);
+      let stages = 0;
+      for (let s = 1; s <= summary.stagesCleared; s++) stages += BR.CFG.coinsPerStage * s;
+      const mult = 1 + (opts.daily ? 1 : 0) + (opts.double ? 1 : 0);
+      return { base, stages, mult, total: (base + stages) * mult };
+    },
+
+    /* ---------- XP, levels, Rush Pass ---------- */
+    runXpRows(summary, opts = {}) {
+      const rows = [];
+      const pts = Math.floor(summary.score / 250);
+      if (pts > 0) rows.push({ label: 'Points scored', xp: pts });
+      let st = 0;
+      for (let s = 1; s <= summary.stagesCleared; s++) st += 40 + 8 * s;
+      if (st) rows.push({ label: `${summary.stagesCleared} stage${summary.stagesCleared > 1 ? 's' : ''} cleared`, xp: st });
+      if (summary.rushes) rows.push({ label: `Rush Mode x${summary.rushes}`, xp: 20 * summary.rushes });
+      if (summary.lineBlasts) rows.push({ label: `Line Blast x${summary.lineBlasts}`, xp: 25 * summary.lineBlasts });
+      if (summary.bigPops) rows.push({ label: `Pops of 10+ x${summary.bigPops}`, xp: 15 * summary.bigPops });
+      if (opts.daily) rows.push({ label: 'Daily Rush', xp: 100 });
+      if (opts.isBest) rows.push({ label: 'New best score', xp: 200 });
+      if (opts.firstOfDay) rows.push({ label: 'First run of the day', xp: 150 });
+      return rows;
+    },
+
+    /** Add XP. Every level-up finishes a Pass tier and pays its reward. */
     addXp(amount) {
       const p = P();
       const from = { level: p.level, xp: p.xp, need: BR.xpForLevel(p.level) };
@@ -28,78 +52,73 @@
       p.xp += Math.max(0, Math.round(amount));
       while (p.xp >= BR.xpForLevel(p.level)) {
         p.xp -= BR.xpForLevel(p.level);
+        const tier = p.level;
         p.level++;
-        const kind = p.level % BR.CFG.geodeSeriesEvery === 0 ? 'series' : 'normal';
-        p.geodes[kind]++;
-        ups.push({ level: p.level, kind });
+        const reward = BR.passReward(tier);
+        if (tier > p.passTier) { p.passTier = tier; this.grant(reward); }
+        ups.push({ level: p.level, tier, reward });
       }
       save();
       return { gained: amount, from, level: p.level, xp: p.xp, need: BR.xpForLevel(p.level), ups };
     },
 
-    /** XP rows for finishing a round (or the remainder of a run when `partial`). */
-    roundRows(engine, partial) {
-      const rows = [];
-      const pts = Math.floor(engine.roundScore / 100);
-      if (pts > 0) rows.push({ label: 'Points scored', xp: pts });
-      if (!partial) rows.push({ label: 'Round ' + engine.round + ' cleared', xp: 50 + 10 * engine.round });
-      if (engine.roundStats.lines) rows.push({ label: 'Line Blast x' + engine.roundStats.lines, xp: 25 * engine.roundStats.lines });
-      if (engine.roundStats.big) rows.push({ label: 'Groups of 10+ x' + engine.roundStats.big, xp: 15 * engine.roundStats.big });
-      return rows;
+    /** Pay out a reward object (coins / chest / item). */
+    grant(r) {
+      if (r.kind === 'coins') this.earn(r.amount);
+      else if (r.kind === 'chest') this.addChest(r.chest, 1);
+      else if (r.kind === 'item') this.keep({ itemId: r.itemId, shine: r.shine || 'plain', seed: 7, counter: null });
+      save();
     },
 
-    /** Once-per-run bonuses, added at the end of the first round or run. */
-    dailyRow() {
-      const t = todayKey();
-      if (S().lastDay === t) return null;
-      S().lastDay = t; save();
-      return { label: 'First run of the day', xp: 150 };
-    },
+    /* ---------- Chests ---------- */
+    chestCount(id) { return P().chests[id] || 0; },
+    totalChests() { return Object.values(P().chests).reduce((a, b) => a + b, 0); },
+    addChest(id, n = 1) { P().chests[id] = (P().chests[id] || 0) + n; save(); },
+    /** Can this chest be opened right now (owned, or affordable)? */
+    canOpen(id) { const c = BR.CHESTS[id]; return this.chestCount(id) > 0 || (c.cost != null && P().coins >= c.cost); },
 
-    // ---------- Geodes ----------
-    /** Next Geode to open: Series Geodes first (better odds). null if none. */
-    nextGeodeKind() { const g = P().geodes; return g.series > 0 ? 'series' : g.normal > 0 ? 'normal' : null; },
-
-    /** Consume a Geode and roll its drop. The drop is not in the Vault until keep() / equip(). */
-    openGeode() {
-      const kind = this.nextGeodeKind();
-      if (!kind) return null;
-      P().geodes[kind]--;
-      P().opened++;
-      const drop = BR.rollDrop(rng(), kind);
-      drop.kind = kind;
+    /**
+     * Take a chest (from inventory first, otherwise pay) and roll its drop.
+     * Called at the burst moment of the opening, so backing out early never costs anything.
+     */
+    openChest(id, type) {
+      const c = BR.CHESTS[id];
+      if (this.chestCount(id) > 0) P().chests[id]--;
+      else if (c.cost == null || !this.spend(c.cost)) return null;
+      const drop = BR.rollChest(rng(), id, type);
+      drop.chest = id;
       drop.dup = this.owns(drop.itemId);
+      P().opened++; P().stats.chests++;
       save();
       return drop;
     },
 
+    /* ---------- items ---------- */
     owns(itemId) { return P().vault.some((i) => i.itemId === itemId); },
-
+    ownedIds() { return Array.from(new Set(P().vault.map((i) => i.itemId))); },
     keep(drop) {
-      const inst = { uid: 'i' + (++P().seq).toString(36), itemId: drop.itemId, finish: drop.finish, seed: drop.seed, tracker: drop.tracker ? Object.assign({}, drop.tracker) : null };
+      const inst = { uid: 'i' + (++P().seq).toString(36), itemId: drop.itemId, shine: drop.shine, seed: drop.seed || 0, counter: drop.counter ? Object.assign({}, drop.counter) : null };
       P().vault.push(inst);
       save();
       return inst;
     },
-
-    dust(drop) {
-      const amt = BR.rarityById[drop.rarity].dust;
-      P().shards += amt;
-      save();
-      return amt;
+    /** Sell a drop that has not been kept. */
+    sellDrop(drop) { const n = BR.rarityById[drop.rarity].sell; this.earn(n); save(); return n; },
+    sellInstance(uid) {
+      const inst = this.instance(uid);
+      if (!inst || this.isEquipped(uid)) return 0;
+      const n = BR.rarityById[BR.itemById[inst.itemId].rarity].sell;
+      P().vault = P().vault.filter((i) => i.uid !== uid);
+      this.earn(n); save();
+      return n;
     },
-
-    // ---------- Vault ----------
     instance(uid) { return P().vault.find((i) => i.uid === uid) || null; },
     itemOf(inst) { return BR.itemById[inst.itemId]; },
-
-    /** Resolve the currently equipped item for a type: { item, inst|null }. */
     equipped(type) {
       const uid = P().loadout[type];
       const inst = uid && uid !== 'default' ? this.instance(uid) : null;
       return inst ? { item: this.itemOf(inst), inst } : { item: BR.DEFAULTS[type], inst: null };
     },
-
     equip(uid, type) {
       if (uid === 'default') P().loadout[type] = 'default';
       else { const inst = this.instance(uid); if (!inst) return false; P().loadout[BR.itemById[inst.itemId].type] = uid; }
@@ -108,54 +127,64 @@
     },
     isEquipped(uid) { return Object.values(P().loadout).includes(uid); },
 
-    // ---------- Fusion ----------
-    /** Validate a fusion selection. Returns { ok, reason, rarityIndex }. */
-    canFuse(uids) {
-      if (uids.length !== BR.CFG.fusionCount) return { ok: false, reason: 'Pick ' + BR.CFG.fusionCount + ' items' };
-      if (new Set(uids).size !== uids.length) return { ok: false, reason: 'Duplicate pick' };
+    /* ---------- Trade-up: 5 items of one rarity and type -> 1 of the next ---------- */
+    canTradeUp(uids) {
+      const n = BR.CFG.tradeUpCount;
+      if (uids.length !== n) return { ok: false, reason: `Pick ${n} items` };
+      if (new Set(uids).size !== n) return { ok: false, reason: 'Pick different items' };
       const insts = uids.map((u) => this.instance(u));
       if (insts.some((i) => !i)) return { ok: false, reason: 'Item missing' };
-      if (uids.some((u) => this.isEquipped(u))) return { ok: false, reason: 'Unequip first' };
-      const rars = new Set(insts.map((i) => this.itemOf(i).rarity));
-      if (rars.size !== 1) return { ok: false, reason: 'Same rarity only' };
-      const idx = BR.RARITIES.findIndex((r) => r.id === [...rars][0]);
-      if (idx >= BR.RARITIES.length - 1) return { ok: false, reason: 'Celestial is the top' };
-      return { ok: true, rarityIndex: idx + 1 };
+      if (uids.some((u) => this.isEquipped(u))) return { ok: false, reason: 'Take it off first' };
+      const items = insts.map((i) => this.itemOf(i));
+      if (new Set(items.map((x) => x.rarity)).size !== 1) return { ok: false, reason: 'Same rarity only' };
+      if (new Set(items.map((x) => x.type)).size !== 1) return { ok: false, reason: 'Same type only' };
+      const idx = BR.RARITIES.findIndex((r) => r.id === items[0].rarity);
+      if (idx >= BR.RARITIES.length - 1) return { ok: false, reason: 'Mythic is the top' };
+      return { ok: true, rarityIndex: idx + 1, type: items[0].type };
     },
-
-    /** Trade 5 items of one rarity for 1 item of the next. The new item goes straight into the Vault. */
-    fuse(uids) {
-      const chk = this.canFuse(uids);
+    tradeUp(uids) {
+      const chk = this.canTradeUp(uids);
       if (!chk.ok) return null;
       P().vault = P().vault.filter((i) => !uids.includes(i.uid));
-      const drop = BR.rollDrop(rng(), 'normal', chk.rarityIndex);
-      drop.kind = 'fusion';
-      drop.dup = this.owns(drop.itemId);
+      const chestId = BR.ITEM_TYPES[chk.type].chest;
+      const drop = BR.rollChest(rng(), chestId, chk.type, chk.rarityIndex);
+      drop.chest = chestId; drop.dup = false; drop.fromTradeUp = true;
       drop.inst = this.keep(drop);
       return drop;
     },
 
-    buyGeode() {
-      if (P().shards < BR.CFG.shardGeodeCost) return false;
-      P().shards -= BR.CFG.shardGeodeCost;
-      P().geodes.series++;
+    /* ---------- run bookkeeping ---------- */
+    /** Feed run stats to equipped items that carry a Counter, and to the lifetime stats. */
+    trackRun(sum, mode) {
+      const st = P().stats;
+      st.runs++; st.bricks += sum.bricks; st.rushes += sum.rushes; st.bigPops += sum.bigPops; st.powerups += sum.powerUsed;
+      st.lineBlasts += sum.lineBlasts; st.stages += sum.stagesCleared; st.defused += sum.defused || 0;
+      st.bestCombo = Math.max(st.bestCombo, sum.maxCombo); st.maxGroup = Math.max(st.maxGroup, sum.biggest);
+      if (mode === 'daily') st.dailyRuns++;
+      const bump = (type, fn) => { const e = this.equipped(type); if (e.inst && e.inst.counter) fn(e.inst.counter); };
+      bump('skin', (c) => { c.value += sum.bricks; });
+      bump('pop', (c) => { c.value = Math.max(c.value, sum.biggest); });
+      bump('board', (c) => { c.value += sum.stagesCleared + 1; });
+      bump('fuse', (c) => { c.value += sum.rushes; });
       save();
-      return true;
     },
 
-    // ---------- Trackers ----------
-    /** Feed run stats to equipped items that carry a Tracker. */
-    trackRun(stats) {
-      const bump = (type, fn) => { const e = this.equipped(type); if (e.inst && e.inst.tracker) fn(e.inst.tracker); };
-      bump('facet', (t) => { t.value += stats.bricks || 0; });
-      bump('burst', (t) => { t.value = Math.max(t.value, stats.biggest || 0); });
-      bump('arena', (t) => { t.value += stats.rounds || 0; });
-      save();
+    /* ---------- Trophies ---------- */
+    checkTrophies() {
+      const p = P(), got = [];
+      const ctx = { profile: p, stats: p.stats, owned: new Set(p.vault.map((i) => i.itemId)), bestStage: Math.max(S().bestStage.rush, S().bestStage.daily, S().bestStage.chill) };
+      for (const t of BR.TROPHIES) {
+        if (p.trophies[t.id]) continue;
+        if (t.test(ctx)) { p.trophies[t.id] = Date.now(); this.earn(t.coins); got.push(t); }
+      }
+      if (got.length) save();
+      return got;
     },
 
     counts() {
       const have = new Set(P().vault.map((i) => i.itemId));
-      return { found: have.size, total: BR.ITEMS.length };
+      const dropHave = BR.DROP_ITEMS.filter((x) => have.has(x.id)).length;
+      return { found: BR.ITEMS.filter((x) => have.has(x.id)).length, total: BR.ITEMS.length, dropFound: dropHave, dropTotal: BR.DROP_ITEMS.length };
     },
   };
 })();
