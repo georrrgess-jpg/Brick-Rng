@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#070a12">
+<meta name="description" content="Brick RNG: tap to pop bricks, open crates, and pull Cores that rewrite the rules.">
+<title>Brick RNG</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='24' rx='6' fill='%234a8dff'/%3E%3Ccircle cx='16' cy='15' r='6' fill='%2378adff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="flash" aria-hidden="true"></div>
+
+<div id="app">
+  <div class="ambient" aria-hidden="true"></div>
+
+  <!-- ============ MENU ============ -->
+  <section class="screen" id="menu">
+    <div class="menu-bricks" id="menuBricks" aria-hidden="true"></div>
+    <div class="menu-inner">
+      <div class="logo">
+        <div class="logo-row" aria-label="Brick">
+          <span class="lb" data-c="0">B</span><span class="lb" data-c="1">R</span><span class="lb" data-c="2">I</span><span class="lb" data-c="3">C</span><span class="lb" data-c="4">K</span>
+        </div>
+        <div class="logo-rng">RNG</div>
+        <p class="tagline">Pop. Pull. Reshape the game.</p>
+      </div>
+      <div class="menu-actions">
+        <button class="btn btn-primary btn-xl" id="btnPlay">Play</button>
+        <div class="menu-row">
+          <button class="btn" id="btnCollection"><span>Collection</span><small id="collCount">0/13</small></button>
+          <button class="btn" id="btnSettings">Settings</button>
+        </div>
+      </div>
+      <div class="menu-best"><span>Best score</span><b id="menuBest">0</b></div>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section class="screen" id="game">
+    <div class="game-col" id="gameCol">
+      <header class="topbar">
+        <button class="icon-btn" id="btnPause" aria-label="Pause">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+        </button>
+        <div class="topbar-title">BRICK<b>RNG</b></div>
+        <button class="icon-btn" id="btnSound" aria-label="Toggle sound">
+          <svg viewBox="0 0 24 24" class="snd-on"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+          <svg viewBox="0 0 24 24" class="snd-off"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+        </button>
+      </header>
+
+      <div class="hud">
+        <div class="stat stat-score">
+          <span class="lbl">Score</span>
+          <span class="val" id="score">0</span>
+          <span class="sub">Best <b id="best">0</b></span>
+        </div>
+        <div class="stat stat-fuel" id="fuelStat">
+          <span class="lbl">Fuel</span>
+          <span class="val" id="fuelVal">25</span>
+          <div class="bar"><i id="fuelBar"></i></div>
+        </div>
+      </div>
+
+      <div class="meter" id="crateMeter">
+        <div class="meter-icon" id="meterIcon">
+          <svg viewBox="0 0 24 24"><path d="M3.5 9.5h17v10h-17zM2.5 6.5h19v3h-19z"/><path d="M12 6.5v13M9.5 14.5h5"/></svg>
+        </div>
+        <div class="meter-track"><i id="meterFill"></i><span id="meterText">Next crate</span></div>
+      </div>
+
+      <div class="board-wrap" id="boardWrap">
+        <div class="board" id="board"><div class="field" id="field"></div></div>
+        <div class="fxlayer" id="fxlayer"></div>
+        <div class="combo" id="combo" aria-live="polite"><b id="comboX">x2</b><span>COMBO</span></div>
+        <div class="gravity-tag" id="gravityTag"><svg viewBox="0 0 24 24"><path d="M12 19V5M12 5l-5 5M12 5l5 5"/></svg>Gravity up</div>
+        <div class="hint" id="hint" role="status"></div>
+      </div>
+
+      <div class="core-slot empty" id="coreSlot"></div>
+    </div>
+  </section>
+
+  <!-- ============ COLLECTION ============ -->
+  <section class="screen" id="collection">
+    <div class="page">
+      <header class="page-head">
+        <button class="icon-btn" id="btnCollBack" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h2>Collection</h2>
+        <span class="page-sub" id="collProgress"></span>
+      </header>
+      <div class="coll-grid" id="collGrid"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ CRATE OVERLAY ============ -->
+<div class="overlay crate-overlay" id="crate" aria-hidden="true">
+  <div class="crate-glow-bg" id="crateGlow"></div>
+
+  <div class="crate-stage" id="crateStage">
+    <div class="crate-kicker">Crate unlocked</div>
+    <div class="crate-box" id="crateBox">
+      <div class="crate-rays" id="crateRays"></div>
+      <svg class="crate-svg" viewBox="0 0 200 196" aria-hidden="true">
+        <defs>
+          <linearGradient id="cgBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34456f"/><stop offset="1" stop-color="#172140"/></linearGradient>
+          <linearGradient id="cgLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46598a"/><stop offset="1" stop-color="#2a3a64"/></linearGradient>
+          <linearGradient id="cgGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".45" stop-color="#f6bd3c"/><stop offset="1" stop-color="#b8761a"/></linearGradient>
+          <radialGradient id="cgInner" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        </defs>
+        <ellipse cx="100" cy="184" rx="74" ry="8" fill="#000" opacity=".4"/>
+        <g class="crate-body">
+          <rect x="26" y="86" width="148" height="92" rx="12" fill="url(#cgBody)" stroke="#4a5f98" stroke-width="2"/>
+          <rect x="26" y="86" width="148" height="12" fill="#000" opacity=".25"/>
+          <rect x="44" y="86" width="16" height="92" fill="url(#cgGold)"/>
+          <rect x="140" y="86" width="16" height="92" fill="url(#cgGold)"/>
+          <rect x="44" y="86" width="16" height="92" fill="#000" opacity=".12"/>
+          <rect x="140" y="86" width="16" height="92" fill="#000" opacity=".12"/>
+          <g fill="#0f1730" opacity=".85"><circle cx="52" cy="100" r="2.6"/><circle cx="52" cy="164" r="2.6"/><circle cx="148" cy="100" r="2.6"/><circle cx="148" cy="164" r="2.6"/></g>
+          <text x="100" y="146" text-anchor="middle" class="crate-label">RNG</text>
+        </g>
+        <ellipse class="crate-inner" cx="100" cy="86" rx="70" ry="14" fill="url(#cgInner)" opacity="0"/>
+        <g class="crate-lid">
+          <path d="M20 88V66a14 14 0 0 1 14-14h132a14 14 0 0 1 14 14v22z" fill="url(#cgLid)" stroke="#5a70ab" stroke-width="2"/>
+          <path d="M34 52h132a14 14 0 0 1 14 14v4H20v-4a14 14 0 0 1 14-14z" fill="#fff" opacity=".1"/>
+          <rect x="44" y="52" width="16" height="36" fill="url(#cgGold)"/>
+          <rect x="140" y="52" width="16" height="36" fill="url(#cgGold)"/>
+          <rect x="86" y="74" width="28" height="30" rx="6" fill="url(#cgGold)" stroke="#8a560f" stroke-width="1.5"/>
+          <circle cx="100" cy="86" r="4.2" fill="#3b2806"/><rect x="98.2" y="86" width="3.6" height="9" rx="1.6" fill="#3b2806"/>
+        </g>
+      </svg>
+    </div>
+    <div class="odds" id="crateOdds"></div>
+    <button class="btn btn-primary btn-xl" id="btnOpenCrate">Open crate</button>
+  </div>
+
+  <div class="reel-stage" id="reelStage">
+    <div class="reel-kicker" id="reelKicker">Rolling</div>
+    <div class="reel-window" id="reelWindow">
+      <div class="reel-strip" id="reelStrip"></div>
+      <div class="reel-fade left"></div><div class="reel-fade right"></div>
+      <div class="reel-marker"><i></i><i></i></div>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-rays" id="resultRays"></div>
+    <div class="result-card" id="resultCard">
+      <div class="result-new" id="resultNew">New</div>
+      <div class="result-rarity" id="resultRarity"></div>
+      <div class="result-icon" id="resultIcon"></div>
+      <div class="result-name" id="resultName"></div>
+      <div class="result-desc" id="resultDesc"></div>
+      <div class="result-replace" id="resultReplace"></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary btn-xl" id="btnEquip">Equip</button>
+      <button class="btn btn-xl" id="btnScrap">Scrap <b id="scrapAmt">+3</b> Fuel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME OVER ============ -->
+<div class="overlay" id="gameover" aria-hidden="true">
+  <div class="panel gameover-panel">
+    <div class="eyebrow">Run over</div>
+    <div class="go-best" id="goBest">New best</div>
+    <div class="go-score" id="goScore">0</div>
+    <div class="go-grid">
+      <div><b id="goPops">0</b><span>Pops</span></div>
+      <div><b id="goBiggest">0</b><span>Biggest group</span></div>
+      <div><b id="goCombo">x1</b><span>Best combo</span></div>
+      <div><b id="goCrates">0</b><span>Crates opened</span></div>
+    </div>
+    <div class="go-core" id="goCore"></div>
+    <div class="panel-actions">
+      <button class="btn btn-primary btn-xl" id="btnAgain">Play again</button>
+      <button class="btn" id="btnGoMenu">Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAUSE ============ -->
+<div class="overlay" id="pause" aria-hidden="true">
+  <div class="panel">
+    <div class="eyebrow">Paused</div>
+    <div class="panel-actions stack">
+      <button class="btn btn-primary btn-xl" id="btnResume">Resume</button>
+      <button class="btn" id="btnRestart">Restart run</button>
+      <button class="btn" id="btnPauseSettings">Settings</button>
+      <button class="btn btn-ghost" id="btnQuit">Quit to menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div class="overlay" id="settings" aria-hidden="true">
+  <div class="panel">
+    <div class="eyebrow">Settings</div>
+    <div class="toggles">
+      <label class="toggle"><span><b>Sound</b><small>Synthesized effects</small></span><input type="checkbox" id="setSound"><i></i></label>
+      <label class="toggle"><span><b>Screen shake</b><small>Impact on big pops</small></span><input type="checkbox" id="setShake"><i></i></label>
+      <label class="toggle"><span><b>Shape hints</b><small>Symbols on bricks for color-blind play</small></span><input type="checkbox" id="setShapes"><i></i></label>
+      <label class="toggle"><span><b>Reduce motion</b><small>Calmer, shorter animations</small></span><input type="checkbox" id="setReduced"><i></i></label>
+    </div>
+    <div class="panel-actions stack">
+      <button class="btn btn-primary" id="btnSettingsDone">Done</button>
+      <button class="btn btn-ghost btn-danger" id="btnResetData">Reset all progress</button>
+    </div>
+  </div>
+</div>
+
+<noscript><p style="color:#fff;text-align:center;margin-top:30vh;font-family:sans-serif">Brick RNG needs JavaScript.</p></noscript>
+
+<script src="js/rng.js"></script>
+<script src="js/board.js"></script>
+<script src="js/cores.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/view.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/crate.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
