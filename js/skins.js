@@ -50,8 +50,9 @@
        Each one is short (under 600ms) and only draws on the effects layer, so it never slows a tap. */
     popCount: 0,
     onEvent(type, d) {
-      const M = this.moments;
-      if (!M || !Object.keys(M).length || BR.reducedMotion) return;
+      const M = this.moments || {};
+      if (BR.reducedMotion) return;
+      if (!Object.keys(M).length && !this.handlers.length) return;   // moment-less loadouts still reach the Series 3 handlers (demos, skins without a moment)
       const fx = BR.App.fx, rnd = (a, b) => a + Math.random() * (b - a);
       if (type === 'pop' || type === 'demo') {
         let cells, n, view, pt;
