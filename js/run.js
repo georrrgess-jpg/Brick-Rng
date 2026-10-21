@@ -683,7 +683,11 @@
         const k = b.dataset.r;
         if (k === 'again') { this.closeResults(); this.start({ mode, boosts: {} }); }
         else if (k === 'share') this.share(sum);
-        else if (k === 'shop') { this.closeResults(); BR.Router.go('shop'); }
+        else if (k === 'shop') {
+          this.closeResults(); BR.Router.go('shop');
+          const own = ['golden'].concat(BR.CHEST_ORDER).find((id) => BR.Progress.chestCount(id) > 0);
+          if (own) setTimeout(() => BR.App.openChest(own), 450);
+        }
         else { this.closeResults(); BR.Router.go('home'); }
       });
       if (BR.Skins.onEvent) BR.Skins.onEvent('results', { run: this });
