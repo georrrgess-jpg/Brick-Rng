@@ -6,6 +6,9 @@
 .opening[data-chest="brick"] { --ac: #ff6a4d; } .opening[data-chest="pop"] { --ac: #ff3d8b; } .opening[data-chest="board"] { --ac: #4aa8ff; } .opening[data-chest="fuse"] { --ac: #ffb02e; } .opening[data-chest="golden"] { --ac: #ffd24a; }
 
 /* ---------- backdrop ---------- */
+/* While a chest is open the game behind it is hidden outright: no blurred blobs or drifting bricks to repaint under the reel */
+body.in-opening #screens, body.in-opening #tabbar, body.in-opening .bg { visibility: hidden; }
+body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .op-dust { animation-play-state: paused; }
 .op-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #170c2e, #07040f 78%); overflow: hidden; }
 .op-glow { position: absolute; inset: 0; background: radial-gradient(ellipse 85% 52% at 50% 40%, color-mix(in srgb, var(--ac) 62%, transparent), transparent 70%); opacity: calc(0.24 + var(--hold) * 0.66); transition: opacity 0.12s linear; }
 .op-rays { position: absolute; left: 50%; top: 40%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--ac) 30%, transparent) 0 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0, transparent 52%); mask-image: radial-gradient(circle, #000 0, transparent 52%); opacity: calc(0.28 + var(--hold) * 0.55); animation: spinSlow 80s linear infinite; will-change: transform; }
@@ -80,37 +83,40 @@
 .op-reel.on { opacity: 1; transform: none; pointer-events: auto; }
 .op-reel-frame { position: relative; display: grid; place-items: center; }
 .op-reel-frame::before { content: ''; position: absolute; inset: -26px -10px; border-radius: 30px; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--ac) 38%, transparent), transparent 68%); opacity: 0.9; }
-.reel { position: relative; overflow: hidden; perspective: 760px; perspective-origin: 50% 50%; border-radius: 22px; background: linear-gradient(180deg, rgba(8, 5, 18, 0.9), rgba(18, 11, 36, 0.9)); border: 2px solid color-mix(in srgb, var(--ac) 60%, #000); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px color-mix(in srgb, var(--ac) 30%, transparent), inset 0 0 30px rgba(0, 0, 0, 0.6); }
+.reel { position: relative; overflow: hidden; border-radius: 22px; background: linear-gradient(180deg, #0c0720, #1a1033); border: 2px solid color-mix(in srgb, var(--ac) 60%, #000); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px color-mix(in srgb, var(--ac) 30%, transparent), inset 0 0 30px rgba(0, 0, 0, 0.6); contain: layout paint; }
 .reel::before, .reel::after { content: ''; position: absolute; z-index: 4; pointer-events: none; }
 .reel-h { width: min(calc(100vw - 16px), 680px); height: 236px; }
-.reel-h::before { left: 0; top: 0; bottom: 0; width: 26%; background: linear-gradient(90deg, rgba(8, 5, 18, 0.96), transparent); }
-.reel-h::after { right: 0; top: 0; bottom: 0; width: 26%; background: linear-gradient(270deg, rgba(8, 5, 18, 0.96), transparent); }
+.reel-h::before { left: 0; top: 0; bottom: 0; width: 24%; background: linear-gradient(90deg, #0a0618, rgba(10, 6, 24, 0)); }
+.reel-h::after { right: 0; top: 0; bottom: 0; width: 24%; background: linear-gradient(270deg, #0a0618, rgba(10, 6, 24, 0)); }
 .reel-v { width: min(calc(100vw - 48px), 320px); height: min(58dvh, 470px); }
-.reel-v::before { left: 0; right: 0; top: 0; height: 28%; background: linear-gradient(180deg, rgba(8, 5, 18, 0.96), transparent); }
-.reel-v::after { left: 0; right: 0; bottom: 0; height: 28%; background: linear-gradient(0deg, rgba(8, 5, 18, 0.96), transparent); }
-.reel-strip { display: flex; gap: 8px; will-change: transform; transform-style: preserve-3d; }
-.reel-h .reel-strip { flex-direction: row; align-items: center; height: 100%; padding-left: 8px; width: max-content; }
-.reel-v .reel-strip { flex-direction: column; align-items: center; width: 100%; padding-top: 8px; }
-.rc { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px 8px 14px; border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 24%, #241a40), #130c26); border: 2px solid color-mix(in srgb, var(--rc) 75%, #000); box-shadow: inset 0 0 20px color-mix(in srgb, var(--rc) 22%, transparent), 0 6px 14px rgba(0, 0, 0, 0.45); transition: filter 0.4s, opacity 0.4s; backface-visibility: hidden; }
-.reel-h .rc { width: clamp(108px, 30vw, 138px); height: 186px; }
-.reel-v .rc { width: 100%; height: 112px; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 8px 14px 8px 10px; }
-.rc-art { flex: 1; display: grid; place-items: center; min-height: 0; min-width: 0; transform: scale(0.9); }
-.reel-v .rc-art { flex: none; width: 84px; transform: scale(0.92); }
+.reel-v::before { left: 0; right: 0; top: 0; height: 26%; background: linear-gradient(180deg, #0a0618, rgba(10, 6, 24, 0)); }
+.reel-v::after { left: 0; right: 0; bottom: 0; height: 26%; background: linear-gradient(0deg, #0a0618, rgba(10, 6, 24, 0)); }
+.reel-strip { display: flex; gap: 10px; will-change: transform; }
+.reel-h .reel-strip { flex-direction: row; align-items: center; height: 100%; padding-left: 10px; width: max-content; }
+.reel-v .reel-strip { flex-direction: column; align-items: center; width: 100%; padding-top: 10px; }
+/* a card is a still badge plus its name; the rarity color is on the badge frame, the name plate and the bar */
+.rc { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 6px 12px; border-radius: 18px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 20%, #1d1438), #110a24); border: 2px solid color-mix(in srgb, var(--rc) 70%, #000); }
+.reel-h .rc { width: clamp(118px, 32vw, 140px); height: 196px; }
+.reel-v .rc { width: 100%; height: 108px; flex-direction: row; justify-content: flex-start; gap: 14px; padding: 8px 14px 8px 12px; }
+.rc .bdg { box-shadow: 0 0.3em 0.6em rgba(0, 0, 0, 0.4); }
+.rc-txt { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.reel-v .rc-txt { align-items: flex-start; flex: 1; }
 .rc-name { font: 700 16px/1.1 var(--f-display); text-align: center; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
-.reel-v .rc-name { flex: 1; text-align: left; font-size: 18px; }
-.rc-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--rc); box-shadow: 0 0 14px var(--rc); }
-.reel-v .rc-bar { left: 0; right: auto; top: 0; bottom: 0; width: 6px; height: auto; }
-.rc-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc) 50%, transparent), transparent 66%); opacity: 0; transition: opacity 0.2s; }
-.rc.at .rc-glow { opacity: 1; } .rc.at { border-color: color-mix(in srgb, var(--rc) 60%, #fff); }
-.rc.win { animation: winPulse 0.7s ease-in-out infinite alternate; border-color: #fff; box-shadow: 0 0 0 2px var(--rc), 0 0 40px var(--rc), inset 0 0 26px color-mix(in srgb, var(--rc) 50%, transparent); }
-@keyframes winPulse { to { filter: brightness(1.3); } }
-.reel.landed .rc:not(.win) { opacity: 0.28; filter: saturate(0.4) brightness(0.7); }
+.reel-v .rc-name { text-align: left; font-size: 19px; }
+.rc-rar { font: 800 11px var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 55%, #fff); }
+.rc.at { border-color: color-mix(in srgb, var(--rc) 60%, #fff); }
+.rc.win { border-color: #fff; box-shadow: 0 0 0 2px var(--rc), 0 0 30px var(--rc); }
+.reel.landed .rc:not(.win) { opacity: 0.3; }
+.reel-speed { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; }
+.reel-h .reel-speed { background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 22px); }
+.reel-v .reel-speed { background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 22px); }
 .reel-marker { position: absolute; z-index: 5; pointer-events: none; }
-.reel-h .reel-marker { left: 50%; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: linear-gradient(180deg, transparent, #fff 14%, #fff 86%, transparent); box-shadow: 0 0 14px #fff, 0 0 30px var(--ac); }
-.reel-v .reel-marker { top: 50%; left: 0; right: 0; height: 3px; margin-top: -1.5px; background: linear-gradient(90deg, transparent, #fff 14%, #fff 86%, transparent); box-shadow: 0 0 14px #fff, 0 0 30px var(--ac); }
-.reel-marker i { position: absolute; width: 0; height: 0; border: 9px solid transparent; filter: drop-shadow(0 0 6px var(--ac)); }
-.reel-h .reel-marker i:first-child { left: -8px; top: -2px; border-top-color: #fff; } .reel-h .reel-marker i:last-child { left: -8px; bottom: -2px; border-bottom-color: #fff; }
-.reel-v .reel-marker i:first-child { top: -8px; left: -2px; border-left-color: #fff; } .reel-v .reel-marker i:last-child { top: -8px; right: -2px; border-right-color: #fff; }
+/* the marker is just two notches at the edges: a line through the middle would cut the winning card in half */
+.reel-h .reel-marker { left: 50%; top: 0; bottom: 0; width: 0; }
+.reel-v .reel-marker { top: 50%; left: 0; right: 0; height: 0; }
+.reel-marker i { position: absolute; width: 0; height: 0; border: 10px solid transparent; filter: drop-shadow(0 0 6px var(--ac)); }
+.reel-h .reel-marker i:first-child { left: -10px; top: -1px; border-top-color: #fff; } .reel-h .reel-marker i:last-child { left: -10px; bottom: -1px; border-bottom-color: #fff; }
+.reel-v .reel-marker i:first-child { top: -10px; left: -1px; border-left-color: #fff; } .reel-v .reel-marker i:last-child { top: -10px; right: -1px; border-right-color: #fff; }
 .op-reel-caption { position: absolute; left: 0; right: 0; top: calc(var(--sat) + 26px); text-align: center; font: 700 18px var(--f-display); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); }
 .op-reel-caption small { display: block; font: 700 13px var(--f-ui); letter-spacing: 0.06em; text-transform: none; color: var(--muted); margin-top: 4px; }
 
@@ -177,9 +183,6 @@
 @media (max-height: 700px) { .op-chest-wrap { width: min(60vw, 240px); } .hold { width: 96px; height: 96px; } .hold-disc { width: 70px; height: 70px; } .rv-card { height: min(40dvh, 300px); } }
 @media (orientation: landscape) and (max-height: 560px) { .op-chest-wrap { width: min(34vw, 200px); } .rv-card { height: min(60dvh, 260px); } .op-odds { display: none; } }
 html.reduced .op-rays, html.reduced .op-dust { display: none; }
-.reel-v .rc-art .mini-bricks { font-size: 24px; }
-.reel-v .rc-art .mini-board { transform: scale(0.95); }
-.reel-h .rc-art .mini-fuse { transform: scale(0.82); }
 .hold:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; border-radius: 50%; }
 
 /* compact odds: five chips you can read at a glance */
@@ -191,7 +194,6 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
 .op-odds .odds-bar { display: none; }
 .rv-card { width: min(70vw, 280px); height: min(46dvh, 380px); }
 
-.reel-h .rc-art { transform: scale(1.12); }
 .op-chest .c-cracks { filter: drop-shadow(0 0 3px #9fe8ff) drop-shadow(0 0 7px rgba(159, 232, 255, 0.8)); }
 .op-chest .c-needle { transform-box: view-box; transform-origin: 100px 106px; }
 .rv:not(.on), .rv:not(.on) * { pointer-events: none !important; }
@@ -210,6 +212,6 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
   .rv-info { grid-column: 2; grid-row: 1; align-self: end; padding-top: 0; max-width: 100%; }
   .rv-actions { grid-column: 2; grid-row: 2; align-self: start; padding-bottom: 14px; }
   .rv-banner { top: 14px; font-size: 22px; }
-  .reel-h { height: 200px; } .reel-h .rc { height: 150px; } .reel-v { height: 300px; }
+  .reel-h { height: 200px; } .reel-h .rc { height: 164px; } .reel-v { height: 300px; }
   .op-reel-caption { top: 10px; font-size: 14px; }
 }

@@ -254,6 +254,7 @@
         chestBox: q('.op-chest'), shake: q('.op-shake'), wrap: q('.op-chest-wrap'), svg: q('.chest-svg'), holdEl: q('[data-hold]'),
         label: q('[data-label]'), sub: q('[data-sub]'), reelWrap: q('.op-reel'), reelHost: q('.reel-host'), skipEl: q('[data-skip]'), rv: q('[data-rv]'),
       });
+      document.body.classList.add('in-opening');
       document.getElementById('layer-opening').appendChild(root);
       document.getElementById('layer-opening').style.pointerEvents = 'auto';
       this.backEntry = BR.Back.push((fromBack) => this.requestClose(true));
@@ -439,7 +440,7 @@
       this.root.classList.remove('bursting'); this.root.classList.add('spinning');
       const type = drop.type;
       const orient = ORIENT[type] || 'h';
-      const { cards, target } = BR.buildStrip(BR.makeRng((Date.now() ^ (drop.seed || 0) * 977) >>> 0), this.id, type, drop, 56);
+      const { cards, target } = BR.buildStrip(BR.makeRng((Date.now() ^ (drop.seed || 0) * 977) >>> 0), this.id, type, drop, 44);
       this.reelWrap.classList.add('on');
       const frame = this.root.querySelector('.op-reel-frame');
       frame.dataset.orient = orient;
@@ -489,13 +490,10 @@
       rv.className = 'rv';
       this.root.classList.remove('spinning'); this.root.classList.add('revealing');
       if (this.demo) this.demo.stop();
-      const sell = R.sell;
-      const dup = !!drop.dup && !drop.fromTradeUp;
       const shineTag = inst.shine && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
-      const counterTag = inst.counter ? `<span class="tag counter">Counter: ${BR.ITEM_TYPES[item.type].counter}</span>` : '';
       rv.querySelector('.rv-card').innerHTML = `<div class="rv-face"><div class="rv-rar">${R.name}</div><div class="rv-art"></div><div class="rv-name">${item.name}</div><div class="rv-type">${BR.ITEM_TYPES[item.type].name}</div></div>`;
-      rv.querySelector('.rv-info').innerHTML = `<div class="rv-tags">${dup ? '<span class="rv-badge dup">Duplicate</span>' : (drop.fromTradeUp ? '<span class="rv-badge">Trade-up result</span>' : '<span class="rv-badge">New</span>')}${shineTag}${counterTag}</div><p class="rv-desc">${item.desc}</p>`;
-      this.renderActions(drop, item, inst, dup, sell);
+      rv.querySelector('.rv-info').innerHTML = `<div class="rv-tags"><span class="rv-badge">New</span>${shineTag}</div><p class="rv-desc">${item.desc}</p>`;
+      this.renderActions(drop, item, inst);
       rv.querySelector('.rv-card').className = 'rv-card';
       rv.querySelector('.rv-info').classList.remove('on');
       rv.querySelector('.rv-actions').classList.remove('on');
@@ -556,28 +554,22 @@
       this.state = 'done';
     }
 
-    renderActions(drop, item, inst, dup, sell) {
+    renderActions(drop, item, inst) {
       const box = this.rv.querySelector('.rv-actions');
-      const again = P().canOpen(this.id) && !drop.fromTradeUp;
+      const again = P().canOpen(this.id);
       const equipped = inst.uid && P().isEquipped(inst.uid);
-      const sellable = dup && inst.uid && !equipped;
       box.innerHTML = `
         ${inst.uid ? `<button class="btn btn-xl" data-a="equip" ${equipped ? 'disabled' : ''}>${equipped ? 'Equipped' : 'Equip'}</button>` : ''}
         <div class="row">
           <button class="btn btn-dark" data-a="done">${again ? 'Done' : 'Continue'}</button>
           ${again ? '<button class="btn btn-green" data-a="again">Open another</button>' : ''}
-        </div>
-        ${sellable ? `<button class="btn btn-text" data-a="sell">Sell for ${BR.coin()} ${BR.fmt(sell)} Coins</button>` : ''}`;
+        </div>`;
       box.onclick = (e) => {
         const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
         const a = b.dataset.a;
         if (a === 'equip') {
           P().equip(inst.uid, item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('win');
           b.textContent = 'Equipped'; b.disabled = true; fx().sparks(b.getBoundingClientRect().left + b.offsetWidth / 2, b.getBoundingClientRect().top, '#ffffff', 16, 1.2, 0.6);
-          const sb = box.querySelector('[data-a="sell"]'); if (sb) sb.remove();
-        } else if (a === 'sell') {
-          const n = P().sellInstance(inst.uid);
-          if (n) { BR.audio.scrap(); BR.audio.coin(2); BR.haptic('win'); BR.toast(`Sold for ${BR.fmt(n)} Coins`, 'good'); b.remove(); const eq = box.querySelector('[data-a="equip"]'); if (eq) { eq.disabled = true; eq.textContent = 'Sold'; } this.root.querySelector('[data-coins]').textContent = BR.fmt(P().coins); }
         } else if (a === 'done') { BR.audio.ui(); this.requestClose(false); }
         else if (a === 'again') { BR.audio.ui(); this.again(); }
       };
@@ -609,6 +601,7 @@
       if (this.demo) this.demo.stop();
       if (!fromBack && this.backEntry) BR.Back.release(this.backEntry);
       this.root.classList.remove('on');
+      document.body.classList.remove('in-opening');
       setTimeout(() => { this.root.remove(); const l = document.getElementById('layer-opening'); if (!l.children.length) l.style.pointerEvents = 'none'; }, 450);
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
       BR.Router.rerender();
@@ -627,19 +620,6 @@
       o.mount();
       await sleep(260);
       o.arrive(true);
-      return o.done;
-    },
-    /** Show the reveal for a drop that already exists (Trade-up results). */
-    async reveal(drop) {
-      if (this.current && !this.current.closed) return this.current.done;
-      const chestId = drop.chest || BR.ITEM_TYPES[drop.type].chest;
-      const o = new Opening(chestId);
-      this.current = o;
-      o.mount();
-      o.root.classList.add('revealing');
-      o.drop = drop; o.holdEl.classList.add('off');
-      await sleep(260);
-      o.reveal(drop);
       return o.done;
     },
     demo: heroDemo,

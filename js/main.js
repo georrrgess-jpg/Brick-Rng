@@ -81,7 +81,6 @@
     startRun(opts) { return BR.Run.start(opts); },
     resume() { return BR.Run.resume(); },
     openChest(id) { return BR.Openings.open(id); },
-    tradeReveal(drop) { return BR.Openings.reveal(drop); },
   };
 
   BR.App = App;

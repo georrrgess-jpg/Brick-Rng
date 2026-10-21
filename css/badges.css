@@ -9,7 +9,7 @@
 @keyframes bdgFloat { 50% { transform: translateY(-0.28em); } }
 
 /* rarity: the higher it is, the more the frame has going on */
-.bdg.r1 .bdg-bg { background: radial-gradient(circle at 50% 28%, #e6efff 0, #9fb4e6 44%, #4a5a8c 100%); }
+.bdg.r1 .bdg-bg { background: radial-gradient(circle at 50% 28%, #e9f6ff 0, #8fc3ec 44%, #3d6aa6 100%); }
 .bdg.r2 .bdg-bg { background: radial-gradient(circle at 50% 28%, #bfe0ff 0, #3d9bff 44%, #1a3f9e 100%); }
 .bdg.r3 .bdg-bg { background: radial-gradient(circle at 50% 28%, #e6c8ff 0, #a85cff 44%, #4a1f9e 100%); }
 .bdg.r4 .bdg-bg, .bdg.r5 .bdg-bg { inset: 0.24em; border-radius: 1.28em; }
@@ -28,7 +28,13 @@
 .bdg-twinkle.t1 { left: 14%; top: 16%; } .bdg-twinkle.t2 { right: 16%; top: 30%; animation-delay: -0.8s; width: 0.8em; height: 0.8em; } .bdg-twinkle.t3 { left: 26%; bottom: 14%; animation-delay: -1.4s; width: 0.7em; height: 0.7em; }
 @keyframes twinkleS { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
 .bdg.still *, .bdg.still::before { animation: none !important; }
-.bdg.still .bdg-gleam { transform: translateX(150%) skewX(-18deg); opacity: 0.5; }
+/* A still badge is built to scroll by in a reel by the dozen: no clip, filter or contain, because each of those makes the compositor
+   draw the card as its own surface every frame (measured: that alone was 3/4 of the spin's frame time). */
+.bdg.still { overflow: visible; contain: none; transform: none; box-shadow: 0 0.3em 0.6em rgba(0, 0, 0, 0.4); }
+.bdg.still.r4::before, .bdg.still.r5::before { inset: 0; border-radius: inherit; z-index: -1; }
+.bdg.still .bk, .bdg.still .pa { filter: none; }
+.bdg.still .bdg-scene { overflow: visible; }
+.bdg.still .bdg-gleam { display: none; }
 
 /* ---- skins: a hero brick in front of two others ---- */
 .bdg-bricks { position: relative; width: 6em; height: 5.2em; margin-top: 0.3em; }
