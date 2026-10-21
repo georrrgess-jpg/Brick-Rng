@@ -333,6 +333,7 @@
       this.chestBox.classList.add('idle');
       this.state = 'ready';
       this.refreshFoot();
+      if (first && BR.Coach) setTimeout(() => { if (!this.closed && this.state === 'ready') BR.Coach.show('opening'); }, 500);
     }
 
     refreshFoot() {

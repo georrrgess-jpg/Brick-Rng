@@ -25,7 +25,13 @@
     if (r.kind === 'coins') return `<span class="rw-ico coins">${BR.coin()}</span><span class="rw-txt"><b>${r.amount}</b> Coins</span>`;
     if (r.kind === 'chest') return `<span class="rw-ico chest">${BR.chestSVG(r.chest)}</span><span class="rw-txt"><b>${BR.CHESTS[r.chest].name}</b></span>`;
     const it = BR.itemById[r.itemId];
-    return `<span class="rw-ico item" style="--rc:${R(it.rarity).color}">${BR.Skins.previewHTML(it, { shine: r.shine, seed: 7 })}</span><span class="rw-txt"><b>${it.name}</b> ${R(it.rarity).name} ${BR.ITEM_TYPES[it.type].name}</span>`;
+    return `<span class="rw-ico item" style="--rc:${R(it.rarity).color}">${BR.Badge.html(it, { shine: r.shine, seed: 7 }, { size: 48, still: true })}</span><span class="rw-txt"><b>${it.name}</b> ${R(it.rarity).name} ${BR.ITEM_TYPES[it.type].name}</span>`;
+  }
+  /** Big art for a reward (the Pop Pass track and the next-reward spotlight). */
+  function rewardArt(r, size) {
+    if (r.kind === 'coins') return `<span class="pt-coin" style="--sz:${size}px">${BR.coin()}</span>`;
+    if (r.kind === 'chest') return `<span class="pt-chest" style="--sz:${size}px">${BR.chestSVG(r.chest)}</span>`;
+    return BR.Badge.html(BR.itemById[r.itemId], { shine: r.shine, seed: 7 }, { size, still: true });
   }
   BR.rewardChip = rewardChip;
 
@@ -72,6 +78,7 @@
   const Home = {
     render() {
       const st = S(), today = BR.dayKey();
+      const par = (rec) => (rec && rec.length ? Math.round(rec.reduce((a, b) => a + b, 0) / rec.length) : 0);
       const dailyDone = st.daily.day === today;
       const chillOpen = P.level >= BR.CFG.chill.unlockLevel;
       const nextTier = P.level, reward = BR.passReward(nextTier);
@@ -93,7 +100,7 @@
             <span class="tag hot">${BR.icon('fire')} Main mode</span>
             <span class="hero-title display">Rush</span>
             <span class="hero-sub">Pop fast to keep the fuse lit. Chain big pops for Rush Mode.</span>
-            <span class="hero-stats"><span><small>Best</small><b class="num">${fmt(st.best.rush)}</b></span><span><small>Stage</small><b class="num">${st.bestStage.rush || '-'}</b></span></span>
+            <span class="hero-stats"><span><small>Best</small><b class="num">${fmt(st.best.rush)}</b></span><span><small>Stage</small><b class="num">${st.bestStage.rush || '-'}</b></span>${par(st.recent.rush) ? `<span><small>Par</small><b class="num">${fmt(par(st.recent.rush))}</b></span>` : ''}</span>
           </span>
           <span class="btn btn-gold btn-xl hero-play">Play</span>
         </button>
@@ -101,7 +108,7 @@
           <button class="mode-card daily ${dailyDone ? 'done' : ''}" data-act="play-daily">
             <span class="mc-ico"><span class="cal"><small>${new Date().toLocaleString('en-US', { month: 'short' })}</small><b>${new Date().getDate()}</b></span></span>
             <span class="mc-title display">Daily Rush</span>
-            <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : 'Same board for everyone. Bonus Coins.'}</span>
+            <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : par(st.recent.daily) ? `Your par: ${fmt(par(st.recent.daily))}` : 'Same board for everyone. Bonus Coins.'}</span>
             <span class="tag ${dailyDone ? '' : 'gold'}">${dailyDone ? BR.icon('check') + ' Come back tomorrow' : '+15 Coins'}</span>
           </button>
           <button class="mode-card chill ${chillOpen ? '' : 'locked'}" data-act="play-chill">
@@ -271,7 +278,7 @@
   function card(item, inst, o) {
     const r = R(item.rarity);
     const shine = inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
-    if (o.locked) return `<div class="icard locked" style="--rc:${r.color};--i:${o.i}"><div class="ic-prev"><span class="q">?</span></div><b class="ic-name">???</b><span class="tag rar" style="--rc:${r.color}">${r.name}</span><small class="ic-hint">${BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name}${item.pass ? ' · Pop Pass' : ''}</small></div>`;
+    if (o.locked) return `<div class="icard locked" style="--rc:${r.color};--i:${o.i}"><div class="ic-prev">${BR.Badge.html(item, null, { size: 64, locked: true, still: true })}</div><b class="ic-name">???</b><span class="tag rar" style="--rc:${r.color}">${r.name}</span><small class="ic-hint">${item.pass ? 'Pop Pass reward' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name}</small></div>`;
     return `<div class="icard ${o.eq ? 'eq' : ''}" data-uid="${inst ? inst.uid : 'default'}" data-type="${item.type}" style="--rc:${r.color};--i:${o.i}">
       ${o.eq ? `<span class="eq-flag">${BR.icon('check')}</span>` : ''}
       <div class="ic-prev">${BR.Skins.previewHTML(item, inst)}</div><b class="ic-name">${esc(item.name)}</b>
@@ -295,6 +302,17 @@
     let demo = null;
     const sheet = BR.Sheet.open({ title: esc(item.name), body, actions, onClose: () => { if (demo) demo.stop(); } });
     demo = BR.Openings.demo(sheet.body.querySelector('.hero-host'), item, inst || { shine: 'plain', seed: 0 }, { silent: true, power: 1.2 });
+  };
+  /** What a Pop Pass tier gives: tap a tier on the track. */
+  BR.rewardSheet = function (tier) {
+    const r = BR.passReward(tier);
+    const away = tier + 1 - P.level;
+    const state = tier < P.level ? 'You have this reward.' : tier === P.level ? 'Your next reward. Finish this level to get it.' : `${away} levels to go.`;
+    let title = BR.rewardLabel(r), desc = '', tags = '';
+    if (r.kind === 'item') { const it = BR.itemById[r.itemId]; title = it.name; desc = it.desc; tags = `<span class="tag rar" style="--rc:${R(it.rarity).color}">${R(it.rarity).name}</span><span class="tag">${BR.ITEM_TYPES[it.type].name}</span>`; }
+    else if (r.kind === 'chest') desc = BR.CHESTS[r.chest].blurb;
+    else desc = 'Coins go into your balance right away.';
+    BR.Sheet.open({ title: esc(title), body: `<div class="detail"><div class="reward-big">${rewardArt(r, r.kind === 'item' ? 168 : 120)}</div><div class="detail-tags"><span class="tag gold">Pop Pass level ${tier}</span>${tags}</div><p class="detail-desc">${esc(desc)}</p><div class="detail-where"><small>${tier < P.level ? 'Claimed' : tier === P.level ? 'Up next' : 'Locked'}</small><b>${state}</b></div></div>` });
   };
   /** Bigger preview for the detail sheet: a live mini board for skins/pops/boards, a burning fuse for fuses. */
   BR.detailPreview = function (item, inst) {
@@ -321,6 +339,7 @@
       else body = this.trophiesHTML();
       this.el.innerHTML = `${topbar('Missions')}<div class="scroll"><div class="seg stg" id="misSeg">${seg}<i class="thumb"></i></div>${body}</div>`;
       this.placeThumb();
+      if (this.tab === 'pass') this.centerTrack(false);
       BR.Router.screens.missions.hasDot();
     },
     missionCard(x, i) {
@@ -330,13 +349,23 @@
         <div class="m-reward"><b>${BR.coin()} ${x.reward}</b>${x.done ? '<small>Paid</small>' : can ? `<button class="reroll" data-act="reroll" data-i="${i}" aria-label="Swap this mission for ${BR.CFG.rerollCost} Coins">${BR.icon('reroll')}<small>${BR.CFG.rerollCost}</small></button>` : ''}</div></article>`;
     },
     passHTML() {
+      const L = P.level, need = P.need, next = BR.passReward(L), S3 = BR.PASS_SEASON;
+      const big = (t) => t.kind !== 'coins';
       const tiers = BR.PASS.map((t) => {
-        const state = t.tier < P.level ? 'claimed' : t.tier === P.level ? 'next' : 'locked';
-        return `<div class="tier ${state}" data-tier="${t.tier}"><span class="t-node"><b>${t.tier}</b></span><div class="t-card">${BR.rewardChip(t)}${state === 'claimed' ? `<i class="t-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="t-lk">${BR.icon('lock')}</i>` : `<span class="tag hot">Next</span>`}</div></div>`;
+        const state = t.tier < L ? 'claimed' : t.tier === L ? 'next' : 'locked';
+        const mark = state === 'claimed' ? `<i class="pt-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="pt-lk">${BR.icon('lock')}</i>` : '<span class="pt-now">Next</span>';
+        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}"><span class="pt-n"><b>${t.tier}</b></span>
+          <div class="pt-card">${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${BR.rewardLabel(t)}</span>${mark}</div></div>`;
       }).join('');
-      return `<article class="card pass-head stg"><div><span class="display ph-t">Pop Pass</span><small>Free. One reward for every level.</small></div><div class="ph-lvl">${ringSVG(P.xp / P.need, 64, 6)}<b>${P.level}</b></div></article>
-        <div class="xp-line stg"><div class="bar tall cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.xp)} / ${fmt(P.need)} XP to level ${P.level + 1}</small></div>
-        <div class="tiers stg">${tiers}<div class="tier more"><span class="t-node"><b>+</b></span><div class="t-card"><span class="rw-txt"><b>Every level after 30</b> 100 Coins</span></div></div></div>`;
+      return `<article class="pass-hero stg">
+          <div class="ph-head"><div><span class="ph-season">${S3.label}</span><h2 class="display">Pop Pass</h2><small>Free. Every level pays the next reward.</small></div>
+            <div class="ph-lvl">${ringSVG(P.xp / need, 64, 6)}<b>${L}</b></div></div>
+          <div class="ph-next"><div class="phn-art">${rewardArt(next, next.kind === 'coins' ? 64 : 92)}</div>
+            <div class="phn-txt"><small>Next reward, level ${L}</small><b class="display">${BR.rewardLabel(next)}</b>
+              <div class="bar tall cyan"><i style="width:${(P.xp / need) * 100}%"></i></div><small class="num">${fmt(need - P.xp)} XP to go</small></div></div>
+          <p class="ph-how">XP comes from every run, mission and trophy.</p>
+        </article>
+        <div class="track-wrap stg"><div class="track" id="passTrack">${tiers}<div class="pt more"><span class="pt-n"><b>+</b></span><div class="pt-card"><span class="pt-coin" style="--sz:52px">${BR.coin()}</span><span class="pt-label">Every level after 30</span></div></div></div></div>`;
     },
     trophiesHTML() {
       const got = S().profile.trophies;
@@ -348,10 +377,16 @@
       const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb');
       th.style.width = on.offsetWidth + 'px'; th.style.transform = `translateX(${on.offsetLeft - 4}px)`;
     },
+    centerTrack(smooth) {
+      const tr = this.el.querySelector('#passTrack'), n = tr && tr.querySelector('.pt.next');
+      if (!n) return;
+      const left = n.offsetLeft - (tr.clientWidth - n.offsetWidth) / 2;
+      if (smooth && !BR.reducedMotion) setTimeout(() => tr.scrollTo({ left, behavior: 'smooth' }), 350); else tr.scrollLeft = left;
+    },
     hasDot() { const m = BR.Missions.ensure(); document.getElementById('dotMissions').classList.toggle('show', false && m.list.some((x) => !x.done)); },
     onShow() {
       this.placeThumb();
-      if (this.tab === 'pass') setTimeout(() => { const t = this.el.querySelector('.tier.next'); if (t) t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 450);
+      if (this.tab === 'pass') this.centerTrack(true);
     },
   };
 
@@ -361,6 +396,7 @@
       const st = S(), pr = st.profile, set = st.settings;
       const tog = (key, label, sub) => `<label class="toggle"><span><b>${label}</b><small>${sub}</small></span><input type="checkbox" data-set="${key}" ${set[key] ? 'checked' : ''}><i></i></label>`;
       const earned = BR.TROPHIES.filter((t) => pr.trophies[t.id]);
+      const vol = (key, gate) => `<label class="vol ${set[gate] ? '' : 'off'}"><span>Volume</span><input type="range" min="0" max="100" step="5" value="${Math.round((set[key] == null ? 1 : set[key]) * 100)}" data-vol="${key}" aria-label="${key === 'sfxVol' ? 'Sound effects' : 'Music'} volume"><b class="num">${Math.round((set[key] == null ? 1 : set[key]) * 100)}</b></label>`;
       const stat = (label, val) => `<div class="stat"><b class="num">${val}</b><small>${label}</small></div>`;
       const installRow = BR.App && BR.App.canInstall() ? `<article class="card card-pad install stg"><div><b class="display">Play it like an app</b><small>Add Pop Rush to your home screen. It works offline.</small></div><button class="btn btn-sm" data-act="install">Add</button></article>` : '';
       this.el.innerHTML = `${topbar('Profile')}<div class="scroll">
@@ -370,11 +406,12 @@
         <article class="card card-pad stg"><div class="sec-title">Trophies <small>${earned.length}/${BR.TROPHIES.length}</small></div><div class="badges">${earned.length ? earned.slice(-6).map((t) => `<span class="badge-ico" title="${t.name}">${BR.icon('trophy')}</span>`).join('') : '<small class="muted">Finish runs to earn trophies.</small>'}</div></article>
         ${installRow}
         <article class="card card-pad stg"><div class="sec-title">Settings</div>
-          ${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${tog('music', 'Music', 'The fuse gets faster, so does the beat')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
+          ${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
           <div class="perf"><div><b>Performance</b><small>Auto lowers effects if your phone struggles</small></div><div class="seg mini" id="perfSeg">${['auto', 'high', 'low'].map((p) => `<button data-perf="${p}" class="${set.perf === p ? 'on' : ''}">${p[0].toUpperCase() + p.slice(1)}</button>`).join('')}<i class="thumb"></i></div></div>
         </article>
+        <article class="card card-pad stg help-card"><div class="sec-title">Help</div><p class="tiny">New to something? Every part of the game shows a short tip the first time. Show them all again:</p><button class="btn btn-dark btn-sm" data-act="tips">Show the tips again</button></article>
         <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device.</p><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
-        <p class="tiny center version">Pop Rush 2.0</p>
+        <p class="tiny center version">Pop Rush 3.0 · Carnival</p>
       </div>`;
       const seg = this.el.querySelector('#perfSeg');
       if (seg) { const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb'); requestAnimationFrame(() => { th.style.width = on.offsetWidth + 'px'; th.style.transform = `translateX(${on.offsetLeft - 4}px)`; }); }
@@ -385,7 +422,7 @@
   /* ------------------------------------------------------------------ events + registration */
   function bind(screen, handler) {
     screen.el.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-perf]');
+      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-perf],[data-tier]');
       if (!t || !screen.el.contains(t)) return;
       handler(t, e);
     });
@@ -432,7 +469,8 @@
       if (t.dataset.uid) { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(t.dataset.uid, t.dataset.type); }
     });
     bind(Missions, (t) => {
-      if (t.dataset.tab) { Missions.tab = t.dataset.tab; BR.audio.ui(); BR.Router.rerender(); Missions.placeThumb(); Missions.onShow(); return; }
+      if (t.dataset.tab) { Missions.tab = t.dataset.tab; BR.audio.ui(); BR.Router.rerender(); Missions.placeThumb(); Missions.onShow(); BR.Coach.onScreen('missions'); return; }
+      if (t.dataset.tier) { BR.audio.ui(); BR.haptic('tick'); BR.rewardSheet(+t.dataset.tier); return; }
       if (t.dataset.act === 'reroll') {
         if (BR.Missions.reroll(+t.dataset.i)) { BR.audio.scrap(); BR.toast('New mission!', 'good'); BR.Router.rerender(); } else BR.toast('Not enough Coins', 'bad');
       }
@@ -441,12 +479,19 @@
       if (t.dataset.perf) { S().settings.perf = t.dataset.perf; BR.Storage.save(); BR.App.applySettings(); BR.Router.rerender(); return; }
       const a = t.dataset.act;
       if (a === 'install') BR.App.install();
+      if (a === 'tips') { BR.Coach.reset(); BR.audio.ui(); BR.toast('Tips will show again as you visit each screen', 'good'); }
       if (a === 'reset') {
         if (t.dataset.armed !== '1') { t.dataset.armed = '1'; t.textContent = 'Tap again to erase everything'; setTimeout(() => { t.dataset.armed = ''; t.textContent = 'Reset all progress'; }, 3500); return; }
         BR.Storage.reset(); BR.App.applySettings(); BR.Skins.apply(); BR.toast('Progress reset'); BR.Router.rerender();
       }
     });
+    Profile.el.addEventListener('input', (e) => {
+      const k = e.target.dataset.vol; if (!k) return;
+      const v = +e.target.value / 100; S().settings[k] = v; e.target.parentNode.querySelector('b').textContent = Math.round(v * 100);
+      if (BR.audio && BR.audio.setVolumes) BR.audio.setVolumes(); else if (BR.App && BR.App.applySettings) BR.App.applySettings();
+    });
     Profile.el.addEventListener('change', (e) => {
+      if (e.target.dataset.vol) { BR.Storage.save(); if (BR.audio && BR.audio.ui) BR.audio.ui(); return; }
       const k = e.target.dataset.set;
       if (!k) return;
       S().settings[k] = e.target.checked; BR.Storage.save(); BR.App.applySettings(); BR.audio.ui(); BR.haptic('tap');

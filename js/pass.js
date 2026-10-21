@@ -19,6 +19,7 @@
     if (tier > BR.CFG.passTiers) return { kind: 'coins', amount: 75 };
     return { kind: 'coins', amount: Math.round((25 + 3 * tier) / 5) * 5 };
   };
+  BR.PASS_SEASON = { n: 3, name: 'Carnival', label: 'Season 3 · Carnival' };
   BR.PASS = Array.from({ length: BR.CFG.passTiers }, (_, i) => Object.assign({ tier: i + 1 }, BR.passReward(i + 1)));
 
   BR.rewardLabel = function rewardLabel(r) {

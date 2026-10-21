@@ -215,6 +215,7 @@
       document.getElementById('app').classList.toggle('run-active', id === 'run');
       if (next.onShow) next.onShow();
       const sc = next.el.querySelector('.scroll'); if (sc && !opts.keepScroll) sc.scrollTop = 0;
+      if (BR.Coach) BR.Coach.onScreen(id);
     },
     rerender() { const s = this.screens[this.current]; if (s && s.render) { const sc = s.el.querySelector('.scroll'); const top = sc ? sc.scrollTop : 0; s.render(); const sc2 = s.el.querySelector('.scroll'); if (sc2) sc2.scrollTop = top; s.el.querySelectorAll('.stg').forEach((n) => { n.style.animation = 'none'; n.style.opacity = 1; n.style.transform = 'none'; }); } },
   };

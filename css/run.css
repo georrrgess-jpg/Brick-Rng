@@ -279,3 +279,5 @@
 .res-gap { text-align: center; font: 700 15px var(--f-ui); color: var(--muted); margin-top: -4px; }
 .res-gap.near { color: #ffb02e; font-size: 17px; }
 .res-gap.good { color: var(--green); }
+
+.lvl-up .lu-rw { display: flex; align-items: center; gap: 8px; flex: none; max-width: 48%; } .lvl-up .lu-rw .rw-txt { font: 700 13px/1.15 var(--f-ui); } .lvl-up .lu-rw .rw-txt b { display: block; font: 700 15px var(--f-display); } .lvl-up .rw-ico.coins svg, .lvl-up .rw-ico.coins .coin { width: 34px; height: 34px; }
