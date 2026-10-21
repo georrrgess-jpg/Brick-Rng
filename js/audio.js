@@ -56,6 +56,9 @@
 
   const A = {
     unlock() { ensure(); },
+    /** Shared context and master bus (used by the music engine). */
+    context() { const c = ensure(); return c ? { ctx: c, master } : null; },
+    tone, noise,
     setEnabled(v) { enabled = !!v; },
     get enabled() { return enabled; },
 
@@ -103,6 +106,33 @@
     geodeDrop() { tone({ f: 90, to: 40, type: 'sine', dur: 0.4, vol: 0.4, at: 0.3 }); noise({ dur: 0.3, vol: 0.2, from: 1500, to: 100, at: 0.3 }); },
     crack(i) { const k = i + 1; tone({ f: 110 / k, to: 40, type: 'sine', dur: 0.3, vol: 0.35 + k * 0.05 }); noise({ dur: 0.18 + k * 0.05, vol: 0.2 + k * 0.05, from: 7000, to: 600, type: 'highpass' }); tone({ f: 500 * k, to: 900 * k, type: 'triangle', dur: 0.25, vol: 0.06 }); },
     rockShatter() { noise({ dur: 0.9, vol: 0.45, from: 7000, to: 120, q: 0.6 }); tone({ f: 120, to: 32, type: 'sine', dur: 0.8, vol: 0.5 }); },
+
+    // ----- Pop Rush: fuse, Rush Mode, stages, chests -----
+    heartbeat(level = 1) { tone({ f: 70, to: 45, type: 'sine', dur: 0.14, vol: 0.34 * level }); tone({ f: 62, to: 40, type: 'sine', dur: 0.16, vol: 0.28 * level, at: 0.16 }); },
+    timeGain(n) { tone({ f: 880 + n * 60, to: 1320 + n * 60, type: 'triangle', dur: 0.1, vol: 0.07 }); },
+    burstFuse() { noise({ dur: 0.5, vol: 0.4, from: 5000, to: 150, q: 0.6 }); tone({ f: 130, to: 36, type: 'sine', dur: 0.5, vol: 0.5 }); tone({ f: 320, to: 90, type: 'sawtooth', dur: 0.3, vol: 0.12 }); },
+    defuse() { [0, 4, 7, 12].forEach((s, i) => tone({ f: 660 * Math.pow(2, s / 12), type: 'sine', dur: 0.18, vol: 0.09, at: i * 0.05 })); },
+    rushStart() {
+      noise({ dur: 0.9, vol: 0.28, from: 400, to: 9000, type: 'bandpass', q: 1.2 });
+      tone({ f: 110, to: 440, type: 'sawtooth', dur: 0.5, vol: 0.14 });
+      [0, 4, 7, 12, 16, 19].forEach((s, i) => tone({ f: 440 * Math.pow(2, s / 12), type: 'square', dur: 0.3, vol: 0.07, at: 0.1 + i * 0.05 }));
+      tone({ f: 70, to: 36, type: 'sine', dur: 0.6, vol: 0.5 });
+    },
+    rushEnd() { tone({ f: 600, to: 150, type: 'sawtooth', dur: 0.5, vol: 0.1 }); noise({ dur: 0.4, vol: 0.12, from: 4000, to: 300, type: 'lowpass' }); },
+    stageUp() { [0, 4, 7, 12].forEach((s, i) => tone({ f: 330 * Math.pow(2, s / 12), type: 'triangle', dur: 0.4, vol: 0.15, at: i * 0.07 })); tone({ f: 90, to: 40, type: 'sine', dur: 0.5, vol: 0.45 }); noise({ dur: 0.5, vol: 0.16, from: 800, to: 7000, type: 'bandpass', q: 1.4 }); },
+    fuseOut() { noise({ dur: 1.1, vol: 0.5, from: 7000, to: 90, q: 0.5 }); tone({ f: 120, to: 28, type: 'sine', dur: 1.0, vol: 0.7 }); tone({ f: 300, to: 60, type: 'sawtooth', dur: 0.6, vol: 0.15 }); },
+    go() { tone({ f: 523, type: 'square', dur: 0.12, vol: 0.09 }); tone({ f: 784, type: 'square', dur: 0.26, vol: 0.1, at: 0.12 }); },
+    count() { tone({ f: 392, type: 'square', dur: 0.1, vol: 0.08 }); },
+    coin(i = 0) { tone({ f: 1100 + (i % 6) * 110, type: 'square', dur: 0.07, vol: 0.06 }); tone({ f: 1650 + (i % 6) * 110, type: 'square', dur: 0.1, vol: 0.05, at: 0.05 }); },
+    // chest rituals
+    holdStart() { },
+    thud(p = 1) { tone({ f: 100, to: 44, type: 'sine', dur: 0.2, vol: 0.28 * p }); noise({ dur: 0.1, vol: 0.12 * p, from: 1500, to: 200 }); },
+    bang() { noise({ dur: 0.7, vol: 0.5, from: 8000, to: 120, q: 0.5 }); tone({ f: 140, to: 34, type: 'sine', dur: 0.7, vol: 0.6 }); tone({ f: 900, to: 200, type: 'sawtooth', dur: 0.3, vol: 0.1 }); },
+    glassBreak() { noise({ dur: 0.6, vol: 0.4, from: 9000, to: 1200, type: 'highpass' }); [0, 1, 2, 3, 4, 5].forEach((i) => tone({ f: 2200 + Math.random() * 2400, type: 'sine', dur: 0.2, vol: 0.06, at: i * 0.03 })); tone({ f: 200, to: 60, type: 'sine', dur: 0.3, vol: 0.25 }); },
+    steam() { noise({ dur: 0.9, vol: 0.22, from: 6000, to: 1500, type: 'highpass' }); },
+    brickBurst() { noise({ dur: 0.5, vol: 0.35, from: 5000, to: 200 }); tone({ f: 120, to: 40, type: 'sine', dur: 0.5, vol: 0.5 }); [0, 1, 2, 3].forEach((i) => tone({ f: 300 + i * 90, type: 'square', dur: 0.06, vol: 0.06, at: i * 0.04 })); },
+    whoosh() { noise({ dur: 0.5, vol: 0.18, from: 300, to: 6000, type: 'bandpass', q: 1 }); },
+    sting() { [0, 3, 6, 9].forEach((s, i) => tone({ f: 220 * Math.pow(2, s / 12), type: 'sawtooth', dur: 1.2, vol: 0.1, at: i * 0.0 })); tone({ f: 55, to: 40, type: 'sine', dur: 1.4, vol: 0.5 }); noise({ dur: 1.4, vol: 0.18, from: 400, to: 9000, type: 'bandpass', q: 0.8 }); },
     // ----- crate (legacy names reused by the Geode reel) -----
     crateDrop() { tone({ f: 110, to: 45, type: 'sine', dur: 0.35, vol: 0.3, at: 0.35 }); noise({ dur: 0.25, vol: 0.18, from: 1200, to: 100, at: 0.35 }); },
     chargeUp(dur = 1) {

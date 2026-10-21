@@ -29,6 +29,7 @@
       this.bricks = new Map();
       this.gen = 0;
       this.reduced = false;
+      this.tune = { fall: 1, pop: 1 };
 
       this.chip = document.createElement('div');
       this.chip.className = 'chip';
@@ -78,7 +79,8 @@
       el.className = 'brick';
       el.dataset.c = b.color;
       el.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
-      const rec = { b: { id: b.id, color: b.color }, el, face: el.firstChild, r: atR, c };
+      const rec = { b: { id: b.id, color: b.color, fb: b.fb || 0 }, el, face: el.firstChild, r: atR, c };
+      if (b.fb) { el.classList.add('fusebrick'); el.firstChild.insertAdjacentHTML('beforeend', `<em class="fcount">${b.fb}</em>`); }
       this._place(rec);
       this.field.appendChild(el);
       this.bricks.set(b.id, rec);
@@ -100,7 +102,7 @@
       if (d === 0) return { land: 0, end: 0 };
       const cell = this.cell, x = rec.c * cell;
       const y0 = fromR * cell, y1 = toR * cell;
-      const fall = (this.reduced ? T * 0.6 : T) * Math.sqrt(d);
+      const fall = (this.reduced ? T * 0.6 : T * this.tune.fall) * Math.sqrt(d);
       const total = fall / 0.8;
       const sgn = dir === 'down' ? 1 : -1;
       const bounce = Math.min(0.11, 0.025 * d + 0.02) * cell;
@@ -195,8 +197,9 @@
       mark(plan.primary, 'hl');
       this.field.classList.add('has-hl');
 
-      // preview chip: points, plus combo / Line Blast tags
+      // preview chip: points, plus time / combo / Line Blast tags
       const tags = [];
+      if (plan.timeGain > 0) tags.push(`<span class="fuel plus">+${plan.timeGain.toFixed(1)}s</span>`);
       if (plan.line) tags.push('<span class="fuel plus">LINE BLAST</span>');
       else if (plan.combo > 1) tags.push(`<span class="fuel plus">x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}</span>`);
       this.chip.innerHTML = `<span>+${plan.points.toLocaleString()}</span>${tags.join('')}`;
@@ -268,6 +271,8 @@
       const total = res.removed.length;
 
       // 1) pop wave, rippling out from the tapped brick
+      (res.ticks || []).forEach((t) => this.tickFuseBrick(t.id, t.fb));
+      const burstIds = new Set((res.bursts || []).map((b) => b.id));
       const originPt = this.pagePoint(tap.r, tap.c);
       let maxDelay = 0;
       const perBrick = total > 28 ? 3 : total > 14 ? 5 : total > 6 ? 7 : 9;
@@ -276,11 +281,11 @@
         if (!rec) continue;
         this.bricks.delete(p.id);
         const dist = Math.abs(p.r - tap.r) + Math.abs(p.c - tap.c);
-        const delay = this.reduced ? 0 : Math.min(dist * 17, 150);
+        const delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop;
         maxDelay = Math.max(maxDelay, delay);
-        this._pop(rec, delay, p, perBrick, originPt);
+        this._pop(rec, delay, p, perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null);
       }
-      await sleep(this.reduced ? 100 : maxDelay + 90);
+      await sleep(this.reduced ? 100 : (maxDelay + 90) * this.tune.pop);
       if (!alive()) return false;
 
       // 2) gravity + refill
@@ -294,7 +299,7 @@
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
       for (const s of res.spawns) {
-        const rec = this._make({ id: s.id, color: s.color }, s.r, s.c, s.fromR);
+        const rec = this._make({ id: s.id, color: s.color, fb: s.fb || 0 }, s.r, s.c, s.fromR);
         const t = this._fall(rec, s.fromR, s.r, colDelay(s.c), res.dir);
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
@@ -308,7 +313,7 @@
       return true;
     }
 
-    _pop(rec, delay, p, shardCount, origin) {
+    _pop(rec, delay, p, shardCount, origin, fuseKind) {
       const pal = BR.PALETTE[p.color];
       const sgn = Math.random() < 0.5 ? -1 : 1;
       if (rec.face.animate) {
@@ -324,9 +329,21 @@
       setTimeout(() => {
         const pt = this.pagePoint(p.r, p.c);
         const sk = BR.Skins;
-        this.fx.pop(sk.burst, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.burstFinish);
-        if (sk.burst === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);
+        if (fuseKind === 'burst') { this.fx.explosion(pt.x, pt.y, '#ff4d6d', 0.9); this.fx.flash('#ff4d6d', 0.25, 400); this.fx.shake(document.getElementById('app'), 9, 380); BR.haptic('boom'); }
+        else if (fuseKind === 'defuse') { this.fx.sparks(pt.x, pt.y, '#3ddc97', 18, 1.4, 0.7); this.fx.ring(pt.x, pt.y, '#3ddc97', 80, 0.5, 4); }
+        this.fx.pop(sk.pop, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.popShine);
+        if (sk.pop === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);
       }, delay + 70);
+    }
+
+    /** Update a Fuse brick's countdown (called after every pop). */
+    tickFuseBrick(id, n) {
+      const rec = this.bricks.get(id);
+      if (!rec) return;
+      rec.b.fb = n;
+      const em = rec.el.querySelector('.fcount');
+      if (em) { em.textContent = n; em.classList.remove('tick'); void em.offsetWidth; em.classList.add('tick'); }
+      rec.el.classList.toggle('danger', n <= 2);
     }
 
     _recolor(list, mode) {

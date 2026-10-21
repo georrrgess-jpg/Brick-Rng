@@ -27,6 +27,7 @@
     bolt: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
     trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8.5 20.5h7M9.5 17h5"/>',
+    flag: '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4.5L17 13H5"/>',
     bomb: '<circle cx="11" cy="14" r="7"/><path d="M16 8.5l2.5-2.5"/><path d="M19 3v2M22 6h-2M20.8 4.2l-1.4 1.4"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>',

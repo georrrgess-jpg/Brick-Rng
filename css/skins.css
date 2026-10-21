@@ -64,34 +64,35 @@
     radial-gradient(900px 600px at 15% -10%, rgba(94, 120, 255, 0.22), transparent 60%),
     radial-gradient(800px 600px at 100% 110%, rgba(176, 90, 255, 0.18), transparent 60%),
     radial-gradient(500px 400px at 50% 50%, rgba(40, 70, 160, 0.12), transparent 70%),
-    linear-gradient(180deg, var(--bg1), var(--bg0));
+    linear-gradient(180deg, #1a1033, #08060f);
   --a-board: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%), linear-gradient(180deg, #0e1730, #0a1126);
   --a-frame: rgba(255, 255, 255, 0.16);
   --a-glow: transparent;
 }
-.ambient { background: var(--a-bg); }
-.ambient::before { content: ''; position: absolute; inset: 0; pointer-events: none; }
+.run-active .bg { background: var(--a-bg); }
+.run-active .blob { opacity: 0.18; }
+.run-active .bg::before, .run-active .bg::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
 
 /* Deep Sea */
 .board-deepsea { --a-bg: radial-gradient(900px 700px at 50% -10%, rgba(60, 170, 220, 0.45), transparent 65%), linear-gradient(180deg, #06304a, #031526 70%, #020a14); --a-board: linear-gradient(180deg, rgba(12, 56, 90, 0.88), rgba(4, 26, 48, 0.94)); --a-frame: rgba(120, 220, 255, 0.4); --a-glow: rgba(60, 190, 255, 0.2); }
-.board-deepsea .ambient::before { background-image: radial-gradient(circle, rgba(190, 240, 255, 0.55) 0 2px, transparent 3px), radial-gradient(circle, rgba(190, 240, 255, 0.4) 0 3px, transparent 4px), radial-gradient(circle, rgba(190, 240, 255, 0.3) 0 1.5px, transparent 2.5px); background-size: 140px 190px, 230px 270px, 90px 120px; background-position: 0 0, 60px 90px, 30px 40px; animation: bubbles 24s linear infinite; }
+.board-deepsea .run-active .bg::before { background-image: radial-gradient(circle, rgba(190, 240, 255, 0.55) 0 2px, transparent 3px), radial-gradient(circle, rgba(190, 240, 255, 0.4) 0 3px, transparent 4px), radial-gradient(circle, rgba(190, 240, 255, 0.3) 0 1.5px, transparent 2.5px); background-size: 140px 190px, 230px 270px, 90px 120px; background-position: 0 0, 60px 90px, 30px 40px; animation: bubbles 24s linear infinite; }
 @keyframes bubbles { to { background-position: 0 -1900px, 60px -2700px, 30px -1200px; } }
 /* The Foundry */
 .board-foundry { --a-bg: radial-gradient(900px 500px at 50% 115%, rgba(255, 120, 30, 0.45), transparent 62%), linear-gradient(180deg, #150b08, #070405); --a-board: linear-gradient(180deg, rgba(40, 22, 16, 0.92), rgba(18, 10, 8, 0.96)); --a-frame: rgba(255, 150, 70, 0.45); --a-glow: rgba(255, 110, 30, 0.22); }
-.board-foundry .ambient::before { background-image: radial-gradient(circle, rgba(255, 170, 70, 0.8) 0 1.6px, transparent 2.6px), radial-gradient(circle, rgba(255, 110, 40, 0.6) 0 2.4px, transparent 3.6px), radial-gradient(circle, rgba(255, 220, 140, 0.55) 0 1.2px, transparent 2.2px); background-size: 120px 170px, 210px 250px, 80px 110px; background-position: 0 0, 70px 80px, 20px 30px; animation: embersRise 18s linear infinite; }
+.board-foundry .run-active .bg::before { background-image: radial-gradient(circle, rgba(255, 170, 70, 0.8) 0 1.6px, transparent 2.6px), radial-gradient(circle, rgba(255, 110, 40, 0.6) 0 2.4px, transparent 3.6px), radial-gradient(circle, rgba(255, 220, 140, 0.55) 0 1.2px, transparent 2.2px); background-size: 120px 170px, 210px 250px, 80px 110px; background-position: 0 0, 70px 80px, 20px 30px; animation: embersRise 18s linear infinite; }
 @keyframes embersRise { to { background-position: 0 -1700px, 70px -2500px, 20px -1100px; } }
 /* Night Market */
 .board-market { --a-bg: radial-gradient(700px 500px at 20% 0%, rgba(255, 90, 190, 0.32), transparent 62%), radial-gradient(700px 500px at 90% 20%, rgba(150, 90, 255, 0.35), transparent 62%), linear-gradient(180deg, #1b0b30, #0b0518); --a-board: linear-gradient(180deg, rgba(40, 18, 70, 0.9), rgba(18, 8, 38, 0.95)); --a-frame: rgba(255, 130, 220, 0.45); --a-glow: rgba(255, 90, 200, 0.2); }
-.board-market .ambient::before { background-image: radial-gradient(circle at 15% 12%, rgba(255, 130, 90, 0.5), transparent 70px), radial-gradient(circle at 42% 20%, rgba(255, 210, 90, 0.42), transparent 80px), radial-gradient(circle at 70% 10%, rgba(255, 110, 200, 0.5), transparent 70px), radial-gradient(circle at 92% 22%, rgba(120, 220, 255, 0.4), transparent 75px); animation: lanterns 11s ease-in-out infinite alternate; }
+.board-market .run-active .bg::before { background-image: radial-gradient(circle at 15% 12%, rgba(255, 130, 90, 0.5), transparent 70px), radial-gradient(circle at 42% 20%, rgba(255, 210, 90, 0.42), transparent 80px), radial-gradient(circle at 70% 10%, rgba(255, 110, 200, 0.5), transparent 70px), radial-gradient(circle at 92% 22%, rgba(120, 220, 255, 0.4), transparent 75px); animation: lanterns 11s ease-in-out infinite alternate; }
 @keyframes lanterns { from { transform: translate3d(-14px, 0, 0); opacity: 0.8; } to { transform: translate3d(14px, 10px, 0); opacity: 1; } }
 /* Orbit */
 .board-orbit { --a-bg: radial-gradient(circle at 82% 108%, #31509e 0 16%, #15245a 16.5% 21%, transparent 21.5%), radial-gradient(600px 400px at 85% 100%, rgba(110, 150, 255, 0.35), transparent 70%), linear-gradient(180deg, #03050f, #070b1f); --a-board: linear-gradient(180deg, rgba(14, 22, 52, 0.85), rgba(6, 10, 28, 0.92)); --a-frame: rgba(150, 180, 255, 0.4); --a-glow: rgba(110, 150, 255, 0.2); }
-.board-orbit .ambient::before { background-image: radial-gradient(circle, #fff 0 1px, transparent 1.8px), radial-gradient(circle, rgba(190, 210, 255, 0.9) 0 1.2px, transparent 2px), radial-gradient(circle, rgba(255, 240, 200, 0.8) 0 0.9px, transparent 1.6px); background-size: 97px 131px, 173px 211px, 59px 83px; background-position: 10px 20px, 80px 90px, 30px 50px; animation: starDrift 90s linear infinite, twinkle 4s ease-in-out infinite; }
+.board-orbit .run-active .bg::before { background-image: radial-gradient(circle, #fff 0 1px, transparent 1.8px), radial-gradient(circle, rgba(190, 210, 255, 0.9) 0 1.2px, transparent 2px), radial-gradient(circle, rgba(255, 240, 200, 0.8) 0 0.9px, transparent 1.6px); background-size: 97px 131px, 173px 211px, 59px 83px; background-position: 10px 20px, 80px 90px, 30px 50px; animation: starDrift 90s linear infinite, twinkle 4s ease-in-out infinite; }
 @keyframes starDrift { to { background-position: 10px 1310px, 80px 2110px, 30px 830px; } }
 /* Greenhouse */
 .board-greenhouse { --a-bg: radial-gradient(800px 500px at 50% -10%, rgba(200, 255, 140, 0.32), transparent 62%), linear-gradient(180deg, #0a2a1c, #04140d); --a-board: linear-gradient(180deg, rgba(14, 58, 40, 0.88), rgba(6, 30, 20, 0.94)); --a-frame: rgba(160, 255, 140, 0.4); --a-glow: rgba(150, 255, 120, 0.2); }
-.board-greenhouse .ambient::before { background-image: repeating-linear-gradient(104deg, transparent 0 70px, rgba(255, 255, 190, 0.07) 70px 120px); background-size: 200% 100%; animation: shafts 16s ease-in-out infinite alternate; }
-.board-greenhouse .ambient::after { background-image: radial-gradient(circle, rgba(230, 255, 160, 0.7) 0 1.6px, transparent 2.6px), radial-gradient(circle, rgba(255, 255, 210, 0.5) 0 1.2px, transparent 2.2px); background-size: 110px 150px, 70px 95px; mask-image: none; -webkit-mask-image: none; animation: embersRise 40s linear infinite; }
+.board-greenhouse .run-active .bg::before { background-image: repeating-linear-gradient(104deg, transparent 0 70px, rgba(255, 255, 190, 0.07) 70px 120px); background-size: 200% 100%; animation: shafts 16s ease-in-out infinite alternate; }
+.board-greenhouse .run-active .bg::after { background-image: radial-gradient(circle, rgba(230, 255, 160, 0.7) 0 1.6px, transparent 2.6px), radial-gradient(circle, rgba(255, 255, 210, 0.5) 0 1.2px, transparent 2.2px); background-size: 110px 150px, 70px 95px; mask-image: none; -webkit-mask-image: none; animation: embersRise 40s linear infinite; }
 @keyframes shafts { from { background-position: 0 0; } to { background-position: 160px 0; } }
 
 /* board picks up the arena */

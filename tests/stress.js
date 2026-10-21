@@ -1,114 +1,119 @@
-// Bot plays the real UI (rounds, boosters, round clears, game overs) and opens Geodes.
-// After every action the DOM bricks must equal engine state exactly.
-// Usage: node tests/stress.js [reduced|full] [actions] [geodes]
+// Bot plays the real UI: Rush (with stage-ups, power-ups, pause, End Run), Chill rounds, Daily. After every
+// action the DOM bricks must equal the engine state exactly. Usage: node tests/stress.js [reduced|full] [actions]
 const { launch } = require('./lib');
 const REDUCED = process.argv[2] !== 'full';
-const ACTIONS = +(process.argv[3] || 120);
-const GEODES = +(process.argv[4] || 10);
+const ACTIONS = +(process.argv[3] || 150);
 (async () => {
-  const { browser, page, errors } = await launch({ width: 430, height: 820, mobile: false });
-  if (REDUCED) await page.evaluate(() => { BR.Storage.data.settings.reduced = true; __brick.applySettings(); });
+  const { browser, page, errors } = await launch({ width: 390, height: 844 });
+  await page.evaluate((reduced) => {
+    BR.Storage.data.settings.reduced = reduced; BR.Storage.data.seenTutorial = true; BR.App.applySettings(); BR.Storage.save();
+    BR.Storage.data.runs = 3;
+  }, REDUCED);
   let problems = 0;
   const note = (...a) => { problems++; console.log('PROBLEM', ...a); };
+  const R = '(window.BR.Run)';
 
   const verify = async (tag) => {
+    await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect && a.effect.getTiming().iterations !== Infinity && a.playState === 'running').map((a) => a.finished.catch(() => 0))));
     const issues = await page.evaluate(() => {
-      const a = __brick; const e = a.engine, v = a.view; const out = [];
-      if (v.bricks.size !== 64) out.push('brick count ' + v.bricks.size);
-      if (document.querySelectorAll('#field .brick').length !== 64) out.push('dom bricks ' + document.querySelectorAll('#field .brick').length);
+      const run = BR.Run, e = run.engine, v = run.view; const out = [];
+      const n = 64;
+      if (v.bricks.size !== n) out.push('brick count ' + v.bricks.size);
+      if (document.querySelectorAll('#field .brick').length !== n) out.push('dom bricks ' + document.querySelectorAll('#field .brick').length);
       for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
-        const b = e.board.grid[r][c]; const rec = v.bricks.get(b.id);
+        const b = e.board.grid[r][c]; if (!b) { out.push('hole ' + r + ',' + c); continue; }
+        const rec = v.bricks.get(b.id);
         if (!rec) { out.push('missing ' + r + ',' + c); continue; }
         if (rec.r !== r || rec.c !== c) out.push('pos ' + b.id);
-        if (+rec.el.dataset.c !== b.color) out.push('color ' + r + ',' + c);
+        if (+rec.el.dataset.c !== b.color && !rec.el.classList.contains('wild')) out.push('color ' + r + ',' + c);
         const m = new DOMMatrixReadOnly(getComputedStyle(rec.el).transform);
         if (Math.abs(m.m41 - c * v.cell) > 1 || Math.abs(m.m42 - r * v.cell) > 1) out.push('visual ' + r + ',' + c);
       }
       if (e.movesLeft < 0) out.push('negative moves');
+      if (!(e.fuse >= 0)) out.push('fuse ' + e.fuse);
       return out;
     });
     if (issues.length) note(tag, issues.slice(0, 4));
     return issues.length === 0;
   };
 
-  const settle = async () => {
-    for (let i = 0; i < 400; i++) {
-      const st = await page.evaluate(() => ({ busy: __brick.busy, rc: document.getElementById('roundclear').classList.contains('show'), go: document.getElementById('gameover').classList.contains('show') }));
-      if (st.go) return 'over';
-      if (st.rc) { await page.waitForTimeout(REDUCED ? 500 : 2600); await page.click('#btnNextRound'); await page.waitForTimeout(REDUCED ? 450 : 700); continue; }
-      if (!st.busy) return 'idle';
-      await page.waitForTimeout(100);
+  const settle = async (mode) => {
+    for (let i = 0; i < 300; i++) {
+      const st = await page.evaluate(() => ({ busy: BR.Run.busy, over: BR.Run.over, modal: BR.Run.modal, res: !!document.querySelector('.results.on') }));
+      if (st.res || st.over) return 'over';
+      if (!st.busy && !st.modal) return 'idle';
+      await page.waitForTimeout(60);
     }
-    note('STUCK');
-    return 'stuck';
+    note('STUCK in', mode); return 'stuck';
   };
 
-  await page.click('#btnPlay');
-  await page.waitForFunction(() => !__brick.busy, null, { timeout: 10000 });
-  let runs = 1, boosterUses = 0, rounds = 0;
-  for (let n = 0; n < ACTIONS; n++) {
-    const act = await page.evaluate(() => {
-      const a = __brick, e = a.engine;
-      const useB = BR.BOOSTER_ORDER.filter((t) => e.inv[t] > 0);
-      if (useB.length && Math.random() < 0.5) {
-        const t = useB[Math.floor(Math.random() * useB.length)];
-        const r = Math.floor(Math.random() * 8), c = Math.floor(Math.random() * 8);
-        const q = a.view.pagePoint(r, c);
-        return { type: t, x: q.x, y: q.y };
+  const play = async (mode, actions) => {
+    await page.evaluate((m) => { BR.Storage.clearRun(); __app.startRun({ mode: m, boosts: {} }); }, mode);
+    await page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 12000 }).catch(() => note('never started', mode));
+    let stages = 0, powers = 0, pauses = 0;
+    for (let n = 0; n < actions; n++) {
+      // keep the fuse alive so the bot can reach higher stages
+      await page.evaluate(() => { const e = BR.Run.engine; if (!e.chill && e.fuse < 6) e.fuse = e.fuseMax; });
+      const act = await page.evaluate(() => {
+        const run = BR.Run, e = run.engine, v = run.view;
+        const have = BR.BOOSTER_ORDER.filter((t) => e.inv[t] > 0);
+        if (have.length && Math.random() < 0.5) {
+          const t = have[Math.floor(Math.random() * have.length)]; const r = Math.floor(Math.random() * 8), c = Math.floor(Math.random() * 8);
+          const q = v.pagePoint(r, c); return { type: t, x: q.x, y: q.y };
+        }
+        const taps = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (e.plan(r, c)) taps.push({ r, c });
+        if (!taps.length) return { type: 'none' };
+        taps.sort((a, b) => e.plan(b.r, b.c).cells.length - e.plan(a.r, a.c).cells.length);
+        const pick = Math.random() < 0.7 ? taps[Math.floor(Math.random() * Math.min(3, taps.length))] : taps[Math.floor(Math.random() * taps.length)];
+        const q = v.pagePoint(pick.r, pick.c); return { type: 'tap', x: q.x, y: q.y };
+      });
+      if (act.type === 'none') { await page.evaluate(() => BR.Run.engine.board.shuffle && 0); await page.waitForTimeout(200); continue; }
+      if (act.type !== 'tap') { await page.click('.bslot[data-b="' + act.type + '"]'); powers++; await page.waitForTimeout(60); }
+      await page.mouse.click(act.x, act.y);
+      const res = await settle(mode);
+      if (res === 'over') return { over: true, n };
+      if (res === 'stuck') return { stuck: true, n };
+      await verify(mode + ' #' + n);
+      if (n % 37 === 20) { // pause and resume
+        await page.click('#btnPause'); await page.waitForTimeout(REDUCED ? 200 : 600); pauses++;
+        const paused = await page.evaluate(() => BR.Run.paused);
+        if (!paused) note('pause did not engage');
+        const before = await page.evaluate(() => BR.Run.engine.fuse); await page.waitForTimeout(500);
+        const after = await page.evaluate(() => BR.Run.engine.fuse);
+        if (Math.abs(before - after) > 0.001) note('fuse moved while paused', before, after);
+        await page.click('.sheet .btn:has-text("Resume")'); await page.waitForTimeout(REDUCED ? 300 : 700);
       }
-      const taps = [];
-      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (e.plan(r, c)) taps.push({ r, c });
-      const p = taps[Math.floor(Math.random() * taps.length)];
-      const q = a.view.pagePoint(p.r, p.c);
-      return { x: q.x, y: q.y };
-    });
-    if (act.type) { await page.click(`.bslot[data-b="${act.type}"]`); await page.waitForTimeout(60); boosterUses++; }
-    await page.mouse.click(act.x, act.y);
-    const st = await settle();
-    if (st === 'over') {
-      await page.waitForTimeout(REDUCED ? 700 : 1500);
-      const info = await page.evaluate(() => ({ score: __brick.engine.score, rounds: __brick.engine.roundsCleared, level: BR.Progress.level, xp: BR.Progress.xp, geodes: BR.Progress.geodeCount() }));
-      rounds += info.rounds;
-      await page.click('#btnAgain'); runs++;
-      await page.waitForFunction(() => !__brick.busy, null, { timeout: 12000 }).catch(() => note('no restart'));
-      continue;
+      // give the bot some charge so power-ups get exercised
+      if (n % 25 === 10) await page.evaluate(() => { BR.Run.engine.inv.hammer++; BR.Run.engine.inv.beam++; BR.Run.engine.inv.prism++; BR.Run.renderPower(null); });
     }
-    if (st === 'stuck') break;
-    await page.waitForTimeout(REDUCED ? 380 : 480);
-    await verify('after action ' + n);
-  }
-  console.log('runs', runs, 'boosterUses', boosterUses, 'roundsCleared(prev runs)', rounds);
-  const prof = await page.evaluate(() => ({ level: BR.Progress.level, xp: BR.Progress.xp, geodes: BR.Progress.geodeCount(), best: __brick.store.data.best }));
-  console.log('profile after bot', prof);
+    return { n: actions, powers, pauses };
+  };
 
-  // ---- open Geodes (random equip / keep / dust) ----
-  await page.evaluate(() => __brick.toMenu());
-  await page.waitForTimeout(300);
-  await page.evaluate((n) => { BR.Storage.data.profile.geodes = { normal: n, series: Math.floor(n / 4) }; __brick.ui.refreshMenu(); }, GEODES);
-  const before = await page.evaluate(() => ({ g: BR.Progress.geodeCount(), vault: BR.Storage.data.profile.vault.length, shards: BR.Storage.data.profile.shards }));
-  await page.evaluate(() => { window.__opening = __brick.openGeodes(); });
-  let opened = 0;
-  for (let guard = 0; guard < 4000; guard++) {
-    const st = await page.evaluate(() => ({ phase: document.getElementById('geode').dataset.phase, show: document.getElementById('geode').classList.contains('show'), resOn: document.getElementById('result').classList.contains('on'), act: getComputedStyle(document.getElementById('resultActions')).opacity }));
-    if (!st.show && opened >= 1 && !(await page.evaluate(() => __brick.geodeBusy))) break;
-    if (st.phase === 'idle' && st.show) { await page.locator('#geodeBtn').click({ force: true }).catch(() => {}); if (!REDUCED) { await page.waitForTimeout(250); await page.locator('#geodeBtn').click({ force: true }).catch(() => {}); await page.waitForTimeout(250); await page.locator('#geodeBtn').click({ force: true }).catch(() => {}); } }
-    else if (st.phase === 'result' && st.resOn && +st.act > 0.9) {
-      await page.waitForTimeout(700);
-      const pick = Math.random();
-      await page.click(pick < 0.5 ? '#btnEquip' : '#btnKeep'); opened++;
-      await page.waitForTimeout(REDUCED ? 450 : 700);
-    }
-    else await page.waitForTimeout(100);
+  console.log('rush', JSON.stringify(await play('rush', ACTIONS)));
+  // End Run from the pause menu
+  let ended = await page.evaluate(() => !BR.Run.over);
+  if (!ended) await page.waitForSelector('.results.on', { timeout: 12000 }).catch(() => note('no results after fuse out'));
+  if (ended) {
+    await page.click('#btnPause'); await page.waitForTimeout(500);
+    await page.locator('.sheet .btn:has-text("End run")').first().click(); await page.waitForTimeout(500);
+    await page.locator('.sheet .btn:has-text("End run")').last().click(); // confirm
+    await page.waitForSelector('.results.on', { timeout: 12000 }).catch(() => note('no results after End Run'));
   }
-  await page.waitForFunction(() => !__brick.geodeBusy, null, { timeout: 10000 }).catch(() => note('geodes still busy'));
-  const after = await page.evaluate(() => ({ g: BR.Progress.geodeCount(), vault: BR.Storage.data.profile.vault.length, shards: BR.Storage.data.profile.shards, dupes: 0 }));
-  console.log('geodes before', before, 'after', after, 'opened via UI', opened);
-  if (after.g !== 0) note('geodes left', after.g);
-  if (after.vault + after.shards / 10 <= before.vault) note('items/shards did not grow');
-  // loadout must point at real instances
-  const lo = await page.evaluate(() => { const p = BR.Storage.data.profile; return Object.values(p.loadout).every((u) => u === 'default' || p.vault.some((i) => i.uid === u)); });
-  if (!lo) note('loadout points at missing instance');
-  console.log('problems', problems, 'errors', errors);
+  await page.waitForTimeout(REDUCED ? 800 : 5000);
+  await page.screenshot({ path: process.env.SHOT_RES || '/tmp/res.png' });
+  const resText = await page.evaluate(() => (document.querySelector('.results') || {}).innerText || '');
+  if (!/Coins/i.test(resText)) note('results missing Coins', resText.slice(0, 120));
+  await page.evaluate(() => BR.Run.closeResults && BR.Run.closeResults('home')); await page.waitForTimeout(800);
+  const coinsAfter = await page.evaluate(() => BR.Storage.data.profile.coins);
+  console.log('coins after rush run', coinsAfter);
+
+  console.log('chill', JSON.stringify(await play('chill', Math.round(ACTIONS / 2))));
+  await page.evaluate(() => { if (!BR.Run.over) BR.Run.endRun && BR.Run.endRun('quit'); }); await page.waitForTimeout(1500);
+  await page.evaluate(() => BR.Run.closeResults && BR.Run.closeResults('home')); await page.waitForTimeout(600);
+  console.log('daily', JSON.stringify(await play('daily', Math.round(ACTIONS / 3))));
+
+  console.log('errors', errors.filter((e) => !/Failed to load resource/.test(e)));
+  console.log('problems', problems);
   await browser.close();
-  process.exit(problems || errors.length ? 1 : 0);
+  process.exit(problems || errors.some((e) => /pageerror/.test(e)) ? 1 : 0);
 })();

@@ -210,3 +210,9 @@ html.reduced *, html.reduced *::before, html.reduced *::after { animation-durati
 html.reduced .blob, html.reduced .bg-bricks { display: none; }
 @media (prefers-reduced-motion: reduce) { .blob, .bg-bricks { display: none; } }
 @media (min-width: 700px) { #screens .scroll, .topbar { width: min(100%, 560px); margin-inline: auto; } .tabbar { grid-template-columns: repeat(5, 1fr); padding-inline: max(var(--sal), calc((100vw - 560px) / 2)); } }
+
+/* centered sheets: title in the middle, close button tucked in the corner */
+.sheet.center .sheet-head { justify-content: center; padding-top: 18px; }
+.sheet.center .sheet-head h2 { text-align: center; flex: none; }
+.sheet.center .sheet-head .icon-btn { position: absolute; right: 12px; top: 12px; width: 38px; height: 38px; border-radius: 12px; }
+.sheet-actions.row .btn { padding: 0 10px; white-space: nowrap; font-size: 17px; }
