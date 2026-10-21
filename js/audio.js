@@ -126,6 +126,10 @@
     coin(i = 0) { tone({ f: 1100 + (i % 6) * 110, type: 'square', dur: 0.07, vol: 0.06 }); tone({ f: 1650 + (i % 6) * 110, type: 'square', dur: 0.1, vol: 0.05, at: 0.05 }); },
     // chest rituals
     holdStart() { },
+    holdTick(p = 0) { tone({ f: 90 + p * 260, to: 60 + p * 190, type: 'sine', dur: 0.13, vol: 0.16 + p * 0.2 }); tone({ f: 300 + p * 1500, type: 'triangle', dur: 0.07, vol: 0.04 + p * 0.07, at: 0.02 }); if (p > 0.45) noise({ dur: 0.09, vol: 0.05 + p * 0.1, from: 2000 + p * 4000, to: 800 }); },
+    drum(n = 6) { for (let i = 0; i < n; i++) tone({ f: 85 + i * 6, to: 55, type: 'sine', dur: 0.1, vol: 0.2, at: i * 0.06 }); },
+    launch() { noise({ dur: 0.5, vol: 0.16, from: 900, to: 5200, type: 'bandpass', q: 1.4 }); tone({ f: 300, to: 1200, type: 'sine', dur: 0.4, vol: 0.05 }); },
+    crackle() { for (let i = 0; i < 8; i++) noise({ dur: 0.04, vol: 0.12, from: 6000, to: 2000, at: 0.05 + i * 0.045 + Math.random() * 0.03, type: 'highpass' }); },
     thud(p = 1) { tone({ f: 100, to: 44, type: 'sine', dur: 0.2, vol: 0.28 * p }); noise({ dur: 0.1, vol: 0.12 * p, from: 1500, to: 200 }); },
     bang() { noise({ dur: 0.7, vol: 0.5, from: 8000, to: 120, q: 0.5 }); tone({ f: 140, to: 34, type: 'sine', dur: 0.7, vol: 0.6 }); tone({ f: 900, to: 200, type: 'sawtooth', dur: 0.3, vol: 0.1 }); },
     glassBreak() { noise({ dur: 0.6, vol: 0.4, from: 9000, to: 1200, type: 'highpass' }); [0, 1, 2, 3, 4, 5].forEach((i) => tone({ f: 2200 + Math.random() * 2400, type: 'sine', dur: 0.2, vol: 0.06, at: i * 0.03 })); tone({ f: 200, to: 60, type: 'sine', dur: 0.3, vol: 0.25 }); },

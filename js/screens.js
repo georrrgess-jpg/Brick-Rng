@@ -40,9 +40,10 @@
         <i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>${r.total} item${r.total === 1 ? '' : 's'} · ${r.missing === 0 ? 'you own them all' : `${r.missing} left to find`}</small></div>
         <div class="od-pct"><b>${fmtPct(r.pct)}</b><small>1 in ${r.oneIn}</small></div></div>`).join('');
     const inside = live.map((r) => `<div class="inside-grp" style="--rc:${r.rarity.color}"><h4>${r.rarity.name}</h4><div class="inside-items">${r.items.map((x) => `<div class="inside-item ${P.owns(x.id) ? 'own' : ''}">${P.owns(x.id) ? BR.icon('check') : ''}<span>${x.name}</span></div>`).join('')}</div></div>`).join('');
+    const chips = opts.compact ? `<div class="odds-chips">${live.map((r) => `<div class="oc" style="--rc:${r.rarity.color}"><b>${fmtPct(r.pct)}</b><span>${r.rarity.name}</span><small>1 in ${r.oneIn}</small></div>`).join('')}</div>` : '';
     return `<div class="odds ${opts.compact ? 'compact' : ''}">
       <p class="odds-sentence">${BR.oddsSentence(chestId)}</p>
-      <div class="odds-bar" role="img" aria-label="Odds bar">${bar}</div>
+      <div class="odds-bar" role="img" aria-label="Odds bar">${bar}</div>${chips}
       ${opts.compact ? '' : `<div class="odds-rows">${list}</div>
       <button class="odds-more" data-act="toggle-inside">See everything inside <i>${BR.icon('arrow')}</i></button>
       <div class="inside">${inside}</div>`}</div>`;

@@ -9,6 +9,7 @@
       this.parts = [];
       this.rings = [];
       this.bolts = [];
+      this.rockets = [];
       this.running = false;
       this.last = 0;
       this.scale = 1;
@@ -28,7 +29,7 @@
       this.canvas.height = Math.round(this.h * dpr);
     }
 
-    get budget() { return this.settings.reduced ? 0.35 : 1; }
+    get budget() { return this.settings.reduced ? 0.35 : this.settings.low ? 0.6 : 1; }
 
     _kick() {
       if (this.running) return;
@@ -91,6 +92,13 @@
             const sp = rnd(120, 420);
             this.emit({ kind: 'shard', shape: 'pixel', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 200, drag: 3.2, size: 3 + ((Math.random() * 3) | 0) * 2, spread: 0, max: rnd(0.35, 0.7), color: cols[(Math.random() * cols.length) | 0] });
           }
+          break;
+        }
+        case 'fireworks': {
+          const cols = [glow, '#ff6b9a', '#6bffb2', '#6bb8ff', '#ffd36b'];
+          this.sparks(x, y, cols[(Math.random() * cols.length) | 0], Math.ceil(n * 1.1), 1.35, 0.55);
+          this.shards(x, y, glow, Math.ceil(n / 3), 0.6);
+          if (power >= 1.4 && Math.random() < 0.7) this.firework(x, y, x + rnd(-60, 60), Math.max(80, y - rnd(150, 260)), cols[(Math.random() * cols.length) | 0], ['peony', 'ring', 'willow', 'star'][(Math.random() * 4) | 0]);
           break;
         }
         case 'lightning':
@@ -168,6 +176,26 @@
       this.shards(x, y, color, 14 * power, 1.7);
     }
 
+    /** A firework: a rocket climbs to (x1, y1), then bursts. `style` is peony, ring, willow or star. */
+    firework(x0, y0, x1, y1, color = '#ffd24a', style = 'peony') {
+      if (this.rockets.length > 6) return;
+      this.rockets.push({ x0, y0, x1, y1, x: x0, y: y0, life: 0, max: 0.55 + Math.random() * 0.15, color, style });
+      this._kick();
+    }
+    _burstFirework(r) {
+      const { x1: x, y1: y, color, style } = r;
+      const n = Math.round((style === 'willow' ? 34 : 44) * this.budget);
+      const pal = [color, '#ffffff', color];
+      for (let i = 0; i < n && this.parts.length < 520; i++) {
+        const a = style === 'ring' ? (i / n) * 6.2832 : Math.random() * 6.2832;
+        const sp = style === 'ring' ? 250 : style === 'willow' ? 90 + Math.random() * 130 : 120 + Math.random() * 260;
+        this.parts.push({ kind: 'spark', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, size: 2 + Math.random() * 2.2, life: 0, max: style === 'willow' ? 1.6 + Math.random() * 0.6 : 0.9 + Math.random() * 0.5, color: pal[i % 3], g: style === 'willow' ? 190 : 120, drag: style === 'willow' ? 1.6 : 2.1 });
+      }
+      if (style === 'star') for (let i = 0; i < 10 * this.budget; i++) this.emit({ shape: 'star', x, y, vx: (Math.random() - 0.5) * 520, vy: (Math.random() - 0.5) * 520, g: 160, drag: 2, size: 7 + Math.random() * 5, max: 1 + Math.random() * 0.4, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 8, color });
+      this.ring(x, y, color, 70, 0.5, 3);
+      this._kick();
+    }
+
     loop(now) {
       const dt = Math.max(0, Math.min(0.05, (now - this.last) / 1000));
       this.last = now;
@@ -187,6 +215,16 @@
         ctx.beginPath();
         ctx.arc(r.x, r.y, r.radius * e, 0, 6.2832);
         ctx.stroke();
+      }
+
+      for (let i = this.rockets.length - 1; i >= 0; i--) {
+        const r = this.rockets[i];
+        r.life += dt;
+        const t = r.life / r.max;
+        if (t >= 1) { this.rockets.splice(i, 1); this._burstFirework(r); continue; }
+        const e = 1 - (1 - t) * (1 - t);
+        r.x = r.x0 + (r.x1 - r.x0) * e; r.y = r.y0 + (r.y1 - r.y0) * e;
+        this.emit({ kind: 'spark', x: r.x, y: r.y, vx: (Math.random() - 0.5) * 30, vy: 40 + Math.random() * 60, size: 1.8, max: 0.35, color: '#ffe9a8', g: 0, drag: 2 });
       }
 
       for (let i = this.bolts.length - 1; i >= 0; i--) {
@@ -237,7 +275,8 @@
             ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
           } else {
             const s = p.size * (1 - t * 0.35);
-            if (p.shape === 'tri') { ctx.beginPath(); ctx.moveTo(0, -s * 0.85); ctx.lineTo(s * 0.7, s * 0.6); ctx.lineTo(-s * 0.7, s * 0.6); ctx.closePath(); ctx.fill(); }
+            if (p.shape === 'star') { ctx.beginPath(); for (let k = 0; k < 10; k++) { const rr = k % 2 ? s * 0.4 : s; const aa = k * 0.6283; ctx.lineTo(Math.cos(aa) * rr, Math.sin(aa) * rr); } ctx.closePath(); ctx.fill(); }
+            else if (p.shape === 'tri') { ctx.beginPath(); ctx.moveTo(0, -s * 0.85); ctx.lineTo(s * 0.7, s * 0.6); ctx.lineTo(-s * 0.7, s * 0.6); ctx.closePath(); ctx.fill(); }
             else if (p.shape === 'petal') { ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, s * 0.45, 0, 0, 6.2832); ctx.fill(); }
             else ctx.fillRect(-s / 2, -s / 2, s, s);
           }
@@ -246,7 +285,7 @@
       }
       ctx.globalAlpha = 1;
 
-      if (this.parts.length || this.rings.length || this.bolts.length) requestAnimationFrame(this.loop);
+      if (this.parts.length || this.rings.length || this.bolts.length || this.rockets.length) requestAnimationFrame(this.loop);
       else { this.running = false; ctx.clearRect(0, 0, this.w, this.h); }
     }
 

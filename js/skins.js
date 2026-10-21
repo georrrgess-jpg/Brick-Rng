@@ -44,7 +44,7 @@
     },
 
     /** Small live preview of an item: used on cards, sheets, the reel and the result. */
-    previewHTML(item, inst) {
+    previewHTML(item, inst, o = {}) {
       const shine = inst ? inst.shine : 'plain';
       if (item.type === 'skin') {
         const seed = inst ? inst.seed : 0;
@@ -55,7 +55,7 @@
         const dots = Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg"></i>`).join('');
         return `<div class="mini-burst" style="--c:${item.color}">${dots}</div>`;
       }
-      if (item.type === 'board') return `<div class="mini-board ${item.cls}" data-ashine="${shine}"><i></i></div>`;
+      if (item.type === 'board') return `<div class="mini-board ${item.cls} ${o.live ? 'live' : ''}" data-ashine="${shine}">${o.live ? '<b class="scene-fx"></b><b class="scene-fx b"></b>' : ''}<i></i></div>`;
       return `<div class="mini-fuse ${item.cls}" data-shine="${shine}"><span class="mf-bomb"></span><span class="mf-track"><i class="mf-fill"></i><b class="mf-spark"></b></span></div>`;
     },
   };

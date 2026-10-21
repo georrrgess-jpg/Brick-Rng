@@ -1,1 +1,196 @@
-/* chest opening styles: next phase */
+/* ===================================================================
+   Chest openings: stage, hold ring, themed bursts, the reel, the reveal
+   =================================================================== */
+.opening { --ac: #ff6a4d; --hold: 0; position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; overflow: hidden; opacity: 0; transition: opacity 0.4s; pointer-events: auto; touch-action: manipulation; }
+.opening.on { opacity: 1; }
+.opening[data-chest="brick"] { --ac: #ff6a4d; } .opening[data-chest="pop"] { --ac: #ff3d8b; } .opening[data-chest="board"] { --ac: #4aa8ff; } .opening[data-chest="fuse"] { --ac: #ffb02e; } .opening[data-chest="golden"] { --ac: #ffd24a; }
+
+/* ---------- backdrop ---------- */
+.op-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #170c2e, #07040f 78%); overflow: hidden; }
+.op-glow { position: absolute; inset: 0; background: radial-gradient(ellipse 85% 52% at 50% 40%, color-mix(in srgb, var(--ac) 62%, transparent), transparent 70%); opacity: calc(0.24 + var(--hold) * 0.66); transition: opacity 0.12s linear; }
+.op-rays { position: absolute; left: 50%; top: 40%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--ac) 30%, transparent) 0 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0, transparent 52%); mask-image: radial-gradient(circle, #000 0, transparent 52%); opacity: calc(0.28 + var(--hold) * 0.55); animation: spinSlow 80s linear infinite; will-change: transform; }
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+.op-dust { position: absolute; left: 0; top: 0; width: 100%; height: 2400px; background-image: radial-gradient(circle 2px at 12% 10%, rgba(255, 255, 255, 0.7), transparent 90%), radial-gradient(circle 1.5px at 38% 34%, rgba(255, 255, 255, 0.5), transparent 90%), radial-gradient(circle 2.4px at 70% 18%, rgba(255, 255, 255, 0.6), transparent 90%), radial-gradient(circle 1.5px at 88% 52%, rgba(255, 255, 255, 0.5), transparent 90%), radial-gradient(circle 2px at 24% 70%, rgba(255, 255, 255, 0.6), transparent 90%), radial-gradient(circle 1.5px at 60% 88%, rgba(255, 255, 255, 0.5), transparent 90%); background-size: 320px 600px; animation: sceneUp 40s linear infinite; opacity: 0.6; will-change: transform; }
+.op-vig { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(3, 1, 8, 0.82) 100%); pointer-events: none; }
+
+/* ---------- top bar ---------- */
+.op-top { position: relative; z-index: 3; flex: none; display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: calc(var(--sat) + 10px) calc(var(--sar) + 14px) 6px calc(var(--sal) + 14px); transition: opacity 0.4s; }
+.op-title { text-align: center; line-height: 1.1; } .op-title b { display: block; font: 700 24px var(--f-display); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); } .op-title span { font: 700 13px var(--f-ui); color: var(--muted); }
+.opening.spinning .op-top, .opening.revealing .op-top { opacity: 0.0; pointer-events: none; }
+.opening.spinning .op-top .icon-btn { opacity: 0; }
+
+/* ---------- stage + chest ---------- */
+.op-stage { position: relative; z-index: 2; flex: 1; min-height: 0; display: grid; place-items: center; }
+.op-chest-wrap { position: relative; width: min(82vw, 340px); aspect-ratio: 200 / 180; margin-top: -4vh; }
+.op-pedestal { position: absolute; left: 50%; bottom: -7%; width: 138%; height: 26%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--ac) 60%, transparent), transparent 68%); filter: blur(2px); opacity: calc(0.55 + var(--hold) * 0.45); }
+.op-pedestal::after { content: ''; position: absolute; inset: 22% 14%; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--ac) 80%, #fff); opacity: 0.6; box-shadow: 0 0 22px var(--ac); }
+.op-shake { position: absolute; inset: 0; will-change: transform; }
+.op-chest { position: absolute; inset: 0; transform-origin: 50% 90%; filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.55)) brightness(calc(1 + var(--hold) * 0.45)); }
+.op-chest .chest-svg { width: 100%; height: 100%; overflow: visible; }
+.op-chest .chest-svg g, .op-chest .chest-svg ellipse { transform-box: fill-box; transform-origin: center; }
+.op-chest.drop { animation: chestDrop 0.95s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+@keyframes chestDrop { 0% { transform: translateY(-120vh) rotate(-8deg) scale(0.9); } 55% { transform: translateY(0) rotate(2deg) scale(1.06, 0.94); } 68% { transform: translateY(-5%) rotate(-1deg) scale(0.98, 1.03); } 82% { transform: translateY(0) scale(1.02, 0.98); } 100% { transform: none; } }
+.op-chest.idle { animation: chestBob 3s ease-in-out infinite; }
+@keyframes chestBob { 50% { transform: translateY(-2.5%) rotate(0.6deg); } }
+.op-chest .c-glow { opacity: calc(0.15 + var(--hold) * 0.85); }
+.op-chest .c-glints { animation: glints 2.4s ease-in-out infinite; } @keyframes glints { 50% { opacity: 0.2; transform: scale(0.7); } }
+.op-ground-dust { position: absolute; left: 50%; bottom: 0; width: 10px; height: 10px; pointer-events: none; }
+.op-ground-dust i { position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 70%); opacity: 0; }
+.op-chest.gone { animation: chestAway 0.55s cubic-bezier(0.5, 0, 0.8, 0.4) both; }
+@keyframes chestAway { to { transform: translateY(8%) scale(0.5); opacity: 0; } }
+.op-steam { position: absolute; inset: 0; pointer-events: none; } .op-steam i { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%); opacity: 0; }
+.op-shard { position: absolute; width: 22px; height: 26px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(150, 220, 255, 0.35)); clip-path: polygon(50% 0, 100% 90%, 0 100%); pointer-events: none; will-change: transform; }
+
+/* ---------- odds strip under the chest ---------- */
+.op-odds { position: relative; z-index: 2; flex: none; margin: 0 calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px); padding: 12px 14px 12px; border-radius: 20px; background: rgba(12, 8, 26, 0.72); border: 1px solid var(--line-2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: opacity 0.4s, transform 0.5s var(--ease-out); }
+.op-odds .odds-sentence { font: 700 14px/1.3 var(--f-ui); color: #e9defb; text-align: center; margin-bottom: 8px; }
+.op-odds .odds-bar { margin-bottom: 4px; }
+.op-odds .op-see { display: flex; justify-content: center; align-items: center; gap: 4px; width: 100%; margin-top: 6px; min-height: 36px; font: 700 14px var(--f-ui); color: var(--cyan); }
+.op-odds .op-see svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.opening.spinning .op-odds, .opening.revealing .op-odds { opacity: 0; transform: translateY(20px); pointer-events: none; }
+.op-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 calc(var(--sar) + 16px) 8px calc(var(--sal) + 16px); position: relative; z-index: 3; }
+.op-picker button { min-height: 50px; border-radius: 16px; font: 700 15px var(--f-display); background: rgba(255, 255, 255, 0.08); border: 2px solid var(--line-2); color: var(--text); transition: transform 0.2s var(--ease-spring), border-color 0.2s, background 0.2s; }
+.op-picker button.on { border-color: var(--gold); background: linear-gradient(180deg, rgba(255, 200, 61, 0.3), rgba(255, 160, 30, 0.12)); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255, 190, 40, 0.3); }
+.opening.spinning .op-picker, .opening.revealing .op-picker { display: none; }
+
+/* ---------- footer: hold to open ---------- */
+.op-foot { position: relative; z-index: 3; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px calc(var(--sar) + 16px) calc(var(--sab) + 16px) calc(var(--sal) + 16px); transition: opacity 0.35s, transform 0.5s var(--ease-out); }
+.opening.spinning .op-foot, .opening.revealing .op-foot { opacity: 0; transform: translateY(30px); pointer-events: none; }
+.hold { position: relative; width: 112px; height: 112px; display: grid; place-items: center; touch-action: none; -webkit-user-select: none; user-select: none; }
+.hold svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.hold .ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.14); stroke-width: 7; }
+.hold .ring-fg { fill: none; stroke: url(#holdGrad); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 314.16; stroke-dashoffset: calc(314.16 * (1 - var(--hold))); filter: drop-shadow(0 0 6px var(--ac)); }
+.hold-disc { position: relative; width: 82px; height: 82px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--ac) 50%, #fff), var(--ac) 58%, color-mix(in srgb, var(--ac) 60%, #000)); box-shadow: 0 6px 0 color-mix(in srgb, var(--ac) 45%, #000), 0 14px 28px color-mix(in srgb, var(--ac) 45%, transparent), inset 0 3px 0 rgba(255, 255, 255, 0.45); transition: transform 0.15s var(--ease-out); }
+.hold.down .hold-disc { transform: translateY(5px) scale(0.96); box-shadow: 0 1px 0 color-mix(in srgb, var(--ac) 45%, #000), 0 6px 14px color-mix(in srgb, var(--ac) 45%, transparent), inset 0 3px 0 rgba(255, 255, 255, 0.35); }
+.hold-disc svg { width: 40px; height: 40px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25)); }
+.hold::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ac); opacity: 0; animation: holdPing 2s ease-out infinite; }
+@keyframes holdPing { 0% { transform: scale(0.78); opacity: 0.8; } 100% { transform: scale(1.25); opacity: 0; } }
+.hold.down::before, .hold.off::before { animation: none; }
+.hold.off { opacity: 0.4; pointer-events: none; filter: grayscale(0.5); }
+.hold-label { font: 700 20px var(--f-display); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
+.hold-sub { display: flex; align-items: center; gap: 6px; font: 700 14px var(--f-ui); color: var(--muted); min-height: 22px; }
+.hold-sub .coin { width: 18px; height: 18px; }
+.hold-sub b { color: var(--text); }
+.hold-sub.warn { color: var(--red); }
+.op-skip { position: absolute; left: 0; right: 0; bottom: calc(var(--sab) + 26px); z-index: 4; text-align: center; font: 700 14px var(--f-ui); letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.7); opacity: 0; transition: opacity 0.4s; pointer-events: none; text-transform: uppercase; }
+.op-skip.on { opacity: 1; animation: skipPulse 1.6s ease-in-out infinite; } @keyframes skipPulse { 50% { opacity: 0.45; } }
+
+/* ---------- the reel ---------- */
+.op-reel { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; opacity: 0; pointer-events: none; transform: scale(0.9); transition: opacity 0.45s, transform 0.7s var(--ease-out); }
+.op-reel.on { opacity: 1; transform: none; pointer-events: auto; }
+.op-reel-frame { position: relative; display: grid; place-items: center; }
+.op-reel-frame::before { content: ''; position: absolute; inset: -26px -10px; border-radius: 30px; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--ac) 38%, transparent), transparent 68%); opacity: 0.9; }
+.reel { position: relative; overflow: hidden; perspective: 760px; perspective-origin: 50% 50%; border-radius: 22px; background: linear-gradient(180deg, rgba(8, 5, 18, 0.9), rgba(18, 11, 36, 0.9)); border: 2px solid color-mix(in srgb, var(--ac) 60%, #000); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px color-mix(in srgb, var(--ac) 30%, transparent), inset 0 0 30px rgba(0, 0, 0, 0.6); }
+.reel::before, .reel::after { content: ''; position: absolute; z-index: 4; pointer-events: none; }
+.reel-h { width: min(calc(100vw - 16px), 680px); height: 236px; }
+.reel-h::before { left: 0; top: 0; bottom: 0; width: 26%; background: linear-gradient(90deg, rgba(8, 5, 18, 0.96), transparent); }
+.reel-h::after { right: 0; top: 0; bottom: 0; width: 26%; background: linear-gradient(270deg, rgba(8, 5, 18, 0.96), transparent); }
+.reel-v { width: min(calc(100vw - 48px), 320px); height: min(58dvh, 470px); }
+.reel-v::before { left: 0; right: 0; top: 0; height: 28%; background: linear-gradient(180deg, rgba(8, 5, 18, 0.96), transparent); }
+.reel-v::after { left: 0; right: 0; bottom: 0; height: 28%; background: linear-gradient(0deg, rgba(8, 5, 18, 0.96), transparent); }
+.reel-strip { display: flex; gap: 8px; will-change: transform; transform-style: preserve-3d; }
+.reel-h .reel-strip { flex-direction: row; align-items: center; height: 100%; padding-left: 8px; width: max-content; }
+.reel-v .reel-strip { flex-direction: column; align-items: center; width: 100%; padding-top: 8px; }
+.rc { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px 8px 14px; border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 24%, #241a40), #130c26); border: 2px solid color-mix(in srgb, var(--rc) 75%, #000); box-shadow: inset 0 0 20px color-mix(in srgb, var(--rc) 22%, transparent), 0 6px 14px rgba(0, 0, 0, 0.45); transition: filter 0.4s, opacity 0.4s; backface-visibility: hidden; }
+.reel-h .rc { width: clamp(108px, 30vw, 138px); height: 186px; }
+.reel-v .rc { width: 100%; height: 112px; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 8px 14px 8px 10px; }
+.rc-art { flex: 1; display: grid; place-items: center; min-height: 0; min-width: 0; transform: scale(0.9); }
+.reel-v .rc-art { flex: none; width: 84px; transform: scale(0.92); }
+.rc-name { font: 700 16px/1.1 var(--f-display); text-align: center; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
+.reel-v .rc-name { flex: 1; text-align: left; font-size: 18px; }
+.rc-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--rc); box-shadow: 0 0 14px var(--rc); }
+.reel-v .rc-bar { left: 0; right: auto; top: 0; bottom: 0; width: 6px; height: auto; }
+.rc-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc) 50%, transparent), transparent 66%); opacity: 0; transition: opacity 0.2s; }
+.rc.at .rc-glow { opacity: 1; } .rc.at { border-color: color-mix(in srgb, var(--rc) 60%, #fff); }
+.rc.win { animation: winPulse 0.7s ease-in-out infinite alternate; border-color: #fff; box-shadow: 0 0 0 2px var(--rc), 0 0 40px var(--rc), inset 0 0 26px color-mix(in srgb, var(--rc) 50%, transparent); }
+@keyframes winPulse { to { filter: brightness(1.3); } }
+.reel.landed .rc:not(.win) { opacity: 0.28; filter: saturate(0.4) brightness(0.7); }
+.reel-marker { position: absolute; z-index: 5; pointer-events: none; }
+.reel-h .reel-marker { left: 50%; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: linear-gradient(180deg, transparent, #fff 14%, #fff 86%, transparent); box-shadow: 0 0 14px #fff, 0 0 30px var(--ac); }
+.reel-v .reel-marker { top: 50%; left: 0; right: 0; height: 3px; margin-top: -1.5px; background: linear-gradient(90deg, transparent, #fff 14%, #fff 86%, transparent); box-shadow: 0 0 14px #fff, 0 0 30px var(--ac); }
+.reel-marker i { position: absolute; width: 0; height: 0; border: 9px solid transparent; filter: drop-shadow(0 0 6px var(--ac)); }
+.reel-h .reel-marker i:first-child { left: -8px; top: -2px; border-top-color: #fff; } .reel-h .reel-marker i:last-child { left: -8px; bottom: -2px; border-bottom-color: #fff; }
+.reel-v .reel-marker i:first-child { top: -8px; left: -2px; border-left-color: #fff; } .reel-v .reel-marker i:last-child { top: -8px; right: -2px; border-right-color: #fff; }
+.op-reel-caption { position: absolute; left: 0; right: 0; top: calc(var(--sat) + 26px); text-align: center; font: 700 18px var(--f-display); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); }
+.op-reel-caption small { display: block; font: 700 13px var(--f-ui); letter-spacing: 0.06em; text-transform: none; color: var(--muted); margin-top: 4px; }
+
+/* ---------- reveal ---------- */
+.rv { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; opacity: 0; pointer-events: none; --rc: #9fb0d6; }
+.rv.on { opacity: 1; pointer-events: auto; }
+.rv-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 90% 60% at 50% 38%, color-mix(in srgb, var(--rc) 40%, #0b0618), #05030c 78%); opacity: 0; transition: opacity 0.5s; }
+.rv.on .rv-bg { opacity: 1; }
+.rv-rays { position: absolute; left: 50%; top: 36%; width: 1700px; height: 1700px; margin: -850px 0 0 -850px; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rc) 55%, transparent) 0 4deg, transparent 4deg 15deg); -webkit-mask-image: radial-gradient(circle, #000 0, transparent 50%); mask-image: radial-gradient(circle, #000 0, transparent 50%); opacity: 0; animation: spinSlow 36s linear infinite; will-change: transform; }
+.rv.fx-rays .rv-rays { opacity: 0.6; transition: opacity 1s; }
+.rv.fx-rays-hot .rv-rays { opacity: 0.9; animation-duration: 22s; }
+.rv-flare { position: absolute; left: 0; right: 0; top: 36%; height: 4px; margin-top: -2px; background: linear-gradient(90deg, transparent, #fff 30%, #fff 70%, transparent); box-shadow: 0 0 40px 12px var(--rc), 0 0 120px 40px color-mix(in srgb, var(--rc) 60%, transparent); transform: scaleX(0); opacity: 0; }
+.rv-flare.go { animation: flareGo 1.6s ease-out forwards; } @keyframes flareGo { 0% { transform: scaleX(0); opacity: 1; } 30% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1.3); opacity: 0; } }
+.rv-ring { position: absolute; left: 50%; top: 36%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 4px solid var(--rc); opacity: 0; pointer-events: none; }
+.rv-ring.go { animation: ringGo 1.1s ease-out forwards; } @keyframes ringGo { 0% { transform: scale(0.4); opacity: 0.95; } 100% { transform: scale(22); opacity: 0; border-width: 1px; } }
+.rv-spot { position: absolute; left: 50%; top: -10%; width: 900px; height: 130%; margin-left: -450px; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 80%); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); mix-blend-mode: screen; opacity: 0; will-change: transform; }
+.rv.fx-spot .rv-spot { opacity: 0.55; animation: spotSweep 6s ease-in-out infinite alternate; } @keyframes spotSweep { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+.rv-black { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 9; }
+.rv-black.go { animation: blackGo 1.5s ease-in-out forwards; } @keyframes blackGo { 0% { opacity: 0; } 18% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
+.rv-banner { position: absolute; left: 0; right: 0; top: calc(var(--sat) + 40px); text-align: center; font: 700 30px var(--f-display); letter-spacing: 0.34em; text-transform: uppercase; color: var(--rc); text-shadow: 0 0 22px var(--rc), 0 3px 0 rgba(0, 0, 0, 0.5); opacity: 0; transform: scale(1.4); }
+.rv-banner.go { animation: bannerGo 0.9s var(--ease-out) forwards; } @keyframes bannerGo { 0% { opacity: 0; transform: scale(1.8); letter-spacing: 0.8em; } 100% { opacity: 1; transform: none; } }
+.rv-stage { position: relative; flex: 1; min-height: 0; width: 100%; display: grid; place-items: center; padding-top: calc(var(--sat) + 70px); }
+.rv-card { position: relative; width: min(66vw, 262px); height: min(44dvh, 350px); transform-style: preserve-3d; perspective: 900px; opacity: 0; }
+.rv-card.in { animation: cardIn 0.9s var(--ease-out) forwards; }
+.rv-card.in-slow { animation: cardRise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+.rv-card.in-pop { animation: cardPop 0.9s var(--ease-spring) forwards; }
+@keyframes cardIn { 0% { opacity: 0; transform: translateY(70px) rotateY(180deg) scale(0.8); } 100% { opacity: 1; transform: none; } }
+@keyframes cardPop { 0% { opacity: 0; transform: scale(0.2) rotateY(100deg); } 60% { opacity: 1; transform: scale(1.14) rotateY(-6deg); } 100% { opacity: 1; transform: none; } }
+@keyframes cardRise { 0% { opacity: 0; transform: translateY(160px) scale(0.55) rotateX(24deg); filter: brightness(3); } 55% { opacity: 1; filter: brightness(1.8); } 100% { opacity: 1; transform: none; filter: none; } }
+.rv-face { position: absolute; inset: 0; border-radius: 26px; display: flex; flex-direction: column; align-items: center; padding: 14px 14px 16px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 34%, #2a1d4a), #120a26 70%); border: 3px solid var(--rc); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 0 50px color-mix(in srgb, var(--rc) 70%, transparent), 0 24px 50px rgba(0, 0, 0, 0.6), inset 0 0 40px color-mix(in srgb, var(--rc) 25%, transparent); overflow: hidden; }
+.rv-face::before { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 45%, transparent 60%); background-size: 260% 100%; animation: cardShine 3.2s ease-in-out infinite; pointer-events: none; }
+@keyframes cardShine { 0% { background-position: 140% 0; } 50%, 100% { background-position: -40% 0; } }
+.rv-rar { align-self: stretch; text-align: center; font: 700 15px var(--f-display); letter-spacing: 0.22em; text-transform: uppercase; color: #fff; padding: 5px 0; border-radius: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 85%, #fff), color-mix(in srgb, var(--rc) 70%, #000)); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); box-shadow: 0 0 18px color-mix(in srgb, var(--rc) 60%, transparent); }
+.rv-art { flex: 1; width: 100%; min-height: 0; display: grid; place-items: center; position: relative; }
+.rv-name { font: 700 26px/1.1 var(--f-display); text-align: center; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4); }
+.rv-type { font: 700 13px var(--f-ui); color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
+.rv-flip { position: relative; }
+.rv-info { position: relative; z-index: 2; flex: none; width: 100%; padding: 12px calc(var(--sar) + 22px) 0 calc(var(--sal) + 22px); display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0; transform: translateY(14px); }
+.rv-info.on { opacity: 1; transform: none; transition: opacity 0.5s, transform 0.6s var(--ease-out); }
+.rv-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.rv-desc { text-align: center; font: 700 15px/1.3 var(--f-ui); color: #e6dcf8; max-width: 320px; }
+.rv-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 99px; font: 800 12px var(--f-ui); letter-spacing: 0.16em; text-transform: uppercase; color: #3a2400; background: var(--grad-gold); box-shadow: 0 6px 18px rgba(255, 190, 60, 0.5); animation: bump 0.7s var(--ease-spring) both; }
+.rv-badge.dup { color: var(--text); background: rgba(255, 255, 255, 0.14); box-shadow: none; border: 1px solid var(--line-2); }
+.rv-actions { position: relative; z-index: 3; flex: none; width: 100%; display: flex; flex-direction: column; gap: 10px; padding: 12px calc(var(--sar) + 20px) calc(var(--sab) + 16px) calc(var(--sal) + 20px); opacity: 0; transform: translateY(24px); pointer-events: none; }
+.rv-actions.on { opacity: 1; transform: none; pointer-events: auto; transition: opacity 0.45s, transform 0.6s var(--ease-out); }
+.rv-actions .row { display: flex; gap: 10px; } .rv-actions .row .btn { flex: 1; padding: 0 10px; white-space: nowrap; }
+.rv-actions .btn .coin { width: 20px; height: 20px; }
+
+/* hero demos inside the reveal card */
+.hero-bricks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; font-size: 52px; width: 3em; height: 3em; position: relative; }
+.hero-bricks .brick { position: relative; width: 1em; height: 1em; transform: none; }
+.hero-board { position: relative; width: 100%; max-width: 210px; aspect-ratio: 1.3; border-radius: 18px; overflow: hidden; background: var(--a-bg); border: 2px solid var(--a-frame); box-shadow: 0 0 30px var(--a-glow); display: grid; place-items: center; }
+.hero-board .hb-board { position: relative; z-index: 2; width: 66%; aspect-ratio: 1; border-radius: 12px; background: var(--a-board); border: 2px solid var(--a-frame); display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; font-size: 24px; box-shadow: 0 0 20px var(--a-glow); }
+.hero-board .brick { position: relative; width: 1em; height: 1em; transform: none; }
+.hero-fuse { position: relative; display: flex; align-items: center; gap: 6px; transform: scale(1.7); transform-origin: center; width: 118px; }
+.hero-pop { position: relative; width: 150px; height: 150px; display: grid; place-items: center; }
+.hero-pop .hp-brick { position: relative; font-size: 74px; width: 1em; height: 1em; }
+.hero-pop .hp-brick .brick { position: relative; width: 1em; height: 1em; transform: none; }
+.hero-pop .hp-brick.pop { animation: heroPop 0.32s ease-in forwards; } @keyframes heroPop { to { transform: scale(0); opacity: 0; } }
+.hero-pop .hp-brick.re { animation: heroRe 0.5s var(--ease-spring) both; } @keyframes heroRe { from { transform: scale(0); } }
+.brick.hp { animation: heroDrop 0.5s var(--ease-spring) both; } @keyframes heroDrop { from { transform: translateY(-120%) scale(0.8); opacity: 0; } }
+.brick.hpop .face { animation: heroPopFace 0.3s ease-in forwards; } @keyframes heroPopFace { to { transform: scale(0); opacity: 0; } }
+
+@media (max-height: 700px) { .op-chest-wrap { width: min(60vw, 240px); } .hold { width: 96px; height: 96px; } .hold-disc { width: 70px; height: 70px; } .rv-card { height: min(40dvh, 300px); } }
+@media (orientation: landscape) and (max-height: 560px) { .op-chest-wrap { width: min(34vw, 200px); } .rv-card { height: min(60dvh, 260px); } .op-odds { display: none; } }
+html.reduced .op-rays, html.reduced .op-dust { display: none; }
+.reel-v .rc-art .mini-bricks { font-size: 24px; }
+.reel-v .rc-art .mini-board { transform: scale(0.95); }
+.reel-h .rc-art .mini-fuse { transform: scale(0.82); }
+.hold:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; border-radius: 50%; }
+
+/* compact odds: five chips you can read at a glance */
+.odds-chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin-top: 8px; }
+.oc { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 5px; border-radius: 12px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 30%, #1a1230), #120b24); border: 1.5px solid color-mix(in srgb, var(--rc) 70%, #000); }
+.oc b { font: 700 17px/1 var(--f-display); color: #fff; text-shadow: 0 0 10px var(--rc); }
+.oc span { font: 800 10px/1.1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 55%, #fff); }
+.oc small { font: 700 10px var(--f-ui); color: var(--muted); }
+.op-odds .odds-bar { display: none; }
+.rv-card { width: min(70vw, 280px); height: min(46dvh, 380px); }
+
+.reel-h .rc-art { transform: scale(1.12); }
+.op-chest .c-cracks { filter: drop-shadow(0 0 3px #9fe8ff) drop-shadow(0 0 7px rgba(159, 232, 255, 0.8)); }
+.op-chest .c-needle { transform-box: view-box; transform-origin: 100px 106px; }
