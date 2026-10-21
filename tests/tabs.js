@@ -1,6 +1,6 @@
 // Screenshots of the five tab screens. Usage: node tests/tabs.js <outdir> [seed profile json file]
 const { launch } = require('./lib');
-const OUT = process.argv[2];
+const OUT = process.argv[2] || require('os').tmpdir() + '/tabs-shots';
 (async () => {
   const { browser, page, errors } = await launch({ width: 390, height: 844 });
   await page.waitForTimeout(1200);

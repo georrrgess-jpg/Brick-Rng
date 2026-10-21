@@ -7,7 +7,8 @@ if (out) fs.mkdirSync(out, { recursive: true });
 (async () => {
   const { browser, page, errors } = await launch({ width: 390, height: 844, dsf: 1 });
   await page.evaluate(() => { BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 3; BR.Storage.data.settings.sound = false; BR.App.applySettings(); });
-  const ids = ['f_lava', 'f_nova', 'f_aurora', 'f_heart', 'b_fire', 'a_storm', 'a_holo', 'u_ice', 'u_plasma', 'u_dragon'];
+  const ids = await page.evaluate(() => BR.ITEMS.filter((i) => i.moment).map((i) => i.id));   // every item that has a signature moment
+  console.log(ids.length + ' items with moments');
   let bad = 0;
   for (const id of ids) {
     await page.evaluate((id) => {

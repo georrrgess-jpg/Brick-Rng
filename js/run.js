@@ -643,7 +643,9 @@
       const token = this.token;
       this.over = true; this.ending = true; this.clock = false; this.busy = true;
       this.clearHover(); this.view.hideHint(); this.hideHint(); this.aimBanner(''); this.armed = null;
-      $('warnVignette').classList.remove('on'); this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
+      $('warnVignette').classList.remove('on'); $('lastSpark').classList.remove('on');
+      if (this.el.classList.contains('rushing') && BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });   // so Rush-only moments clean up
+      this.el.classList.remove('rushing', 'sparking');
       if (BR.Music) BR.Music.stop();
       const e = this.engine;
       if (reason === 'fuse') {
