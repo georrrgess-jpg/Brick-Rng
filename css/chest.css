@@ -255,3 +255,10 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
   .reel-h { height: 200px; } .reel-h .rc { height: 164px; } .reel-v { height: 300px; }
   .op-reel-caption { top: 10px; font-size: 14px; }
 }
+
+/* the item sits on a bright plate in its rarity color, the same look as its badge in the reel and the Collection */
+.rv-art { margin: 10px 0 8px; }
+.rv-art::before { content: ''; position: absolute; inset: 0 2%; border-radius: 22px; background: radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--rc) 40%, #fff) 0, var(--rc) 46%, color-mix(in srgb, var(--rc) 50%, #0c0620) 100%); box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--rc) 60%, #000), inset 0 6px 0 rgba(255, 255, 255, 0.25), 0 10px 24px rgba(0, 0, 0, 0.4); }
+.rv-art > * { position: relative; z-index: 1; }
+.rv-art[data-type="board"]::before { display: none; }
+.rv-art[data-type="board"] { margin: 6px 0; }

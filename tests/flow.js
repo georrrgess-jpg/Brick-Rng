@@ -1,7 +1,7 @@
 // End-to-end menus and chests on a phone viewport: every chest opens, drops are saved, reveal buttons work,
-// the reduced-motion path works, Back/Escape behave, and Trade-up produces a result. Usage: node tests/flow.js [full]
+// the reduced-motion path works, Back/Escape behave, a finished set cannot be opened, and a chest never repeats an item.
+// Usage: node tests/flow.js
 const { launch } = require('./lib');
-const FULL = process.argv[2] === 'full';
 (async () => {
   const { browser, page, errors } = await launch({ width: 390, height: 844, dsf: 1 });
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message, (e.stack || '').split('\n').slice(1, 4).join(' | ')));
@@ -9,7 +9,7 @@ const FULL = process.argv[2] === 'full';
   let problems = 0;
   const note = (...a) => { problems++; console.log('PROBLEM', ...a); };
   const ok = (c, ...a) => { if (!c) note(...a); };
-  await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 3; BR.Storage.data.seenTutorial = true; BR.Storage.data.profile.coins = 6000; BR.Progress.addChest('golden', 2); });
+  await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 3; BR.Storage.data.seenTutorial = true; Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; BR.Storage.data.profile.coins = 6000; BR.Progress.addChest('golden', 2); });
   const dom = (sel) => page.evaluate((s) => { const b = document.querySelector(s); if (!b) throw new Error('missing ' + s); b.click(); }, sel);
   const S = () => page.evaluate(() => ({ coins: BR.Progress.coins, vault: BR.Storage.data.profile.vault.length, opened: BR.Storage.data.profile.opened, chests: Object.assign({}, BR.Storage.data.profile.chests) }));
 
@@ -72,15 +72,25 @@ const FULL = process.argv[2] === 'full';
     ok(await page.locator('.opening').count() === 0, 'overlay not removed', id);
   }
 
-  // a duplicate can be sold for its Coins
-  await page.evaluate(() => { const P = BR.Progress; window.__realOpen = BR.Progress.openChest; const it = BR.itemById['f_candy']; if (!P.owns('f_candy')) P.keep({ itemId: 'f_candy', shine: 'plain', seed: 1, counter: null }); P.equip('default', 'skin'); BR.Progress.openChest = function (id) { if (this.chestCount(id) > 0) BR.Storage.data.profile.chests[id]--; return { itemId: 'f_candy', type: 'skin', rarity: 'common', shine: 'plain', seed: 5, counter: null, chest: id, dup: true }; }; });
+  // no sell button, no duplicate tag, and the collection really grows by one each time
+  ok(await page.locator('[data-a="sell"]').count() === 0, 'sell button still exists');
   await page.evaluate(() => BR.Progress.addChest('brick', 1));
   const pre = await S();
-  await openOne('brick', { forced: true });
-  ok(await page.locator('[data-a="sell"]').count() === 1, 'duplicate has no sell button');
-  await dom('[data-a="sell"]'); await page.waitForTimeout(200);
-  const post = await S(); ok(post.coins >= pre.coins + 40, 'sell did not pay 40', pre.coins, post.coins); ok(post.vault === pre.vault, 'sold item still in vault', pre.vault, post.vault);
+  await openOne('brick');
+  const post = await S(); ok(post.vault === pre.vault + 1, 'collection did not grow by one', pre.vault, post.vault);
+  ok(await page.locator('.rv-badge.dup').count() === 0, 'duplicate badge shown');
   await dom('.rv-actions [data-a="done"]'); await page.waitForTimeout(600);
+
+  // a finished set: every Skin owned, the chest says Complete and will not open
+  const done = await page.evaluate(() => {
+    const P = BR.Progress; const pr = BR.Storage.data.profile; const sp = pr.vault.slice();
+    BR.DROP_ITEMS.filter((i) => i.type === 'skin').forEach((i) => { if (!P.owns(i.id)) P.keep({ itemId: i.id, shine: 'plain', seed: 3, counter: null }); });
+    BR.Router.go('shop'); return { complete: BR.Progress.chestStatus('brick').complete, can: BR.Progress.canOpen('brick') };
+  });
+  ok(done.complete && !done.can, 'finished set can still be opened', done);
+  await page.waitForTimeout(600);
+  ok(await page.evaluate(() => /Complete/.test(document.querySelector('.cc-brick .cc-act').textContent)), 'shop does not say Complete');
+  await page.evaluate(() => BR.Router.go('home'));
 
   // Escape closes the arrival screen for free
   const b3 = await S();
@@ -96,25 +106,13 @@ const FULL = process.argv[2] === 'full';
   await page.evaluate(() => { BR.Storage.data.profile.coins = 6000; });
 
   // reduced motion: one tap, short spin
-  await page.evaluate(() => { BR.Storage.data.settings.reduced = true; BR.App.applySettings(); BR.Progress.addChest('brick', 1); });
-  await page.evaluate(() => { BR.Progress.openChest = window.__realOpen; });
+  await page.evaluate(() => { BR.Storage.data.settings.reduced = true; BR.App.applySettings(); BR.Progress.addChest('pop', 1); });
   const t0 = Date.now();
-  await openOne('brick', { reduced: true });
+  await openOne('pop', { reduced: true });
   console.log('reduced-motion opening took', ((Date.now() - t0) / 1000).toFixed(1) + 's');
   await dom('.rv-actions [data-a="done"]').catch(async () => { note('done button unstable', JSON.stringify(await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').map((a) => { const t = a.effect && a.effect.target; return (t && (t.className && t.className.baseVal != null ? t.className.baseVal : t.className || t.tagName)) + '|' + (a.animationName || a.transitionProperty || ''); }).slice(0, 12)))); await page.evaluate(() => BR.Openings.current && BR.Openings.current.close(false)); });
   await page.waitForTimeout(500);
   await page.evaluate(() => { BR.Storage.data.settings.reduced = false; BR.App.applySettings(); });
-
-  // Trade-up: five commons become one rare
-  const tu = await page.evaluate(() => {
-    const P = BR.Progress; const pr = BR.Storage.data.profile; pr.vault = []; pr.loadout = { skin: 'default', pop: 'default', board: 'default', fuse: 'default' };
-    ['f_candy', 'f_slate', 'f_candy', 'f_slate', 'f_candy'].forEach((id, i) => P.keep({ itemId: id, shine: 'plain', seed: i, counter: null }));
-    const uids = pr.vault.map((v) => v.uid);
-    const drop = P.tradeUp(uids); return { drop: !!drop, rarity: drop && drop.rarity, left: pr.vault.length };
-  });
-  ok(tu.drop && tu.rarity === 'rare' && tu.left === 1, 'trade-up', tu);
-  await page.evaluate(() => BR.Router.go('collection'));
-  if (FULL) { await page.evaluate(() => { const d = BR.Storage.data.profile.vault[0]; BR.App.tradeReveal({ itemId: d.itemId, type: 'skin', rarity: 'rare', shine: d.shine, seed: 1, inst: d, fromTradeUp: true, chest: 'brick' }); return 1; }); await page.waitForSelector('.rv.on .rv-actions.on', { timeout: 20000 }).catch(() => note('trade reveal')); await page.keyboard.press('Escape'); await dom('.rv-actions [data-a="done"]'); await page.waitForTimeout(600); }
 
   console.log('errors', errors.filter((e) => !/Failed to load resource/.test(e)));
   console.log('problems', problems);

@@ -517,7 +517,7 @@
       rv.querySelector('.rv-flare').classList.remove('go');
       rv.querySelector('.rv-black').classList.remove('go');
       const card = rv.querySelector('.rv-card');
-      const art = rv.querySelector('.rv-art');
+      const art = rv.querySelector('.rv-art'); art.dataset.type = item.type;
       const cardCenter = () => { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       const rings = () => rv.querySelectorAll('.rv-ring');
       const lvl = level + 1;

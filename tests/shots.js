@@ -40,8 +40,11 @@ const SIZES = (process.argv[3] || '360x640,390x844,430x932,768x1024,844x390,1280
     await page.waitForTimeout(2400); await page.screenshot({ path: `${OUT}/chest_${tag}.png` });
     await page.evaluate(() => { BR.Openings.current.close(false); });
     await page.waitForTimeout(600);
-    await page.evaluate(() => { const d = { itemId: 'f_neon', type: 'skin', rarity: 'epic', shine: 'holo', seed: 1, chest: 'brick', dup: false, fromTradeUp: true, inst: BR.Storage.data.profile.vault.find((v) => v.itemId === 'f_neon') }; BR.App.tradeReveal(d); });
-    await page.waitForSelector('.rv.on .rv-actions.on', { timeout: 20000 }).catch(() => {});
+    await page.evaluate(() => { BR.Progress.addChest('pop', 1); BR.App.openChest('pop'); });
+    await page.waitForSelector('.opening.on .hold:not(.off)', { timeout: 15000 });
+    { const box = await page.locator('.hold').boundingBox(); await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); }
+    await page.waitForSelector('.reel', { timeout: 20000 }); await page.mouse.up(); await page.waitForTimeout(1700); await page.click('.op-reel').catch(() => {});
+    await page.waitForSelector('.rv.on .rv-actions.on', { timeout: 40000 }).catch(() => {});
     await page.waitForTimeout(2600); await page.screenshot({ path: `${OUT}/reveal_${tag}.png` });
     console.log(tag, errors.filter((e) => !/Failed to load resource/.test(e)));
     await browser.close();
