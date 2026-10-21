@@ -148,7 +148,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .tabbar {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: calc(var(--tabbar-h) + var(--sab)); padding: 0 var(--sar) var(--sab) var(--sal);
   display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
-  background: linear-gradient(180deg, rgba(20, 14, 38, 0.82), rgba(10, 7, 20, 0.96)); border-top: 1px solid var(--line-2);
+  background: linear-gradient(180deg, rgba(20, 14, 38, 0.95), rgba(10, 7, 20, 0.99)); border-top: 1px solid var(--line-2);   /* near-opaque: scrolling cards must not read through the bar */
   -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   transition: transform 0.5s var(--ease-out), opacity 0.3s;
 }
