@@ -174,7 +174,12 @@
     }
 
     /* ================= input ================= */
+    refreshHover() {
+      const lp = this.lastPointer;
+      if (lp && lp.type === 'mouse' && this.canPlay && !this.busy) this.updateHover(lp);
+    }
     updateHover(e) {
+      this.lastPointer = { clientX: e.clientX, clientY: e.clientY, type: e.pointerType };
       if (!this.canPlay || this.busy) { this.clearHover(); return; }
       const cell = this.view.cellAt(e.clientX, e.clientY);
       if (!cell) { this.clearHover(); return; }
@@ -224,6 +229,16 @@
     /* ================= one turn ================= */
     async runTurn(plan) {
       const token = this.token;
+      try {
+        await this._runTurn(plan, token);
+      } catch (err) {
+        // Never leave the game locked if something unexpected throws mid-turn.
+        console.error(err);
+        if (token === this.token) { this.busy = false; this.inCrate = false; this.view.syncTo(this.engine.board); this.view.setWild(this.engine.wild()); this.ui.setScore(this.engine.score, false); this.ui.setFuel(this.engine.fuel, false); }
+      }
+    }
+
+    async _runTurn(plan, token) {
       this.busy = true;
       this.clearHover();
       this.view.hideHint();
@@ -243,7 +258,7 @@
       if (e.fuel <= 0) { await this.endRun(token); return; }
       this.busy = false;
       this.armIdle(7000);
-      this.flushBuffer();
+      if (this.buffered) this.flushBuffer(); else this.refreshHover();
     }
 
     /** Everything the player should feel the instant a pop happens. */

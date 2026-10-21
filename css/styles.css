@@ -286,6 +286,9 @@ body.muted .snd-off { display: block; }
 .brick.wild .stud { background: radial-gradient(circle at 34% 28%, #fff, rgba(255, 255, 255, 0.2) 60%); }
 @keyframes wildHue { to { filter: hue-rotate(360deg); } }
 
+/* idle hint: the suggested group breathes */
+.brick.hinting .face { animation: hintPulse 1.1s ease-in-out infinite; }
+@keyframes hintPulse { 50% { transform: translateY(-3%) scale(1.07); filter: brightness(1.2); } }
 /* idle hint ring */
 .tap-hint { position: absolute; z-index: 6; pointer-events: none; opacity: 0; transition: opacity 0.4s; }
 .tap-hint.show { opacity: 1; }
@@ -311,7 +314,7 @@ body.muted .snd-off { display: block; }
 /* floating text + callouts */
 .float { position: absolute; z-index: 8; pointer-events: none; white-space: nowrap; font-family: var(--font-display); font-weight: 700; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 14px var(--fc, rgba(255, 255, 255, 0.4)); will-change: transform, opacity; }
 .callout {
-  position: absolute; left: 50%; top: 50%; z-index: 9; pointer-events: none; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.06em; white-space: nowrap;
+  position: absolute; left: 50%; top: 30%; z-index: 9; pointer-events: none; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.06em; white-space: nowrap;
   font-size: clamp(28px, 8vw, 48px);
   background: linear-gradient(180deg, #fff, var(--cc, #ffd66b)); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.4)) drop-shadow(0 0 18px var(--cc, #ffd66b));

@@ -151,6 +151,12 @@
       return gen === this.gen;
     }
 
+    /** Instantly rebuild the DOM from engine state (error recovery). */
+    syncTo(board) {
+      this.reset();
+      for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) this._make(board.grid[r][c], r, c, r);
+    }
+
     /** Game over: the whole board crumbles away. */
     async crumble() {
       const gen = this.gen;
@@ -225,8 +231,13 @@
       this.hintEl.style.transform = `translate(${best.c * this.cell}px,${best.r * this.cell}px)`;
       this.hintEl.style.width = this.hintEl.style.height = this.cell + 'px';
       this.hintEl.classList.add('show');
+      const pos = this._posMap();
+      this._hinted = cells.map((p) => pos.get(p.r * this.cols + p.c)).filter(Boolean).map((rec) => { rec.el.classList.add('hinting'); return rec.el; });
     }
-    hideHint() { this.hintEl.classList.remove('show'); }
+    hideHint() {
+      this.hintEl.classList.remove('show');
+      if (this._hinted) { this._hinted.forEach((el) => el.classList.remove('hinting')); this._hinted = null; }
+    }
 
     reject(r, c) {
       const rec = this._posMap().get(r * this.cols + c);

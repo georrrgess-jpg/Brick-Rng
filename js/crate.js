@@ -182,7 +182,7 @@
       const speedUp = () => { try { anim.updatePlaybackRate(3.2); } catch (e) { /* ignore */ } this.reelStage.removeEventListener('pointerdown', speedUp); };
       const speedTimer = setTimeout(() => this.reelStage.addEventListener('pointerdown', speedUp), 900);
 
-      try { await anim.finished; } catch (e) { /* cancelled */ }
+      try { await Promise.race([anim.finished, sleep(duration + 2000)]); } catch (e) { /* cancelled */ }
       clearTimeout(speedTimer);
       this.reelStage.removeEventListener('pointerdown', speedUp);
       running = false;

@@ -5,7 +5,8 @@ const TURNS = +(process.argv[3] || 25);
 (async () => {
   const { browser, page, errors } = await launch({ width: 430, height: 820, mobile: false });
   if (REDUCED) await page.evaluate(() => { BR.Storage.data.settings.reduced = true; __brick.applySettings(); });
-  const cores = await page.evaluate(() => BR.CORES.map((c) => c.id));
+  let cores = await page.evaluate(() => BR.CORES.map((c) => c.id));
+  if (process.env.ONLY) cores = process.env.ONLY.split(',');
   let problems = 0;
   for (const coreId of cores) {
     await page.click('#btnPlay');
@@ -27,9 +28,9 @@ const TURNS = +(process.argv[3] || 25);
         if (st.stage) { await page.waitForTimeout(150); await page.click('#btnOpenCrate').catch(() => {}); }
         else if (st.res) { await page.waitForTimeout(REDUCED ? 600 : 1500); await page.click(Math.random() < 0.7 ? '#btnEquip' : '#btnScrap').catch(() => {}); await page.waitForFunction(() => !__brick.inCrate, null, { timeout: 8000 }).catch(() => {}); }
         else await page.waitForTimeout(100);
-        if (i === 299) { console.log('STUCK', coreId, t); problems++; }
+        if (i === 299) { console.log('STUCK', coreId, t, JSON.stringify(await page.evaluate(() => ({ busy: __brick.busy, inCrate: __brick.inCrate, paused: __brick.paused, over: __brick.over, fuel: __brick.engine.fuel, charge: __brick.engine.charge, need: __brick.engine.need, crate: document.getElementById('crate').className, stage: document.getElementById('crateStage').className, reel: document.getElementById('reelStage').className, result: document.getElementById('result').className, openDisabled: document.getElementById('btnOpenCrate').disabled })))); await page.screenshot({ path: process.env.SHOT || '/tmp/stuck.png' }); problems++; }
       }
-      await page.waitForTimeout(REDUCED ? 80 : 450); // let rebound/squash finish
+      await page.waitForTimeout(REDUCED ? 380 : 450); // let rebound/squash finish
       const check = await page.evaluate(() => {
         const a = __brick; if (a.over) return { over: true };
         const e = a.engine, v = a.view; const issues = [];

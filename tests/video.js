@@ -53,6 +53,23 @@ const SCRIPT = process.argv[3] || 'pops';
   };
 
   if (process.env.FORCE_CORE) await page.evaluate((id) => { window.__brick.engine.rollCrate = () => BR.coreById[id]; }, process.env.FORCE_CORE);
+  if (SCRIPT === 'bomb' || SCRIPT === 'laser') {
+    await page.evaluate((id) => { const a = __brick, e = a.engine; e.need = 1e9; e.equip(BR.coreById[id]); a.ui.setCore(e, true); const B = e.board; /* make a big blob so laser fires */ for (let r = 2; r < 5; r++) for (let c = 2; c < 5; c++) B.grid[r][c].color = 1; a.view.build(B); }, SCRIPT);
+    await page.waitForTimeout(1800);
+    await page.evaluate(() => { const q = __brick.view.pagePoint(3, 3); window.__pt = q; });
+    const q = await page.evaluate(() => window.__pt);
+    await page.mouse.move(q.x, q.y); await page.waitForTimeout(500);
+    await page.mouse.down(); await page.mouse.up();
+    await page.waitForTimeout(2500);
+  }
+  if (SCRIPT === 'line') {
+    await page.evaluate(() => { const a = __brick, e = a.engine; e.need = 1e9; const B = e.board; for (let r = 0; r < 8; r++) B.grid[r][3].color = 2; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (c !== 3 && B.grid[r][c].color === 2) B.grid[r][c].color = 0; a.view.build(B); });
+    await page.waitForTimeout(1800);
+    const q = await page.evaluate(() => __brick.view.pagePoint(4, 3));
+    await page.mouse.move(q.x, q.y); await page.waitForTimeout(600);
+    await page.mouse.down(); await page.mouse.up();
+    await page.waitForTimeout(2500);
+  }
   if (SCRIPT === 'crate') {
     await page.evaluate(() => { const e = window.__brick.engine; e.charge = e.need - 1; });
     await tapBest();
