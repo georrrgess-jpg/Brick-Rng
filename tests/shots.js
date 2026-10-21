@@ -19,7 +19,7 @@ const SIZES = (process.argv[3] || '360x640,390x844,430x932,768x1024,844x390,1280
       BR.Skins.apply(); BR.Router.rerender();
     });
     for (const n of ['home', 'shop', 'collection', 'missions', 'pass', 'profile']) {
-      await page.evaluate((id) => { if (id === 'pass') { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); } else { BR.Router.screens.missions.tab = 'daily'; BR.Router.go(id); } }, n); await page.waitForTimeout(1300);
+      await page.evaluate((id) => { if (id === 'pass') { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); BR.Router.rerender(); } else { BR.Router.screens.missions.tab = 'daily'; BR.Router.go(id); } }, n); await page.waitForTimeout(1300);
       await page.screenshot({ path: `${OUT}/${n}_${tag}.png` });
     }
     // run screen

@@ -262,3 +262,7 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
 .rv-art > * { position: relative; z-index: 1; }
 .rv-art[data-type="board"]::before { display: none; }
 .rv-art[data-type="board"] { margin: 6px 0; }
+
+/* reduced motion and low-end phones: the chest sits still while it waits */
+html.reduced .op-chest.idle, html.reduced .op-chest.idle *, html.low-end .op-chest.idle .tw, html.low-end .op-chest.idle .cf, html.low-end .op-chest.idle .vp { animation: none !important; }
+html.reduced .chest .tw { opacity: 0.8; transform: none; }
