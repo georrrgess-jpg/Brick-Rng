@@ -64,7 +64,11 @@ h1, h2, h3, h4, p { margin: 0; }
   15% { opacity: 0.4; } 85% { opacity: 0.4; }
   100% { opacity: 0; transform: translateY(-160px) rotate(var(--r1)); }
 }
-.run-active .bg-bricks, .run-active .blob { opacity: 0.25; }
+/* During a run the blurred, drifting blobs are replaced by the same glow as a static gradient: blurred full-screen layers are the most
+   expensive thing on the page, and the run needs every frame for the bricks. */
+.run-active .blob { display: none; }
+.run-active .bg-bricks { opacity: 0.25; }
+.run-active .bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 90% 45% at 12% 0%, rgba(255, 61, 139, 0.26), transparent 70%), radial-gradient(ellipse 80% 55% at 100% 32%, rgba(106, 61, 255, 0.24), transparent 70%), radial-gradient(ellipse 90% 40% at 30% 100%, rgba(255, 122, 77, 0.14), transparent 70%); pointer-events: none; }
 
 /* ---------- screens ---------- */
 #screens { position: absolute; inset: 0; z-index: 1; }

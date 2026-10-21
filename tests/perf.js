@@ -5,7 +5,7 @@ const { launch } = require('./lib');
   const cdp = await ctx.newCDPSession(page);
   await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 5; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); });
   const probe = (ms) => page.evaluate((ms) => new Promise((res) => { const t = []; let last = performance.now(); const end = last + ms; const f = (n) => { t.push(n - last); last = n; if (n < end) requestAnimationFrame(f); else { t.shift(); t.sort((a, b) => a - b); res({ avg: t.reduce((a, b) => a + b, 0) / t.length, p95: t[Math.floor(t.length * 0.95)], max: t[t.length - 1], n: t.length }); } }; requestAnimationFrame(f); }), ms);
-  const sets = [['classic', []], ['nova', ['f_nova']], ['chrome', ['f_chrome']], ['heart', ['f_heart']], ['lava', ['f_lava']], ['aurora', ['f_aurora']], ['storm+fire', ['a_storm', 'b_fire']], ['holo board', ['a_holo']], ['deepsea', ['a_deepsea']], ['plasma', ['u_plasma']]];
+  const sets = [['classic', []], ['nova', ['f_nova']], ['lava', ['f_lava']], ['galaxy', ['f_galaxy']], ['clockwork', ['f_clock']], ['slime', ['f_slime']], ['deepsea', ['a_deepsea']], ['carnival', ['a_carnival']], ['volcano', ['a_volcano']], ['ink+nova', ['b_ink', 'b_nova']]];
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   for (const [name, ids] of sets) {
     await page.evaluate((ids) => {
