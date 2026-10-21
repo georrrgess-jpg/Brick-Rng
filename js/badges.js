@@ -60,7 +60,9 @@
     const rings = P.rings ? `<circle r="30" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.4"/><circle r="40" fill="none" stroke="${P.cols[2]}" stroke-opacity=".6" stroke-width="1"/>` : '';
     const cloud = item.recipe === 'thunder' ? '<path d="M-26 -22a12 12 0 0 1 22-6a14 14 0 0 1 26 6a9 9 0 0 1-2 18h-40a9 9 0 0 1-6-18z" fill="#5a6a9e" opacity=".9"/>' : '';
     const core = `<circle r="11" fill="${P.cols[0]}" opacity=".35"/><circle r="7" fill="#fff"/><circle r="4" fill="${P.cols[Math.min(1, P.cols.length - 1)]}"/>`;
-    return `<svg class="pa" viewBox="-50 -50 100 100" aria-hidden="true">${rings}${cloud}<g class="pa-r1">${ring(9, 33, 7, 12, 0)}</g><g class="pa-r2">${ring(7, 20, 5, 9, 0.4)}</g><g class="pa-core">${core}</g></svg>`;
+    // a soft dark disc behind the particles so pale ones still read on a pale Common frame
+    const disc = '<circle r="46" fill="#0c0620" opacity=".16"/><circle r="34" fill="#0c0620" opacity=".2"/>';
+    return `<svg class="pa" viewBox="-50 -50 100 100" aria-hidden="true">${disc}${rings}${cloud}<g class="pa-r1">${ring(9, 33, 7, 12, 0)}</g><g class="pa-r2">${ring(7, 20, 5, 9, 0.4)}</g><g class="pa-core">${core}</g></svg>`;
   }
 
   /* ---------- Skin art: a hero brick with two behind it, all wearing the skin ---------- */
@@ -98,8 +100,9 @@
       else art = fuseArt(item, inst);
       const extra = lv >= 4 && !o.still ? '<i class="bdg-rays"></i><i class="bdg-twinkle t1"></i><i class="bdg-twinkle t2"></i><i class="bdg-twinkle t3"></i>' : '';
       const gleam = lv >= 3 ? '<i class="bdg-gleam"></i>' : '';
-      return `<div class="bdg t-${item.type} r${lv} ${o.still ? 'still' : ''} ${o.locked ? 'locked' : ''} ${o.cls || ''}" style="--rc:${R.color};--bs:${size}px;--k:${(size / 118 * 0.86).toFixed(3)}">
-        <i class="bdg-bg"></i>${extra}<div class="bdg-art">${art}</div>${gleam}${o.locked ? '<b class="bdg-q">?</b>' : ''}<i class="bdg-edge"></i></div>`;
+      const shine = !o.locked && inst && inst.shine && inst.shine !== 'plain' ? inst.shine : '';
+      return `<div class="bdg t-${item.type} r${lv} ${o.still ? 'still' : ''} ${o.locked ? 'locked' : ''} ${o.cls || ''}" ${shine ? `data-bshine="${shine}"` : ''} style="--rc:${R.color};--bs:${size}px;--k:${(size / 118 * 0.86).toFixed(3)}">
+        <i class="bdg-bg"></i>${extra}<div class="bdg-art">${art}</div>${gleam}${shine ? '<i class="bdg-fin"></i>' : ''}${o.locked ? '<b class="bdg-q">?</b>' : ''}<i class="bdg-edge"></i></div>`;
     },
   };
 

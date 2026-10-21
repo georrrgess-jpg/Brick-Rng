@@ -11,15 +11,15 @@ const SIZES = (process.argv[3] || '360x640,390x844,430x932,768x1024,844x390,1280
     const tag = `${w}x${h}`;
     await page.evaluate(() => {
       const P = BR.Progress, pr = BR.Storage.data.profile;
-      BR.Storage.data.settings.sound = false; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 5;
+      BR.Storage.data.settings.sound = false; Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 5;
       pr.level = 6; pr.xp = 900; pr.coins = 1840; pr.chests = { brick: 2, pop: 1, board: 0, fuse: 0, golden: 1 }; pr.passTier = 5;
       BR.Storage.data.best.rush = 184520; BR.Storage.data.bestStage.rush = 7;
       ['f_candy', 'f_marble', 'f_neon', 'f_lava', 'f_nova', 'b_ember', 'b_bolt', 'a_deepsea', 'a_orbit', 'u_rope', 'u_neon', 'u_plasma'].forEach((id, i) => P.keep({ itemId: id, shine: ['plain', 'glossy', 'holo', 'prism', 'plain'][i % 5], seed: i * 733 % 10000, counter: i % 4 === 0 ? { stat: 'Bricks popped', value: 420 + i } : null }));
       P.equip(pr.vault.find((i) => i.itemId === 'f_neon').uid); P.equip(pr.vault.find((i) => i.itemId === 'a_orbit').uid);
       BR.Skins.apply(); BR.Router.rerender();
     });
-    for (const n of ['home', 'shop', 'collection', 'missions', 'profile']) {
-      await page.evaluate((id) => BR.Router.go(id), n); await page.waitForTimeout(1300);
+    for (const n of ['home', 'shop', 'collection', 'missions', 'pass', 'profile']) {
+      await page.evaluate((id) => { if (id === 'pass') { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); } else { BR.Router.screens.missions.tab = 'daily'; BR.Router.go(id); } }, n); await page.waitForTimeout(1300);
       await page.screenshot({ path: `${OUT}/${n}_${tag}.png` });
     }
     // run screen
