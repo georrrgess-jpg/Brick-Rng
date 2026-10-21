@@ -31,7 +31,7 @@ const ok = (c, m) => { if (!c) { failed++; console.log('  FAIL', m); } };
     page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
     await page.goto(URL);
     await page.waitForFunction(() => window.__app, null, { timeout: 8000 }).catch(() => {});
-    await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 5; BR.Storage.data.profile.coins = 9000; BR.App.applySettings(); });
+    await page.evaluate(() => { Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 5; BR.Storage.data.profile.coins = 9000; BR.App.applySettings(); });
     console.log(chest);
     await page.evaluate((c) => { if (c === 'golden') BR.Progress.addChest('golden', 2); BR.App.openChest(c); }, chest);
     if (chest === 'golden') { await page.waitForFunction(() => BR.Openings.current && BR.Openings.current.state === 'ready', null, { timeout: 15000 }); await page.evaluate(() => BR.Openings.current.pickType('skin')); }

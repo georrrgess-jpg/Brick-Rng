@@ -10,7 +10,7 @@ const { launch } = require('./lib');
 
   // ---- a brand new player
   {
-    const { browser, page, errors } = await launch({ width: 390, height: 844, dsf: 1 });
+    const { browser, page, errors } = await launch({ width: 390, height: 844, dsf: 1, coach: true });
     await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 0; BR.Storage.data.profile.coins = 2000; BR.Router.go('shop'); BR.Router.go('home'); });
     await page.waitForTimeout(1400);
     ok(await open(page) && /Welcome/.test(await title(page)), 'welcome card on first Home', await title(page));
@@ -56,7 +56,7 @@ const { launch } = require('./lib');
 
   // ---- a returning player (older save): what's-new card once, no welcome card
   {
-    const { browser, page, errors } = await launch({ width: 390, height: 844, dsf: 1 });
+    const { browser, page, errors } = await launch({ width: 390, height: 844, dsf: 1, coach: true });
     await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 12; BR.Storage.data.notice = { kind: 'dupes', coins: 640 }; BR.Storage.data.seen = {}; BR.Router.go('shop'); BR.Router.go('home'); });
     await page.waitForTimeout(1500);
     const t = await title(page);

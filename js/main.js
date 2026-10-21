@@ -71,7 +71,7 @@
     bindGlobal() {
       // first touch unlocks audio
       // (the browser only lets sound start after a tap, so the menu music starts on the first one)
-      ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { BR.audio.unlock(); if (BR.Router.current !== 'run' && BR.Music) BR.Music.start('menu'); }, { once: true, passive: true }));
+      ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { BR.audioUnlocked = true; BR.audio.unlock(); if (BR.Router.current !== 'run' && BR.Music) BR.Music.start('menu'); }, { once: true, passive: true }));
       // prevent pinch / double-tap zoom and context menus on long press
       document.addEventListener('contextmenu', (e) => e.preventDefault());
       document.addEventListener('gesturestart', (e) => e.preventDefault());
