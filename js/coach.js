@@ -106,9 +106,25 @@
     /** Called by the router when a tab opens. Waits a beat so the screen has settled. */
     onScreen(id) {
       const key = id === 'missions' ? (BR.Router.screens.missions.tab === 'pass' ? 'pass' : 'missions') : id;
-      if (!CARDS[key] || seen()[key]) return;
+      if (!CARDS[key] || (seen()[key] && !(id === 'home' && !seen().whatsnew3))) return;
       clearTimeout(this._t);
-      this._t = setTimeout(() => { if (BR.Router.current === id) this.show(key); }, 650);
+      this._t = setTimeout(() => { if (BR.Router.current !== id) return; if (id === 'home') this.whatsNew(); this.show(key); }, 650);
+    },
+    /** Players who come from an older version get one "what's new" card (new players get the Welcome card instead). */
+    whatsNew() {
+      const d = BR.Storage.data, n = d.notice;
+      if (seen().whatsnew3 || showing) return;
+      if (!(d.runs > 0 || n)) { seen().whatsnew3 = true; BR.Storage.save(); return; }
+      seen().whatsnew3 = true; seen().home = true; delete d.notice; BR.Storage.save();
+      const lines = [
+        ['star', '28 new skins, pops, boards and fuses in the Carnival series.'],
+        ['gift', 'Chests never give the same item twice, so Trade-ups are gone.'],
+        ['bolt', 'Boosts now cost Coins, and the Rush fuse has a Last Spark.'],
+      ];
+      if (n && n.kind === 'dupes' && n.coins) lines.splice(2, 0, ['plus', `Your spare duplicates were turned into ${BR.fmt(n.coins)} Coins.`]);
+      showing = true;
+      const body = `<div class="coach-hero"><span class="ch-glow"></span><span class="ch-ico">${BR.icon('gift')}</span></div><h2 class="coach-title display">Update 3: Carnival</h2><ul class="coach-list">${lines.map(([ic, t]) => `<li><span class="cl-ico">${BR.icon(ic)}</span><span>${t}</span></li>`).join('')}</ul>`;
+      BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: 'Let\'s go', cls: 'btn-xl' }], onClose: () => { showing = false; } });
     },
     /** Profile > Help: every card comes back the next time its screen opens. */
     reset() { BR.Storage.data.seen = {}; BR.Storage.save(); },

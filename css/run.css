@@ -265,15 +265,15 @@
 @keyframes bestPulse { to { filter: brightness(1.45); } }
 
 /* ---------- Last Spark ---------- */
-.last-spark { position: absolute; left: 50%; top: 42%; z-index: 12; width: min(86%, 320px); transform: translate(-50%, -50%) scale(0.7); text-align: center; padding: 14px 16px 16px; border-radius: 22px; background: linear-gradient(180deg, rgba(60, 10, 30, 0.94), rgba(20, 6, 20, 0.96)); border: 2px solid #ff4d6d; box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.25), 0 0 40px rgba(255, 60, 90, 0.7); opacity: 0; pointer-events: none; display: flex; flex-direction: column; gap: 6px; }
-.last-spark.on { opacity: 1; transform: translate(-50%, -50%) scale(1); transition: opacity 0.15s, transform 0.35s var(--ease-spring); animation: sparkShake 0.35s linear infinite; }
-.last-spark b { font: 700 32px/1 var(--f-display); letter-spacing: 0.04em; background: linear-gradient(180deg, #fff6c8, #ff7a4d 55%, #ff3d6b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.45)); }
+.last-spark { position: absolute; left: 50%; top: calc(100% + 4px); z-index: 12; width: min(94%, 340px); transform: translate(-50%, 14px) scale(0.9); text-align: center; padding: 6px 14px 10px; border-radius: 18px; background: linear-gradient(180deg, rgba(60, 10, 30, 0.9), rgba(20, 6, 20, 0.92)); border: 2px solid #ff4d6d; box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.25), 0 0 30px rgba(255, 60, 90, 0.6); opacity: 0; pointer-events: none; display: flex; flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0 10px; }
+.last-spark.on { opacity: 1; transform: translate(-50%, 0) scale(1); transition: opacity 0.15s, transform 0.35s var(--ease-spring); }
+.last-spark b { font: 700 24px/1 var(--f-display); letter-spacing: 0.04em; background: linear-gradient(180deg, #fff6c8, #ff7a4d 55%, #ff3d6b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.45)); }
 .last-spark span { font: 700 14px var(--f-ui); color: #ffd6dd; }
-.ls-bar { display: block; height: 10px; border-radius: 99px; background: rgba(0, 0, 0, 0.55); overflow: hidden; margin-top: 4px; }
+.ls-bar { display: block; width: 100%; height: 10px; border-radius: 99px; background: rgba(0, 0, 0, 0.55); overflow: hidden; margin-top: 4px; }
 .ls-bar u { display: block; height: 100%; width: 100%; transform-origin: left; background: linear-gradient(90deg, #ff4d6d, #ffd24a); text-decoration: none; }
 @keyframes sparkShake { 25% { translate: -1px 1px; } 75% { translate: 1px -1px; } }
 .run.sparking .board { box-shadow: 0 0 0 3px #ff4d6d, 0 0 46px rgba(255, 60, 90, 0.8); }
-.run.sparking .field { filter: saturate(0.7) brightness(0.8); }
+.run.sparking .field { opacity: 0.92; }
 .run.sparking .field .brick.hinting .face { filter: brightness(1.25); }
 
 .res-gap { text-align: center; font: 700 15px var(--f-ui); color: var(--muted); margin-top: -4px; }
