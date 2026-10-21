@@ -198,7 +198,7 @@ although points count triple.
 
 | Problem | Update 4 |
 |---|---|
-| The tab bar's "Play" disc only goes to Home, where there is another Play button | the disc starts a Rush run when you are already on Home, and goes Home from any other tab |
+| The tab bar's "Play" disc only goes to Home, where there is another Play button | decided: it does not start a run. The raised disc stays but carries a home icon and the label **Home**, so it no longer promises something it does not do |
 | The "+" on the Coin pill suggests buying Coins, but there is nothing to buy | no "+"; the pill opens a small sheet: your Coins, how to earn more, the cheapest chest you can open |
 | The level ring in the top bar has no label | "Lv 6" under the ring; tapping it opens the Pop Pass |
 
@@ -357,7 +357,7 @@ the player a reason to come back tomorrow, without punishing them for missing a 
 
 ### 7.2 Coming back tomorrow (all on the device, no server)
 
-- **Daily streak.** A 7-day ring on Home: one run a day lights a segment. Day 3 pays Coins, day 7 a Golden Chest, then it loops.
+- **Daily streak.** A 7-day ring on Home: one run a day lights a segment. Day 3 pays 120 Coins, day 7 a Golden Chest plus 200 Coins, then it loops (decided: a little larger than first proposed).
   One missed day a week is forgiven automatically (a streak shield), and a broken streak drops back one week instead of to zero.
   Missing a day never costs anything the player already has.
 - **Run goals.** Each run shows one small goal under the score ("Make a Line Blast", "Reach stage 5"). Hitting it pays a few
@@ -432,13 +432,26 @@ on real phones, so the release needs one Android and one iPhone check by hand.
 
 ---
 
-## 11. Decisions for you
+## 11. Decisions
 
-1. **Fizz.** Should the bomb get a face and expressions, or stay a plain bomb with the new flame and states?
-2. **The Play disc.** Should it start a run straight from Home (proposed), or should the tab simply be renamed Home?
-3. **Daily streak rewards.** Coins on day 3 and a Golden Chest on day 7 is the proposal; smaller or larger?
-4. **Renaming two pops** to "Neon Burst" and "Nova Burst" so no two items share a name. Fine?
-5. **Real devices.** Which phones can you test on? The release check needs one Android and one iPhone.
+Answered by the project owner before the build began:
+
+1. **Fizz** (the bomb with a face): not answered, so the plan stands as written. Fizz is built, and it is a small, replaceable layer
+   (one sprite per expression), so removing the face later costs little.
+2. **The Play disc** does not start a run. It becomes the Home tab (home icon, label "Home").
+3. **Daily streak rewards** are slightly larger than the first proposal: day 3 pays 120 Coins, day 7 pays a Golden Chest plus 200 Coins.
+   Run goals pay 10 to 20 Coins. The acceptance check on the economy applies to a player who ignores the streak and the goals; for a
+   daily player the bots report how much faster the catalogue fills, and that figure goes in the status section.
+4. **Two pops are renamed** "Neon Burst" and "Nova Burst".
+5. **Target device: iPhone 15 Pro** (393x852 points at 3x, Dynamic Island, 120 Hz screen, Safari). Consequences, all part of the build:
+   - Safari has no `navigator.vibrate`, so haptics do nothing there today. Update 4 adds the Safari 17.4+ route (a hidden
+     `<input type="checkbox" switch>` toggled from a tap triggers the system haptic) behind the existing Vibration setting.
+   - The screen refreshes at up to 120 Hz, so every loop uses the frame's real elapsed time (never "per frame" amounts) and is
+     checked at 120 Hz.
+   - The Dynamic Island and home bar are handled with the safe-area insets everywhere, including the run screen and sheets.
+   - When saved to the Home Screen the game runs in standalone mode (no address bar), so it is checked in that mode too.
+   - Only Chromium is available in the build environment, so Safari-specific behavior is covered by emulating the phone's size,
+     pixel density and insets, and by the hand check on the real device at release.
 
 ---
 
