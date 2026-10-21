@@ -185,7 +185,7 @@
       const ind = $('tabInd'), tab = document.querySelector(`#tabbar .tab[data-tab="${id}"]`);
       document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b === tab));
       if (!tab) { ind.style.opacity = 0; return; }
-      ind.style.opacity = 1;
+      ind.style.opacity = id === 'home' ? 0 : 1;   // the Play disc is its own "you are here"; the line would cut across it
       const bar = $('tabbar').getBoundingClientRect(), r = tab.getBoundingClientRect();
       ind.style.transform = `translateX(${r.left - bar.left + r.width / 2 - 22}px)`;
     },

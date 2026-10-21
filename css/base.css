@@ -158,14 +158,14 @@ h1, h2, h3, h4, p { margin: 0; }
 .tab:active { transform: scale(0.92); }
 .tab.on { color: #fff; }
 .tab.on svg { transform: translateY(-2px) scale(1.12); filter: drop-shadow(0 0 8px rgba(255, 90, 140, 0.8)); }
-.tab-play { color: #fff; }
+.tab-play { color: #fff; z-index: 2; }   /* the disc always sits above the sliding indicator line */
 .play-disc { position: relative; width: 62px; height: 62px; margin-top: -26px; border-radius: 50%; display: grid; place-items: center; background: var(--grad-hot); box-shadow: 0 5px 0 #7f1c52, 0 12px 26px rgba(255, 61, 139, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.4); transition: transform 0.2s var(--ease-spring); }
 .play-disc::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(255, 90, 140, 0.5); animation: discPulse 2.4s ease-out infinite; }
 @keyframes discPulse { 0% { transform: scale(0.9); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
 .play-disc svg { width: 30px; height: 30px; fill: #fff; stroke: #fff; stroke-width: 1.6; transform: translateX(2px); }
 .tab-play.on .play-disc, .tab-play:active .play-disc { transform: scale(1.06); }
 .tab-play span { margin-top: 2px; }
-.tab-ind { position: absolute; top: -1px; left: 0; width: 44px; height: 4px; border-radius: 0 0 6px 6px; background: var(--grad-hot); box-shadow: 0 4px 16px rgba(255, 61, 139, 0.9); transition: transform 0.45s var(--ease-spring), opacity 0.2s; }
+.tab-ind { position: absolute; z-index: 1; top: -1px; left: 0; width: 44px; height: 4px; border-radius: 0 0 6px 6px; background: var(--grad-hot); box-shadow: 0 4px 16px rgba(255, 61, 139, 0.9); transition: transform 0.45s var(--ease-spring), opacity 0.2s; }
 .dot { position: absolute; top: 10px; left: calc(50% + 8px); width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink-1); display: none; animation: dotPop 1.6s ease-in-out infinite; font-style: normal; }
 .dot.show { display: block; }
 @keyframes dotPop { 50% { transform: scale(1.25); } }
