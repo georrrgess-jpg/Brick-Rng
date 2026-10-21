@@ -268,7 +268,48 @@ Each phase ends playable and committed.
 
 ---
 
-## 12. Acceptance checklist
+## 12. Quality bar (the build is not done until this holds)
+
+The implementing model keeps working, without being asked, until every item below is true. "Working" is the
+baseline; the standard is a game that looks and feels like a paid, professionally made title.
+
+**Menus must be visually stunning.** The Home screen and every functioning menu (Shop, Collection, Missions,
+Profile, Pause, Results, chest openings) are designed screens, not lists of buttons:
+- Each screen has a clear focal point (the mode cards on Home, the chests in the Shop, the equipped item in the
+  Collection), a visible hierarchy (one big thing, a few medium things, small supporting text), and breathing room.
+- Backgrounds are alive but quiet: slow parallax, drifting light, ambient particles tied to the equipped Board;
+  never a flat fill, never busy enough to fight the content.
+- Every screen enters with a choreographed sequence (background first, then the focal element, then the rest
+  staggered by 40–60ms), and leaves the same way in reverse. No screen ever just appears.
+- Cards, buttons and panels share one radius scale, one shadow scale, one spacing scale. Nothing is "close enough".
+- Icons are drawn in one style and weight. Text is set on a type scale with no odd sizes.
+- Each screen is screenshotted on a phone-size viewport and reviewed against this list before moving on.
+
+**Animations must be thoroughly designed, not just present.** For every animation in the game:
+- It has a purpose (shows cause and effect, directs attention, or rewards), a timing chosen for that purpose
+  (fast for feedback at 100–250ms, slow for reward at 600–1,500ms), and an easing that matches real motion
+  (ease-out for things arriving, ease-in for things leaving, springs for bounces, constant acceleration for falls).
+- It is layered: a primary motion, a secondary follow-through (squash, overshoot, settle), and an accent (flash,
+  particles, sound, haptic) where the moment deserves it.
+- It never blocks input longer than it needs to, never stacks into a mess when triggered repeatedly, and never
+  jitters, pops or snaps between frames. Interrupting it mid-way (a tap, a screen change) leaves nothing stuck.
+- The chest openings and spins are the showpiece: each is reviewed frame by frame from a recording, and tuned until
+  the shake, burst, spin, crawl and reveal read as one continuous, satisfying motion.
+
+**Functionality must be as polished as the look.** Every button does exactly what its label says, every state
+(empty, loading, disabled, error, success) is designed, every number is correct and counts up, every overlay
+can be closed the way it was opened and with the back gesture, and a bot-driven run of the whole UI (play, end,
+shop, open, equip, missions, pass, settings, pause, End Run) passes with zero console errors and zero visual
+mismatches before the work is called done.
+
+**Process.** Each phase ends with a visual review pass: screenshots and frame captures of every new screen and
+animation, a written list of what is not yet at standard, and fixes for all of it. The phase is not complete while
+that list has entries. The model does not ask whether to keep polishing; it keeps polishing until the list is
+empty, then moves on.
+
+---
+
+## 13. Acceptance checklist
 
 - [ ] A new player's first run lasts under 3 minutes and ends in a spectacular fuse-out, never a quiet stop.
 - [ ] Rush Mode triggers at least once in most runs past stage 2.
@@ -284,7 +325,7 @@ Each phase ends playable and committed.
 
 ---
 
-## 13. Decisions taken (change any before build starts)
+## 14. Decisions taken (change any before build starts)
 
 - Cosmetics still give no scoring advantage; run Boosts are the only paid-with-Coins edge, and they are temporary.
 - One currency (Coins). XP and levels stay as progression; the pass rides on levels.
