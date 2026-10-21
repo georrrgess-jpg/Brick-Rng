@@ -195,3 +195,21 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
 .op-chest .c-cracks { filter: drop-shadow(0 0 3px #9fe8ff) drop-shadow(0 0 7px rgba(159, 232, 255, 0.8)); }
 .op-chest .c-needle { transform-box: view-box; transform-origin: 100px 106px; }
 .rv:not(.on), .rv:not(.on) * { pointer-events: none !important; }
+
+/* wide screens: keep the content column phone-sized */
+@media (min-width: 600px) {
+  .op-odds, .op-picker { align-self: center; width: min(calc(100% - 32px), 500px); margin-left: 0; margin-right: 0; }
+  .rv-info, .rv-actions { max-width: 520px; }
+  .opening .op-top { width: min(100%, 560px); align-self: center; }
+}
+/* landscape phones: card on the left, details and buttons on the right */
+@media (orientation: landscape) and (max-height: 560px) {
+  .rv { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: 0 calc(var(--sar) + 20px) 0 calc(var(--sal) + 20px); }
+  .rv-stage { grid-column: 1; grid-row: 1 / span 2; padding-top: 14px; }
+  .rv-card { height: min(78dvh, 290px); width: min(40vw, 230px); }
+  .rv-info { grid-column: 2; grid-row: 1; align-self: end; padding-top: 0; max-width: 100%; }
+  .rv-actions { grid-column: 2; grid-row: 2; align-self: start; padding-bottom: 14px; }
+  .rv-banner { top: 14px; font-size: 22px; }
+  .reel-h { height: 200px; } .reel-h .rc { height: 150px; } .reel-v { height: 300px; }
+  .op-reel-caption { top: 10px; font-size: 14px; }
+}

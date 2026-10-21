@@ -333,3 +333,28 @@ empty, then moves on.
 - Hold-to-open replaces tap-to-crack; the spin stays because it is the part players recognize and enjoy.
 - Daily Rush is local-only (one seed per day, personal best); a shared leaderboard needs a backend and is out of scope.
 - Rarity names go back to Common / Rare / Epic / Legendary / Mythic.
+
+---
+
+## 15. Implementation status (Update 2 shipped as Pop Rush 2.0)
+
+Everything in sections 1 to 12 is built and covered by tests. Deviations from the plan, and why:
+
+| Plan | Built | Why |
+|---|---|---|
+| Stage goal growth and Coin rates as drafted | Goal 8,000 x 1.5 per stage; fuse burns 1.15x faster per stage; Rush bar gain 9 + 3 per extra brick; Coins = score / 600 + 12 per cleared stage | Tuned with time-stepped bots so a casual run lasts about 2 minutes (stage 4), an average one reaches stage 6 and a sharp one stage 8, with 3 to 5 Rush Modes per run (`tests/sim.js`) |
+| 28 droppable items | 28 droppable + 2 Rush Pass exclusives (Chrome at tier 25, Prism Heart at tier 30) = 30 items | The pass needs real rewards; pass items never drop from chests |
+| Play as a button on the tab bar | Play is a raised center disc between Collection and Missions | Keeps the thumb target large and the order Shop, Collection, Play, Missions, Profile |
+| Hold ring around the thumb | The ring sits around the Hold button and the chest also accepts the press | The thumb covers a ring drawn at the touch point; the button keeps it visible |
+| Odds as one stacked bar | Five chips (percent, rarity, "1 in N") on the opening screen, bar plus rows on the Shop and the odds sheet | Thin Legendary and Mythic slivers were unreadable at phone size |
+| Closing during the spin | Back or X while spinning skips to the result; the drop is saved at the burst | Nothing can be lost and nothing is charged for backing out before the burst |
+| Item saved when you press Keep | The item is saved at the burst; Equip, Sell and Done act on the saved copy | An app kill or crash mid-reveal can never lose an item |
+
+Added beyond the plan: item sheets play a live demo of the item, the Golden Chest has its own burst, Boards have
+frame details and animated scene layers (GPU transforms, no repaint), fireworks are a real particle type, and the
+reel scales card size and physics to the screen so the spin feels the same on every phone.
+
+Verification: `node tests/logic.js`, `sim.js`, `spin.js` (1,000 landings), `stress.js`, `flow.js`, `moments.js` and
+`lifecycle.js` (migration, resume after reload, offline through the service worker) all pass with no console errors;
+screens were reviewed at 360x640, 390x844, 430x932, 768x1024, 844x390 and 1280x800, and every chest opening and the
+Legendary and Mythic reveals were reviewed frame by frame from recordings.

@@ -210,3 +210,11 @@
 .mf-fill { position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #6b4a1e, #c08a4a); animation: mfBurn 2.6s linear infinite; transform-origin: left; }
 .mf-spark { position: absolute; top: 50%; left: 100%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: radial-gradient(circle, #fff 0 30%, #ffd24a 31% 60%, transparent 70%); animation: mfSpark 2.6s linear infinite; box-shadow: 0 0 8px 2px rgba(255, 170, 60, 0.8); }
 @keyframes mfBurn { 0% { transform: scaleX(1); } 90%, 100% { transform: scaleX(0.04); } } @keyframes mfSpark { 0% { left: 100%; } 90%, 100% { left: 4%; } }
+
+/* item sheet: live demo scaled to the preview well */
+.detail-prev { display: grid; place-items: center; min-height: 168px; }
+.detail-prev .hero-host { position: relative; z-index: 1; display: grid; place-items: center; width: 100%; min-height: 150px; }
+.detail-prev .hero-bricks { font-size: 44px; }
+.detail-prev .hero-pop { transform: scale(0.9); }
+.detail-prev .hero-board { max-width: 200px; }
+.detail-prev .hero-fuse { transform: scale(1.5); }

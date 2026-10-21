@@ -285,14 +285,16 @@
     const sellPrice = inst ? r.sell : 0;
     const where = item.pass ? 'Rush Pass reward' : item.isDefault ? 'Always yours' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name;
     const body = `<div class="detail" style="--rc:${r.color}">
-        <div class="detail-prev"><span class="dp-glow"></span>${BR.detailPreview(item, inst)}</div>
+        <div class="detail-prev"><span class="dp-glow"></span><div class="hero-host"></div></div>
         <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">${BR.ITEM_TYPES[item.type].name}</span>${inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : ''}</div>
         <p class="detail-desc">${esc(item.desc)}</p>
         ${inst && inst.counter ? `<div class="detail-counter"><small>${esc(inst.counter.stat)}</small><b class="num">${fmt(inst.counter.value)}</b></div>` : ''}
         <div class="detail-where"><small>Comes from</small><b>${where}</b></div></div>`;
     const actions = [{ label: equipped ? 'Equipped' : 'Equip', cls: equipped ? 'btn-dark' : 'btn-green', disabled: equipped, onClick: () => { P.equip(inst ? inst.uid : 'default', item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap'); BR.toast(`${esc(item.name)} equipped`, 'good'); BR.Router.rerender(); } }];
     if (inst && !equipped) actions.push({ label: `Sell for ${BR.coin()} ${sellPrice}`, cls: 'btn-dark', onClick: () => { P.sellInstance(inst.uid); BR.audio.scrap(); BR.toast(`Sold for ${sellPrice} Coins`, 'good'); BR.Router.rerender(); } });
-    BR.Sheet.open({ title: esc(item.name), body, actions });
+    let demo = null;
+    const sheet = BR.Sheet.open({ title: esc(item.name), body, actions, onClose: () => { if (demo) demo.stop(); } });
+    demo = BR.Openings.demo(sheet.body.querySelector('.hero-host'), item, inst || { shine: 'plain', seed: 0 }, { silent: true, power: 1.2 });
   };
   /** Bigger preview for the detail sheet: a live mini board for skins/pops/boards, a burning fuse for fuses. */
   BR.detailPreview = function (item, inst) {

@@ -41,7 +41,7 @@
         slot.className = 'hp-brick re';
         slot.innerHTML = BR.Skins.brickHTML([3, 0, 2, 4][n % 4]);
         const c = [3, 0, 2, 4][n % 4];
-        later(() => { slot.classList.add('pop'); popAt(slot, recipe, c, n % 3 === 2); BR.audio.pop(n % 3 === 2 ? 9 : 4, 1, recipe === 'classic' ? null : recipe); n++; }, 850);
+        later(() => { slot.classList.add('pop'); popAt(slot, recipe, c, n % 3 === 2); if (!o.silent) BR.audio.pop(n % 3 === 2 ? 9 : 4, 1, recipe === 'classic' ? null : recipe); n++; }, 850);
         later(cycle, 1900);
       };
       later(cycle, 350);
@@ -64,7 +64,7 @@
         g.forEach((i) => cells[i].classList.add('hpop'));
         later(() => {
           g.forEach((i) => popAt(cells[i], recipe, +cells[i].dataset.c, n % 4 === 0));
-          BR.audio.pop(3, 1, recipe === 'classic' ? null : recipe);
+          if (!o.silent) BR.audio.pop(3, 1, recipe === 'classic' ? null : recipe);
           if (item.type === 'skin' && BR.Skins.onEvent) BR.Skins.onEvent('demo', { item, cells: g.map((i) => cells[i]) });
         }, 90);
         later(() => g.forEach((i) => {
@@ -542,7 +542,7 @@
         await sleep(780);
         if (this.closed) return;
         rv.classList.add('fx-rays', 'fx-rays-hot', 'fx-spot'); rv.querySelector('.rv-flare').classList.add('go'); card.classList.add('in-slow'); banner.classList.add('go');
-        BR.audio.reveal(5); fx().flash('#ffffff', 0.5, 700); fx().shake(this.root, 18, 900);
+        BR.audio.reveal(5); fx().flash(R.color, 0.32, 600); fx().shake(this.root, 18, 900);
         rings().forEach((x, i) => setTimeout(() => x.classList.add('go'), i * 220));
         const c = cardCenter();
         [0, 380, 760, 1140].forEach((d, i) => setTimeout(() => { if (this.closed) return; fx().explosion(c.x + rnd(-90, 90), c.y + rnd(-110, 80), ['#ff4d6d', '#ffe58a', '#43e0ff', '#c08bff'][i], 1.4); BR.audio.launch(); BR.haptic('big'); }, d));
@@ -596,9 +596,9 @@
     /* ---------- leaving ---------- */
     requestClose(fromBack) {
       if (this.closed) return;
-      if (this.state === 'burst') return; // a half-second; the result is already saved
-      if (this.state === 'spin' && this.reel && !this.reel.done) { this.reel.skip(); this.skipEl.classList.remove('on'); return; }
-      if (this.state === 'reveal') { return; }
+      const keep = () => { if (fromBack) this.backEntry = BR.Back.push(() => this.requestClose(true)); };
+      if (this.state === 'burst') { keep(); return; } // half a second; the result is already saved
+      if (this.state === 'spin' && this.reel && !this.reel.done) { this.reel.skip(); this.skipEl.classList.remove('on'); keep(); return; }
       this.close(fromBack);
     }
     close(fromBack) {

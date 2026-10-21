@@ -236,3 +236,19 @@
   .run > * { width: auto; } .board-wrap { grid-column: 1; grid-row: 1 / span 6; width: var(--bw); }
   .run-top, .fuse, .chillbar, .stagebar, .rushbar, .powerups { grid-column: 2; }
 }
+
+/* short phones (iPhone SE, small Androids): tighten the HUD so nothing is cut off */
+@media (max-height: 720px) and (orientation: portrait) {
+  :root { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 318px), 540px); }
+  .run { gap: 6px; padding-top: calc(var(--sat) + 4px); padding-bottom: calc(var(--sab) + 6px); }
+  .run-top { grid-template-columns: 40px 1fr auto; }
+  .run-top .icon-btn { width: 40px; height: 40px; }
+  .stage-tag { padding: 3px 14px 3px 12px; } .stage-tag b { font-size: 22px; }
+  .score-box b { font-size: 24px; }
+  .fuse { --fh: 52px; } .bomb { width: 50px; height: 50px; } .bomb::after { left: 16px; width: 16px; height: 10px; }
+  .fuse-time b { font-size: 20px; } .fuse-time { width: 50px; }
+  .stagebar { height: 18px; }
+  .rushbar { height: 26px; }
+  .bslot { min-height: 52px; padding: 4px; } .bslot svg { width: 24px; height: 24px; } .bslot .bname { font-size: 12px; }
+}
+@media (min-width: 600px) { .results .res-scroll, .res-actions { width: min(100%, 520px); margin-inline: auto; } .res-scroll { align-items: stretch; } }
