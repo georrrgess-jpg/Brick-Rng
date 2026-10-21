@@ -84,7 +84,7 @@
       const nextTier = P.level, reward = BR.passReward(nextTier);
       const m = BR.Missions.ensure();
       const resume = BR.Storage.loadRun();
-      const owned = P.totalChests();
+      const owned = P.openableChests();
       const logo = ['P', 'O', 'P'].map((ch, i) => `<div class="brick lb" data-c="${[0, 3, 1][i]}" style="--i:${i}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b><span class="ltr">${ch}</span></div></div>`).join('');
       this.el.innerHTML = `${topbar()}<div class="scroll">
         <div class="logo stg" aria-label="Pop Rush">
@@ -172,11 +172,14 @@
       else { picked.add(id); if (total() > P.coins) { picked.delete(id); BR.toast(`You need ${cfg[id].cost - (P.coins - total())} more Coins for that Boost`, 'bad'); BR.haptic('err'); BR.audio.deny(); return; } }
       BR.audio.ui(); BR.haptic('tick'); refresh();
     });
-    start.querySelector('button').addEventListener('click', () => {
+    let paid = false;
+    start.querySelector('button').addEventListener('click', (ev) => {
+      if (paid) return;
+      paid = true; ev.currentTarget.disabled = true;   // a quick double tap must not charge twice or start two runs
       const chosen = {};
       picked.forEach((id) => { chosen[id] = true; });
       const t = total();
-      if (t > 0) { if (!P.spend(t)) { BR.toast('Not enough Coins', 'bad'); return; } BR.audio.coin && BR.audio.coin(1); BR.toast(`Paid ${t} Coins for ${[...picked].map((id) => cfg[id].name).join(' and ')}`, 'good'); }
+      if (t > 0) { if (!P.spend(t)) { BR.toast('Not enough Coins', 'bad'); paid = false; ev.currentTarget.disabled = false; return; } BR.audio.coin && BR.audio.coin(1); BR.toast(`Paid ${t} Coins for ${[...picked].map((id) => cfg[id].name).join(' and ')}`, 'good'); }
       sh.close();
       setTimeout(() => BR.App.startRun({ mode, boosts: chosen }), 250);
     });

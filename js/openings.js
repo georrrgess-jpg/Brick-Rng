@@ -337,6 +337,9 @@
     }
 
     refreshFoot() {
+      // a Golden Chest only offers the types that still have an Epic or better to find
+      const goldOk = this.golden ? BR.goldenTypes(P().ownedIds()) : null;
+      if (goldOk && this.type && !goldOk.includes(this.type)) this.type = null;
       const owned = P().chestCount(this.id), cost = this.chest.cost;
       const coins = P().coins;
       let sub = '', can = true;
@@ -351,10 +354,11 @@
       this.label.textContent = can ? (reduced() ? 'Tap to open' : 'Hold to open') : (this.golden && !this.type ? 'Pick a type' : 'Not enough Coins');
       this.holdEl.classList.toggle('off', !can || this.state !== 'ready');
       this.canOpen = can;
-      if (this.golden) this.root.querySelectorAll('.op-picker button').forEach((b) => { const on = b.dataset.type === this.type; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+      if (this.golden) this.root.querySelectorAll('.op-picker button').forEach((b) => { const on = b.dataset.type === this.type, can_ = goldOk.includes(b.dataset.type); b.classList.toggle('on', on); b.classList.toggle('done', !can_); b.disabled = !can_; b.setAttribute('aria-checked', on); });
     }
 
     pickType(t) {
+      if (this.golden && !BR.goldenTypes(P().ownedIds()).includes(t)) return;
       this.type = t; BR.audio.ui(); BR.haptic('tick');
       this.refreshFoot();
     }
@@ -427,6 +431,8 @@
       const drop = P().openChest(this.id, this.type);
       if (!drop) { BR.toast('Could not open that chest', 'bad'); this.state = 'ready'; this.hold = 0; this.setHold(0); this.refreshFoot(); return; }
       drop.inst = P().keep(drop);   // saved immediately: closing the screen can never lose the item
+      const cashed = P().cashStranded();   // a set you just finished turns spare chests of it into Coins
+      if (cashed) setTimeout(() => BR.toast(`Set complete! Spare chests became ${BR.fmt(cashed)} Coins`, 'good'), 1600);
       this.drop = drop; this.count++;
       const newly = P().checkTrophies();
       if (newly.length) setTimeout(() => BR.toast(`Trophy: ${newly[0].name}`, 'good'), 1200);

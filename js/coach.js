@@ -127,6 +127,6 @@
       BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: 'Let\'s go', cls: 'btn-xl' }], onClose: () => { showing = false; } });
     },
     /** Profile > Help: every card comes back the next time its screen opens. */
-    reset() { BR.Storage.data.seen = {}; BR.Storage.save(); },
+    reset() { BR.Storage.data.seen = { whatsnew3: true }; BR.Storage.save(); },
   };
 })();

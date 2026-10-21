@@ -46,9 +46,10 @@ const { launch } = require('./lib');
     // replay from Profile
     await page.evaluate(() => { Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Router.go('profile'); }); await page.waitForTimeout(600);
     await page.evaluate(() => { document.querySelector('[data-act="tips"]').click(); });
-    ok(await page.evaluate(() => Object.keys(BR.Storage.data.seen).length === 0), 'tips were not reset');
+    ok(await page.evaluate(() => Object.keys(BR.Storage.data.seen).filter((k) => k !== 'whatsnew3').length === 0), 'tips were not reset');
     await page.evaluate(() => BR.Router.go('shop')); await page.waitForTimeout(1300);
     ok(await open(page), 'card did not come back after reset');
+    ok(!/Update 3/.test(await title(page)), 'the what is new card came back with the tips');
     console.log('first visits:', shown.join(' '), '| errors', errors.length ? errors.join(' | ') : 'none');
     ok(errors.length === 0, 'console errors');
     await browser.close();

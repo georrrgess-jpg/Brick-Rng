@@ -213,6 +213,8 @@
       res.kind = 'booster'; res.type = type; res.boostersGained = []; res.bursts = []; res.ticks = []; res.timeGain = this.chill ? 0 : BR.CFG.fuse.powerBonus;
       res.plan = { kind: 'booster', n: cells.length, points, r, c, primary: cells, combo: 1, line: false };
       this._afterScore(res);
+      // a power-up during the Last Spark gives time (and a stage-up refills the fuse), so the window is over: the run goes on
+      if (!this.chill && this.spark > 0 && this.fuse > 0) { this.spark = 0; res.sparkEnd = true; }
       return res;
     }
 
@@ -247,12 +249,15 @@
       return {
         v: 1, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
         inv: Object.assign({}, this.inv), charge: this.charge, stats: JSON.parse(JSON.stringify(this.stats)),
-        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, colors: this.board.grid.map((row) => row.map((b) => b.color)),
+        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, fuse: this.fuse, rushMeter: this.rush.active ? 0 : this.rush.meter, colors: this.board.grid.map((row) => row.map((b) => b.color)),
       };
     }
     _restore(s) {
       this.stage = s.stage; this.score = s.score; this.inv = Object.assign({}, s.inv); this.charge = s.charge || 0;
       this.stats = Object.assign(this.stats, s.stats); this.maxCombo = s.maxCombo || 0; this.sparkUsed = !!s.sparkUsed;
+      // resuming must not refill the fuse (Save and leave would be a free refill), but a few seconds of grace keep it from ending at once
+      if (!this.chill && s.fuse != null) this.fuse = Math.min(this.fuseMax, Math.max(+s.fuse || 0, BR.CFG.fuse.resumeGrace));
+      if (s.rushMeter != null) this.rush.meter = s.rushMeter;
       this.goal = this.chill ? BR.chillGoal(this.stage) : BR.stageGoal(this.stage);
       for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) this.board.grid[r][c].color = s.colors[r][c];
       this.board.version++;

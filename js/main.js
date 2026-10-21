@@ -19,6 +19,8 @@
       this.spawnBgBricks();
       this.bindGlobal();
       BR.Router.go('home', { instant: true });
+      const cashed = BR.Progress.cashStranded();   // older saves can hold chests of a type that is already complete
+      if (cashed) setTimeout(() => BR.toast(`Your spare chests of a finished set became ${BR.fmt(cashed)} Coins`, 'good'), 1800);
       this.registerSW();
       if (BR.Run && BR.Run.init) BR.Run.init(this);
     },

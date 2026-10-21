@@ -60,33 +60,51 @@
         const tier = p.level;
         p.level++;
         const reward = BR.passReward(tier);
-        if (tier > p.passTier) { p.passTier = tier; this.grant(reward); }
-        ups.push({ level: p.level, tier, reward });
+        let paid = 0;
+        if (tier > p.passTier) { p.passTier = tier; paid = this.grant(reward) || 0; }
+        ups.push({ level: p.level, tier, reward, paid });
       }
       save();
       return { gained: amount, from, level: p.level, xp: p.xp, need: BR.xpForLevel(p.level), ups };
     },
 
-    /** Pay out a reward object (coins / chest / item). Items you already own pay Coins instead. */
+    /** Pay out a reward object (coins / chest / item). Items you already own, and chests with nothing left to find, pay Coins
+     *  instead; returns those Coins (0 when the reward arrived as itself). */
     grant(r) {
+      let paid = 0;
       if (r.kind === 'coins') this.earn(r.amount);
-      else if (r.kind === 'chest') this.addChest(r.chest, 1);
+      else if (r.kind === 'chest') paid = this.addChest(r.chest, 1);
       else if (r.kind === 'item') {
-        if (this.owns(r.itemId)) this.earn(BR.CFG.goldenFallback / 2);
+        if (this.owns(r.itemId)) { paid = BR.CFG.goldenFallback / 2; this.earn(paid); }
         else this.keep({ itemId: r.itemId, shine: r.shine || 'plain', seed: 7 });
       }
       save();
+      return paid;
     },
 
     /* ---------- Chests ---------- */
     chestCount(id) { return P().chests[id] || 0; },
     totalChests() { return Object.values(P().chests).reduce((a, b) => a + b, 0); },
-    /** Add chests. A Golden Chest with nothing left to find pays Coins instead (returns the Coins, else 0). */
+    /** What a chest that can no longer be opened is worth: a Golden Chest pays the fallback, any other chest its price. */
+    chestValue(id) { const c = BR.CHESTS[id]; return c.golden ? BR.CFG.goldenFallback : (c.cost || 0); },
+    /** Add chests. A chest whose pool is finished (nothing left to find) pays Coins instead (returns the Coins, else 0). */
     addChest(id, n = 1) {
-      if (id === 'golden' && BR.goldenTypes(this.ownedIds()).length === 0) { this.earn(BR.CFG.goldenFallback * n); save(); return BR.CFG.goldenFallback * n; }
+      if (this.chestStatus(id).complete) { const v = this.chestValue(id) * n; this.earn(v); save(); return v; }
       P().chests[id] = (P().chests[id] || 0) + n; save();
       return 0;
     },
+    /** Chests already in stock whose pool has since been finished turn into Coins, so nothing is stranded. Returns the Coins paid. */
+    cashStranded() {
+      let coins = 0;
+      for (const id of Object.keys(P().chests)) {
+        const n = P().chests[id] || 0;
+        if (n > 0 && BR.CHESTS[id] && this.chestStatus(id).complete) { coins += this.chestValue(id) * n; P().chests[id] = 0; }
+      }
+      if (coins) { this.earn(coins); save(); }
+      return coins;
+    },
+    /** Chests in stock that can actually be opened. */
+    openableChests() { return Object.keys(P().chests).reduce((a, id) => a + (BR.CHESTS[id] && !this.chestStatus(id).complete ? (P().chests[id] || 0) : 0), 0); },
     /** Status of a chest for the Shop and the opening screen. */
     chestStatus(id) {
       const c = BR.CHESTS[id], owned = this.ownedIds();

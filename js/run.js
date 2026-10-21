@@ -240,7 +240,7 @@
       if (!(base > 0)) { el.className = 'best-line none'; return; }
       const f = Math.min(1, score / base);
       $('bestFill').style.width = (f * 100).toFixed(1) + '%';
-      if (score >= base) {
+      if (score > base) {
         el.className = 'best-line beat'; $('bestText').textContent = 'NEW BEST!';
         if (!this.beatFired && announce !== false) {
           this.beatFired = true;
@@ -409,6 +409,7 @@
     powerFeedback(res) {
       const e = this.engine, p = res.plan, view = this.view;
       BR.audio.boosterUse(res.type); BR.haptic('big');
+      if (res.sparkEnd && this.el.classList.contains('sparking')) this.sparkEnd(false);   // the power-up bought time: the Last Spark window is over
       this.setScore(e.score); this.hudStageBar();
       const pos = view.layerPoint(res.tap.r, res.tap.c);
       this.floatText('+' + fmt(p.points), pos.x, pos.y, { size: 30, color: PCOL[res.type], glow: PCOL[res.type] });
@@ -604,7 +605,7 @@
         if (k === 'resume') sh.close();
         else if (k === 'settings') this.quickSettings();
         else if (k === 'end') this.confirmEnd(sh);
-        else if (k === 'restart') { this.leaving = true; sh.close(); this.bankSilently(); setTimeout(() => this.start({ mode: this.mode === 'daily' ? 'rush' : this.mode, boosts: {} }), 350); }
+        else if (k === 'restart') { this.leaving = true; sh.close(); this.bankSilently(); setTimeout(() => this.start({ mode: this.mode === 'daily' ? 'rush' : this.mode, boosts: this.mode === 'rush' ? this.boosts : {} }), 350); }
         else if (k === 'leave') { this.leaving = true; sh.close(); this.saveSnap(); this.exitToHome(); }
       });
     },
@@ -644,6 +645,7 @@
       this.over = true; this.ending = true; this.clock = false; this.busy = true;
       this.clearHover(); this.view.hideHint(); this.hideHint(); this.aimBanner(''); this.armed = null;
       $('warnVignette').classList.remove('on'); $('lastSpark').classList.remove('on');
+      if (BR.Music && BR.Music.duck) BR.Music.duck(false);   // a missed Last Spark leaves the held duck on
       if (this.el.classList.contains('rushing') && BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });   // so Rush-only moments clean up
       this.el.classList.remove('rushing', 'sparking');
       if (BR.Music) BR.Music.stop();
@@ -704,7 +706,7 @@
       const titles = { fuse: 'FUSE OUT!', moves: 'OUT OF MOVES', ended: 'RUN OVER' };
       const canShop = BR.CHEST_ORDER.some((id) => P.canOpen(id));
       const mis = r.missions.map((m) => `<div class="res-mis rev ${m.justDone ? 'done' : ''}"><div class="t"><span>${m.justDone ? BR.icon('check', 'ck') + ' ' : ''}${BR.esc(m.mission.text)}</span><b>${m.justDone ? '+' + m.mission.reward + ' Coins' : fmt(m.after) + '/' + fmt(m.mission.target)}</b></div><div class="bar ${m.weekly ? 'gold' : 'green'}"><i data-to="${(m.after / m.mission.target) * 100}" style="width:${(m.before / m.mission.target) * 100}%"></i></div></div>`).join('');
-      const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pop Pass reward</small></span><span class="lu-rw">${BR.rewardChip(u.reward)}</span></div>`).join('');
+      const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pop Pass reward</small></span><span class="lu-rw">${BR.rewardChip(u.paid ? { kind: 'coins', amount: u.paid } : u.reward)}</span></div>`).join('');
       const trophies = r.trophies.map((t) => `<div class="lvl-up rev"><span class="lu-n">${BR.icon('trophy')}</span><span class="lu-t"><b>${t.name}</b><small>Trophy earned · +${t.coins} Coins</small></span></div>`).join('');
       let chase = '';
       if (r.isBest && sum.score > 0) chase = `<div class="new-best rev">New best</div>${r.prevBest > 0 ? `<div class="res-gap rev good">${fmt(sum.score - r.prevBest)} more than your old best</div>` : ''}`;
@@ -758,7 +760,7 @@
         else if (k === 'share') this.share(sum);
         else if (k === 'shop') {
           this.closeResults(); BR.Router.go('shop');
-          const own = ['golden'].concat(BR.CHEST_ORDER).find((id) => BR.Progress.chestCount(id) > 0);
+          const own = ['golden'].concat(BR.CHEST_ORDER).find((id) => BR.Progress.chestCount(id) > 0 && !BR.Progress.chestStatus(id).complete);
           if (own) setTimeout(() => BR.App.openChest(own), 450);
         }
         else { this.closeResults(); BR.Router.go('home'); }

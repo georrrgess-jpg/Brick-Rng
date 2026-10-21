@@ -114,6 +114,25 @@ const { launch } = require('./lib');
   await page.waitForTimeout(500);
   await page.evaluate(() => { BR.Storage.data.settings.reduced = false; BR.App.applySettings(); });
 
+  // two quick taps on "Pay and start" charge once and start one run
+  await page.evaluate(() => { BR.Router.go('home'); BR.Storage.data.profile.coins = 500; BR.readySheet('rush'); }); await page.waitForTimeout(900);
+  await page.click('[data-boost="longFuse"]');
+  await page.evaluate(() => { window.__starts = 0; const real = BR.App.startRun.bind(BR.App); BR.App.startRun = (o) => { window.__starts++; return real(o); }; });
+  await page.evaluate(() => { const b = document.getElementById('goBtn'); b.click(); b.click(); });
+  await page.waitForTimeout(900);
+  const dbl = await page.evaluate(() => ({ coins: BR.Progress.coins, price: BR.CFG.boosts.longFuse.cost, starts: window.__starts }));
+  ok(dbl.coins === 500 - dbl.price, 'double tap charged twice', dbl); ok(dbl.starts === 1, 'double tap started two runs', dbl);
+  await page.evaluate(() => { BR.Run.over = true; BR.Router.go('home', { instant: true }); }); await page.waitForTimeout(600);
+
+  // a Golden Chest only offers types that still have an Epic or better, and stranded stock turns into Coins
+  await page.evaluate(() => {
+    const P = BR.Progress; BR.DROP_ITEMS.filter((i) => i.type === 'fuse' && BR.rarityById[i.rarity].level >= 3).forEach((i) => { if (!P.owns(i.id)) P.keep({ itemId: i.id, shine: 'plain', seed: 1 }); });
+    BR.Storage.data.profile.chests.golden = 2; BR.App.openChest('golden');
+  });
+  await page.waitForSelector('.op-picker button', { timeout: 8000 }); await page.waitForTimeout(1800);
+  ok(await page.evaluate(() => document.querySelector('.op-picker button[data-type="fuse"]').disabled), 'finished type is selectable on the Golden Chest');
+  await page.keyboard.press('Escape'); await page.waitForTimeout(700);
+
   console.log('errors', errors.filter((e) => !/Failed to load resource/.test(e)));
   console.log('problems', problems);
   await browser.close();

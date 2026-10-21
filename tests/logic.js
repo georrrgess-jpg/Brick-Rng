@@ -171,4 +171,37 @@ assert.strictEqual(mg.profile.loadout.skin, 'b');
 assert.strictEqual(mg.profile.coins, 500 + 40 + 600, 'duplicates refunded: one Common and one Legendary'); assert.deepStrictEqual(mg.notice, { kind: 'dupes', coins: 640 });
 assert(mg.profile.xp < BR.xpForLevel(3), 'xp clamped to the new level curve'); assert.deepStrictEqual(mg.profile.pity, { skin: 0, pop: 0, board: 0, fuse: 0 });
 assert.strictEqual(mg.profile.chests.brick, 1, 'unopened chests survive'); assert(!('counter' in mg.profile.vault[0]));
+
+// ---- review fixes: the best Shine survives a duplicate collapse, bad saves are kept aside, nulls cannot wipe defaults
+for (const k of Object.keys(mem)) delete mem[k];
+mem['poprush.v3'] = JSON.stringify({ v: 3, profile: { level: 2, xp: 0, coins: 0, chests: {}, vault: [{ uid: 'a', itemId: 'f_aurora', shine: 'plain', seed: 1 }, { uid: 'b', itemId: 'f_aurora', shine: 'prism', seed: 2 }, { uid: 'c', itemId: 'f_aurora', shine: 'glossy', seed: 3 }], loadout: {} } });
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+mg = BR.Storage.data;
+assert.strictEqual(mg.profile.vault.length, 1); assert.strictEqual(mg.profile.vault[0].shine, 'prism', 'the best Shine copy is kept when none is equipped');
+for (const k of Object.keys(mem)) delete mem[k];
+mem['poprush.v4'] = JSON.stringify({ v: 4, recent: null, settings: null, profile: { level: 9, coins: 77, chests: null } });
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+mg = BR.Storage.data;
+assert.strictEqual(mg.profile.level, 9); assert(mg.recent && Array.isArray(mg.recent.rush) && mg.settings && typeof mg.settings.sound === 'boolean' && mg.profile.chests && typeof mg.profile.chests.brick === 'number', 'null fields do not wipe the defaults');
+for (const k of Object.keys(mem)) delete mem[k];
+mem['poprush.v4'] = '{"v":4,"profile":{"level":12,"coins":'; mem['poprush.v3'] = JSON.stringify({ v: 3, profile: { level: 7, vault: [], loadout: {} } });
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+assert.strictEqual(mem['poprush.v4.corrupt'], '{"v":4,"profile":{"level":12,"coins":', 'a corrupt save is copied aside before anything older is used');
+
+// ---- review fixes: chests whose pool is finished turn into Coins instead of being stranded
+for (const k of Object.keys(mem)) delete mem[k];
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+{
+  const P = BR.Progress, pr = BR.Storage.data.profile;
+  pr.coins = 0; pr.chests = { brick: 0, pop: 0, board: 0, fuse: 0, golden: 0 };
+  P.addChest('brick', 2); P.addChest('golden', 2); assert.strictEqual(P.chestCount('brick'), 2); assert.strictEqual(P.chestCount('golden'), 2);
+  BR.DROP_ITEMS.filter((i) => i.type === 'skin').forEach((i) => { if (!P.owns(i.id)) P.keep({ itemId: i.id, shine: 'plain', seed: 1 }); });
+  assert.strictEqual(P.openableChests(), 2, 'stock of a finished set does not count as openable');
+  const coins = P.cashStranded(); assert.strictEqual(coins, 2 * BR.CHESTS.brick.cost); assert.strictEqual(P.chestCount('brick'), 0); assert.strictEqual(P.chestCount('golden'), 2, 'a Golden Chest stays while another type still has Epic or better');
+  assert.strictEqual(P.addChest('brick', 1), BR.CHESTS.brick.cost, 'a new chest of a finished set pays its price'); assert.strictEqual(P.chestCount('brick'), 0);
+  assert.strictEqual(P.grant({ kind: 'chest', chest: 'brick' }), BR.CHESTS.brick.cost, 'grant reports what was paid instead');
+  assert.strictEqual(P.grant({ kind: 'item', itemId: 'f_candy', shine: 'plain' }), BR.CFG.goldenFallback / 2, 'an owned Pass item pays Coins and says so');
+  BR.DROP_ITEMS.filter((i) => BR.rarityById[i.rarity].level >= 3).forEach((i) => { if (!P.owns(i.id)) P.keep({ itemId: i.id, shine: 'plain', seed: 1 }); });
+  const c2 = P.cashStranded(); assert.strictEqual(c2, 2 * BR.CFG.goldenFallback, 'Golden stock converts once nothing Epic or better is left'); assert.strictEqual(P.chestCount('golden'), 0);
+}
 console.log('logic tests passed');

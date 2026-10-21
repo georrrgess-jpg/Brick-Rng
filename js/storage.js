@@ -41,6 +41,7 @@
   function deepMerge(base, over) {
     if (!over || typeof over !== 'object') return base;
     for (const k of Object.keys(over)) {
+      if (over[k] === null && base[k] && typeof base[k] === 'object') continue;   // a null in a hand-edited save must not wipe a default object
       if (base[k] && typeof base[k] === 'object' && !Array.isArray(base[k]) && over[k] && typeof over[k] === 'object') deepMerge(base[k], over[k]);
       else base[k] = over[k];
     }
@@ -85,7 +86,8 @@
     const equipped = new Set(Object.values(pr.loadout || {}));
     const seen = new Map(); let refund = extraRefund || 0;
     const vault = [];
-    const sorted = (pr.vault || []).slice().sort((a, b) => (equipped.has(b.uid) ? 1 : 0) - (equipped.has(a.uid) ? 1 : 0));
+    const rank = { prism: 3, holo: 2, glossy: 1 };
+    const sorted = (pr.vault || []).map((v, i) => [v, i]).sort((a, b) => ((equipped.has(b[0].uid) ? 100 : 0) + (rank[b[0].shine] || 0)) - ((equipped.has(a[0].uid) ? 100 : 0) + (rank[a[0].shine] || 0)) || a[1] - b[1]).map((x) => x[0]);   // equipped copy first, then the best Shine
     for (const inst of sorted) {
       const item = BR.itemById && BR.itemById[inst.itemId];
       if (!item) continue;
@@ -106,6 +108,8 @@
     const d = defaults();
     const cur = read(KEY);
     if (cur) return deepMerge(d, cur);
+    // a v4 save that exists but cannot be parsed is kept aside before anything older is tried
+    try { const raw = G.localStorage && G.localStorage.getItem(KEY); if (raw) G.localStorage.setItem(KEY + '.corrupt', raw); } catch (e) { /* ignore */ }
     const v3 = read(V3_KEY);
     if (v3 && BR.itemById) return normalize(deepMerge(d, v3), 0).data;
     const v2 = read(V2_KEY);

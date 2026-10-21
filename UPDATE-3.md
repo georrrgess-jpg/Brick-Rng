@@ -396,3 +396,12 @@ Everything in sections 1 to 15 is built. Where the build differs from the plan, 
   descriptions only describe their look), and the pop moments do not play in the chest-reveal preview (the particle recipe does).
 - **Not verified:** Safari and Firefox (only Chromium was available), real phone frame times, and how the music sounds to a listener
   (only measured). The 10-minute render of a session is written by `node tests/audio.js` for listening.
+
+### Independent review before release
+A separate reviewer read the logic changes and reproduced ten problems, all fixed and covered by tests:
+a power-up used during Last Spark no longer ends the run with a full fuse; music no longer stays ducked after a missed Last Spark;
+chests of a finished set (including Pass chests and Golden Chests already in stock) turn into Coins instead of being stranded, and Home and
+Results only count chests that can be opened; the Golden Chest picker disables finished types; two quick taps on "Pay and start" charge once;
+an old-save duplicate collapse keeps the best Shine copy; a corrupt save is copied aside before an older one is tried and nulls cannot wipe
+defaults; replaying the tips no longer re-shows the what's-new card; Restart keeps Boosts already paid for; a tie is no longer called a new best.
+Also fixed: Save and leave then Resume no longer refills the fuse (a resumed run keeps its fuse, with at least 6 seconds of grace, and its Rush meter).

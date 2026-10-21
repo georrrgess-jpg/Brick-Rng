@@ -266,3 +266,5 @@ html.reduced .op-rays, html.reduced .op-dust { display: none; }
 /* reduced motion and low-end phones: the chest sits still while it waits */
 html.reduced .op-chest.idle, html.reduced .op-chest.idle *, html.low-end .op-chest.idle .tw, html.low-end .op-chest.idle .cf, html.low-end .op-chest.idle .vp { animation: none !important; }
 html.reduced .chest .tw { opacity: 0.8; transform: none; }
+
+.op-picker button.done, .op-picker button:disabled { opacity: 0.35; filter: grayscale(0.8); transform: none; box-shadow: none; }

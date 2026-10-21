@@ -53,4 +53,21 @@ for (let seed = 1; seed < 30; seed++) {
 { const e = new BR.Engine({ seed: 2, mode: 'chill' }); for (let i = 0; i < 50; i++) e.tick(1); assert(!e.over && e.spark === 0); }
 // Rush Start boost
 { const e = new BR.Engine({ seed: 2, mode: 'rush', boosts: { rushStart: true } }); assert.strictEqual(e.rush.meter, 60); const f = new BR.Engine({ seed: 2, mode: 'rush', boosts: { longFuse: true } }); assert.strictEqual(f.fuseMax, 40); }
+// a power-up during the Last Spark gives time, so the window ends and the run goes on (it used to die 2 s later with a full fuse)
+{
+  const e = new BR.Engine({ seed: 5, mode: 'rush', boosts: { headStart: true } });
+  e.fuse = 0.05; let ev = []; for (let i = 0; i < 5 && !e.spark; i++) ev = ev.concat(e.tick(0.1));
+  assert(e.spark > 0 && !e.over, 'spark running');
+  const cell = { r: 3, c: 3 }; const res = e.applyBooster('hammer', cell.r, cell.c);
+  assert(res && res.sparkEnd && e.spark === 0 && e.fuse > 0, 'power-up ends the spark and keeps the fuse');
+  const f0 = e.fuse; for (let i = 0; i < 10; i++) e.tick(0.1);
+  assert(!e.over && e.fuse < f0 && e.spark === 0, 'the fuse burns normally again after the power-up (no phantom spark window left to expire)');
+}
+// resume does not refill the fuse, but never starts below the grace
+{
+  const e = new BR.Engine({ seed: 6, mode: 'rush' }); e.fuse = 12;
+  const r1 = new BR.Engine({ seed: 6, mode: 'rush', snapshot: e.snapshot() }); assert.strictEqual(r1.fuse, 12, 'resumed fuse is the saved fuse');
+  e.fuse = 1.2; const r2 = new BR.Engine({ seed: 6, mode: 'rush', snapshot: e.snapshot() }); assert.strictEqual(r2.fuse, BR.CFG.fuse.resumeGrace, 'a nearly empty fuse resumes with a short grace');
+  e.rush.meter = 33; const r3 = new BR.Engine({ seed: 6, mode: 'rush', boosts: { rushStart: true }, snapshot: e.snapshot() }); assert.strictEqual(r3.rush.meter, 33, 'Rush Start does not top the meter up again on resume');
+}
 console.log('engine rules ok');
