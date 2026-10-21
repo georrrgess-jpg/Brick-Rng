@@ -105,9 +105,13 @@
           this.sparks(x, y, '#d6e8ff', Math.ceil(n * 1.1), 1.3, 0.35);
           this.shards(x, y, glow, Math.ceil(n / 2), 0.7);
           break;
-        default:
+        default: {
+          // Series 3 recipes register themselves: BR.PopRecipes[name] = function ({ x, y, glow, hi, n, power, rnd, R }) { ... } (this = the FX)
+          const custom = BR.PopRecipes && BR.PopRecipes[recipe];
+          if (custom) { custom.call(this, { x, y, glow, hi, n, power, rnd, R }); break; }
           this.shards(x, y, glow, n, power);
           this.sparks(x, y, hi, Math.ceil(n / 3), 0.8, 0.5);
+        }
       }
       if (finish === 'gloss') this.sparks(x, y, '#ffffff', 3, 0.9, 0.35);
       else if (finish === 'holo' || finish === 'prism') {

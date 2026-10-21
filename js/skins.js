@@ -8,6 +8,10 @@
     popShine: 'plain',
     beam: '#9ff0ff',
     moments: {},      // item moment keys currently active (e.g. { fireworks: true })
+    /* Series 3 plugs its signature moments in here instead of growing onEvent: handler(type, d, ctx) runs for every
+       event, ctx = { M, fx, rnd, cells, n, view } (cells/n only for 'pop' and 'demo'). applyHooks(M, root) run at the end of apply(). */
+    handlers: [],
+    applyHooks: [],
     fuseCls: 'fuse-classic',
 
     /** Re-read the loadout and restyle the page. */
@@ -38,6 +42,7 @@
       this.moments = {};
       [sk, po, bo, fu].forEach((x) => { if (x.item.moment) this.moments[x.item.moment] = true; });
       root.classList.toggle('has-nova', !!this.moments.nova);
+      this.applyHooks.forEach((h) => h(this.moments, root));
     },
 
 
@@ -60,6 +65,8 @@
         }
         const col = (i) => BR.PALETTE[(d.res && d.res.plan.color != null ? d.res.plan.color : i) % 7];
         this.popCount++;
+        const ctx = { M, fx, rnd, cells, n, view, col };
+        this.handlers.forEach((h) => h(type, d, ctx));
         if (M.lava && n >= 4) cells.forEach((q) => {
           for (let i = 0; i < 3; i++) fx.emit({ kind: 'spark', x: q.x + rnd(-10, 10), y: q.y, vx: rnd(-70, 70), vy: rnd(-420, -200), g: 520, drag: 0.6, size: rnd(2.6, 5), max: rnd(0.45, 0.8), color: ['#ff9a3d', '#ffcf3f', '#ff4d2e'][i % 3] });
           fx.ring(q.x, q.y, '#ff7a2a', 34 + n * 3, 0.4, 3);
@@ -86,14 +93,17 @@
         }
         if (M.thunder && type === 'pop' && (n >= 7 || this.popCount % 5 === 0)) this.lightning(d.view.boardEl, cells[0]);
       } else if (type === 'line') {
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
         if (M.scan) this.scan(d.view.boardEl);
         if (M.thunder) this.lightning(d.view.boardEl, null);
       } else if (type === 'rushStart') {
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
         const run = d.run.el;
         run.classList.toggle('tint-plasma', !!M.plasma);
         if (M.dragon) this.roar(d.run);
         if (M.plasma) { BR.audio.crackle(); }
       } else if (type === 'rushEnd') {
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
         d.run.el.classList.remove('tint-plasma');
         if (M.ice) {
           const r = document.getElementById('fuseFill').getBoundingClientRect();
@@ -101,6 +111,7 @@
           BR.audio.glassBreak();
         }
       } else if (type === 'stageUp') {
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
         if (M.dragon) fx.flash('#ff7a2a', 0.2, 320);
       }
     },
