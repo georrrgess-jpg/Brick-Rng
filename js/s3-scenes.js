@@ -17,22 +17,22 @@
   function clearMoments() {
     timers.forEach(clearTimeout); timers.clear();
     const run = $('run'), fuse = $('fuse'), app = $('app');
-    if (run) run.classList.remove('rod-on');
-    if (fuse) fuse.classList.remove('hatching');
-    if (app) app.classList.remove('au-hot');
-    document.querySelectorAll('.px-hatch').forEach((n) => n.remove());
+    if (run) run.classList.remove('sc-rod-on');
+    if (fuse) fuse.classList.remove('sc-hatching');
+    if (app) app.classList.remove('sc-hot');
+    document.querySelectorAll('.sc-hatch').forEach((n) => n.remove());
   }
   S.applyHooks.push((M, root) => {
     clearMoments();
     const spark = $('spark');
     if (spark) {
-      spark.querySelectorAll('.s3-tip').forEach((n) => n.remove());
-      if (TIPS.test(S.fuseCls || '')) for (let i = 0; i < 4; i++) spark.appendChild(Object.assign(document.createElement('i'), { className: 's3-tip' }));
+      spark.querySelectorAll('.sc-tip').forEach((n) => n.remove());
+      if (TIPS.test(S.fuseCls || '')) for (let i = 0; i < 4; i++) spark.appendChild(Object.assign(document.createElement('i'), { className: 'sc-tip' }));
     }
     const bg = $('bg');
     if (bg) {
-      const have = bg.querySelector('.au-surge');
-      if (root.classList.contains('board-aurora')) { if (!have) bg.appendChild(Object.assign(document.createElement('i'), { className: 'au-surge' })); }
+      const have = bg.querySelector('.sc-surge');
+      if (root.classList.contains('board-aurora')) { if (!have) bg.appendChild(Object.assign(document.createElement('i'), { className: 'sc-surge' })); }
       else if (have) have.remove();
     }
   });
@@ -41,11 +41,11 @@
   function auroraSky(ctx) {
     const app = $('app'), bg = $('bg'), fx = ctx.fx, rnd = ctx.rnd;
     if (!app) return;
-    app.classList.add('au-hot');
+    app.classList.add('sc-hot');
     if (auroraSky.t) clearTimeout(auroraSky.t);
-    auroraSky.t = setTimeout(() => app.classList.remove('au-hot'), 700);
+    auroraSky.t = setTimeout(() => app.classList.remove('sc-hot'), 700);
     if (BR.lowEnd) return;
-    const band = bg && bg.querySelector('.au-surge');
+    const band = bg && bg.querySelector('.sc-surge');
     if (band && band.animate) band.animate([
       { transform: 'translate3d(-45%, 0, 0)', opacity: 0 },
       { opacity: 1, offset: 0.22 },
@@ -60,7 +60,7 @@
 
   /* ------------------------------------------------------------------ rod: arcs crackle along the fuse for the length of a Rush */
   function rodStart(d, ctx) {
-    d.run.el.classList.add('rod-on');
+    d.run.el.classList.add('sc-rod-on');
     if (BR.lowEnd) return;
     audio('crackle');
     const tr = $('fuseTrack'), bomb = $('bomb');
@@ -68,7 +68,7 @@
     const r = tr.getBoundingClientRect(), b = bomb.getBoundingClientRect(), y = r.top + r.height / 2;
     for (let i = 0; i < 3; i++) later(() => ctx.fx.bolt(b.left + b.width * 0.7 + i * 14, y + ctx.rnd(-6, 6), r.left + r.width * ((i + 1) / 3.2), y + ctx.rnd(-9, 9), '#9fd8ff'), i * 90);
   }
-  function rodEnd(d) { d.run.el.classList.remove('rod-on'); }
+  function rodEnd(d) { d.run.el.classList.remove('sc-rod-on'); }
   function rodPop(d, ctx) {
     const run = d.run && d.run.el;
     if (!run || !run.classList.contains('rushing') || BR.lowEnd) return;
@@ -89,14 +89,14 @@
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;       // page coordinates, for the canvas effects
     const hx = cx - a.left, hy = cy - a.top;                          // the overlay lives inside #app, which shakes at a Rush start
     if (BR.lowEnd) { fx.sparks(cx, cy, '#ffd24a', 14, 1.2, 0.5); return; }
-    document.querySelectorAll('.px-hatch').forEach((n) => n.remove());
+    document.querySelectorAll('.sc-hatch').forEach((n) => n.remove());
     const host = document.createElement('div');
-    host.className = 'px-hatch';
-    host.style.cssText = `left:${hx.toFixed(1)}px;top:${hy.toFixed(1)}px;transform:scale(${k.toFixed(3)});--fx:${((window.innerWidth - hx + 90) / k).toFixed(0)}px;--fy:${((-hy - 100) / k).toFixed(0)}px`;
-    host.innerHTML = '<div class="px-egg"><i class="px-half b"></i><i class="px-half t"></i><i class="px-crack"></i></div><i class="px-flash"></i><div class="px-bird"><i class="pw l"></i><i class="pw r"></i><i class="pb"></i></div>';
+    host.className = 'sc-hatch';
+    host.style.cssText = `left:${hx.toFixed(1)}px;top:${hy.toFixed(1)}px;transform:scale(${k.toFixed(3)});--sc-fx:${((window.innerWidth - hx + 90) / k).toFixed(0)}px;--sc-fy:${((-hy - 100) / k).toFixed(0)}px`;
+    host.innerHTML = '<div class="sc-egg"><i class="sc-half b"></i><i class="sc-half t"></i><i class="sc-crack"></i></div><i class="sc-flash"></i><div class="sc-bird"><i class="pw l"></i><i class="pw r"></i><i class="pb"></i></div>';
     app.appendChild(host);
-    fuse.classList.add('hatching');
-    const bird = host.querySelector('.px-bird');
+    fuse.classList.add('sc-hatching');
+    const bird = host.querySelector('.sc-bird');
     later(() => { fx.sparks(cx, cy, '#ffd24a', 26, 1.6, 0.7); fx.sparks(cx, cy, '#ff8a2a', 16, 1.1, 0.8); fx.ring(cx, cy, '#ffb02e', 86 * k, 0.5, 4); audio('boom'); }, 430);
     // sparks trail the bird as it flies off
     [1180, 1290, 1400, 1510].forEach((t) => later(() => {
@@ -104,7 +104,7 @@
       fx.sparks(b.left + b.width / 2, b.top + b.height / 2, '#ffcf3f', 5, 0.7, 0.5);
     }, t));
     later(() => audio('whoosh'), 1150);
-    later(() => fuse.classList.remove('hatching'), 1750);
+    later(() => fuse.classList.remove('sc-hatching'), 1750);
     later(() => host.remove(), 2050);
   }
 
