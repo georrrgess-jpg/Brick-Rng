@@ -170,7 +170,7 @@
       </div>`);
       const bodyEl = sheet.querySelector('.sheet-body');
       if (typeof o.body === 'string') bodyEl.innerHTML = o.body; else if (o.body) bodyEl.appendChild(o.body);
-      layer.style.pointerEvents = 'auto';
+      layer.style.pointerEvents = 'auto'; layer._open = (layer._open || 0) + 1;
       layer.append(back_, sheet);
       BR.under(1);
       let closed = false;
@@ -180,6 +180,10 @@
         if (closed) return; closed = true;
         if (!fromBack && entry) BR.Back.release(entry);
         back_.classList.remove('on'); sheet.classList.remove('on'); BR.under(-1);
+        // a closing sheet fades for half a second, but taps go through to what is underneath from the first moment:
+        // a quick tap on the board after Resume must never land on the Restart button that is still fading out
+        back_.style.pointerEvents = 'none'; sheet.style.pointerEvents = 'none';
+        if (--layer._open <= 0) layer.style.pointerEvents = 'none';
         setTimeout(() => { back_.remove(); sheet.remove(); if (!layer.children.length) layer.style.pointerEvents = 'none'; }, 480);
         if (o.onClose) o.onClose();
       };

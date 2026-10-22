@@ -39,6 +39,13 @@ const { launch } = require('./lib');
   await page.waitForFunction(() => !BR.Run.busy, null, { timeout: 10000 });
   const bad = await page.evaluate(() => { const e = BR.Run.engine, v = BR.Run.view; let n = 0; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const b = e.board.grid[r][c], rec = v.bricks.get(b.id); if (!rec || rec.r !== r || rec.c !== c || +rec.el.dataset.c !== b.color) n++; } return n; });
   ok(bad === 0, 'board desynced after rapid taps', bad);
+  // a sheet that is closing lets taps through at once: right after Resume, nothing of the fading sheet or its backdrop can be hit
+  await page.click('#btnPause'); await page.waitForTimeout(700);
+  await page.click('.sheet [data-p="resume"]');
+  const hit = await page.evaluate(() => { let n = 0, any = 0; for (let y = 20; y < 840; y += 40) for (let x = 10; x < 390; x += 40) { const el = document.elementFromPoint(x, y); if (el && el.closest('#layer-sheets')) n++; any++; } return { n, any, stillThere: document.querySelectorAll('#layer-sheets .sheet').length }; });
+  ok(hit.stillThere === 1 && hit.n === 0, 'a closing sheet still catches taps', JSON.stringify(hit));
+  await page.waitForTimeout(700);
+  ok(await page.evaluate(() => document.getElementById('layer-sheets').style.pointerEvents === 'none' && !document.getElementById('layer-sheets').children.length), 'the sheet layer kept catching taps after it closed');
   // touch targets
   const small = await page.evaluate(() => Array.from(document.querySelectorAll('#btnPause, .bslot')).filter((b) => b.getBoundingClientRect().height < 44 || b.getBoundingClientRect().width < 44).map((b) => b.id || b.className));
   ok(small.length === 0, 'touch targets under 44px', small);
