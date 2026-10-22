@@ -461,7 +461,7 @@
   const TOKENS = {
     'fuse-classic': {
       name: 'Basic Cord', h: 14, rail: { bg: 'rgba(0,0,0,0.5)', line: 'rgba(255,255,255,0.05)' }, glow: '#ffb347', gs: ['rgba(255,170,60,0.42)', 'rgba(255,140,40,0.75)', 'rgba(255,70,50,0.9)'],
-      rope: { base: R.twist('#b88a4a', '#8a6232', 6), low: R.twist('#f0a458', '#c0642a', 6), crit: R.twist('#ff8a5a', '#d02a1a', 6) },
+      rope: { base: R.twist('#ece3d0', '#8e8070', 5), low: R.twist('#f0a458', '#c0642a', 6), crit: R.twist('#ff8a5a', '#d02a1a', 6) },
       flame: { shape: 'flame', core: ['#ffffff', '#fff2a8'], tongue: ['#ff7a1a', '#ffb02e', '#ffe27a'], halo: ['rgba(255,150,50,0.55)'], ice: ['#ffffff', '#cfeeff', '#7fc4ff'] },
       ember: ['#ffb44a', '#ffe9a8'], ash: '#4a423c', heat: 'rgba(255,120,40,0.6)', smoke: 'rgba(205,195,215,0.55)', frost: '#d9f2ff',
       part: { spark: ['#ffd24a', '#ff8a3d', '#fff3b0'], ember: ['#ff9a3d', '#ff6a2a'], smoke: 'rgba(200,190,215,0.55)', special: null },
@@ -529,7 +529,7 @@
     },
     'fuse-rod': {
       name: 'Lightning Rod', h: 14, railH: 18, rail: { bg: 'linear-gradient(180deg, #1b2740, #0a1222)', line: 'rgba(160,210,255,0.3)', steel: true }, glow: '#9fd8ff', gs: ['rgba(255,170,110,0.55)', 'rgba(255,140,60,0.85)', 'rgba(255,70,40,0.95)'],
-      rope: { base: R.segs('#ffd9b0', '#e89a5a', '#c4682f', '#6a3418'), low: R.segs('#fff0d6', '#ff9a52', '#e0541c', '#8a2410'), crit: R.segs('#ffffff', '#ffc27a', '#ff5a24', '#a8200c'), arcs: true },
+      rope: { base: R.segs('#eef4fb', '#a8bad0', '#6a7f9b', '#33445e'), low: R.segs('#fff0d6', '#ff9a52', '#e0541c', '#8a2410'), crit: R.segs('#ffffff', '#ffc27a', '#ff5a24', '#a8200c'), arcs: true },
       flame: { shape: 'spike', core: ['#ffffff', '#e8f6ff'], tongue: ['#5aa0ff', '#9fd8ff', '#ffffff'], halo: ['rgba(120,190,255,0.65)'], ice: ['#ffffff', '#e8f6ff', '#9fd0ff'] },
       ember: ['#ffb070', '#ffffff'], ash: '#2a3348', heat: 'rgba(140,200,255,0.55)', smoke: 'rgba(150,175,210,0.35)', frost: '#d4ecff',
       part: { spark: ['#d6f0ff', '#8fd0ff', '#ffffff'], ember: ['#ff9a52', '#ffcf9a'], smoke: 'rgba(150,175,210,0.35)', special: { shape: 'arc', colors: ['#cfeaff', '#8fd0ff'], rate: 2.2 } },
