@@ -606,7 +606,7 @@
         rv.classList.add('look-on', 'look-' + item.type);
         if (still) { if (bd) bd.remove(); return; }
         host.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, fill: 'both' });
-        if (bd) bd.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.9)' }], { duration: 380, fill: 'forwards' }).onfinish = () => bd.remove();
+        if (bd) bd.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 1, transform: 'scale(1)', offset: 0.6 }, { opacity: 0, transform: 'scale(0.92)' }], { duration: 520, fill: 'forwards' }).onfinish = () => bd.remove();   // (the badge holds until the demo is mostly in, so the card never dips)
       };
       const steps = [];
       const at = (t, state, fx) => steps.push({ t, state, fx });

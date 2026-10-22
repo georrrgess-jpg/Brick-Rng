@@ -77,7 +77,7 @@ const ok = (c, m) => { if (!c) { failed++; console.log('  FAIL', m); } };
     // the spin and the reveal
     await page.waitForSelector('.reel', { timeout: 20000 });
     await page.waitForSelector('.rv.on', { timeout: 40000 });
-    await page.waitForTimeout(2500);
+    await page.waitForSelector('.rv-actions.on', { timeout: 6000 }).catch(() => {});   // (the Legendary and Mythic reveals take about 3 s: wait for the actions, not for a fixed time)
     ok(await page.evaluate(() => !!document.querySelector('.rv-actions.on')), 'reveal actions appear');
     ok(await page.evaluate(() => !document.querySelector('.rv-actions [data-a="sell"]')), 'no sell button');
     console.log('  errors:', errors.length ? errors.join(' | ') : 'none');
