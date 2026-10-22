@@ -377,7 +377,7 @@
         <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">${BR.ITEM_TYPES[item.type].name}</span>${inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : ''}</div>
         <p class="detail-desc">${esc(item.desc)}</p>
         <div class="detail-where"><small>Comes from</small><b>${where}</b></div></div>`;
-    const actions = [{ label: equipped ? 'Equipped' : 'Equip', cls: equipped ? 'btn-dark' : 'btn-green', disabled: equipped, onClick: () => { P.equip(inst ? inst.uid : 'default', item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap'); BR.toast(`${esc(item.name)} equipped`, 'good'); BR.Router.rerender(); } }];
+    const actions = [{ label: equipped ? 'Equipped' : 'Equip', cls: equipped ? 'btn-dark' : 'btn-green', disabled: equipped, onClick: () => { P.equip(inst ? inst.uid : 'default', item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap'); BR.toast(`${esc(item.name)} equipped`, 'good'); BR.Router.rerender(); } }, { label: 'Try it', cls: 'btn-dark', onClick: () => { BR.audio.ui(); setTimeout(() => BR.Run.practiceItem(item, inst), 250); } }];
     let demo = null;
     const sheet = BR.Sheet.open({ title: esc(item.name), body, actions, onClose: () => { if (demo) demo.stop(); } });
     demo = BR.Openings.demo(sheet.body.querySelector('.hero-host'), item, inst || { shine: 'plain', seed: 0 }, { silent: true, power: 1.2 });
