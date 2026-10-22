@@ -13,6 +13,9 @@
 .bdg.r2 .bdg-bg { background: radial-gradient(circle at 50% 28%, #bfe0ff 0, #3d9bff 44%, #1a3f9e 100%); }
 .bdg.r3 .bdg-bg { background: radial-gradient(circle at 50% 28%, #e6c8ff 0, #a85cff 44%, #4a1f9e 100%); }
 .bdg.r4 .bdg-bg, .bdg.r5 .bdg-bg { inset: 0.24em; border-radius: 1.28em; }
+/* Mythic is told apart from Legendary at any size: a thicker rainbow rim and a small star on the corner */
+.bdg.r5 .bdg-bg { inset: 0.34em; border-radius: 1.2em; }
+.bdg.r5 .bdg-edge::after { content: ''; position: absolute; top: calc(var(--bs) * 0.09); right: calc(var(--bs) * 0.09); width: calc(var(--bs) * 0.24); height: calc(var(--bs) * 0.24); background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); filter: drop-shadow(0 0 3px #ff6bd6); }
 .bdg.r4 .bdg-bg { background: radial-gradient(circle at 50% 28%, #fff1b0 0, #ffb21e 44%, #a8520a 100%); }
 .bdg.r5 .bdg-bg { background: radial-gradient(circle at 50% 28%, #ffd0dc 0, #ff3d6a 44%, #7a0f3a 100%); }
 .bdg.r4::before, .bdg.r5::before { content: ''; position: absolute; inset: -50%; z-index: -1; animation: spinR 8s linear infinite; }
