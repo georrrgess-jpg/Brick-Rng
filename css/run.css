@@ -316,7 +316,7 @@
 /* the action bar belongs to the screen, not to the stagger: it is there within a third of a second */
 .res-actions { opacity: 0; transform: translateY(14px); transition: opacity 0.28s ease 0.1s, transform 0.38s var(--ease-out) 0.1s; }
 .results.on .res-actions { opacity: 1; transform: none; }
-.rev.hold { /* level-up banners wait for the XP bar to fill */ }
+.rev.rwait { /* level-up banners wait for the XP bar to fill (js/run.js animateXp) */ }
 .res-coins h3, .res-xpc h3 { font-size: 17px; }
 .res-coins .coins-total { font-size: 30px; }
 .res-bd { display: flex; flex-direction: column; gap: 3px; }
@@ -332,3 +332,21 @@
 .run.sparking #btnPause { background: #1a1233; border-color: rgba(255, 255, 255, 0.28); }
 /* short phones: the Last Spark band keeps the title and the draining bar (the readout already says "Pop 4+"), so nothing is clipped in 38px */
 @media (max-height: 720px) and (orientation: portrait) { .last-spark span { display: none; } .last-spark { padding: 4px 12px; } }
+/* short phones: the results tighten up so the Coins and the XP bar both reach the screen above the action bar */
+@media (max-height: 720px) and (orientation: portrait) {
+  .res-scroll { gap: 8px; padding-top: calc(var(--sat) + 8px); }
+  .res-title { font-size: 34px; } .res-score b { font-size: 52px; } .res-sub { font-size: 14px; margin-top: -4px; }
+  .res-card { padding: 10px 12px; gap: 6px; } .res-bd { gap: 1px; } .res-bd .res-row { font-size: 12.5px; line-height: 1.25; } .res-coins .coins-total { font-size: 26px; }
+  .res-actions { gap: 8px; padding-top: 6px; padding-bottom: calc(var(--sab) + 10px); } .res-actions .btn-xl { min-height: 52px; font-size: 20px; }
+}
+/* the results come in two parts: the hero (title, score) and the rest (Coins, XP, banners, missions). Portrait: one column. */
+.res-hero, .res-rest { display: contents; }
+/* landscape phones: the hero stays on the left, the rest scrolls beside it, and the buttons share one row under both (nothing is hidden behind a tall button stack) */
+@media (orientation: landscape) and (max-height: 560px) {
+  .res-scroll { flex-direction: row; gap: 18px; overflow: hidden; padding-top: calc(var(--sat) + 8px); padding-bottom: 6px; }
+  .res-hero { display: flex; flex-direction: column; gap: 8px; flex: 0 0 40%; align-self: center; }
+  .res-rest { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; overflow-y: auto; align-self: stretch; scrollbar-width: none; padding: 2px 2px 8px; } .res-rest::-webkit-scrollbar { display: none; } .res-rest > * { flex: none; }
+  .res-title { font-size: 34px; } .res-score b { font-size: 52px; }
+  .res-actions { flex-direction: row; align-items: stretch; gap: 10px; padding-top: 8px; padding-bottom: calc(var(--sab) + 10px); }
+  .res-actions .btn-xl { flex: 2; min-height: 48px; font-size: 20px; padding: 0 16px; } .res-actions .row { flex: 1.5; } .res-actions .row .btn { min-height: 48px; }
+}

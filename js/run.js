@@ -1024,9 +1024,9 @@
       let seen = false, shown = false, done = false;
       const go = () => { if (!done && seen && shown) { done = true; setTimeout(() => { if (this.resultsEl) fn(); }, BR.reducedMotion ? 0 : 60); } };
       el._onIn = () => { shown = true; go(); };
-      const root = this.resultsEl && this.resultsEl.querySelector('.res-scroll');
-      if (!window.IntersectionObserver || !root) { seen = true; go(); return; }
-      const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { seen = true; io.disconnect(); go(); } }, { root, threshold: 0.5 });
+      // (observed against the viewport: whichever box scrolls, a row clipped by its overflow does not count as seen)
+      if (!window.IntersectionObserver || !this.resultsEl) { seen = true; go(); return; }
+      const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { seen = true; io.disconnect(); go(); } }, { threshold: 0.25 });
       io.observe(el);
     },
 
@@ -1044,7 +1044,7 @@
       const xpCard = empty ? '' : `<div class="res-card res-xpc rev"><h3><span>XP</span><span class="muted num">+${fmt(xpGain)} XP</span></h3>
             <div class="xp-line"><div class="bar tall cyan"><i id="resXp" style="width:${(r.xp.from.xp / r.xp.from.need) * 100}%"></i></div><small class="num" id="resXpText">Level ${r.xp.from.level} · ${fmt(r.xp.from.xp)} / ${fmt(r.xp.from.need)}</small></div>
             <div class="xp-src">${r.rows.map((x) => `<span>${BR.esc(x.label)} <b>+${fmt(x.xp)}</b></span>`).join('')}</div></div>`;
-      const ups = r.xp.ups.map((u) => { const c = this.levelCoins(u); return `<div class="res-banner lvl rev hold"><span>${BR.icon('star')}</span><b>Level ${u.level}!</b><small>${c ? '+' + fmt(c) + ' Coins' : BR.rewardLabel(u.reward)}</small></div>`; }).join('');
+      const ups = r.xp.ups.map((u) => { const c = this.levelCoins(u); return `<div class="res-banner lvl rev rwait"><span>${BR.icon('star')}</span><b>Level ${u.level}!</b><small>${c ? '+' + fmt(c) + ' Coins' : BR.rewardLabel(u.reward)}</small></div>`; }).join('');
       const tcoins = r.trophies.reduce((a, t) => a + t.coins, 0);
       const trophies = r.trophies.length ? `<div class="res-banner trophy rev"><span>${BR.icon('trophy')}</span><b>${r.trophies.length === 1 ? 'Trophy: ' + BR.esc(r.trophies[0].name) : r.trophies.length + ' trophies'}</b><small>${r.trophies.length > 1 ? r.trophies.map((t) => BR.esc(t.name)).join(', ') + ' · ' : ''}+${fmt(tcoins)} Coins</small></div>` : '';
       const sk = r.streak, skCoins = sk ? (sk.coins || 0) + (sk.chestPaid || 0) : 0;   // what the streak REALLY paid (a finished Golden set pays Coins instead of the chest)
@@ -1064,15 +1064,15 @@
       const beatIt = !r.isBest && r.prevBest > 0 && mode !== 'daily' && !empty;
       const html = `<div class="results" id="results">
         <div class="res-scroll">
-          ${empty ? '' : `<div class="res-top"><span class="pill gold res-bal" aria-label="Your Coins">${BR.coin()}<b class="num" id="resBal">${fmt(r.balance.from)}</b></span></div>`}
+          <div class="res-hero">${empty ? '' : `<div class="res-top"><span class="pill gold res-bal" aria-label="Your Coins">${BR.coin()}<b class="num" id="resBal">${fmt(r.balance.from)}</b></span></div>`}
           <div class="res-title out rev">${titles[reason] || 'RUN OVER'}</div>
           <div class="res-sub rev">${mode === 'daily' ? 'Daily Rush' : mode === 'chill' ? 'Chill' : 'Rush'} · ${round} ${sum.stage} · ${Math.floor(sum.time / 60)}:${String(Math.floor(sum.time % 60)).padStart(2, '0')}</div>
           <div class="res-score rev"><small>Score</small><b id="resScore">0</b></div>
           ${empty ? '<div class="res-card rev res-none"><h3>Nothing popped</h3><p class="tiny">A run needs at least one pop to count. Nothing was paid and nothing was counted.</p></div>' : ''}
-          ${chase}${coinsCard}${xpCard}${ups}${trophies}${streak}${goalLine}${nextLine ? `<div class="res-next rev">Next: ${BR.esc(nextLine)}</div>` : ''}
+          ${chase}</div><div class="res-rest">${coinsCard}${xpCard}${ups}${trophies}${streak}${goalLine}${nextLine ? `<div class="res-next rev">Next: ${BR.esc(nextLine)}</div>` : ''}
           ${mis ? `<div class="res-card res-mc rev"><h3>Missions</h3>${mis}</div>` : ''}
           ${empty ? '' : `<div class="res-chips rev"><div class="res-chip"><b>${sum.stagesCleared}</b><small>${mode === 'chill' ? 'Rounds cleared' : 'Stages cleared'}</small></div><div class="res-chip"><b>${sum.biggest}</b><small>Biggest pop</small></div><div class="res-chip"><b>${sum.rushes}</b><small>Rush Modes</small></div></div>`}
-          ${shapesOffer}
+          ${shapesOffer}</div>
         </div>
         <div class="res-actions">
           ${mode === 'daily' && !empty ? `<button class="btn btn-xl" data-r="share">${BR.icon('share')} Share result</button>` : `<button class="btn btn-xl" data-r="again">${BR.icon('play')} ${beatIt ? 'Beat it' : 'Play again'}</button>`}
@@ -1093,7 +1093,7 @@
       // ---- choreography. The action bar belongs to the screen (it fades in on its own, well inside 0.6 s). Rows that are on screen reveal
       // one after another in a fast stagger; rows below the fold are simply there. Each count starts when its own row is in view.
       const scroll = node.querySelector('.res-scroll'), sr = scroll.getBoundingClientRect();
-      const revs = Array.from(node.querySelectorAll('.rev')).filter((n) => !n.classList.contains('hold'));
+      const revs = Array.from(node.querySelectorAll('.rev')).filter((n) => !n.classList.contains("rwait"));
       const onFold = revs.map((n) => n.getBoundingClientRect().top - sr.top < sr.height - 8);
       const nOn = onFold.filter(Boolean).length, step = rm ? 0 : Math.min(70, 400 / Math.max(1, nOn));
       let k = 0;
@@ -1109,7 +1109,7 @@
           BR.countTo($('resBal'), r.balance.to, rm ? 10 : 1100, r.balance.from);
           for (let i = 0; i < 6 && !rm; i++) setTimeout(() => BR.audio.coin(i), i * 120);
         });
-        const holds = Array.from(node.querySelectorAll('.res-banner.hold'));
+        const holds = Array.from(node.querySelectorAll('.res-banner.rwait'));
         this.whenShown(node.querySelector('.res-xpc'), () => this.animateXp(r.xp, holds));
         setTimeout(() => holds.forEach((n) => n.classList.add('in')), 3200);   // (a level-up is never left hidden if the XP row stays below the fold)
       }

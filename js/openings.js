@@ -629,7 +629,7 @@
         at(380, startDemo);
       } else if (!night && level === 3) {
         // Legendary: the card rises in the dark with its badge already on it (no empty black), then the burst lights it
-        at(0, () => { rv.classList.add('dim'); black.classList.add('go'); card.classList.add('in-emerge'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(0, () => { black.classList.add('go'); card.classList.add('in-emerge'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
         at(900, () => { rv.classList.add('fx-rays', 'fx-rays-hot'); flare.classList.add('go'); banner.classList.add('go'); card.classList.add('lit'); }, () => { BR.audio.reveal(4); fx().flash('#ffb02e', 0.36, 520); fx().shake(this.root, 14, 700); });
         [0, 1, 2].forEach((i) => at(900 + i * 260, ringGo(i)));
         at(900, startDemo);
@@ -637,7 +637,7 @@
         at(2500);
       } else if (!night) {
         // Mythic
-        at(0, () => { rv.classList.add('dim'); black.classList.add('go'); card.classList.add('in-emerge'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(0, () => { black.classList.add('go'); card.classList.add('in-emerge'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
         at(780, () => { rv.classList.add('fx-rays', 'fx-rays-hot', 'fx-spot'); flare.classList.add('go'); banner.classList.add('go'); card.classList.add('lit'); }, () => { BR.audio.reveal(5); fx().flash(R.color, 0.32, 600); fx().shake(this.root, 18, 900); });
         [0, 1, 2].forEach((i) => at(780 + i * 220, ringGo(i)));
         const cols = ['#ff4d6d', '#ffe58a', '#43e0ff', '#c08bff'];
