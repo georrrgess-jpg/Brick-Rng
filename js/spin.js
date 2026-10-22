@@ -247,7 +247,11 @@
       if (i === target) { cards.push({ item: BR.itemById[drop.itemId], inst: { shine: drop.shine, seed: drop.seed } }); continue; }
       const r = rng.weighted(weights.filter((x) => x.w > 0), (x) => x.w).r;
       const list = pool.filter((x) => x.rarity === r.id);
-      const item = rng.pick(list.length ? list : pool);
+      // never the same item twice in a row, and never the winner next to itself
+      const near = (x) => (cards[i - 1] && cards[i - 1].item.id === x.id) || (i + 1 === target && drop.itemId === x.id);
+      let pickFrom = (list.length ? list : pool).filter((x) => !near(x));
+      if (!pickFrom.length) pickFrom = pool.filter((x) => !near(x));
+      const item = rng.pick(pickFrom.length ? pickFrom : pool);
       const shine = rng.weighted(BR.SHINES, (f) => f.weight);
       cards.push({ item, inst: { shine: shine.id, seed: rng.int(10000) } });
     }

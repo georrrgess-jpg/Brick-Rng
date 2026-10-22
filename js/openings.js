@@ -33,24 +33,16 @@
     const colors = [0, 0, 4, 2, 3, 4, 2, 3, 5];
     const groups = [[0, 1], [2, 5], [3, 6], [4, 7]];
 
-    if (item.type === 'pop') {
-      host.innerHTML = '<div class="hero-pop"><div class="hp-brick"></div></div>';
-      const slot = host.querySelector('.hp-brick');
-      let n = 0;
-      const cycle = () => {
-        slot.className = 'hp-brick re';
-        slot.innerHTML = BR.Skins.brickHTML([3, 0, 2, 4][n % 4]);
-        const c = [3, 0, 2, 4][n % 4];
-        later(() => { slot.classList.add('pop'); popAt(slot, recipe, c, n % 3 === 2); if (!o.silent) BR.audio.pop(n % 3 === 2 ? 9 : 4, 1, recipe === 'classic' ? null : recipe); n++; }, 850);
-        later(cycle, 1900);
-      };
-      later(cycle, 350);
-    } else {
+    {
       let gridHTML;
       const bricks = colors.map((c) => BR.Skins.brickHTML(c)).join('');
       if (item.type === 'skin') {
         const seed = inst ? inst.seed : 0;
         host.innerHTML = `<div class="hero-bricks ${item.cls}" data-shine="${shine}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">${bricks}</div>`;
+      } else if (item.type === 'pop') {
+        // a pop is shown the way it plays: a group of bricks on a small board, in the skin you have equipped
+        const sk = BR.Progress.equipped('skin'), sd = sk.inst ? sk.inst.seed : 0;
+        host.innerHTML = `<div class="hero-bricks ${sk.item.cls}" data-shine="${sk.inst ? sk.inst.shine : 'plain'}" style="--ang:${160 + ((sd % 41) - 20)}deg;--sx:${sd % 97}px">${bricks}</div>`;
       } else if (item.type === 'board') {
         host.innerHTML = `<div class="hero-board ${item.cls}" data-ashine="${shine}"><b class="scene-fx"></b><b class="scene-fx b"></b><div class="hb-board" data-skin-host>${bricks}</div></div>`;
       } else {
