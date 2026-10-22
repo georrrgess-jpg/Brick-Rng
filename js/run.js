@@ -200,7 +200,19 @@
     },
 
     /** The run goal sits in the message band when nothing more urgent is showing. */
+    /** Tell the tile director what the player is chasing (a goal or a daily mission about a big group), so big blocks line up for it. Rush only:
+        Daily boards are the same for everyone and Chill has no chase. */
+    syncWant() {
+      const e = this.engine; if (!e || !e.setWant) return;
+      let w = null;
+      if (e.mode === 'rush' && !this.practice) {
+        if (this.goal && !this.goal.done && this.goal.want) w = this.goal.want;
+        else { const m = BR.Missions.ensure().list.find((x) => x.kind === 'big' && !x.done); if (m) w = { big: m.target }; }
+      }
+      e.setWant(w);
+    },
     renderGoal() {
+      this.syncWant();
       const g = this.goal, el = $('goalLine');
       el.innerHTML = g ? `<span class="gl-ico">${g.done ? BR.icon('check') : BR.icon('flag')}</span><span class="gl-txt">${g.done ? 'Goal reached' : 'Goal'}: <b>${BR.esc(g.text)}</b></span><span class="gl-rw">+${g.reward}${g.done ? ' Coins' : BR.coin('gl-coin')}</span>` : '';
       el.classList.toggle('show', !!g); el.classList.toggle('done', !!(g && g.done));
@@ -256,11 +268,12 @@
       if (sparking) BR.haptic('tick');
     },
 
-    /** Last Spark: the fuse hit zero. One short window to land a pop of 4 or more. */
+    /** Last Spark: the fuse hit zero. One short window to land a pop of BR.sparkNeed (4, then 5 from stage 3). */
     sparkStart() {
       const e = this.engine;
       this.hb = 0;
       this.el.classList.add('sparking');
+      { const need = BR.sparkNeed(e.stage), t = document.querySelector('#lastSpark span'); if (t) t.textContent = `Pop ${need} or more to relight the fuse`; }   // (a bigger pop is asked for from stage 3)
       $('lastSpark').classList.add('on'); this.band();
       BR.audio.lastSpark && BR.audio.lastSpark(); BR.haptic('boom'); BR.Fuse.sparkStart();
       this.fx.flash('#ff4d6d', 0.3, 360); this.fx.shake($('app'), 10, 360);

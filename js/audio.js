@@ -53,7 +53,7 @@
     fuseTick: 0.713, timeGain: 1.156, burstFuse: 0.907, defuse: 2.176, rushStart: 1.059, rushEnd: 1.73, stageUp: 1.467,
     lastSpark: 1.42, lastSparkSave: 1.52, fuseOut: 1.142, gameOver: 1.118, newBest: 1.702, go: 1.558, count: 1, coin: 1.367,
     holdTick: 0.632, drum: 1.407, launch: 1.81, crackle: 2.643, thud: 0.79, bang: 0.703, glassBreak: 1, steam: 1.679,
-    brickBurst: 0.81, whoosh: 2.9, sting: 1.093, crateDrop: 1.232, chargeUp: 1.852, boom: 0.723, tick: 1, 'reveal:1': 1,
+    brickBurst: 0.81, whoosh: 2.9, sting: 1.093, toll: 1, crateDrop: 1.232, chargeUp: 1.852, boom: 0.723, tick: 1, 'reveal:1': 1,
     'reveal:2': 1.155, 'reveal:3': 0.748, 'reveal:4': 0.876, 'reveal:5': 1, equip: 2.717, scrap: 1.204,
   };
 
@@ -643,6 +643,11 @@
     sub(62, 44, 0, 0.22, 1.0);
     [0, 2, 3, 5].forEach((d, i) => bell(degFreq(d), i * 0.04, 0.09, 1.0, (i - 1.5) * 0.14));
     swish(0, 0.8, 400, 2600, 0.05, 0.9);
+  });
+  /* Midnight (Series 4 reveal): the tower bell, two strokes a beat apart, low and long, with a hum under it */
+  def('toll', () => {
+    [0, 0.62].forEach((t, i) => { bell(degFreq(0) / 2, t, 0.15 - i * 0.03, 1.15, 0); bell(degFreq(5) / 2, t + 0.02, 0.05, 0.9, 0); });
+    sub(55, 40, 0, 0.26, 0.7);
   });
   def('crateDrop', () => { sub(110, 46, 0.35, 0.22, 0.3); noise({ dur: 0.22, vol: 0.1, from: 1200, to: 140, q: 0.7, type: 'lowpass', at: 0.35, attack: 0.003 }); });
   def('chargeUp', (dur = 1) => {

@@ -58,7 +58,7 @@
         later(() => {
           g.forEach((i) => popAt(cells[i], recipe, +cells[i].dataset.c, n % 4 === 0));
           if (!o.silent) BR.audio.pop(3, 1, recipe === 'classic' ? null : recipe);
-          if (item.type === 'skin' && BR.Skins.onEvent) BR.Skins.onEvent('demo', { item, cells: g.map((i) => cells[i]) });
+          if ((item.type === 'skin' || item.type === 'pop') && BR.Skins.onEvent) BR.Skins.onEvent('demo', { item, cells: g.map((i) => cells[i]) });
         }, 90);
         later(() => g.forEach((i) => {
           const c = Math.floor(Math.random() * 6); cells[i].dataset.c = c; cells[i].classList.remove('hpop'); cells[i].classList.remove('hp'); void cells[i].offsetWidth; cells[i].classList.add('hp');
@@ -648,7 +648,7 @@
         at(780 + 1700);
       } else if (!fullNight) {
         // Midnight, short: night falls with a bell, the moon rises, the card eclipses it (a corona), the item's own moment follows
-        at(0, () => { rv.classList.add('seed-on'); black.classList.add('go'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(0, () => { rv.classList.add('seed-on'); black.classList.add('go'); }, () => { (BR.audio.toll || BR.audio.sting)(); BR.haptic('boom'); });
         at(250, () => rv.classList.add('moon-up'));
         at(1000, () => { rv.classList.add('seed-off', 'eclipse', 'fx-rays'); card.classList.add('in-slow'); banner.classList.add('go'); flare.classList.add('go'); }, () => { BR.audio.reveal(4); fx().flash('#dfe8ff', 0.34, 520); fx().shake(this.root, 12, 600); });
         [0, 1].forEach((i) => at(1000 + i * 260, ringGo(i)));
@@ -658,7 +658,7 @@
       } else {
         // Midnight (Mythic): the spec's timeline: night + bell (0), the moon rises (300), the spell circle draws (700), the eclipse and the card flip in (1100),
         // two silver-and-gold bursts and stardust (1400), the item's own moment (1900)
-        at(0, () => { rv.classList.add('seed-on'); black.classList.add('go'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(0, () => { rv.classList.add('seed-on'); black.classList.add('go'); }, () => { (BR.audio.toll || BR.audio.sting)(); BR.haptic('boom'); });
         at(300, () => rv.classList.add('moon-up'));
         at(700, () => rv.classList.add('circle-on'), () => BR.haptic('tick'));
         at(1100, () => { rv.classList.add('seed-off', 'eclipse', 'fx-rays', 'fx-rays-hot'); card.classList.add('in-slow'); banner.classList.add('go'); flare.classList.add('go'); }, () => { BR.audio.reveal(5); fx().flash('#dfe8ff', 0.34, 600); fx().shake(this.root, 16, 800); });

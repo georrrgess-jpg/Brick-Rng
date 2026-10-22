@@ -275,7 +275,7 @@ const ROOT_PC = [0, 7, 9, 5];
     ['steam', [], 1.1, 'small'], ['brickBurst', [], 0.7, 'mid'], ['whoosh', [], 0.7, 'small'], ['sting', [], 1.4, 'mid'], ['crateDrop', [], 0.9, 'mid'],
     ['chargeUp', [1], 1.2, 'small'], ['boom', [], 1.0, 'mid'], ['tick', [1], 0.075, 'small'], ['tick', [0], 0.075, 'small'],
     ['reveal', [1], 1.1, 'mid'], ['reveal', [2], 1.3, 'mid'], ['reveal', [3], 1.4, 'mid'], ['reveal', [4], 1.6, 'mid'], ['reveal', [5], 1.8, 'mid'],
-    ['equip', [], 0.6, 'mid'], ['scrap', [], 0.4, 'small'],
+    ['equip', [], 0.6, 'mid'], ['scrap', [], 0.4, 'small'], ['toll', [], 1.8, 'mid'],
   ];
   const covered = new Set(SFX.map((s) => s[0]));
   const notSounds = new Set(['unlock', 'context', 'tone', 'noise', 'setEnabled', 'setVolume', 'setMusicVolume', 'setKey', 'pop']);
