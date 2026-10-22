@@ -97,7 +97,7 @@ for (const m of mods) {
   const r = require('./' + m).css();
   const cls = CLS[m];
   const [pr, pg, pb, pa] = r.plate;
-  css += `/* ================================================================ ${m} */\n.${cls} {\n  --s4-plate: rgba(${pr}, ${pg}, ${pb}, ${pa}); --s4-ink: rgba(${pr}, ${pg}, ${pb}, 0.92);${r.vars}\n}\n${r.run || ''}${r.frame || ''}\n`;
+  css += `/* ================================================================ ${m} */\n.${cls} {\n  --s4-plate: rgba(${pr}, ${pg}, ${pb}, ${pa}); --s4-ink: rgba(${pr}, ${pg}, ${pb}, 0.92);${r.vars}\n}\n${r.run || ''}${r.frame || ''}${r.media || ''}\n`;
 }
 css += tail;
 css += require('./badges').css(mods);

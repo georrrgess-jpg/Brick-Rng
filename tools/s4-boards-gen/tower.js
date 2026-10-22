@@ -203,7 +203,7 @@ function css() {
 .board-tower .bg .s4x.win { left: 0; right: 0; height: 10%; opacity: 0; background: ${ref.litL} no-repeat calc(var(--s4-cx) - var(--s4-cw) / 2 - ${RW}px - 8px) 0 / 16px 100%, ${ref.litR} no-repeat calc(var(--s4-cx) + var(--s4-cw) / 2 + ${RW}px + 8px) 0 / 16px 100%; }
 .board-tower .bg .s4x.silver { inset: 0; opacity: 0; background: ${litL}, ${litR}, radial-gradient(ellipse calc(var(--s4-cw) * 0.8) calc(var(--s4-th) * 2) at calc(var(--s4-cx) - var(--s4-cw) * 0.12) calc(var(--s4-th) * 0.5), rgba(232, 240, 255, 0.38), rgba(180, 205, 255, 0.12) 60%, transparent 80%); }
 .board-tower .bg .s4x.owl { left: -50px; top: calc(var(--s4-th) * 0.28); width: 40px; height: 24px; background: ${ref.owl} no-repeat center / 100% 100%; opacity: 0; }
-.board-tower .board-wrap .s4x.beam { position: absolute; z-index: 5; pointer-events: none; opacity: 0; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(232, 240, 255, 0), rgba(232, 240, 255, 0.34) 35%, rgba(232, 240, 255, 0.28)); border-radius: 99px; }
+.board-tower .board-wrap .s4x.beam { position: absolute; z-index: 5; pointer-events: none; opacity: 0; transform-origin: 50% 0; background: linear-gradient(90deg, rgba(232, 240, 255, 0), rgba(232, 240, 255, 0.2) 28%, rgba(255, 255, 255, 0.95) 48.5%, rgba(255, 255, 255, 0.95) 51.5%, rgba(232, 240, 255, 0.2) 72%, rgba(232, 240, 255, 0)); }
 `,
     frame: L.frameCSS('board-tower', {
       rw: RW,

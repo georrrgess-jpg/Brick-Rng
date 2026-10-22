@@ -109,17 +109,18 @@
     alchemyLine(d, ctx) {
       const pl = spr.plume, sw = spr.sweep;
       play(pl, [
-        { transform: 'translateY(20%) scale(0.5, 0.2)', opacity: 0 },
-        { transform: 'translateY(0) scale(1, 1)', opacity: 1, offset: 0.3 },
-        { transform: 'translateY(-16%) scale(1.15, 1.2)', opacity: 0 },
-      ], { duration: 600, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' });
+        { transform: 'scale(0.55, 0.15)', opacity: 0 },
+        { transform: 'scale(1, 1)', opacity: 1, offset: 0.3 },
+        { transform: 'scale(1.06, 1.2)', opacity: 1, offset: 0.62 },
+        { transform: 'scale(1.1, 1.3)', opacity: 0 },
+      ], { duration: 580, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' });
       play(sw, [
         { transform: 'translateX(-40%)', opacity: 0 },
         { transform: 'translateX(60%)', opacity: 0.95, offset: 0.35 },
         { transform: 'translateX(230%)', opacity: 0 },
       ], { duration: 580, easing: 'ease-in-out' });
       const r = rectOf(pl);
-      if (r) for (let i = 0; i < 16; i++) ctx.fx.emit({ kind: 'spark', x: r.left + r.width * (0.3 + 0.4 * Math.random()), y: r.bottom - r.height * 0.25, vx: ctx.rnd(-60, 60), vy: ctx.rnd(-420, -170), g: 420, drag: 0.7, size: ctx.rnd(2.4, 5), max: ctx.rnd(0.4, 0.62), color: ['#c8ff6a', '#3dffa0', '#ffe27a'][i % 3] });
+      if (r) for (let i = 0; i < 24; i++) ctx.fx.emit({ kind: 'spark', x: r.left + r.width * (0.3 + 0.4 * Math.random()), y: r.top + r.height * 0.75, vx: ctx.rnd(-60, 60), vy: ctx.rnd(-420, -170), g: 420, drag: 0.7, size: ctx.rnd(2.4, 5), max: ctx.rnd(0.4, 0.62), color: ['#c8ff6a', '#3dffa0', '#ffe27a'][i % 3] });
       noise({ dur: 0.45, vol: 0.07, from: 900, to: 2600, q: 0.8, type: 'bandpass', attack: 0.12 });
       tone({ f: 130, to: 74, dur: 0.3, vol: 0.12 });
     },
@@ -134,13 +135,13 @@
       const f = spr.flasklit; if (!f || !hold.rush) return;
       hold.rush = false;
       f.style.opacity = '';
-      play(f, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in' });
+      play(f, [{ opacity: 1 }, { opacity: 0 }], { duration: 580, easing: 'ease-in' });
     },
     alchemyStageUp(d, ctx) {
       const dr = spr.drop, pl = spr.plume, bg = $('bg');
       if (!dr || !pl || !bg) return;
       const b = bg.getBoundingClientRect(), r = pl.getBoundingClientRect(), d0 = dr.getBoundingClientRect();
-      const x1 = r.left + r.width / 2 - d0.width / 2 - d0.left, y1 = r.bottom - r.height * 0.25 - d0.top - d0.height / 2;
+      const x1 = r.left + r.width / 2 - d0.width / 2 - d0.left, y1 = r.top + r.height * 0.75 - d0.top - d0.height / 2;
       const yEnd = b.bottom - b.top;
       play(dr, [
         { transform: 'translate(0, 0)', opacity: 0 },
@@ -151,7 +152,7 @@
       ], { duration: 880, easing: 'ease-in' });
       later(() => {
         const q = rectOf(pl); if (!q) return;
-        const x = q.left + q.width / 2, y = q.bottom - q.height * 0.25;
+        const x = q.left + q.width / 2, y = q.top + q.height * 0.75;
         ctx.fx.ring(x, y, '#c8ff6a', 44, 0.4, 2);
         for (let i = 0; i < 7; i++) ctx.fx.emit({ kind: 'spark', x, y, vx: ctx.rnd(-90, 90), vy: ctx.rnd(-260, -90), g: 460, drag: 0.8, size: ctx.rnd(2, 3.6), max: 0.4, color: '#e8ffb0' });
         tone({ f: 880, to: 1320, dur: 0.14, vol: 0.09, attack: 0.002 }); tone({ f: 1320, dur: 0.2, vol: 0.05, at: 0.05 });
@@ -167,13 +168,13 @@
       { transform: 'rotate(-9deg)', offset: 0.32 },
       { transform: 'rotate(5deg)', offset: 0.68 },
       { transform: 'rotate(0deg)' },
-    ], { duration: 600, easing: 'ease-in-out' });
+    ], { duration: 580, easing: 'ease-in-out' });
     const r = rectOf(sh);
-    const th = r ? r.width / 0.7 : 85;
+    const th = r ? r.width / 0.34 : 85;
     play(sh, [
-      { transform: `translate(0, 0) rotate(18deg)`, opacity: 0 },
+      { transform: `translate(0, 0) rotate(66deg)`, opacity: 0 },
       { opacity: 1, offset: 0.2 },
-      { transform: `translate(${(th * 0.9).toFixed(0)}px, ${(th * 0.42).toFixed(0)}px) rotate(18deg)`, opacity: 0 },
+      { transform: `translate(${(th * 0.3).toFixed(0)}px, ${(th * 0.74).toFixed(0)}px) rotate(66deg)`, opacity: 0 },
     ], { duration: 520, easing: 'cubic-bezier(0.3, 0.1, 0.6, 1)' });
     tone({ f: 660, to: 1760, dur: 0.3, vol: 0.05, attack: 0.02 });
   };
@@ -216,14 +217,14 @@
       { transform: 'translateY(-30%)', opacity: 0 },
       { opacity: 1, offset: 0.22 },
       { transform: 'translateY(26%)', opacity: 0 },
-    ], { duration: 600, easing: 'cubic-bezier(0.3, 0.1, 0.4, 1)' });
+    ], { duration: 580, easing: 'cubic-bezier(0.3, 0.1, 0.4, 1)' });
     const b = $('bg'), W = b ? b.getBoundingClientRect().width : window.innerWidth;
     play(spr.birds, [
       { transform: 'translate(0, 0)', opacity: 0 },
       { opacity: 1, offset: 0.12 },
       { transform: `translate(${(W + 270).toFixed(0)}px, -14px)`, opacity: 1, offset: 0.88 },
       { transform: `translate(${(W + 290).toFixed(0)}px, -16px)`, opacity: 0 },
-    ], { duration: 600, easing: 'linear' });
+    ], { duration: 580, easing: 'linear' });
     noise({ dur: 0.5, vol: 0.06, from: 1800, to: 700, q: 0.7, type: 'bandpass', attack: 0.1 });
   };
   shapes.islesRushStart = function () {
@@ -249,7 +250,7 @@
       { transform: 'rotate(0deg) scale(0.6)', opacity: 0 },
       { opacity: 1, offset: 0.3 },
       { transform: 'rotate(36deg) scale(1.1)', opacity: 0 },
-    ], { duration: 900, easing: 'ease-out' });
+    ], { duration: 880, easing: 'ease-out' });
     tone({ f: 523, dur: 0.5, vol: 0.05, attack: 0.05 }); tone({ f: 784, dur: 0.6, vol: 0.04, attack: 0.08, at: 0.1 });
   };
 
@@ -259,7 +260,7 @@
     { transform: `rotate(${a2 * 0.4}deg)`, offset: 0.76 }, { transform: 'rotate(0deg)' },
   ], { duration: ms, easing: 'ease-in-out' });
   shapes.towerLine = function (d, ctx) {
-    swing(14, 12, 600);
+    swing(14, 12, 580);
     bell(196, 0.14);
     // a moonbeam lances down onto the blasted line, drawn on the board's own effect layer (a narrow column of pale light, never a fill)
     const v = d && d.view, p = d && d.res && d.res.plan, layer = $('fxlayer');
@@ -314,7 +315,7 @@
       { transform: `translate(${(W + 100) * 0.5}px, -6px)`, opacity: 1, offset: 0.5 },
       { transform: `translate(${(W + 100)}px, 4px)`, opacity: 1, offset: 0.88 },
       { transform: `translate(${(W + 110)}px, 4px)`, opacity: 0 },
-    ], { duration: 600, easing: 'linear' });
+    ], { duration: 580, easing: 'linear' });
   };
 
   /* ------------------------------------------------------------------ dispatch */

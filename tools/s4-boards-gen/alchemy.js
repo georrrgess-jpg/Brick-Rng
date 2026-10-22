@@ -134,13 +134,19 @@ function props() {
   return svgc(W, H, b, defs, '');
 }
 
-/** the plume that boils over (a moment sprite): a column of glowing bubbles and vapour */
+/** the plume that boils over (a moment sprite): foam heaped on the rim and running down the pot, a glowing column of vapour and bubbles above it.
+    Same unit scale as the cauldron picture; the rim's centre is at (84, 150) of 168 x 200. */
 function plume() {
-  const W = 120, H = 180, rnd = rngOf(7);
-  const defs = glowDef('p', GOLDG, 0.85, 0.35) + S.rg('b', [[0, '#f4ffc8', 0.9], [0.5, GOLDG, 0.6], [1, '#40c860', 0.5]]);
-  let b = `<ellipse cx='60' cy='150' rx='46' ry='28' fill='url(#p)'/>`;
-  for (let i = 0; i < 16; i++) { const t = i / 15, y = 160 - t * 140, x = 60 + Math.sin(i * 1.7) * 18 * t + rnd.between(-6, 6), r = 10 + (1 - t) * 14 + rnd.between(0, 6); b += `<circle cx='${n(x)}' cy='${n(y)}' r='${n(r * (0.6 + t * 0.5))}' fill='url(#b)' opacity='${n(0.9 - t * 0.5)}'/>`; }
-  for (let i = 0; i < 8; i++) { const x = rnd.between(26, 94), y = rnd.between(8, 140), r = rnd.between(2, 5); b += `<circle cx='${n(x)}' cy='${n(y)}' r='${n(r)}' fill='none' stroke='#fff' stroke-width='1' opacity='.8'/>`; }
+  const W = 168, H = 200, rnd = rngOf(7);
+  const defs = glowDef('p', GOLDG, 0.9, 0.4) + S.rg('b', [[0, '#f8ffd8', 0.95], [0.5, GOLDG, 0.75], [1, '#40c860', 0.7]]) + S.lg('dr', [[0, '#f0ffb0'], [0.6, GOLDG], [1, '#40c860']], 0, 0, 0, 1) + S.lg('cl', [[0, GOLDG, 0], [0.5, GOLDG, 0.38], [1, GOLDG, 0.18]], 0, 0, 0, 1);
+  let b = `<ellipse cx='84' cy='150' rx='86' ry='46' fill='url(#p)'/>`;
+  b += `<path d='M40 150Q36 60 84 4Q132 60 128 150Z' fill='url(#cl)'/>`;
+  // streaks of brew running down the pot from the rim
+  [[26, 168, 22], [44, 176, 30], [62, 172, 16], [106, 172, 18], [124, 178, 30], [142, 166, 22]].forEach(([x, y, l]) => { b += `<path d='M${x - 4} 150Q${x - 5} ${y - l * 0.4} ${x - 2.4} ${y}Q${x} ${y + 5} ${x + 2.4} ${y}Q${x + 5} ${y - l * 0.4} ${x + 4} 150Z' fill='url(#dr)'/><path d='M${x - 1.4} 152V${y - 3}' stroke='#fff' stroke-width='1' opacity='.7' stroke-linecap='round'/>`; });
+  // foam: a heap of bubbles along the rim, tallest in the middle
+  for (let i = 0; i < 26; i++) { const t = i / 25, x = 18 + t * 132, hgt = 20 * Math.sin(t * Math.PI) + 4, y = 150 - rnd.between(0, hgt) - 4, r = rnd.between(5, 11) * (0.7 + Math.sin(t * Math.PI) * 0.5); b += `<circle cx='${n(x)}' cy='${n(y)}' r='${n(r)}' fill='url(#b)'/><circle cx='${n(x - r * 0.3)}' cy='${n(y - r * 0.3)}' r='${n(r * 0.26)}' fill='#fff' opacity='.9'/>`; }
+  // bubbles climbing the column
+  for (let i = 0; i < 22; i++) { const t = i / 21, y = 128 - t * 120, x = 84 + Math.sin(i * 1.9) * 30 * (0.4 + t) + rnd.between(-6, 6), r = rnd.between(2.4, 7) * (1 - t * 0.4); b += `<circle cx='${n(x)}' cy='${n(y)}' r='${n(r)}' fill='${GOLDG}' opacity='${n(0.25 + (1 - t) * 0.3)}'/><circle cx='${n(x)}' cy='${n(y)}' r='${n(r)}' fill='none' stroke='#f4ffc8' stroke-width='.9' opacity='.9'/><circle cx='${n(x - r * 0.3)}' cy='${n(y - r * 0.3)}' r='${n(r * 0.24)}' fill='#fff'/>`; }
   return svgc(W, H, b, defs, '');
 }
 /** bubbles and fumes that rise through the whole room (the tile of the moving .scene-fx layer) */
@@ -180,7 +186,7 @@ function css() {
   const P = {
     cauldron: { fx: -0.1, band: 'bottom', h: K(bh, 0.6), a: 168 / 120, dy: K(bh, 0.03) },
     props: { fx: 0.36, band: 'bottom', h: K(bh, 0.56), a: 132 / 84, dy: K(bh, 0.08) },
-    plume: { fx: -0.1, band: 'bottom', h: K(bh, 1.2), a: 120 / 180, dy: K(bh, 0.3) },
+    plume: { fx: -0.1, band: 'bottom', h: K(bh, 1.0), a: 168 / 200, dy: K(bh, 0.13) },
   };
   const R = registry('alchemy');
   const svg = { top: top(), glow: flaskGlow(1), lit: flaskGlow(1.7), wall: wall(), floor: floor(), cauldron: cauldron(), props: props(), plume: plume(), bubbles: bubbles(), sweep: sweep(), drop: drop() };
@@ -213,7 +219,7 @@ function css() {
 /* moment layers (js/s4-scenes.js): they sit exactly on their static twins and stay invisible until a moment plays */
 .board-alchemy .bg .s4x { position: absolute; pointer-events: none; opacity: 0; }
 .board-alchemy .bg .s4x.flasklit { left: 0; right: 0; top: 0; height: var(--s4-th); background: ${ref.lit} repeat-x 50% 0 / auto 100%; }
-.board-alchemy .bg .s4x.plume { ${boxCSS(P.plume)} background: ${ref.plume} no-repeat center / 100% 100%; transform-origin: 50% 100%; }
+.board-alchemy .bg .s4x.plume { ${boxCSS(P.plume)} background: ${ref.plume} no-repeat center / 100% 100%; transform-origin: 50% 75%; }
 .board-alchemy .bg .s4x.sweep { left: 0; top: calc(var(--s4-th) * 0.12); width: 46%; height: calc(var(--s4-th) * 0.62); background: ${ref.sweep} no-repeat center / 100% 100%; }
 .board-alchemy .bg .s4x.drop { left: calc(var(--s4-cx) - var(--s4-cw) / 2 - 8px); top: 0; width: 16px; height: 26px; background: ${ref.drop} no-repeat center / 100% 100%; }
 `,

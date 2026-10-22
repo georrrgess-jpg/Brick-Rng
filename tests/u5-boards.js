@@ -186,7 +186,39 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
     }
   }
 
-  // ---- 4. low-end and reduced hold still
+  // ---- moments: fire an event on the real Skins hook and watch every animation the equipped board's layers (.s4x) start
+  const MOMENTS = { a_alchemy: ['line', 'rushStart', 'rushEnd', 'stageUp'], a_observatory: ['line', 'rushStart', 'rushEnd', 'stageUp'], a_isles: ['line', 'rushStart', 'rushEnd', 'stageUp'], a_tower: ['line', 'pop', 'rushStart', 'rushEnd', 'stageUp'] };
+  const BUDGET = { line: 600, pop: 600, rushStart: 900, rushEnd: 900, stageUp: 900 };
+  const fire = (type, watchMs) => page.evaluate(async ({ type, watchMs }) => {
+    const R = BR.Run, v = R.view;
+    const mine = (a) => { const t = a.effect && a.effect.target; return !!(t && t.closest && t.closest('.s4x')); };
+    const base = new Set(document.getAnimations());
+    const parts0 = BR.App.fx.parts.length;
+    const seen = new Map(); let maxConc = 0, maxParts = 0;
+    const t0 = performance.now();
+    const sample = () => {
+      const now = performance.now() - t0; let conc = 0;
+      document.getAnimations().forEach((a) => {
+        if (base.has(a) || !mine(a)) return;
+        if (!seen.has(a)) { const ct = a.effect.getComputedTiming(); const props = a.effect.getKeyframes ? Array.from(new Set(a.effect.getKeyframes().flatMap((k) => Object.keys(k)))).filter((p) => !['offset', 'easing', 'composite', 'computedOffset'].includes(p)) : [a.transitionProperty]; seen.set(a, { end: now + Math.max(0, ct.endTime - (ct.localTime || 0)), props, who: a.effect.target.className }); }
+        if (a.playState === 'running') conc++;
+      });
+      maxConc = Math.max(maxConc, conc); maxParts = Math.max(maxParts, BR.App.fx.parts.length - parts0);
+    };
+    if (type === 'line') BR.Skins.onEvent('line', { res: { plan: { r: 3, c: 4, lineH: true, lineV: false, n: 8 } }, view: v, run: R });
+    else if (type === 'pop') BR.Skins.onEvent('pop', { res: { plan: { n: 14, primary: [{ r: 3, c: 3 }, { r: 3, c: 4 }], color: 1 } }, view: v, run: R });
+    else if (type === 'rushStart') BR.Skins.onEvent('rushStart', { run: R, view: v });
+    else if (type === 'rushEnd') BR.Skins.onEvent('rushEnd', { run: R });
+    else if (type === 'stageUp') { R.engine.stage = (R.engine.stage || 1) + 1; BR.Skins.onEvent('stageUp', { run: R, info: { to: R.engine.stage, from: R.engine.stage - 1, mult: 1.5 } }); }
+    sample();
+    await new Promise((res) => { const iv = setInterval(sample, 16); setTimeout(() => { clearInterval(iv); res(); }, watchMs); });
+    const arr = Array.from(seen.values());
+    return { count: arr.length, end: Math.max(0, ...arr.map((s) => s.end)), maxConc, maxParts, props: Array.from(new Set(arr.flatMap((s) => s.props))), who: arr.map((s) => s.who) };
+  }, { type, watchMs });
+  const layerState = () => page.evaluate(() => Array.from(document.querySelectorAll('#bg .s4x, #boardWrap .s4x')).map((el) => { const cs = getComputedStyle(el); return el.className + '|' + cs.opacity + '|' + cs.transform + '|' + cs.translate; }));
+  const stuck = () => page.evaluate(() => ({ running: document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.s4x')).length, beams: document.querySelectorAll('#fxlayer .s4x').length }));
+
+  // ---- 4. low-end and reduced hold still: no idle animation, no moments, the static scene
   if (want('still')) {
     for (const mode of ['low', 'reduced']) {
       await page.evaluate((m) => { const s = BR.Storage.data.settings; s.reduced = m === 'reduced'; s.perf = m === 'low' ? 'low' : 'high'; BR.App.applySettings(); }, mode);
@@ -194,9 +226,82 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
         await run([id]);
         const a = await anims();
         ok(a.scene.length === 0, `${mode}: ${id} still animates behind the bricks`, a.scene);
+        const shown = await page.evaluate(() => Array.from(document.querySelectorAll('#bg .s4x')).filter((e) => getComputedStyle(e).display !== 'none').length);
+        ok(shown === 0, `${mode}: ${id} leaves ${shown} moment layers showing (the static scene is the whole picture)`);
+        for (const ev of ['line', 'pop', 'rushStart', 'rushEnd', 'stageUp']) {
+          const m = await fire(ev, 120);
+          ok(m.count === 0 && m.maxParts === 0, `${mode}: ${id} plays a ${ev} moment (${m.count} animations, ${m.maxParts} particles)`);
+        }
       }
     }
     await page.evaluate(() => { const s = BR.Storage.data.settings; s.reduced = false; s.perf = 'high'; BR.App.applySettings(); });
+  }
+
+  // ---- 5. moments: time, count, particles and leftovers
+  if (want('moments')) {
+    for (const id of Object.keys(MOMENTS)) {
+      await run([id]);
+      const before = await layerState();
+      for (const ev of MOMENTS[id]) {
+        const m = await fire(ev, BUDGET[ev] + 400);
+        const tag = `${id} ${ev}`;
+        console.log(`moment ${tag.padEnd(24)} ends at ${m.end.toFixed(0)} ms, ${m.count} animations (${m.maxConc} at once), ${m.maxParts} particles, on ${m.props.join('/')}`);
+        ok(m.count > 0, `${tag}: no moment played`);
+        ok(m.end <= BUDGET[ev] + 60, `${tag}: ends at ${m.end.toFixed(0)} ms (limit ${BUDGET[ev]})`);
+        ok(m.maxConc <= 2, `${tag}: ${m.maxConc} short animations at once (limit 2)`, m.who);
+        ok(m.maxParts <= 40, `${tag}: ${m.maxParts} particles (limit 40)`);
+        ok(m.props.every((p) => SAFE.has(p)), `${tag}: animates ${m.props.join(', ')}`);
+        const s = await stuck();
+        ok(s.running === 0 && s.beams === 0, `${tag}: something is still running or left behind after the moment`, s);
+      }
+      // after Rush has ended the layers are back where they started (the stage and the notch are state, so they are compared by hand)
+      const after = await layerState();
+      const rest = (l) => l.filter((x) => !/(win|notch)/.test(x.split('|')[0]));
+      ok(JSON.stringify(rest(before)) === JSON.stringify(rest(after)), `${id}: a layer is stuck after the moments`, { before: rest(before), after: rest(after) });
+      // a new run starts clean (windows and notch reset)
+      await run([id]);
+      const fresh = await layerState();
+      ok(JSON.stringify(fresh.filter((x) => /win/.test(x.split('|')[0]))) === JSON.stringify(before.filter((x) => /win/.test(x.split('|')[0]))), `${id}: the windows did not reset for the new run`);
+    }
+    // the Tower's windows follow the stage: one more lit per stage-up, all of them after ten
+    await run(['a_tower']);
+    const lit = () => page.evaluate(() => Array.from(document.querySelectorAll('#bg .s4x.win')).filter((w) => parseFloat(getComputedStyle(w).opacity) > 0.5).length);
+    const l0 = await lit(); await fire('stageUp', 800); const l1 = await lit(); await fire('stageUp', 800); const l2 = await lit();
+    ok(l0 === 1 && l1 === 2 && l2 === 3, `a_tower: lit windows ${l0}, ${l1}, ${l2} (expected 1, 2, 3 as the stage goes up)`);
+    await run(['a_observatory']);
+    const notch = () => page.evaluate(() => { const m = document.querySelector('#boardWrap .s4x.notch'); return m ? Math.round(new DOMMatrix(getComputedStyle(m).transform).m41) : -1; });
+    const n0 = await notch(); await fire('stageUp', 900); const n1 = await notch();
+    ok(n0 === 0 && n1 === 12, `a_observatory: the marker is at ${n0} then ${n1} (expected 0, 12: one notch per stage)`);
+  }
+
+  // ---- 6. the frame lines up with the bricks: nothing of it is drawn over the brick field
+  if (want('frame')) {
+    const diffIn = async (css) => {
+      const a = await shotWith(NOANIM + '#field .brick,#field .tap-hint{visibility:hidden!important} #fxlayer,.rush-glow,.s4x{display:none!important}');
+      const b = await shotWith(NOANIM + '#field .brick,#field .tap-hint{visibility:hidden!important} #fxlayer,.rush-glow,.s4x{display:none!important}' + css);
+      return page.evaluate(async ({ a, b }) => {
+        const load = async (s) => { const i = new Image(); i.src = 'data:image/png;base64,' + s; await i.decode(); const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(i, 0, 0); return g; };
+        const ga = await load(a), gb = await load(b), f = document.getElementById('field').getBoundingClientRect();
+        const x = Math.round(f.left), y = Math.round(f.top), w = Math.round(f.width), h = Math.round(f.height);
+        const da = ga.getImageData(x, y, w, h).data, db = gb.getImageData(x, y, w, h).data; let n = 0;
+        for (let i = 0; i < da.length; i += 4) if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > 6) n++;
+        return n;
+      }, { a: a.toString('base64'), b: b.toString('base64') });
+    };
+    for (const [w, h] of [[393, 852], [360, 640]]) {
+      await page.setViewportSize({ width: w, height: h });
+      for (const id of BOARDS) {
+        await run([id]);
+        const ring = await diffIn('.board-wrap::before,.board-wrap::after{display:none!important}');
+        const tool = await diffIn('.board::after{display:none!important}');
+        ok(ring === 0, `${id} at ${w}x${h}: the frame ring or its corners reach into the brick field (${ring} pixels)`);
+        ok(tool === 0, `${id} at ${w}x${h}: the inner frame lines reach into the brick field (${tool} pixels)`);
+        // the ring sits outside the board: the board keeps the size the layout gave it
+        const g = await page.evaluate(() => { const b = document.getElementById('board').getBoundingClientRect(), wr = document.getElementById('boardWrap').getBoundingClientRect(), f = document.getElementById('field').getBoundingClientRect(); return { dw: Math.abs(b.width - wr.width), dh: Math.abs(b.height - wr.height), fl: f.left - b.left, ft: f.top - b.top }; });
+        ok(g.dw < 0.5 && g.dh < 0.5 && g.fl > 4 && g.ft > 4, `${id} at ${w}x${h}: the board and its brick field moved`, g);
+      }
+    }
+    await page.setViewportSize({ width: 393, height: 852 });
   }
 
   const real = errors.filter((e) => !/Failed to load resource/.test(e));

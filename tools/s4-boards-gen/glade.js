@@ -96,7 +96,7 @@ function moon() {
 }
 function shafts() {
   const W = 260, H = 700;
-  const defs = S.lg('s', [[0, '#bfe8ff', 0.22], [0.55, '#9fe8e0', 0.08], [1, '#9fe8e0', 0]]);
+  const defs = S.lg('s', [[0, '#bfe8ff', 0.15], [0.55, '#9fe8e0', 0.05], [1, '#9fe8e0', 0]]);
   let b = '';
   [[40, 18, 120, 96], [92, 14, 190, 120], [150, 20, 250, 150]].forEach(([x, w, x2, w2]) => { b += `<path d='M${x} 0H${x + w}L${x2 + w2} ${H}H${x2}Z' fill='url(#s)'/>`; });
   return svgc(W, H, b, defs, '');
@@ -155,7 +155,7 @@ function floor() {
 /** the glow under and around every mushroom (the layer whose opacity breathes) */
 function glow() {
   const W = 520, H = 120;
-  const defs = glowDef('t', TEAL, 0.75, 0.28) + glowDef('p', PINK, 0.75, 0.28);
+  const defs = glowDef('t', TEAL, 0.55, 0.2) + glowDef('p', PINK, 0.55, 0.2);
   let b = '';
   ring().forEach((m) => { const r = 26 * m.s; const g = m.hue === PINK ? 'p' : 't'; b += `<circle cx='${n(m.x)}' cy='${n(m.y - 18 * m.s)}' r='${n(r * 1.5)}' fill='url(#${g})'/><ellipse cx='${n(m.x)}' cy='${n(m.y)}' rx='${n(r * 1.7)}' ry='${n(r * 0.5)}' fill='url(#${g})'/>`; });
   return svgc(W, H, b, defs, '');
@@ -198,7 +198,7 @@ function css() {
   const trunkL = `${ref.trunkL} repeat-y calc(var(--s4-cx) - var(--s4-cw) / 2 - 15px - 6px + 6px) 0 / 30px auto`;
   const trunkR = `${ref.trunkR} repeat-y calc(var(--s4-cx) + var(--s4-cw) / 2 + 15px - 6px + 6px) 0 / 30px auto`;
   const pMoon = bgPiece(ref.moon, P.moon), pShafts = bgPiece(ref.shafts, P.shafts);
-  const mist = 'linear-gradient(0deg, rgba(90, 255, 220, 0.09) 0, rgba(90, 255, 220, 0.03) 18%, transparent 36%)';
+  const mist = 'linear-gradient(0deg, rgba(90, 255, 220, 0.05) 0, rgba(90, 255, 220, 0.02) 18%, transparent 36%)';
   const sky = 'radial-gradient(ellipse 70% 30% at 36% 0%, rgba(150, 220, 255, 0.2), transparent 70%), linear-gradient(180deg, #04141c 0%, #072a30 34%, #0a3a38 62%, #06241f 86%, #031410 100%)';
   return {
     plate: [2, 20, 18, 0.66],

@@ -13,12 +13,12 @@ const brassGrad = (id, dir = [0, 0, 1, 0]) => S.lg(id, [[0, BRASS.lo], [0.28, BR
 function dome() {
   const W = 520, H = 100, rnd = rngOf(14);
   const defs = brassGrad('br') + S.lg('pn', [[0, '#10224a'], [1, '#08122a']]) + S.lg('pn2', [[0, '#0c1b3c'], [1, '#060d20']]) + glowDef('lm', '#ffcf6b', 0.85, 0.3) + S.lg('sh', [[0, '#000', 0.6], [1, '#000', 0]]);
-  let b = `<path fill-rule='evenodd' d='M0 0H${W}V${H}H0Z M244 0H276L288 ${H}H232Z' fill='url(#pn)'/>`;
+  let b = `<path fill-rule='evenodd' d='M0 0H${W}V${H}H0Z M238 0H282L296 ${H}H224Z' fill='url(#pn)'/>`;
   // ribs fan out from the slit: curved brass bars with rivets
   const ribs = [];
   [60, 112, 170, 236].forEach((d) => { ribs.push(-d, d); });
   ribs.forEach((d) => {
-    const x0 = 260 + Math.sign(d) * 20, x1 = 260 + d, cx = 260 + d * 0.62;
+    const x0 = 260 + Math.sign(d) * 28, x1 = 260 + d, cx = 260 + d * 0.62;
     b += `<path d='M${x0} 0Q${cx} 46 ${x1} ${H}' fill='none' stroke='#000' stroke-width='7' opacity='.45'/><path d='M${x0} 0Q${cx} 46 ${x1} ${H}' fill='none' stroke='url(#br)' stroke-width='5'/><path d='M${x0 - 1} 0Q${cx - 1} 46 ${x1 - 1.4} ${H}' fill='none' stroke='#fff6d0' stroke-width='.8' opacity='.7'/>`;
     for (let t = 0.1; t < 1; t += 0.2) { const px = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1, py = 2 * (1 - t) * t * 46 + t * t * H; b += `<circle cx='${n(px)}' cy='${n(py)}' r='1.2' fill='#2a1c06'/><circle cx='${n(px - 0.3)}' cy='${n(py - 0.3)}' r='.5' fill='#fff0b0'/>`; }
   });
@@ -29,7 +29,7 @@ function dome() {
   // the seam post
   b += `<rect x='-6' width='12' height='${H}' fill='url(#br)'/><rect x='${W - 6}' width='12' height='${H}' fill='url(#br)'/><rect x='-6' width='1' height='${H}' fill='#fff6d0' opacity='.6'/>`;
   // the slit's trim: brass edges and little rails
-  b += `<path d='M244 0L232 ${H}M276 0L288 ${H}' stroke='url(#br)' stroke-width='3.4' fill='none'/><path d='M244 0L232 ${H}M276 0L288 ${H}' stroke='#fff6d0' stroke-width='.7' fill='none' opacity='.7'/>`;
+  b += `<path d='M238 0L224 ${H}M282 0L296 ${H}' stroke='url(#br)' stroke-width='3.4' fill='none'/><path d='M238 0L224 ${H}M282 0L296 ${H}' stroke='#fff6d0' stroke-width='.7' fill='none' opacity='.7'/>`;
   [[126, 46], [392, 46]].forEach(([x, y]) => { b += `<circle cx='${x}' cy='${y}' r='26' fill='url(#lm)'/><path d='M${x - 5} ${y - 12}h10v9q0 6 -5 6t-5 -6z' fill='#ffe29a'/><path d='M${x - 7} ${y - 12}h14' stroke='url(#br)' stroke-width='2.6'/><path d='M${x} ${y - 12}V${y - 22}' stroke='url(#br)' stroke-width='1.6'/><path d='M${x - 4.4} ${y - 8}v5' stroke='#fff' stroke-width='1' opacity='.7'/>`; });
   b += `<rect width='${W}' height='10' fill='url(#sh)'/>`;
   return svgc(W, H, b, defs, '');
@@ -205,8 +205,8 @@ function css() {
   const caps = L.cornerCaps(R, 'ob', capDraw);
   const tDome = bgTile(ref.dome, 'top', th), tFloor = bgTile(ref.floor, 'bottom', bh);
   const wallL = `${ref.wall} repeat 50% 0 / auto 96px`;
-  const sShutL = bgPiece(ref.shutL, { fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * -0.28)` });
-  const sShutR = bgPiece(ref.shutR, { fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * 0.28)` });
+  const sShutL = bgPiece(ref.shutL, { fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * -0.36)` });
+  const sShutR = bgPiece(ref.shutR, { fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * 0.36)` });
   const pSky = bgPiece(ref.sky, P.sky), pStars = bgTile(ref.stars, 'top', th);
   const pMount = bgPiece(ref.mount, P.mount), pScope = bgPiece(ref.scope, P.scope);
   const pOrr = bgPiece(ref.orrery, P.orrery), pOrrS = bgPiece(ref.orreryStill, P.orrery), pGlobe = bgPiece(ref.globe, P.globe);
@@ -231,16 +231,16 @@ function css() {
 .board-observatory .run-active .bg::after { display: block; left: calc(var(--s4-cx) + var(--s4-cw) * 0.12 - var(--s4-bh) * 0.375); bottom: calc(var(--s4-bh) * 0.29 - var(--s4-bh) * 0.375); width: calc(var(--s4-bh) * 0.75); height: calc(var(--s4-bh) * 0.75); background: ${ref.planets} no-repeat center / 100% 100%; transform-origin: 50% 50%; will-change: transform; animation: s4Orbit 46s linear infinite; }
 /* moment layers (js/s4-scenes.js) */
 .board-observatory .bg .s4x { position: absolute; pointer-events: none; }
-.board-observatory .bg .s4x.shutL { ${boxCSS({ fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * -0.28)` })} background: ${ref.shutL} no-repeat center / 100% 100%; }
-.board-observatory .bg .s4x.shutR { ${boxCSS({ fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * 0.28)` })} background: ${ref.shutR} no-repeat center / 100% 100%; }
+.board-observatory .bg .s4x.shutL { ${boxCSS({ fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * -0.36)` })} background: ${ref.shutL} no-repeat center / 100% 100%; }
+.board-observatory .bg .s4x.shutR { ${boxCSS({ fx: 0, band: 'top', h: th, a: 0.44, dx: `calc(${th} * 0.36)` })} background: ${ref.shutR} no-repeat center / 100% 100%; }
 .board-observatory .bg .s4x.scope { ${boxCSS(P.scope)} background: ${ref.scope} no-repeat center / 100% 100%; transform-origin: 12.9% 82%; }
-.board-observatory .bg .s4x.shoot { left: calc(var(--s4-cx) - var(--s4-th) * 0.3); top: calc(var(--s4-th) * 0.1); width: calc(var(--s4-th) * 0.7); height: calc(var(--s4-th) * 0.08); background: ${ref.shoot} no-repeat center / 100% 100%; opacity: 0; transform-origin: 100% 50%; }
+.board-observatory .bg .s4x.shoot { left: calc(var(--s4-cx) - var(--s4-th) * 0.2); top: calc(var(--s4-th) * 0.02); width: calc(var(--s4-th) * 0.34); height: calc(var(--s4-th) * 0.06); background: ${ref.shoot} no-repeat center / 100% 100%; opacity: 0; transform-origin: 100% 50%; }
 .board-observatory .board-wrap .s4x.notch { position: absolute; top: -9px; left: 19.5px; width: 9px; height: 9px; z-index: 3; pointer-events: none; background: linear-gradient(180deg, #fff6c8, #ffd36b 55%, #b8741c); clip-path: polygon(50% 100%, 0 0, 100% 0); }
 `,
     frame: L.frameCSS('board-observatory', {
       ring: [[1.5, '#1a1206'], [5, '#b8862e'], [6, '#ffe9a8'], [8, '#4a3208'], [9, '#7fb2ff']],
       drop: '0 0 12px rgba(127, 178, 255, 0.22), 0 8px 22px rgba(0, 0, 0, 0.55)',
-      tooled: 'inset 0 0 0 1.4px rgba(217, 164, 65, 0.65), inset 0 0 0 3px rgba(0, 0, 0, 0.4), inset 0 0 0 4.2px rgba(127, 178, 255, 0.3)',
+      tooled: 'inset 0 0 0 1.4px rgba(217, 164, 65, 0.65), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4), inset 0 0 0 3.5px rgba(127, 178, 255, 0.3)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
       glow: 'rgba(127, 178, 255, 0.25)',
       strips: [

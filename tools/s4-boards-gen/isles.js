@@ -27,12 +27,12 @@ function island(cx, top, w, depth, seed, o = {}) {
     if (r.chance(0.55)) b += `<path d='M${n(x)} ${n(y)}l${n(-th * 0.32)} ${n(th * 0.9)}h${n(th * 0.64)}z' fill='${r.pick(['#2a8a62', '#1f7a5a', '#3a9a6a'])}'/><rect x='${n(x - 0.5)}' y='${n(y + th * 0.9)}' width='1' height='2' fill='#4a2a2a'/>`;
     else b += `<circle cx='${n(x)}' cy='${n(y + 2)}' r='${n(th * 0.34)}' fill='${r.pick(['#3a9a6a', '#58b878', '#2a8a62'])}'/>`;
   }
-  // a waterfall off the left or right rim
+  // a waterfall pouring over the left or right rim and falling straight down
   if (o.fall) {
-    const side = o.fall, x = cx + side * hw * 0.84, y0 = top + depth * 0.1, len = o.len || 36;
-    b += `<path d='M${n(x - 2.6)} ${n(y0)}Q${n(x + side * 1.5)} ${n(y0 + len * 0.5)} ${n(x + side * 0.5 - 1.6)} ${n(y0 + len)}L${n(x + side * 0.5 + 3.4)} ${n(y0 + len)}Q${n(x + side * 1.5 + 2)} ${n(y0 + len * 0.5)} ${n(x + 2.6)} ${n(y0)}Z' fill='url(#fl)'/>`;
-    b += `<path d='M${n(x - 0.6)} ${n(y0)}Q${n(x + side * 1.5)} ${n(y0 + len * 0.5)} ${n(x + side * 0.5)} ${n(y0 + len)}' stroke='#fff' stroke-width='.9' fill='none' opacity='.85'/>`;
-    b += `<ellipse cx='${n(x + side * 0.5 + 0.8)}' cy='${n(y0 + len)}' rx='9' ry='3.2' fill='#fff' opacity='.55'/>`;
+    const side = o.fall, x = cx + side * hw * 0.93, y0 = top - depth * 0.04, len = o.len || 36, dr = side * 1.2;
+    b += `<path d='M${n(x - 2.4)} ${n(y0)}Q${n(x - 2.6 + dr)} ${n(y0 + len * 0.5)} ${n(x - 3.4 + dr * 1.6)} ${n(y0 + len)}L${n(x + 3.8 + dr * 1.6)} ${n(y0 + len)}Q${n(x + 2.8 + dr)} ${n(y0 + len * 0.5)} ${n(x + 2.4)} ${n(y0)}Z' fill='url(#fl)'/>`;
+    b += `<path d='M${n(x - 0.8)} ${n(y0)}Q${n(x - 0.6 + dr)} ${n(y0 + len * 0.5)} ${n(x + dr * 1.6)} ${n(y0 + len)}' stroke='#fff' stroke-width='1' fill='none' opacity='.9'/><path d='M${n(x + 1)} ${n(y0 + 2)}Q${n(x + 1.2 + dr)} ${n(y0 + len * 0.5)} ${n(x + 1.6 + dr * 1.6)} ${n(y0 + len - 2)}' stroke='#fff' stroke-width='.5' fill='none' opacity='.6'/>`;
+    b += `<ellipse cx='${n(x + 0.2 + dr * 1.6)}' cy='${n(y0 + len)}' rx='9' ry='3.2' fill='#fff' opacity='.6'/>`;
   }
   return b;
 }
@@ -55,18 +55,15 @@ function far() {
   // faint stars still showing high up
   for (let i = 0; i < 20; i++) b += `<circle cx='${n(rnd.between(0, W))}' cy='${n(rnd.between(2, 40))}' r='${n(rnd.between(0.4, 1))}' fill='#fff' opacity='${n(rnd.between(0.3, 0.8))}'/>`;
   // a pale crescent
-  b += `<circle cx='92' cy='26' r='14' fill='url(#mn)'/><path d='M92 14A12 12 0 1 0 92 38A9 9 0 1 1 92 14Z' fill='#fff7e6' opacity='.9'/>`;
+  b += `<circle cx='430' cy='30' r='34' fill='url(#mn)'/><circle cx='430' cy='30' r='9' fill='#fffbe8'/><circle cx='92' cy='26' r='10' fill='url(#mn)'/><path d='M92 18A8 8 0 1 0 92 34A6 6 0 1 1 92 18Z' fill='#fff7e6' opacity='.85'/>`;
   // soft clouds
   [[70, 70, 90, 12], [190, 56, 70, 9], [330, 76, 110, 13], [440, 50, 80, 10]].forEach(([x, y, w, h]) => { [-W, 0, W].forEach((dx) => { b += `<g opacity='.8'>${cloud(x + dx, y, w, h, '#ffe2d0', '#e8b0c8')}</g>`; }); });
-  // far islands in haze (they get paler with distance), the tower on the farthest
-  const farIsle = (cx, top, w, d, seed, col, tower) => {
-    let s = `<path d='M${cx - w / 2} ${top}Q${cx - w * 0.25} ${top - d * 0.5} ${cx} ${top - d * 0.45}Q${cx + w * 0.25} ${top - d * 0.5} ${cx + w / 2} ${top}L${cx + w * 0.12} ${top + d}L${cx - w * 0.12} ${top + d * 0.9}Z' fill='${col}'/>`;
-    s += `<path d='M${cx - w / 2} ${top}Q${cx - w * 0.25} ${top - d * 0.5} ${cx} ${top - d * 0.45}Q${cx + w * 0.25} ${top - d * 0.5} ${cx + w / 2} ${top}' stroke='#fff0e0' stroke-width='.8' fill='none' opacity='.6'/>`;
-    if (tower) s += `<path d='M${cx - 3} ${top - d * 0.4}V${top - d * 0.4 - 22}H${cx + 3}V${top - d * 0.4}Z' fill='#4a3a78'/><path d='M${cx - 4.6} ${top - d * 0.4 - 22}L${cx} ${top - d * 0.4 - 32}L${cx + 4.6} ${top - d * 0.4 - 22}Z' fill='#3a2a68'/><rect x='${cx - 0.8}' y='${top - d * 0.4 - 16}' width='1.6' height='3.4' fill='#ffd88a'/><circle cx='${cx}' cy='${top - d * 0.4 - 33}' r='.9' fill='#ffe9a8'/>`;
-    return s;
-  };
-  b += farIsle(140, 74, 44, 14, 1, '#b090c8', false) + farIsle(380, 70, 64, 18, 2, '#a888c0', true) + farIsle(470, 78, 36, 12, 3, '#b8a0d0', false);
-  b += farIsle(250, 84, 54, 16, 4, '#9a78b8', false);
+  // far islands in haze: the same islands, small, washed toward the sky; the farthest carries the Moonwick tower
+  const haze = (x, top, w, d, seed, op, o) => `<g opacity='${op}'>${island(x, top, w, d, seed, o)}</g>`;
+  b += haze(150, 70, 40, 12, 41, 0.42, { trees: 2 }) + haze(250, 84, 56, 16, 42, 0.36, { trees: 3, fall: 1, len: 14 });
+  b += haze(380, 68, 66, 19, 43, 0.5, { trees: 2 }) + haze(480, 80, 36, 11, 44, 0.4, { trees: 1 });
+  // the tower stands on the 380 island
+  b += `<g opacity='.8'><path d='M377 56V38H383V56Z' fill='#4a3a78'/><path d='M375 38L380 28L385 38Z' fill='#3a2a68'/><rect x='379.2' y='43' width='1.6' height='3.2' fill='#ffd88a'/><circle cx='380' cy='27' r='.9' fill='#ffe9a8'/><path d='M375 38H385' stroke='#8a78b8' stroke-width='.8'/></g>`;
   // birds
   [[300, 30, 1], [314, 36, 0.8], [292, 40, 0.7], [210, 22, 0.8]].forEach(([x, y, s]) => { b += `<path d='M${x} ${y}q${3 * s} ${-3 * s} ${6 * s} 0q${3 * s} ${-3 * s} ${6 * s} 0' stroke='#6a5a98' stroke-width='${n(1.1 * s)}' fill='none' stroke-linecap='round'/>`; });
   return svgc(W, H, b, defs, '');
@@ -78,10 +75,10 @@ function isles(surge) {
   const defs = IDEFS;
   let b = '';
   if (!surge) {
-    b += island(90, 66, 84, 28, 21, { fall: 1, len: 38 });
-    b += island(270, 74, 62, 22, 22, { fall: -1, len: 30, trees: 3 });
-    b += island(430, 62, 96, 32, 23, { fall: -1, len: 42 });
-    b += island(520 + 8, 80, 40, 14, 24, { trees: 1 });
+    b += island(90, 62, 84, 30, 21, { fall: 1, len: 40 });
+    b += island(270, 70, 62, 24, 22, { fall: -1, len: 32, trees: 3 });
+    b += island(430, 60, 96, 34, 23, { fall: -1, len: 44 });
+    b += island(528, 74, 44, 16, 24, { trees: 1 });
   }
   return svgc(W, H, b, defs, '');
 }
@@ -91,9 +88,9 @@ function falls() {
   const defs = S.lg('wl', [[0, '#fff', 0], [0.5, '#fff', 0.95], [1, '#fff', 0]], 0, 0, 0, 1);
   let b = '';
   // the same three falls as in isles(): x = cx + side * hw * 0.84 (+ the stream's drift)
-  [[90, 1, 84, 66, 28, 38], [270, -1, 62, 74, 22, 30], [430, -1, 96, 62, 32, 42]].forEach(([cx, side, w, top, depth, len]) => {
-    const x = cx + side * (w / 2) * 0.84, y0 = top + depth * 0.1;
-    b += `<path d='M${n(x - 3.4)} ${n(y0)}Q${n(x + side * 1.5)} ${n(y0 + len * 0.5)} ${n(x + side * 0.5 - 2.4)} ${n(y0 + len + 6)}L${n(x + side * 0.5 + 4.2)} ${n(y0 + len + 6)}Q${n(x + side * 1.5 + 3)} ${n(y0 + len * 0.5)} ${n(x + 3.4)} ${n(y0)}Z' fill='url(#wl)'/>`;
+  [[90, 1, 84, 62, 30, 40], [270, -1, 62, 70, 24, 32], [430, -1, 96, 60, 34, 44]].forEach(([cx, side, w, top, depth, len]) => {
+    const x = cx + side * (w / 2) * 0.93, y0 = top - depth * 0.04, dr = side * 1.2;
+    b += `<path d='M${n(x - 3.4)} ${n(y0)}Q${n(x - 3.6 + dr)} ${n(y0 + len * 0.5)} ${n(x - 4.4 + dr * 1.6)} ${n(y0 + len + 6)}L${n(x + 4.8 + dr * 1.6)} ${n(y0 + len + 6)}Q${n(x + 3.8 + dr)} ${n(y0 + len * 0.5)} ${n(x + 3.4)} ${n(y0)}Z' fill='url(#wl)'/>`;
   });
   return svgc(W, H, b, defs, '');
 }
@@ -148,20 +145,20 @@ function css() {
   const ref = {}; Object.keys(svg).forEach((k) => { ref[k] = R.add(k, svg[k]); });
   const caps = L.cornerCaps(R, 'is', capDraw);
   const tFar = bgTile(ref.far, 'top', th);
-  const pIsl = bgPiece(ref.isles, { fx: 0, band: 'bottom', h: K(bh, 1.0), a: 520 / 120, dy: K(bh, 0.0) });
+  const pIsl = bgPiece(ref.isles, { fx: 0, band: 'bottom', h: 'var(--s4-isl)', a: 520 / 120, dy: '0px' });
   const seaH = 'var(--s4-sea)';
-  const tSea = `${ref.sea} repeat-x 50% 100% / auto ${seaH}`, tSeaBack = `${ref.seaBack} repeat-x 50% 100% / auto calc(var(--s4-sea) * 1.15)`, tSeaBase = bgTile(ref.seaBase, 'bottom', bh);
+  const tSea = `${ref.sea} repeat-x 50% 100% / auto ${seaH}`, tSeaBack = `${ref.seaBack} repeat-x 50% 100% / auto calc(var(--s4-sea) * 1.2)`, tSeaBase = bgTile(ref.seaBase, 'bottom', 'calc(var(--s4-free) * 2)');
   const sunglow = 'radial-gradient(ellipse calc(var(--s4-cw) * 0.8) 34% at 50% 52%, rgba(255, 190, 130, 0.5), rgba(255, 150, 150, 0.14) 55%, transparent 80%)';
   // the scrim: a dark slate-blue wash behind the HUD, from the pause row to the message band, fading out over the dawn at the top and bottom edges
   const scrim = 'linear-gradient(180deg, rgba(20, 22, 58, 0) 0, rgba(20, 22, 58, 0) calc(var(--s4-free) - 8px), rgba(20, 22, 58, 0.9) calc(var(--s4-free) + 28px), rgba(24, 26, 66, 0.88) calc(100% - var(--s4-free) - 80px), rgba(24, 26, 66, 0.9) calc(100% - var(--s4-free) - 4px), rgba(24, 26, 66, 0.35) calc(100% - var(--s4-free) + 10px), rgba(24, 26, 66, 0) calc(100% - var(--s4-free) + 24px))';
   const sky = 'linear-gradient(180deg, #9a8ad8 0%, #e8a0b8 calc(var(--s4-free) * 0.9), #f4a8a8 30%, #ffc8a0 62%, #ffd8b0 86%, #ffe8c8 100%)';
-  const pre = [scrim];
-  const stat = [scrim, tSea, pIsl, tSeaBack, tSeaBase, tFar, sunglow, sky];
-  const runL = [scrim, tSeaBack, tSeaBase, tFar, sunglow, sky];
+  const stat = ['var(--s4-isles-scrim)', tSea, pIsl, tSeaBack, tSeaBase, tFar, sunglow, sky];
+  const runL = ['var(--s4-isles-scrim)', tSeaBack, tSeaBase, tFar, sunglow, sky];
   return {
     plate: [18, 20, 56, 0.72],
     vars: `
-  --s4-sea: calc(var(--s4-free) + 10px);
+  --s4-isles-scrim: ${scrim};
+  --s4-sea: calc(var(--s4-free) * 0.55); --s4-isl: calc(var(--s4-free) * 1.8);
   --a-bg: ${stat.join(',\n    ')};
   --a-bg-run: ${runL.join(',\n    ')};
   --a-board: linear-gradient(180deg, #0b1124, #060a18);
@@ -171,11 +168,16 @@ function css() {
 .board-isles .run-active .bg .scene-fx { display: block; left: 0; width: calc(100% + var(--s4-sea) * 8.667); top: auto; bottom: 0; height: var(--s4-sea); background: ${ref.sea} repeat-x 0 100% / auto 100%; will-change: transform; animation: s4Sea 120s linear infinite; }
 .board-isles .run-active .bg .scene-fx.b { display: none; }
 /* the bobbing islands (one DOM layer made by js/s4-scenes.js, under the cloud sea) with the surge layer on top of the falls */
-.board-isles .bg .s4x.isl { left: 0; right: 0; bottom: 0; height: var(--s4-bh); background: ${ref.isles} no-repeat 50% 100% / auto 100%; will-change: transform; animation: s4Bob2 7s ease-in-out infinite alternate; transition: translate 0.8s ease-in-out; }
+.board-isles .bg .s4x.isl { left: 0; right: 0; bottom: 0; height: var(--s4-isl); background: ${ref.isles} no-repeat 50% 100% / auto 100%; will-change: transform; animation: s4Bob2 7s ease-in-out infinite alternate; transition: translate 0.8s ease-in-out; }
 .board-isles .bg .s4x.isl > i { position: absolute; inset: 0; background: ${ref.falls} no-repeat 50% 100% / auto 100%; opacity: 0; }
 .board-isles .bg .s4x.rainbow { left: calc(var(--s4-cx) - var(--s4-cw) * 0.62); width: calc(var(--s4-cw) * 1.24); top: 36%; height: calc(var(--s4-cw) * 0.68); background: ${ref.rainbow} no-repeat center bottom / 100% 100%; opacity: 0; }
-.board-isles .bg .s4x.rays { width: calc(var(--s4-cw) * 2.4); height: calc(var(--s4-cw) * 2.4); background: repeating-conic-gradient(from 0deg, rgba(255, 232, 180, 0.34) 0 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 62%); mask-image: radial-gradient(circle, #000 12%, transparent 62%); opacity: 0; }
+.board-isles .bg .s4x.rays { width: calc(var(--s4-cw) * 2.4); height: calc(var(--s4-cw) * 2.4); background: repeating-conic-gradient(from 0deg, rgba(255, 240, 200, 0.6) 0 6deg, transparent 6deg 20deg), radial-gradient(circle, rgba(255, 214, 150, 0.6) 0, rgba(255, 190, 140, 0.26) 26%, transparent 52%); -webkit-mask-image: radial-gradient(circle, #000 14%, transparent 64%); mask-image: radial-gradient(circle, #000 14%, transparent 64%); opacity: 0; }
 .board-isles .bg .s4x.birds { left: -130px; top: calc(var(--s4-th) * 0.12); width: 120px; height: 44px; background: ${ref.birds} no-repeat center / 100% 100%; opacity: 0; }
+`,
+    media: `/* on a wide screen the scrim is a soft-edged dark column behind the HUD and the dawn shows on both sides */
+@media (min-width: 701px) and (min-height: 561px) {
+  .board-isles { --s4-isles-scrim: linear-gradient(90deg, rgba(24, 26, 66, 0) calc(var(--s4-cx) - var(--s4-cw) / 2 - 70px), rgba(22, 24, 62, 0.86) calc(var(--s4-cx) - var(--s4-cw) / 2 - 8px), rgba(22, 24, 62, 0.86) calc(var(--s4-cx) + var(--s4-cw) / 2 + 8px), rgba(24, 26, 66, 0) calc(var(--s4-cx) + var(--s4-cw) / 2 + 70px)); }
+}
 `,
     frame: L.frameCSS('board-isles', {
       ring: [[1.5, '#4a4868'], [5, '#d8d4e6'], [6, '#ffffff'], [8, '#a8a4bc'], [9, '#6a6888']],
