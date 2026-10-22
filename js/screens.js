@@ -390,15 +390,17 @@
   };
 
   /* ------------------------------------------------------------------ Collection */
+  const COL_TYPES = BR.TYPE_ORDER.concat('hat');   // the four item types, then Fizz's hats (earned, never in chests)
+  const colLabel = (t) => (t === 'hat' ? 'Hats' : BR.ITEM_TYPES[t].plural);
   const Collection = {
     type: 'skin', filter: null,
     render(arrive) {
       const type = this.type;
-      const segs = BR.TYPE_ORDER.map((t) => `<button data-type="${t}" class="${t === type ? 'on' : ''}" type="button" aria-pressed="${t === type}">${BR.ITEM_TYPES[t].plural}</button>`).join('');
+      const segs = COL_TYPES.map((t) => `<button data-type="${t}" class="${t === type ? 'on' : ''}" type="button" aria-pressed="${t === type}">${colLabel(t)}</button>`).join('');
       this.arrive = !!arrive;
       this.el.innerHTML = `<div class="scroll">
         ${BR.Coach.banner('collection')}
-        <div class="seg stg" id="colSeg" style="--n:${BR.TYPE_ORDER.length};--si:${BR.TYPE_ORDER.indexOf(type)}">${segs}<i class="thumb"></i></div>
+        <div class="seg stg" id="colSeg" style="--n:${COL_TYPES.length};--si:${COL_TYPES.indexOf(type)}">${segs}<i class="thumb"></i></div>
         <div class="col-body" id="colBody">${this.bodyHTML()}</div>
         <p class="tiny center">Tap an item to see it. Tap the circle to wear it. Every chest gives something new.</p>
       </div>`;
@@ -407,6 +409,7 @@
     /** Everything under the type switch: what you wear, the count ring, the rarity filter and the grid. */
     bodyHTML() {
       const type = this.type;
+      if (type === 'hat') return this.hatsHTML();
       const have = new Set(S().profile.vault.filter((i) => BR.itemById[i.itemId].type === type).map((i) => i.itemId)).size;
       const total = BR.ITEMS.filter((i) => i.type === type).length;
       const eq = P.equipped(type);
@@ -419,7 +422,7 @@
     },
     /** Switch the type: the thumb slides, and the content under it slides the same way. Nothing else is rebuilt. */
     setType(t) {
-      const from = BR.TYPE_ORDER.indexOf(this.type), to = BR.TYPE_ORDER.indexOf(t);
+      const from = COL_TYPES.indexOf(this.type), to = COL_TYPES.indexOf(t);
       if (from === to) return;
       this.type = t; this.filter = null; this.arrive = false;
       const seg = this.el.querySelector('#colSeg');
@@ -482,7 +485,77 @@
       const c = this.el.querySelector(`.icard[data-uid="${uid}"]`);
       if (c) { c.classList.add('just'); const h = c.querySelector('.ic-hit'); if (h) { try { h.focus({ preventScroll: true }); } catch (e) { /* ignore */ } } }
     },
+    /** The Hats tab: what Fizz wears, the count, the hats you own and the ones still to earn (every one says how). */
+    hatsHTML() {
+      const all = BR.HATS || [], wear = P.equippedHat(), cur = wear ? hatOf(wear) : null;
+      const owned = all.filter((h) => P.ownsHat(h.id)), missing = all.filter((h) => !P.ownsHat(h.id));
+      const order = BR.RARITIES.map((r) => r.id);
+      owned.sort((a, b) => order.indexOf(b.rarity) - order.indexOf(a.rarity) || a.name.localeCompare(b.name));
+      missing.sort((a, b) => order.indexOf(a.rarity) - order.indexOf(b.rarity) || a.name.localeCompare(b.name));
+      const rc = R(cur ? cur.rarity : 'common').color;
+      const plain = BR.DEFAULTS.fuse;
+      const none = `<div class="icard ${wear ? '' : 'eq'}" data-hatcard="none" style="--rc:${R('common').color};--i:0">
+        <button class="ic-hit" data-hat="none" type="button" aria-label="No hat${wear ? '. Take the hat off' : ', worn'}"></button>
+        ${wear ? `<button class="eq-btn" data-equiphat="none" type="button" aria-label="Wear no hat"><i>${BR.icon('check')}</i></button>` : `<span class="eq-flag" aria-hidden="true">${BR.icon('check')}</span>`}
+        <span class="ic-prev" aria-hidden="true">${BR.Badge.html(plain, null, { size: 64, still: true })}</span><b class="ic-name" aria-hidden="true">No hat</b>
+        <span class="ic-tags" aria-hidden="true"><span class="tag rar" style="--rc:${R('common').color}">Plain</span></span></div>`;
+      const cards = owned.map((h, i) => hatCard(h, { i: i + 1, eq: h.id === wear })).join('');
+      const lockedBlock = missing.length
+        ? `<div class="col-locked-head col-span"><h3>Not earned yet <small>${missing.length}</small></h3><p>Hats are never in chests. Tap one to see how to earn it.</p></div>
+           <div class="col-locked-grid col-span">${missing.map((h) => `<button class="lk" data-hatlock="${h.id}" style="--rc:${R(h.rarity).color}" aria-label="${R(h.rarity).name} hat, not earned yet" type="button"><span class="lk-prev">${BR.Hats ? BR.Hats.badge(h.id, 52, { locked: true, still: true }) : ''}</span><small>${R(h.rarity).name}</small></button>`).join('')}</div>`
+        : '';
+      return `<div class="col-head stg"><div class="eq-now" style="--rc:${rc}"><span class="eq-prev">${cur ? hatArt(cur.id, 52) : BR.Badge.html(plain, null, { size: 52, still: true })}</span><span class="eq-txt"><small>Wearing</small><b class="display">${cur ? esc(cur.name) : 'No hat'}</b></span></div>
+          <div class="col-prog" role="img" aria-label="${owned.length} of ${all.length} earned">${ringSVG(owned.length / Math.max(1, all.length), 60, 6)}<b>${owned.length}<small>/${all.length}</small></b></div></div>
+        <div class="col-grid stg ${this.arrive ? 'enter' : ''}" id="colGrid">${none}${cards}${lockedBlock}</div>`;
+    },
+    /** Wear a hat (or take it off) straight from its card. */
+    equipHat(id) {
+      if (!P.equipHat(id)) return;
+      BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap');
+      BR.toast(id === 'none' ? 'Hat taken off' : `${esc(hatOf(id).name)} equipped`, 'good');
+      BR.Router.rerender();
+    },
     onRetap() { this.el.querySelector('.scroll').scrollTo({ top: 0, behavior: BR.reducedMotion ? 'auto' : 'smooth' }); },
+  };
+  /** A hat's card: the same box as an item card (see it, wear it), with Fizz wearing the hat on the plate. */
+  function hatCard(h, o) {
+    const r = R(h.rarity);
+    const flag = o.eq ? `<span class="eq-flag" aria-hidden="true">${BR.icon('check')}</span>` : `<button class="eq-btn" data-equiphat="${h.id}" type="button" aria-label="Wear ${esc(h.name)}"><i>${BR.icon('check')}</i></button>`;
+    return `<div class="icard ${o.eq ? 'eq' : ''}" data-hatcard="${h.id}" style="--rc:${r.color};--i:${o.i}">
+      <button class="ic-hit" data-hat="${h.id}" type="button" aria-label="${esc(h.name)}, ${r.name} hat${o.eq ? ', worn' : ''}. See details"></button>
+      ${flag}
+      <span class="ic-prev" aria-hidden="true">${hatArt(h.id, 64)}</span><b class="ic-name" aria-hidden="true">${esc(h.name)}</b>
+      <span class="ic-tags" aria-hidden="true"><span class="tag rar" style="--rc:${r.color}">${r.name}</span></span></div>`;
+  }
+  /** A hat you own: Fizz in it, what it does, where it came from, and Wear / Try it. */
+  BR.hatSheet = function (id) {
+    if (id === 'none') { if (P.equippedHat()) Collection.equipHat('none'); return; }
+    const h = hatOf(id);
+    if (!h || !P.ownsHat(id)) return;
+    const r = R(h.rarity), worn = P.equippedHat() === id;
+    const body = `<div class="detail" style="--rc:${r.color}">
+        <div class="detail-prev"><span class="dp-glow"></span><span class="big-hat">${hatArt(id, 132)}</span></div>
+        <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">Fizz Hat</span></div>
+        <p class="detail-desc">${esc(h.desc)}</p>
+        <div class="detail-where"><small>Comes from</small><b>${esc(h.earn)}</b></div></div>`;
+    BR.Sheet.open({ title: esc(h.name), cls: 'detail-sheet', body, actions: [
+      { label: worn ? 'Worn' : 'Wear', cls: worn ? 'btn-dark' : 'btn-green', disabled: worn, onClick: () => Collection.equipHat(id) },
+      { label: 'Try it', cls: 'btn-dark', onClick: () => {
+        BR.audio.ui();
+        const sc = Collection.el.querySelector('.scroll'), top = sc ? sc.scrollTop : 0, back = BR.Router.current === 'collection';
+        if (back) BR.Router.onArrive('collection', () => { const s2 = Collection.el.querySelector('.scroll'); if (s2) s2.scrollTop = top; setTimeout(() => BR.hatSheet(id), 120); });
+        BR.Run.practiceItem(Object.assign({ type: 'hat', name: h.name }, { id }), null);
+      } }] });
+  };
+  /** Where a hat you have not earned comes from. */
+  BR.hatLockedSheet = function (id) {
+    const h = hatOf(id), r = R(h.rarity);
+    const pass = /Pass/i.test(h.earn || '');
+    const body = `<div class="detail" style="--rc:${r.color}"><div class="detail-prev locked-prev"><span class="dp-glow"></span>${BR.Hats ? BR.Hats.badge(id, 120, { locked: true, still: true }) : ''}</div>
+        <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">Fizz Hat</span></div>
+        <p class="detail-desc">A hat for Fizz. Hats are earned by playing and are never in chests.</p>
+        <div class="detail-where"><small>How to earn it</small><b>${esc(h.earn || 'Keep playing')}</b></div></div>`;
+    BR.Sheet.open({ title: 'Not earned yet', cls: 'detail-sheet', body, actions: [{ label: pass ? 'See the Pop Pass' : 'See the Trophies', cls: '', onClick: () => { Missions.tab = pass ? 'pass' : 'trophies'; BR.Router.go('missions'); } }] });
   };
   /** A small tile for something you have not found: a dark silhouette in its rarity colour, never its name. */
   function lockedTile(item) {
@@ -855,7 +928,7 @@
   /* ------------------------------------------------------------------ events + registration */
   function bind(screen, handler) {
     screen.el.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-equip],[data-tier],[data-trophy],[data-locked]');
+      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-equip],[data-equiphat],[data-hat],[data-hatlock],[data-tier],[data-trophy],[data-locked]');
       if (!t || !screen.el.contains(t)) return;
       handler(t, e);
     });
@@ -917,6 +990,9 @@
       const a = t.dataset.act;
       if (common(a, t)) return;
       if (t.dataset.equip) { Collection.equip(t.dataset.equip, t.dataset.type); return; }
+      if (t.dataset.equiphat) { Collection.equipHat(t.dataset.equiphat); return; }
+      if (t.dataset.hatlock) { BR.audio.ui(); BR.haptic('tick'); BR.hatLockedSheet(t.dataset.hatlock); return; }
+      if (t.dataset.hat) { BR.audio.ui(); BR.haptic('tick'); BR.hatSheet(t.dataset.hat); return; }
       if (t.dataset.locked) { BR.audio.ui(); BR.haptic('tick'); BR.lockedSheet(t.dataset.locked); return; }
       if (t.dataset.uid) { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(t.dataset.uid, t.dataset.type); }
     });

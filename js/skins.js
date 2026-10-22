@@ -39,6 +39,7 @@
       this.popShine = po.inst ? po.inst.shine : 'plain';
       this.beam = bo.item.beam;
       this.fuseCls = fu.item.cls;
+      if (BR.Fuse && BR.Fuse.setHat) BR.Fuse.setHat(P.equippedHat ? P.equippedHat() : null);
       this.moments = {};
       [sk, po, bo, fu].forEach((x) => { if (x.item.moment) this.moments[x.item.moment] = true; });
       root.classList.toggle('has-nova', !!this.moments.nova);

@@ -176,7 +176,7 @@
   const keyOf = (el) => {
     if (!el || !el.getAttribute) return '';
     const tag = el.tagName.toLowerCase();
-    for (const a of ['data-equip', 'data-uid', 'data-locked', 'data-tier', 'data-trophy', 'data-chest', 'data-tab', 'data-type', 'data-rar', 'data-act', 'data-boost', 'id']) {
+    for (const a of ['data-equip', 'data-equiphat', 'data-uid', 'data-hat', 'data-hatlock', 'data-locked', 'data-tier', 'data-trophy', 'data-chest', 'data-tab', 'data-type', 'data-rar', 'data-act', 'data-boost', 'id']) {
       const v = el.getAttribute(a);
       if (v) return a === 'id' ? '#' + v : `${tag}[${a}="${v}"]` + (a === 'data-chest' && el.dataset.act ? `[data-act="${el.dataset.act}"]` : '');
     }

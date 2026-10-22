@@ -155,9 +155,9 @@
     practiceItem(item, inst) {
       const pr = BR.Storage.data.profile, type = item.type;
       this.practice = { item, type, prev: pr.loadout[type], iv: 0 };
-      pr.loadout[type] = inst && inst.uid ? inst.uid : 'default';
+      pr.loadout[type] = type === 'hat' ? item.id : inst && inst.uid ? inst.uid : 'default';
       const engine = new BR.Engine({ mode: 'rush', seed: (Date.now() ^ 0x5bd1e995) >>> 0, boosts: {} });
-      if (type !== 'fuse') engine.tick = () => [];   // the fuse does not burn: this is a look, not a run
+      if (type !== 'fuse' && type !== 'hat') engine.tick = () => [];   // the fuse does not burn: this is a look, not a run (a fuse and a hat are looked at while it burns)
       return this.begin(engine, { practice: this.practice, goal: null });
     },
     practiceTimer() {

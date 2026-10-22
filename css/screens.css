@@ -173,6 +173,7 @@
 .chip-btn { --rc: #9fb0d6; min-width: 0; min-height: 44px; padding: 0 8px; text-align: center; border-radius: 99px; font: 700 calc(13px * var(--ts)) var(--f-ui); color: var(--muted); border: 1px solid var(--line); background: rgba(255, 255, 255, 0.05); transition: all 0.2s; }
 .chip-btn.on { color: #fff; border-color: var(--rc); background: color-mix(in srgb, var(--rc) 30%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--rc) 40%, transparent); }
 .col-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; } .col-span { grid-column: 1 / -1; }
+.col-head + .col-grid { margin-top: 12px; }   /* (the Hats tab has no rarity filter row between the two) */
 .icard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px 14px; border-radius: var(--r-l); text-align: center; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 20%, var(--ink-3)), var(--ink-2)); border: 1px solid color-mix(in srgb, var(--rc) 45%, transparent); overflow: hidden; transition: transform 0.15s var(--ease-out), box-shadow 0.2s; }
 .col-grid.enter .icard { animation: icardIn 0.45s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 8) * 30ms); }   /* cards arrive with the screen, not on every redraw */
 @keyframes icardIn { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
@@ -200,6 +201,7 @@
 .detail { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
 .detail-prev { position: relative; width: 100%; min-height: 150px; display: grid; place-items: center; border-radius: var(--r-l); background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rc) 28%, var(--ink-3)), var(--ink-2)); border: 1px solid color-mix(in srgb, var(--rc) 45%, transparent); overflow: hidden; }
 .dp-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--rc) 45%, transparent), transparent 62%); animation: haloPulse 3.4s ease-in-out infinite; }
+.big-hat { position: relative; display: grid; place-items: center; } .big-hat svg, .big-hat .bdg { max-width: 100%; }
 .big-prev { position: relative; transform: scale(1.7); } .big-fuse { position: relative; transform: scale(1.5); }
 .detail-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .detail-desc { font: 700 calc(16px * var(--ts))/1.4 var(--f-ui); color: #d9cff0; text-wrap: balance; }
 .detail-counter, .detail-where { display: flex; flex-direction: column; align-items: center; } .detail-counter small, .detail-where small { font: 800 calc(12px * var(--ts)) var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); } .detail-counter b { font: 700 calc(28px * var(--ts)) var(--f-display); color: #ffd66b; } .detail-where b { font: 700 calc(17px * var(--ts)) var(--f-display); }
@@ -239,12 +241,6 @@
 .btn.btn-danger.btn-sm { margin-top: 8px; width: 100%; }
 
 /* ---------- mini previews used on cards ---------- */
-.mini-fuse { display: flex; align-items: center; gap: 6px; width: 96px; }
-.mf-bomb { width: 24px; height: 24px; flex: none; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6a5a8a, #1a1230 70%); box-shadow: inset 0 0 0 2px #3a2f5a; position: relative; } .mf-bomb::after { content: ''; position: absolute; right: -2px; top: -3px; width: 8px; height: 8px; border-radius: 3px; background: #d9a72a; }
-.mf-track { position: relative; flex: 1; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
-.mf-fill { position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #6b4a1e, #c08a4a); animation: mfBurn 2.6s linear infinite; transform-origin: left; }
-.mf-spark { position: absolute; top: 50%; left: 100%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: radial-gradient(circle, #fff 0 30%, #ffd24a 31% 60%, transparent 70%); animation: mfSpark 2.6s linear infinite; box-shadow: 0 0 8px 2px rgba(255, 170, 60, 0.8); }
-@keyframes mfBurn { 0% { transform: scaleX(1); } 90%, 100% { transform: scaleX(0.04); } } @keyframes mfSpark { 0% { left: 100%; } 90%, 100% { left: 4%; } }
 
 /* item sheet: live demo scaled to the preview well */
 .detail-prev { display: grid; place-items: center; min-height: 168px; }

@@ -46,6 +46,7 @@
       } else if (item.type === 'board') {
         host.innerHTML = `<div class="hero-board ${item.cls}" data-ashine="${shine}"><b class="scene-fx"></b><b class="scene-fx b"></b><div class="hb-board" data-skin-host>${bricks}</div></div>`;
       } else {
+        if (BR.FuseArt && BR.FuseArt.ensure) BR.FuseArt.ensure(item.cls, ['base', 'mini']);   // (a reveal can come before the idle bake)
         host.innerHTML = `<div class="hero-fuse"><div class="mini-fuse ${item.cls}" data-shine="${shine}"><span class="mf-bomb"></span><span class="mf-track"><i class="mf-fill"></i><b class="mf-spark"></b></span></div></div>`;
         return { stop() { alive = false; } };
       }
