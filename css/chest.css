@@ -145,7 +145,7 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .reel-v .rc-txt { align-items: flex-start; flex: 1; }
 .rc-name { font: 700 16px/1.1 var(--f-display); text-align: center; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
 .reel-v .rc-name { text-align: left; font-size: 19px; }
-.rc-rar { font: 800 11px var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 55%, #fff); }
+.rc-rar { font: 800 12px var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 55%, #fff); }
 .rc.at { border-color: color-mix(in srgb, var(--rc) 60%, #fff); }
 .rc.win { border-color: #fff; box-shadow: 0 0 0 2px var(--rc), 0 0 30px var(--rc); }
 .reel.landed .rc:not(.win) { opacity: 0.3; }

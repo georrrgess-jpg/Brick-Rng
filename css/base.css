@@ -20,13 +20,20 @@
   --f-display: 'Fredoka', 'Baloo 2', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
   --f-ui: 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
+  /* type scale (six sizes; nothing below 12px) and the controls' minimum size */
+  --t-xs: 12px; --t-sm: 14px; --t-md: 16px; --t-lg: 20px; --t-xl: 28px; --t-2xl: 44px; --hit: 44px;
+  /* motion: three durations, three easings */
+  --d-fast: 0.15s; --d-med: 0.3s; --d-slow: 0.5s;
+  /* what a color means, everywhere: hot = the one main action, gold = spends Coins, green = free or equip, cyan = XP, time = green */
+  --c-action: var(--grad-hot); --c-spend: var(--gold); --c-free: var(--green); --c-xp: var(--cyan); --c-time: var(--green);
+
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in: cubic-bezier(0.5, 0, 0.9, 0.5);
 
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
-  --tabbar-h: 68px;
+  --tabbar-h: 68px; --rail: 0px;
 }
 
 *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -103,7 +110,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #7f1c52, 0 5px 12px rgba(255, 61, 139, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.3); }
 .btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .btn-xl { min-height: 64px; font-size: 24px; padding: 0 34px; border-radius: 22px; }
-.btn-sm { min-height: 42px; padding: 0 18px; font-size: 16px; border-radius: 14px; box-shadow: 0 4px 0 #7f1c52, 0 8px 18px rgba(255, 61, 139, 0.25), inset 0 2px 0 rgba(255, 255, 255, 0.35); }
+.btn-sm { min-height: 44px; padding: 0 18px; font-size: 16px; border-radius: 14px; box-shadow: 0 4px 0 #7f1c52, 0 8px 18px rgba(255, 61, 139, 0.25), inset 0 2px 0 rgba(255, 255, 255, 0.35); }
 .btn-dark { background: linear-gradient(180deg, var(--ink-4), var(--ink-3)); color: var(--text); text-shadow: none; box-shadow: 0 4px 0 #120d24, 0 10px 20px rgba(0, 0, 0, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.12); }
 .btn-dark:active { box-shadow: 0 1px 0 #120d24, inset 0 2px 0 rgba(255, 255, 255, 0.1); }
 .btn-gold { background: var(--grad-gold); color: #4a2a00; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); box-shadow: 0 5px 0 #a8620a, 0 14px 26px rgba(255, 190, 40, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.6); }
@@ -128,7 +135,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .pill.gold { background: linear-gradient(180deg, rgba(255, 200, 61, 0.22), rgba(255, 160, 30, 0.1)); border-color: rgba(255, 200, 61, 0.55); color: #ffe7a1; }
 .pill svg, .pill .coin { width: 20px; height: 20px; }
 .coin { display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; }
-.tag { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 99px; font: 800 11px var(--f-ui); letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); color: #e7defa; }
+.tag { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 99px; font: 800 12px var(--f-ui); letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); color: #e7defa; }
 .tag.rar { color: #fff; background: color-mix(in srgb, var(--rc) 55%, #000); border: 1px solid color-mix(in srgb, var(--rc) 80%, #fff 10%); }
 .tag.shine-glossy { background: linear-gradient(90deg, #ffffff44, #ffffff18); }
 .tag.shine-holo { color: #1a1030; background: linear-gradient(90deg, #ff6bd6, #6bf0ff, #fff36b); }
@@ -155,7 +162,7 @@ h1, h2, h3, h4, p { margin: 0; }
   transition: transform 0.5s var(--ease-out), opacity 0.3s;
 }
 .tabbar.hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
-.tab { position: relative; height: var(--tabbar-h); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--dim); font: 700 11px var(--f-ui); letter-spacing: 0.04em; transition: color 0.25s, transform 0.2s var(--ease-spring); }
+.tab { position: relative; height: var(--tabbar-h); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--dim); font: 700 12px var(--f-ui); letter-spacing: 0.04em; transition: color 0.25s, transform 0.2s var(--ease-spring); }
 .tab svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.35s var(--ease-spring); }
 .tab:active { transform: scale(0.92); }
 .tab.on { color: #fff; }
@@ -195,7 +202,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .sheet-actions { display: flex; flex-direction: column; gap: 10px; padding: 4px calc(var(--sar) + 20px) 18px calc(var(--sal) + 20px); }
 .sheet-actions.row { flex-direction: row; } .sheet-actions.row .btn { flex: 1; }
 .overlay { position: absolute; inset: 0; pointer-events: auto; }
-#toasts { position: absolute; left: 0; right: 0; top: calc(var(--sat) + 10px); z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+#toasts { position: absolute; left: 0; right: 0; top: calc(var(--sat) + 70px); z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
 .toast { padding: 10px 18px; border-radius: 99px; font: 700 15px var(--f-ui); background: rgba(24, 17, 44, 0.96); border: 1px solid var(--line-2); box-shadow: var(--sh-2); animation: toastIn 0.45s var(--ease-spring) both; max-width: 92vw; text-align: center; }
 .toast.out { animation: toastOut 0.3s ease-in forwards; } .toast.good { border-color: rgba(61, 220, 151, 0.6); } .toast.bad { border-color: rgba(255, 77, 109, 0.6); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(-24px) scale(0.9); } }
@@ -222,7 +229,7 @@ html.reduced .blob, html.reduced .bg-bricks { display: none; }
 /* centered sheets: title in the middle, close button tucked in the corner */
 .sheet.center .sheet-head { justify-content: center; padding-top: 18px; }
 .sheet.center .sheet-head h2 { text-align: center; flex: none; }
-.sheet.center .sheet-head .icon-btn { position: absolute; right: 12px; top: 12px; width: 38px; height: 38px; border-radius: 12px; }
+.sheet.center .sheet-head .icon-btn { position: absolute; right: 8px; top: 8px; width: 44px; height: 44px; border-radius: 14px; }
 .sheet-actions.row .btn { padding: 0 10px; white-space: nowrap; font-size: 17px; }
 
 /* full-screen effect layers */
@@ -233,3 +240,16 @@ html.reduced .blob, html.reduced .bg-bricks { display: none; }
 /* A sheet, a chest opening or the results screen covers the app: everything underneath holds still (paused animations cost nothing). */
 html.under-overlay #screens *, html.under-overlay #screens *::before, html.under-overlay #screens *::after,
 html.under-overlay .bg, html.under-overlay .bg *, html.under-overlay .bg *::before, html.under-overlay .bg *::after { animation-play-state: paused !important; }
+
+/* ---------- landscape phones: the tab bar becomes a slim rail on the left, so the content keeps its height ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  :root { --rail: calc(74px + var(--sal)); --tabbar-h: 0px; }
+  .tabbar { top: 0; right: auto; bottom: 0; width: var(--rail); height: auto; padding: var(--sat) 0 var(--sab) var(--sal); grid-template-columns: 1fr; grid-template-rows: repeat(5, 1fr); align-items: stretch; border-top: 0; border-right: 1px solid var(--line-2); background: linear-gradient(90deg, rgba(20, 14, 38, 0.97), rgba(10, 7, 20, 0.99)); }
+  .tabbar.hidden { transform: translateX(-110%); }
+  .tab { height: auto; min-height: 44px; gap: 1px; }
+  .tab svg { width: 22px; height: 22px; }
+  .tab-play .play-disc { margin-top: 0; width: 44px; height: 44px; } .tab-play .play-disc svg { width: 24px; height: 24px; } .tab-play .play-disc::after { inset: -4px; }
+  .tab-ind { top: var(--sat); left: auto; right: -1px; bottom: auto; width: 4px; height: calc((100% - var(--sat) - var(--sab)) / 5); transform: translateY(calc(var(--i) * 100%)); }
+  .tab-ind::after { left: 0; top: 50%; width: 4px; height: 36px; margin: -18px 0 0; border-radius: 6px 0 0 6px; box-shadow: -4px 0 16px rgba(255, 61, 139, 0.9); }
+  #screens .screen:not(#s-run) { left: var(--rail); --sal: 0px; }
+}

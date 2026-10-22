@@ -51,7 +51,7 @@
       body: `<div class="cs-bal">${BR.coin()}<b class="num">${fmt(P.coins)}</b></div>${next}
         <h3 class="sec-title">Ways to earn Coins</h3>
         <ul class="cs-list"><li><span>${BR.icon('play')}</span>Finish runs: points and every stage you clear</li><li><span>${BR.icon('sun')}</span>Daily Rush, and your first run each day</li><li><span>${BR.icon('missions')}</span>Daily and weekly missions</li><li><span>${BR.icon('trophy')}</span>Trophies and the Pop Pass</li></ul>`,
-      actions: [{ label: 'Go to the Shop', cls: 'btn-gold', onClick: () => BR.Router.go('shop') }],
+      actions: [{ label: 'Go to the Shop', cls: '', onClick: () => BR.Router.go('shop') }],
     });
   };
 
@@ -146,7 +146,7 @@
             <span class="hero-sub">Pop fast to keep the fuse lit. Chain big pops for Rush Mode.</span>
             <span class="hero-stats"><span><small>Best</small><b class="num">${fmt(st.best.rush)}</b></span><span><small>Stage</small><b class="num">${st.bestStage.rush || '-'}</b></span>${par(st.recent.rush) ? `<span><small>Recent avg</small><b class="num">${fmt(par(st.recent.rush))}</b></span>` : ''}</span>
           </span>
-          <span class="btn btn-gold btn-xl hero-play">Play</span>
+          <span class="btn btn-xl hero-play">Play</span>
         </button>
         <div class="row2 stg">
           <button class="mode-card daily ${dailyDone ? 'done' : ''}" data-act="play-daily">
@@ -165,7 +165,7 @@
         ${owned ? `<button class="banner stg" data-act="go-shop"><span class="bn-ico">${BR.icon('gift')}</span><span class="bn-txt"><b>You have ${owned} chest${owned > 1 ? 's' : ''} to open</b><small>Free to open. Tap to see.</small></span><span class="bn-go">${BR.icon('arrow')}</span></button>` : ''}
         <button class="card pass-card stg" data-act="go-pass">
           <div class="pc-head"><span class="pc-title display">Pop Pass</span><span class="tag">Level ${P.level}</span></div>
-          <div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next reward</small><div class="bar"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small>${fmt(P.need - P.xp)} XP to go</small></div></div>
+          <div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next reward</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small>${fmt(P.need - P.xp)} XP to go</small></div></div>
         </button>
         <button class="card mission-card stg" data-act="go-missions">
           <div class="pc-head"><span class="pc-title display">Today's missions</span><span class="tag">${m.list.filter((x) => x.done).length}/3 done</span></div>
@@ -349,7 +349,7 @@
         <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">${BR.ITEM_TYPES[item.type].name}</span></div>
         <p class="detail-desc">${item.pass ? 'A reward on the Pop Pass. Reach its level to get it.' : `Found in the <b>${chest.name}</b>. ${st && st.left ? `${st.left} of ${st.total} ${chest.sub} are still waiting.` : ''}`}</p>
         <div class="detail-where"><small>Comes from</small><b>${item.pass ? 'Pop Pass' : chest.name}</b></div></div>`;
-    BR.Sheet.open({ title: 'Not found yet', body, actions: [{ label: item.pass ? 'See the Pop Pass' : 'Go to the Shop', cls: 'btn-gold', onClick: () => { if (item.pass) { Missions.tab = 'pass'; } BR.Router.go(item.pass ? 'missions' : 'shop'); } }] });
+    BR.Sheet.open({ title: 'Not found yet', body, actions: [{ label: item.pass ? 'See the Pop Pass' : 'Go to the Shop', cls: '', onClick: () => { if (item.pass) { Missions.tab = 'pass'; } BR.Router.go(item.pass ? 'missions' : 'shop'); } }] });
   };
 
   /* item detail sheet */

@@ -582,10 +582,10 @@
       const again = P().canOpen(this.id);
       const equipped = inst.uid && P().isEquipped(inst.uid);
       box.innerHTML = `
-        ${inst.uid ? `<button class="btn btn-xl" data-a="equip" ${equipped ? 'disabled' : ''}>${equipped ? 'Equipped' : 'Equip'}</button>` : ''}
+        ${inst.uid ? `<button class="btn btn-xl btn-green" data-a="equip" ${equipped ? 'disabled' : ''}>${equipped ? 'Equipped' : 'Equip'}</button>` : ''}
         <div class="row">
           <button class="btn btn-dark" data-a="done">Done</button>
-          ${again ? '<button class="btn btn-green" data-a="again">Open another</button>' : ''}
+          ${again ? `<button class="btn ${P().chestCount(this.id) > 0 ? 'btn-green' : 'btn-gold'}" data-a="again">Open another</button>` : ''}
         </div>`;
       box.onclick = (e) => {
         const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
