@@ -41,36 +41,62 @@
 }
 
 /* ---------------------------------------------------------------- Candy
-   Hard sweets: a bright glint on the shoulder, a clean white rim, a swirl on top. Pastel body, same swirl. */
+   Update 5: a wrapped sweet. The pastel tile (which washed into its neighbours, and sat too close to Gumdrop) is now a rich, saturated
+   boiled sweet in clear cellophane: a plump body in the brick's own colour with a slanting cellophane sheen, a wet glint on the shoulder,
+   a swirl on top, and the wrapper twisted into a fan at each end (the two pseudo-elements of .deco, drawn inside the cell). */
 .skin-candy .face {
-  --u4-ra: 0.95; --u4-sa: 0.1; --u4-pa: 0.7; --u4-ca: 0.3;
-  border-radius: 34%;
+  --u4-ra: 0.8; --u4-sa: 0.28; --u4-pa: 0.8; --u4-ca: 0.34;
+  inset: 10% 17%;
+  border-radius: 40% / 46%;
   background:
-    radial-gradient(ellipse 0.2em 0.09em at 30% 19%, #fff 0, rgba(255, 255, 255, 0.78) 45%, rgba(255, 255, 255, 0) 100%),
-    var(--u4-spec),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 46%),
-    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 55%, #fff), color-mix(in srgb, var(--lo) 38%, #ffe0f0));
-  box-shadow: var(--u4-rim), var(--u4-shade), 0 0.055em 0 color-mix(in srgb, var(--lo) 60%, #fff), var(--u4-contact);
+    radial-gradient(ellipse 0.2em 0.085em at 30% 20%, #fff 0, rgba(255, 255, 255, 0.82) 45%, rgba(255, 255, 255, 0) 100%),
+    repeating-linear-gradient(112deg, rgba(255, 255, 255, 0) 0 0.07em, rgba(255, 255, 255, 0.2) 0.07em 0.115em),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(var(--ang, 160deg), var(--hi) 0, color-mix(in srgb, var(--hi) 50%, var(--lo)) 45%, var(--lo));
+  box-shadow: var(--u4-rim), var(--u4-shade), 0 0.055em 0 color-mix(in srgb, var(--lo) 62%, #2a0a30), var(--u4-contact);
 }
-.skin-candy .stud { background: repeating-conic-gradient(rgba(255, 255, 255, 0.95) 0 20%, color-mix(in srgb, var(--lo) 35%, #fff) 0 40%); box-shadow: 0.02em 0.04em 0.05em rgba(0, 0, 0, 0.28), inset 0.014em 0.02em 0 #fff; transform: translate(-50%, -50%) rotate(18deg); }
+.skin-candy .deco { opacity: 1; overflow: visible; }
+.skin-candy .deco::before, .skin-candy .deco::after {
+  content: ''; position: absolute; top: 14%; bottom: 14%; width: 25%;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 0.012em, rgba(255, 255, 255, 0) 0.012em 0.05em), linear-gradient(180deg, color-mix(in srgb, var(--hi) 62%, #fff), color-mix(in srgb, var(--lo) 40%, #fff));
+}
+.skin-candy .deco::before { left: -22%; clip-path: polygon(0 0, 100% 36%, 100% 64%, 0 100%); }
+.skin-candy .deco::after { right: -22%; clip-path: polygon(100% 0, 0 36%, 0 64%, 100% 100%); }
+.skin-candy .stud { width: 40%; height: 40%; top: 48%; background: repeating-conic-gradient(rgba(255, 255, 255, 0.96) 0 12.5%, color-mix(in srgb, var(--hi) 72%, #fff) 0 25%); box-shadow: 0 0 0 0.02em rgba(255, 255, 255, 0.9), 0 0.03em 0.05em rgba(0, 0, 0, 0.3); transform: translate(-50%, -50%) rotate(18deg); }
+.skin-candy .brick.fusebrick .face { inset: 5.5%; border-radius: 24%; }   /* a Fuse brick keeps the standard tile (and its countdown) whatever the sweet looks like */
 
 /* ---------------------------------------------------------------- Slate
-   Flat stone tiles with a bright ring, now with a bevelled, polished edge: a hard bright line along the top and left, a crisp
-   diagonal gloss band across the top-left corner, a fine speckle of mineral in the stone, and a ring that glows. */
-.skin-slate .face {
-  --u4-ra: 0.7; --u4-sa: 0.4; --u4-ca: 0.5; --u4-ea: 18%;
-  border-radius: 14%;
-  background:
-    linear-gradient(118deg, rgba(255, 255, 255, 0.4) 0, rgba(255, 255, 255, 0.4) 19%, rgba(255, 255, 255, 0) 19.6%),
-    radial-gradient(circle at 18% 78%, rgba(255, 255, 255, 0.22) 0 0.014em, transparent 0.026em),
-    radial-gradient(circle at 72% 30%, rgba(255, 255, 255, 0.2) 0 0.014em, transparent 0.026em),
-    radial-gradient(circle at 84% 74%, rgba(0, 0, 0, 0.16) 0 0.016em, transparent 0.028em),
-    radial-gradient(circle at 36% 24%, rgba(0, 0, 0, 0.14) 0 0.014em, transparent 0.026em),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 30%),
-    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 62%, #5e6886), color-mix(in srgb, var(--lo) 62%, #2a3046));
-  box-shadow: var(--u4-rim), inset 0 0.012em 0 rgba(255, 255, 255, 0.55), var(--u4-shade), 0 0.05em 0 #0e1220, var(--u4-contact);
+   Update 5: cut stone with depth. The flat grey-lilac tile is now a block of dark slate tinted by the brick's colour: a mitred, chiselled
+   bevel (lit along the top and left, dark along the bottom and right), a polished facet across the top-left corner, a mottled and
+   grainy face (a baked noise image), veins of the brick's own colour breaking out of two corners (js/s3-skins.js bakes one per palette
+   colour; the pale vein below is the fallback), chisel chips along the edges, and the bright ring inlaid in the middle. Static: it does not move. */
+.skin-slate {
+  --u5-stone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cfilter id='a' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05 .09' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 0 0 -2.2'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.2' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -5 0 0 0 1.7'/%3E%3C/filter%3E%3Cfilter id='c' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.24' numOctaves='2' seed='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 -3.1'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23a)' opacity='.34'/%3E%3Crect width='100' height='100' filter='url(%23b)' opacity='.3'/%3E%3Crect width='100' height='100' filter='url(%23c)' opacity='.3'/%3E%3C/svg%3E");
+  --u5-vein: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M60 -2L66 12L80 18L84 32L102 40M-2 62L14 70L20 84L34 90L40 102' stroke='%23fff' stroke-opacity='.22' stroke-width='5'/%3E%3Cpath d='M60 -2L66 12L80 18L84 32L102 40M-2 62L14 70L20 84L34 90L40 102' stroke='%23fff' stroke-opacity='.8' stroke-width='1.7'/%3E%3C/g%3E%3C/svg%3E");
 }
-.skin-slate .stud { background: rgba(0, 0, 0, 0.32); box-shadow: inset 0.02em 0.04em 0.06em rgba(0, 0, 0, 0.65), 0 0.014em 0 rgba(255, 255, 255, 0.28), 0 0 0.16em color-mix(in srgb, var(--glow) 70%, transparent), inset 0 0 0.1em color-mix(in srgb, var(--glow) 30%, transparent); outline: 0.05em solid var(--hi); outline-offset: -0.05em; }
+.skin-slate .face {
+  --u4-ra: 0; --u4-sa: 0; --u4-ca: 0.55; --u4-ea: 18%;
+  border-radius: 12%;
+  border: 0.06em solid;
+  border-color: rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.46) rgba(255, 255, 255, 0.3);
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.26) 0, rgba(255, 255, 255, 0.26) 15%, rgba(255, 255, 255, 0) 15.6%),
+    var(--u5-stone) 0 0 / 100% 100%,
+    radial-gradient(ellipse 62% 42% at 26% 72%, rgba(0, 0, 0, 0.22), transparent),
+    radial-gradient(ellipse 50% 46% at 78% 22%, rgba(255, 255, 255, 0.12), transparent),
+    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 68%, #3c4562), color-mix(in srgb, var(--lo) 68%, #161c30));
+  box-shadow: inset 0 0 0 0.012em rgba(0, 0, 0, 0.5), 0 0.05em 0 #0b0f1c, var(--u4-contact);
+}
+.skin-slate .deco {
+  opacity: 1; inset: 0; border-radius: inherit;
+  background:
+    radial-gradient(ellipse 0.07em 0.035em at 6% 38%, rgba(0, 0, 0, 0.55) 0, transparent 100%),
+    radial-gradient(ellipse 0.05em 0.08em at 94% 62%, rgba(0, 0, 0, 0.5) 0, transparent 100%),
+    radial-gradient(ellipse 0.08em 0.04em at 52% 96%, rgba(0, 0, 0, 0.5) 0, transparent 100%),
+    radial-gradient(ellipse 0.06em 0.04em at 70% 4%, rgba(255, 255, 255, 0.4) 0, transparent 100%);
+}
+.skin-slate .deco::before { content: ''; position: absolute; inset: 0; background: var(--u5-vein) center / 100% 100% no-repeat; }
+.skin-slate .stud { width: 40%; height: 40%; top: 50%; background: radial-gradient(circle, rgba(0, 0, 0, 0.55) 0 56%, color-mix(in srgb, var(--glow) 38%, transparent) 76%, transparent 78%); box-shadow: inset 0.02em 0.04em 0.06em rgba(0, 0, 0, 0.7), 0 0.014em 0 rgba(255, 255, 255, 0.34), 0 0 0.18em color-mix(in srgb, var(--glow) 75%, transparent), inset 0 0 0.1em color-mix(in srgb, var(--glow) 35%, transparent); outline: 0.055em solid color-mix(in srgb, var(--hi) 78%, #fff); outline-offset: -0.055em; }
 
 /* ---------------------------------------------------------------- Marble
    Polished stone with its own veins (they shift with the pattern seed), now with a mirror-polish glare across the top-left. */
@@ -89,25 +115,39 @@
 
 /* ---------------------------------------------------------------- Stained Glass
    A pane of colored glass held in lead: a dark lead edge all round (so panes read apart even on a busy board and at badge size), a bright
-   line just inside it where the glass catches the light, and light shining through from the top left. */
+   line just inside it where the glass catches the light, and light shining through from the top left.
+   Update 5: the panes were dim and muddy. Now the light comes through: the glass is brighter in the middle and deep at the edges, and a
+   leaded diamond (four lead lines joining the middles of the sides) cuts each pane into facets, like a real window. */
 .skin-glass .face {
   border: 0.05em solid rgba(16, 10, 28, 0.94);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0, rgba(255, 255, 255, 0) 32%),
-    linear-gradient(135deg, color-mix(in srgb, var(--hi) 66%, transparent), color-mix(in srgb, var(--lo) 54%, transparent));
-  box-shadow: inset 0 0 0 0.02em color-mix(in srgb, var(--hi) 78%, #fff), inset 0.05em 0.05em 0.1em rgba(255, 255, 255, 0.4), inset 0 0 0.24em color-mix(in srgb, var(--glow) 55%, transparent), 0 0 0.16em color-mix(in srgb, var(--glow) 45%, transparent), 0.02em 0.07em 0.1em rgba(0, 0, 0, 0.35);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--hi) 44%, #fff) 0, color-mix(in srgb, var(--hi) 90%, transparent) 34%, color-mix(in srgb, var(--lo) 90%, transparent) 100%);
+  box-shadow: inset 0 0 0 0.02em color-mix(in srgb, var(--hi) 78%, #fff), inset 0.05em 0.05em 0.1em rgba(255, 255, 255, 0.4), inset 0 0 0.24em color-mix(in srgb, var(--glow) 60%, transparent), 0 0 0.16em color-mix(in srgb, var(--glow) 45%, transparent), 0.02em 0.07em 0.1em rgba(0, 0, 0, 0.35);
+}
+.skin-glass .deco {
+  opacity: 1;
+  background:
+    linear-gradient(135deg, transparent 47.5%, rgba(16, 10, 28, 0.8) 49.2% 50.8%, transparent 52.5%) 0 0 / 50% 50% no-repeat,
+    linear-gradient(45deg, transparent 47.5%, rgba(16, 10, 28, 0.8) 49.2% 50.8%, transparent 52.5%) 100% 0 / 50% 50% no-repeat,
+    linear-gradient(45deg, transparent 47.5%, rgba(16, 10, 28, 0.8) 49.2% 50.8%, transparent 52.5%) 0 100% / 50% 50% no-repeat,
+    linear-gradient(135deg, transparent 47.5%, rgba(16, 10, 28, 0.8) 49.2% 50.8%, transparent 52.5%) 100% 100% / 50% 50% no-repeat;
 }
 .skin-glass .stud { background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 46%), color-mix(in srgb, var(--hi) 40%, transparent); box-shadow: inset 0 0 0 0.02em rgba(255, 255, 255, 0.55), 0 0 0 0.03em rgba(16, 10, 28, 0.75); }
 
 /* ---------------------------------------------------------------- Neon
-   Dark glass in a glowing tube. The tube now has a white-hot core, a faint reflection in the glass and a pool of light it casts. */
+   Glass lit by a glowing tube. Update 5: the colour used to be only a thin ring on a dark tile; now the glass itself is flooded with the
+   tube's light (a deep, saturated body that is brightest at the edges where the tube is), the tube has a white-hot core, and the stud is a
+   lit bulb inside its ring. The dark corners and the pool of light under the tile keep it a neon sign. */
 .skin-neon .face {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 38%), linear-gradient(180deg, #0c1224, #070b17);
-  border: 0.045em solid var(--glow);
-  box-shadow: 0 0 0.2em var(--glow), 0 0.1em 0.2em -0.03em color-mix(in srgb, var(--glow) 45%, transparent), inset 0 0 0.2em color-mix(in srgb, var(--glow) 55%, transparent);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 30%),
+    radial-gradient(ellipse 96% 92% at 50% 46%, color-mix(in srgb, var(--glow) 34%, #060a16) 0, color-mix(in srgb, var(--glow) 46%, #060a16) 56%, color-mix(in srgb, var(--glow) 32%, #060a16) 100%);
+  border: 0.055em solid color-mix(in srgb, var(--glow) 84%, #fff);
+  box-shadow: 0 0 0.3em var(--glow), 0 0 0.6em color-mix(in srgb, var(--glow) 38%, transparent), 0 0.1em 0.2em -0.03em color-mix(in srgb, var(--glow) 55%, transparent), inset 0 0 0.34em color-mix(in srgb, var(--glow) 90%, transparent), inset 0 0 0 0.014em rgba(255, 255, 255, 0.5);
 }
-.skin-neon .deco { opacity: 1; inset: -0.036em; border: 0.016em solid rgba(255, 255, 255, 0.72); }
-.skin-neon .stud { background: transparent; border: 0.045em solid var(--hi); box-shadow: 0 0 0.12em var(--glow), inset 0 0 0.1em var(--glow); }
+.skin-neon .deco { opacity: 1; inset: 0.002em; border: 0.02em solid rgba(255, 255, 255, 0.78); border-radius: inherit; box-shadow: 0 0 0.05em rgba(255, 255, 255, 0.6); }
+.skin-neon .stud { width: 42%; height: 42%; background: radial-gradient(circle, #fff 0 12%, color-mix(in srgb, var(--hi) 82%, #fff) 26%, color-mix(in srgb, var(--glow) 70%, transparent) 54%, transparent 72%); border: 0.05em solid color-mix(in srgb, var(--glow) 80%, #fff); box-shadow: 0 0 0.16em var(--glow), inset 0 0 0.1em var(--glow); }
 
 /* ---------------------------------------------------------------- Magma
    Black rock split by glowing cracks that breathe. The rock now takes a hard highlight on its top-left edge, and the cracks light it
@@ -128,22 +168,33 @@
 @keyframes u4LavaBreath { 50% { opacity: 0.4; } }
 
 /* ---------------------------------------------------------------- Circuit
-   An etched board with a chip on top. The chip is now a raised package with a bright top edge, and the board has solder pads at its corners. */
+   Update 5: a printed board with a chip on it, and now the board is the brick's colour. The substrate used to be one dark teal for every
+   colour (only the chip and the pads were coloured, so the colours washed together); it is now a deep, saturated board in the brick's
+   own colour, with real traces: pads on the four edges and two bent traces that run to the chip's pins, a bevelled chip package with
+   silver pins and a bright die, and a gold-bright rim. The traces pulse on every third brick (opacity only; no mask, so no extra surface). */
 .skin-circuit .face {
-  --u4-ra: 0.28; --u4-sa: 0.4;
+  --u4-ra: 0.34; --u4-sa: 0.4;
   border-radius: 16%;
-  background: linear-gradient(160deg, #0f2424, #08121a);
-  border: 0.025em solid color-mix(in srgb, var(--glow) 70%, #000);
-  box-shadow: var(--u4-rim), inset 0 0 0.16em color-mix(in srgb, var(--glow) 40%, transparent), 0 0.05em 0 #02080a, var(--u4-contact);
-}
-.skin-circuit .deco { opacity: 0.8; animation: u4CircuitPulse 3s ease-in-out infinite; animation-delay: calc(var(--ph, 0) * -0.43s);
   background:
-    radial-gradient(circle at 11% 11%, var(--hi) 0 0.018em, transparent 0.03em), radial-gradient(circle at 89% 11%, var(--hi) 0 0.018em, transparent 0.03em),
-    radial-gradient(circle at 11% 89%, var(--hi) 0 0.018em, transparent 0.03em), radial-gradient(circle at 89% 89%, var(--hi) 0 0.018em, transparent 0.03em),
-    repeating-linear-gradient(0deg, transparent 0 0.15em, color-mix(in srgb, var(--glow) 45%, transparent) 0.15em 0.165em), repeating-linear-gradient(90deg, transparent 0 0.21em, color-mix(in srgb, var(--glow) 30%, transparent) 0.21em 0.225em);
-  -webkit-mask-image: radial-gradient(circle, transparent 28%, #000 60%); mask-image: radial-gradient(circle, transparent 28%, #000 60%); }
-.skin-circuit .stud { border-radius: 18%; background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 40%), linear-gradient(160deg, color-mix(in srgb, var(--hi) 70%, #000), color-mix(in srgb, var(--lo) 80%, #000)); box-shadow: 0 0 0.14em var(--glow), inset 0 0 0 0.03em var(--hi), inset 0.02em 0.026em 0 rgba(255, 255, 255, 0.4), 0.02em 0.05em 0.05em rgba(0, 0, 0, 0.5); }
-@keyframes u4CircuitPulse { 50% { opacity: 0.35; } }
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--glow) 30%, #06121a) 0, color-mix(in srgb, var(--lo) 52%, #06121a) 100%);
+  border: 0.035em solid color-mix(in srgb, var(--hi) 58%, #0a1418);
+  box-shadow: var(--u4-rim), inset 0 0 0.16em color-mix(in srgb, var(--glow) 45%, transparent), 0 0.05em 0 #02080a, var(--u4-contact);
+}
+.skin-circuit .deco { --tc: color-mix(in srgb, var(--hi) 86%, #fff); opacity: 0.86; animation: u4CircuitPulse 3s ease-in-out infinite; animation-delay: calc(var(--ph, 0) * -0.43s);
+  background:
+    radial-gradient(circle at 0.07em 0.445em, var(--tc) 0 0.026em, transparent 0.03em), radial-gradient(circle at 0.82em 0.445em, var(--tc) 0 0.026em, transparent 0.03em),
+    radial-gradient(circle at 0.445em 0.07em, var(--tc) 0 0.026em, transparent 0.03em), radial-gradient(circle at 0.445em 0.82em, var(--tc) 0 0.026em, transparent 0.03em),
+    radial-gradient(circle at 0.78em 0.12em, var(--tc) 0 0.022em, transparent 0.026em), radial-gradient(circle at 0.11em 0.77em, var(--tc) 0 0.022em, transparent 0.026em),
+    linear-gradient(var(--tc), var(--tc)) 0.07em 0.4325em / 0.15em 0.025em no-repeat, linear-gradient(var(--tc), var(--tc)) 0.67em 0.4325em / 0.15em 0.025em no-repeat,
+    linear-gradient(var(--tc), var(--tc)) 0.4325em 0.07em / 0.025em 0.14em no-repeat, linear-gradient(var(--tc), var(--tc)) 0.4325em 0.68em / 0.025em 0.14em no-repeat,
+    linear-gradient(var(--tc), var(--tc)) 0.66em 0.29em / 0.12em 0.02em no-repeat, linear-gradient(var(--tc), var(--tc)) 0.77em 0.12em / 0.02em 0.18em no-repeat,
+    linear-gradient(var(--tc), var(--tc)) 0.11em 0.6em / 0.12em 0.02em no-repeat, linear-gradient(var(--tc), var(--tc)) 0.11em 0.6em / 0.02em 0.18em no-repeat,
+    repeating-linear-gradient(0deg, transparent 0 0.095em, #d4dcec 0.095em 0.117em, transparent 0.117em 0.15em) 0.2em 0.255em / 0.06em 0.38em no-repeat,
+    repeating-linear-gradient(0deg, transparent 0 0.095em, #d4dcec 0.095em 0.117em, transparent 0.117em 0.15em) 0.63em 0.255em / 0.06em 0.38em no-repeat;
+}
+.skin-circuit .stud { width: 40%; height: 40%; top: 50%; border-radius: 14%; background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--hi) 84%, #fff) 0 18%, transparent 19%), linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 42%), linear-gradient(160deg, color-mix(in srgb, var(--hi) 46%, #1a2230), color-mix(in srgb, var(--lo) 58%, #0a0e16)); box-shadow: inset 0 0 0 0.024em #c9d3e6, inset 0.02em 0.026em 0 rgba(255, 255, 255, 0.4), 0 0 0.14em color-mix(in srgb, var(--glow) 80%, transparent), 0.02em 0.05em 0.05em rgba(0, 0, 0, 0.55); }
+@keyframes u4CircuitPulse { 50% { opacity: 0.4; } }
 
 /* ---------------------------------------------------------------- Supernova
    A dark star-core that pulses; the stud is a star. Same look, lit like the rest (the glass edge catches the light top left). */
@@ -173,31 +224,40 @@
    Mirror metal with a shine that sweeps across. */
 .skin-chrome .face {
   --u4-ra: 0.9; --u4-sa: 0.3; --u4-ea: 0%; --u4-ca: 0.5;
-  background: linear-gradient(var(--ang, 160deg), #fff 0, color-mix(in srgb, var(--hi) 72%, #eef2fb) 16%, color-mix(in srgb, var(--lo) 78%, #4d5672) 46%, #fff 54%, color-mix(in srgb, var(--hi) 70%, #d6def0) 72%, color-mix(in srgb, var(--lo) 82%, #323a54) 100%);
+  background: linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 55%, #fff) 0, color-mix(in srgb, var(--hi) 92%, #eef2fb) 15%, color-mix(in srgb, var(--lo) 80%, #2a3148) 41%, color-mix(in srgb, var(--hi) 45%, #fff) 49%, #fff 52%, color-mix(in srgb, var(--hi) 90%, #d6def0) 59%, color-mix(in srgb, var(--hi) 82%, #fff) 74%, color-mix(in srgb, var(--lo) 92%, #323a54) 100%);
   box-shadow: var(--u4-rim), var(--u4-shade), 0 0.055em 0 #2a3148, var(--u4-contact);
   overflow: hidden;
 }
-.skin-chrome .stud { background: radial-gradient(circle at 34% 28%, #fff 0 12%, color-mix(in srgb, var(--hi) 45%, #d3dbef) 40%, color-mix(in srgb, var(--lo) 55%, #3b4360) 100%); box-shadow: inset -0.02em -0.035em 0.03em rgba(0, 0, 0, 0.35), 0.026em 0.058em 0.06em rgba(0, 0, 0, 0.55); }
+.skin-chrome .stud { background: radial-gradient(circle at 34% 28%, #fff 0 12%, color-mix(in srgb, var(--hi) 72%, #d3dbef) 40%, color-mix(in srgb, var(--lo) 80%, #3b4360) 100%); box-shadow: inset -0.02em -0.035em 0.03em rgba(0, 0, 0, 0.35), 0.026em 0.058em 0.06em rgba(0, 0, 0, 0.55); }
 .skin-chrome .deco { opacity: 1; overflow: hidden; }
 .skin-chrome .deco::before { content: ''; position: absolute; top: 0; bottom: 0; left: -70%; width: 60%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent); transform: skewX(-20deg); animation: u4ChromeSweep 3.6s ease-in-out infinite; animation-delay: calc(var(--ph, 0) * -0.5s); }
 @keyframes u4ChromeSweep { 0% { transform: translateX(0) skewX(-20deg); } 45%, 100% { transform: translateX(380%) skewX(-20deg); } }
 
 /* ---------------------------------------------------------------- Prism Heart (Rush Pass tier 30)
-   See-through crystal with a rainbow rim and a heart in the middle. */
+   See-through crystal with a rainbow rim and a heart in the middle.
+   Update 5: the crystal was washed out (white over white, and the heart all but vanished). Now the body is the brick's own color
+   with the prism glints on top of it, the rim is a true rainbow, and the heart is a faceted gem in a darker setting so it reads. */
 .skin-heart .face {
   --u4-ra: 0.7; --u4-sa: 0.12; --u4-pa: 0.6;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0, transparent 28%), conic-gradient(from var(--ang, 160deg) at 50% 56%, rgba(255, 255, 255, 0.6), transparent 12%, rgba(255, 255, 255, 0.28) 30%, transparent 44%, rgba(255, 255, 255, 0.5) 62%, transparent 76%, rgba(255, 255, 255, 0.4) 90%, rgba(255, 255, 255, 0.6)), linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 88%, #fff), var(--lo));
-  border: 0.03em solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 0.3em color-mix(in srgb, var(--glow) 65%, transparent), inset 0 0 0.28em rgba(255, 255, 255, 0.45), 0 0.05em 0 color-mix(in srgb, var(--lo) 60%, #000), 0.02em 0.1em 0.12em rgba(0, 0, 0, 0.35);
+  border: 0.04em solid transparent;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0, transparent 26%) padding-box,
+    conic-gradient(from var(--ang, 160deg) at 50% 56%, rgba(255, 255, 255, 0.34), transparent 12%, rgba(255, 255, 255, 0.16) 30%, transparent 44%, rgba(255, 255, 255, 0.3) 62%, transparent 76%, rgba(255, 255, 255, 0.22) 90%, rgba(255, 255, 255, 0.34)) padding-box,
+    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 96%, #fff), color-mix(in srgb, var(--lo) 94%, var(--hi))) padding-box,
+    conic-gradient(from 20deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #6bffb2, #ff6bd6) border-box;
+  box-shadow: 0 0 0.3em color-mix(in srgb, var(--glow) 65%, transparent), inset 0 0 0.24em rgba(255, 255, 255, 0.4), 0 0.05em 0 color-mix(in srgb, var(--lo) 60%, #000), 0.02em 0.1em 0.12em rgba(0, 0, 0, 0.35);
 }
 .skin-heart .deco { opacity: 0.6; overflow: hidden; background: linear-gradient(120deg, rgba(255, 255, 255, 0.5), transparent 28%); }
 .skin-heart .deco::before { content: ''; position: absolute; inset: -50%; background: linear-gradient(60deg, transparent 34%, rgba(255, 107, 214, 0.34) 40%, rgba(107, 240, 255, 0.34) 50%, rgba(255, 243, 107, 0.3) 60%, transparent 66%); animation: u4HeartSlide 5s ease-in-out infinite alternate; animation-delay: calc(var(--ph, 0) * -0.7s); }
-.skin-heart .stud { width: 44%; height: 44%; border-radius: 0; background: linear-gradient(135deg, #fff, color-mix(in srgb, var(--hi) 55%, #fff) 45%, var(--lo)); clip-path: polygon(50% 100%, 6% 44%, 6% 22%, 24% 4%, 50% 18%, 76% 4%, 94% 22%, 94% 44%); box-shadow: none; filter: drop-shadow(0 0 0.1em rgba(255, 255, 255, 0.9)); top: 50%; }
+.skin-heart .stud { width: 50%; height: 50%; top: 50%; border-radius: 0; background: color-mix(in srgb, var(--lo) 56%, #1b0830); clip-path: polygon(50% 100%, 6% 44%, 6% 22%, 24% 4%, 50% 18%, 76% 4%, 94% 22%, 94% 44%); box-shadow: none; }
+.skin-heart .stud::after { content: ''; position: absolute; inset: 12%; background: linear-gradient(135deg, #fff, color-mix(in srgb, var(--hi) 60%, #fff) 42%, var(--hi) 72%, var(--lo)); clip-path: polygon(50% 100%, 6% 44%, 6% 22%, 24% 4%, 50% 18%, 76% 4%, 94% 22%, 94% 44%); }
 @keyframes u4HeartSlide { from { transform: translate3d(-20%, -20%, 0); } to { transform: translate3d(20%, 20%, 0); } }
 .skin-chrome .brick, .skin-heart .brick, .skin-nova .brick { contain: layout; }
 
 /* ---------------------------------------------------------------- shape hints (color-blind mode) keep the symbol readable */
 html.shapes :is(.skin-classic, .skin-candy, .skin-slate, .skin-marble, .skin-glass, .skin-neon, .skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) .stud { background: rgba(255, 255, 255, 0.94); border: 0; outline: 0; box-shadow: none; animation: none; }
+html.shapes .skin-heart .stud::after { display: none; }   /* the gem inside the heart would sit inside the shape hint */
+html.shapes .skin-heart :is([data-c="0"], [data-c="3"]) .stud { clip-path: none; }   /* the circle and the rounded square (colors 0 and 3) were drawn as the skin's heart, the same as each other */
 
 /* ---------------------------------------------------------------- low-end phones and reduced motion hold the pose */
 html:is(.low-end, .reduced) :is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) .deco,

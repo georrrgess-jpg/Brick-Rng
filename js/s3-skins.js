@@ -78,13 +78,29 @@
       + `<radialGradient id='a' cx='50' cy='50' r='44' gradientUnits='userSpaceOnUse'><stop offset='0' stop-color='${core}'/><stop offset='.45' stop-color='${p.hi}'/><stop offset='1' stop-color='${p.glow}'/></radialGradient>`
       + `<radialGradient id='c'><stop offset='0' stop-color='#fff'/><stop offset='.4' stop-color='${core}'/><stop offset='1' stop-color='${p.hi}' stop-opacity='0'/></radialGradient></defs><g filter='url(#b)'>${arms}<circle cx='50' cy='50' r='17' fill='url(#c)'/></g></svg>`;
   }
+  /* Update 5: Clockwork's gears take a tint of the brick's colour (plain brass gears on every colour pulled all seven toward gold), and Slate's quartz
+     veins are the brick's colour. Same bake, same single stylesheet. */
+  const GEAR_D = 'M86.3 42.84L97.73 44.88L97.73 55.12L86.3 57.16L83.58 65.54L91.62 73.91L85.6 82.19L75.16 77.13L68.03 82.31L69.62 93.81L59.88 96.97L54.41 86.74L45.59 86.74L40.12 96.97L30.38 93.81L31.97 82.31L24.84 77.13L14.4 82.19L8.38 73.91L16.42 65.54L13.7 57.16L2.27 55.12L2.27 44.88L13.7 42.84L16.42 34.46L8.38 26.09L14.4 17.81L24.84 22.87L31.97 17.69L30.38 6.19L40.12 3.03L45.59 13.26L54.41 13.26L59.88 3.03L69.62 6.19L68.03 17.69L75.16 22.87L85.6 17.81L91.62 26.09L83.58 34.46ZM39 50a11 11 0 1 0 22 0a11 11 0 1 0 -22 0ZM43.8 25a6.2 6.2 0 1 0 12.4 0a6.2 6.2 0 1 0 -12.4 0ZM67.58 42.27a6.2 6.2 0 1 0 12.4 0a6.2 6.2 0 1 0 -12.4 0ZM58.49 70.23a6.2 6.2 0 1 0 12.4 0a6.2 6.2 0 1 0 -12.4 0ZM29.11 70.23a6.2 6.2 0 1 0 12.4 0a6.2 6.2 0 1 0 -12.4 0ZM20.02 42.27a6.2 6.2 0 1 0 12.4 0a6.2 6.2 0 1 0 -12.4 0Z';
+  /** A brass gear whose metal leans toward the brick's colour (enamelled brass), with the same dark outline and inner ring as the plain one. */
+  function gearSvg(p) {
+    const stops = [[0, mixHex(p.hi, '#fff4bd', 0.26)], [0.42, mixHex(p.hi, '#f0b83e', 0.3)], [1, mixHex(p.lo, '#a56a14', 0.3)]];
+    const grad = stops.map(([o, c]) => `<stop offset='${o}' stop-color='${c}'/>`).join('');
+    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>${grad}</linearGradient></defs>`
+      + `<path d='${GEAR_D}' fill='url(#g)' fill-rule='evenodd' stroke='#3f2406' stroke-width='5' stroke-linejoin='round' paint-order='stroke'/><circle cx='50' cy='50' r='31' fill='none' stroke='#fff6c8' stroke-opacity='.55' stroke-width='2'/></svg>`;
+  }
+  /** Two jagged veins that break out of opposite corners of a slate tile, in a light tint of the brick's colour with a soft halo. */
+  function veinSvg(p, i) {
+    const d = 'M60 -2L66 12L80 18L84 32L102 40M-2 62L14 70L20 84L34 90L40 102', v = mixHex(p.hi, '#ffffff', 0.55), flip = i % 2 ? " transform='translate(100 0) scale(-1 1)'" : '';
+    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke-linejoin='round' stroke-linecap='round'${flip}><path d='${d}' stroke='${p.glow}' stroke-opacity='.4' stroke-width='5.5'/><path d='${d}' stroke='${v}' stroke-opacity='.92' stroke-width='1.9'/></g></svg>`;
+  }
   function bakeArt() {
     const pal = BR.PALETTE;
     if (!pal || !document.head || document.getElementById('s3-skin-art')) return;
     if (!pal.every((p) => /^#[0-9a-f]{6}$/i.test(p.hi) && /^#[0-9a-f]{6}$/i.test(p.lo) && /^#[0-9a-f]{6}$/i.test(p.glow))) return;   // the CSS fallbacks stay
     const el = document.createElement('style');
     el.id = 's3-skin-art';
-    el.textContent = pal.map((p, i) => `.skin-phoenix [data-c="${i}"] .deco{background-image:${svgUri(phoenixSvg(p))}}.skin-galaxy [data-c="${i}"] .deco{background-image:${svgUri(galaxySvg(p))}}`).join('\n');
+    el.textContent = pal.map((p, i) => `.skin-phoenix [data-c="${i}"] .deco{background-image:${svgUri(phoenixSvg(p))}}.skin-galaxy [data-c="${i}"] .deco{background-image:${svgUri(galaxySvg(p))}}`
+      + `.skin-clock [data-c="${i}"] .deco::before,.skin-clock [data-c="${i}"] .deco::after{background-image:${svgUri(gearSvg(p))}}.skin-slate [data-c="${i}"] .deco::before{background-image:${svgUri(veinSvg(p, i))}}`).join('\n');
     document.head.appendChild(el);
   }
   bakeArt();
