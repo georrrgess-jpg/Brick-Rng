@@ -1,1 +1,166 @@
-/* Series 4 "Moonwick" skins (see docs/update-5/series-4-moonwick.md, section 3.1). Owned by the skins build. */
+/* ===================================================================
+   Series 4 "Moonwick" skins (see docs/update-5/series-4-moonwick.md, section 3.1): Patchwork, Glowcap, Spellbook, Origami, Potion, Gemcut,
+   Hourglass, Sigil, Moonglass. Same conventions as css/s3-skins.css: the Skin class sits on the board (or on a badge / preview wrapper) and
+   styles .face .stud .deco .sheen (and their pseudo-elements, except .face::before, the group highlight ring); a colour brings --hi --lo
+   --glow, --ph (0 to 6, a phase per colour), --r and --c (row and column, written by js/view.js).
+   Rules of the road (spec 3.0, tested by tests/u5-skins.js):
+   - only transform and opacity animate, nothing animates .face, no blend mode on a brick layer, no layout property;
+   - a skin animates at most one brick in three (and at most two layers on each), so at most 43 animations run on the board at rest;
+   - every rule that styles a brick's own layers carries :not(.fusebrick), so the Fuse brick keeps its countdown. The .face rules wear it
+     inside :where() so their specificity stays below the group highlight's glow (.brick.hl .face) and the highlight keeps working;
+   - with Shape hints on (html.shapes) .stud is the white hint shape of css/run.css, so a skin's own sigil steps out of its way;
+   - low-end phones and Reduce Motion hold the pose (no animation at all).
+   The per-colour art (embroidered, foiled, etched and lit sigils, bottles, gem cuts) is baked into one stylesheet per skin by js/s4-skins.js
+   on the first use of the skin. Until then, and without script, each skin shows the plain look below.
+   =================================================================== */
+
+/* a skin that animates keeps each brick's animated layers apart from the rest of the page */
+.skin-potion .brick, .skin-gemcut .brick, .skin-hourglass .brick, .skin-sigil .brick { contain: layout; }
+
+/* ---------------------------------------------------------------- Patchwork (Common)
+   The first fabric in the game: a puffy quilted square, a fine weave, a seam allowance that lies flat round a pillowed middle, a running
+   stitch of cream thread, a mended patch sewn over one corner and the colour's sigil embroidered in satin stitch. Static. */
+.skin-patchwork :where(.brick:not(.fusebrick)) .face {
+  border-radius: 22%;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.09) 0 0.012em, transparent 0.012em 0.032em),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0 0.012em, transparent 0.012em 0.032em),
+    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 88%, var(--lo)), color-mix(in srgb, var(--lo) 94%, #000));
+  box-shadow: inset 0.03em 0.04em 0.05em rgba(255, 255, 255, 0.32), inset -0.04em -0.05em 0.08em rgba(0, 0, 0, 0.34), 0 0.05em 0 color-mix(in srgb, var(--lo) 62%, #000), 0 0.1em 0.12em rgba(0, 0, 0, 0.38);
+}
+/* the pillow: the quilted middle, inside the stitching, puffs up and catches the light */
+.skin-patchwork .brick:not(.fusebrick) .deco {
+  opacity: 1; inset: 8.5%; border-radius: 15%; border: 0.03em dashed #fff8e4;
+  background: radial-gradient(ellipse 90% 86% at 42% 36%, color-mix(in srgb, var(--hi) 60%, #fff) 0, color-mix(in srgb, var(--hi) 86%, transparent) 46%, transparent 100%);
+  box-shadow: inset 0.035em 0.045em 0.07em rgba(255, 255, 255, 0.34), inset -0.04em -0.05em 0.08em rgba(0, 0, 0, 0.3), 0 0 0 0.03em color-mix(in srgb, var(--lo) 70%, #000);
+}
+/* the thread casts a shadow of its own */
+.skin-patchwork .brick:not(.fusebrick) .deco::before { content: ''; position: absolute; inset: -0.03em; border-radius: inherit; border: 0.03em dashed rgba(40, 8, 24, 0.4); transform: translate(0.01em, 0.026em); }
+/* the mended patch: a lighter scrap with its own stitching, sewn over the lower right corner */
+.skin-patchwork .brick:not(.fusebrick) .deco::after {
+  content: ''; position: absolute; right: -0.075em; bottom: -0.075em; width: 0.27em; height: 0.27em; border-radius: 12%; transform: rotate(-7deg);
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.3) 0 0.03em, transparent 0.03em 0.07em), linear-gradient(135deg, color-mix(in srgb, var(--hi) 55%, #fff6e6), color-mix(in srgb, var(--hi) 80%, #fff6e6));
+  border: 0.022em dashed #fff8e4; box-shadow: 0 0.025em 0.04em rgba(0, 0, 0, 0.45), inset 0 0 0.05em rgba(0, 0, 0, 0.15);
+}
+:root:not(.shapes) .skin-patchwork .brick:not(.fusebrick) .stud { width: 56%; height: 56%; top: 49%; border-radius: 0; background: none; box-shadow: none; z-index: 1; }
+html.shapes .skin-patchwork .brick:not(.fusebrick) .deco::after { opacity: 0.35; }
+
+/* ---------------------------------------------------------------- Glowcap (Common)
+   A glossy toadstool cap, wider and flatter than Gumdrop, with cream spots (each colour has its own pattern) and a pale gill band
+   under the rim that lights the cap from below, like a mushroom in a night forest. .stud stays free for the Shape hints (the spots fade
+   to 35 percent then). Static. */
+.skin-glowcap { --spc: rgba(255, 250, 232, var(--spa, 0.97)); }
+html.shapes .skin-glowcap { --spa: 0.35; }
+.skin-glowcap :where(.brick:not(.fusebrick)) .face {
+  inset: 15% 1.5% 22% 1.5%;
+  border-radius: 50% 50% 14% 14% / 92% 92% 20% 20%;
+  background:
+    var(--sp, linear-gradient(transparent, transparent)),
+    radial-gradient(ellipse 58% 34% at 33% 21%, rgba(255, 255, 255, 0.78) 0, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(ellipse 120% 100% at 50% 0%, color-mix(in srgb, var(--hi) 88%, #fff) 0, var(--hi) 36%, var(--lo) 100%);
+  box-shadow: inset 0 0.025em 0.02em rgba(255, 255, 255, 0.55), inset 0 -0.06em 0.08em color-mix(in srgb, var(--lo) 70%, #300), 0 0.055em 0 color-mix(in srgb, var(--lo) 52%, #1a0830), 0 0.1em 0.11em rgba(0, 0, 0, 0.4);
+}
+/* the gill band under the rim, and the glow it throws */
+.skin-glowcap .brick:not(.fusebrick) .deco {
+  opacity: 1; inset: auto 8% -7.5% 8%; height: 25%; border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: repeating-conic-gradient(from 0deg at 50% -70%, transparent 0 2.2deg, rgba(80, 36, 18, 0.22) 2.2deg 3deg), linear-gradient(180deg, #a98448, #e6cf9a 55%, #fff1c8);
+  box-shadow: 0 0.035em 0.07em 0.01em color-mix(in srgb, var(--glow) 95%, #fff), 0 0.09em 0.2em color-mix(in srgb, var(--glow) 60%, transparent);
+}
+:root:not(.shapes) .skin-glowcap .brick:not(.fusebrick) .stud { opacity: 0; }
+/* each colour counts its spots differently, so the board never looks printed */
+.skin-glowcap .brick[data-c="0"] { --sp: radial-gradient(ellipse 0.082em 0.062em at 27% 40%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.062em 0.05em at 51% 27%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.09em 0.066em at 74% 41%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.05em 0.04em at 41% 60%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.045em 0.036em at 63% 64%, var(--spc) 0 72%, transparent 80%); }
+.skin-glowcap .brick[data-c="1"] { --sp: radial-gradient(ellipse 0.088em 0.066em at 31% 38%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.054em 0.042em at 58% 26%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.076em 0.058em at 72% 51%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.048em 0.038em at 45% 62%, var(--spc) 0 72%, transparent 80%); }
+.skin-glowcap .brick[data-c="2"] { --sp: radial-gradient(ellipse 0.1em 0.075em at 35% 36%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.075em 0.058em at 68% 44%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.054em 0.044em at 48% 62%, var(--spc) 0 72%, transparent 80%); }
+.skin-glowcap .brick[data-c="3"] { --sp: radial-gradient(ellipse 0.07em 0.054em at 24% 46%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.088em 0.066em at 46% 31%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.058em 0.046em at 72% 38%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.05em 0.04em at 60% 62%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.04em 0.034em at 34% 66%, var(--spc) 0 72%, transparent 80%); }
+.skin-glowcap .brick[data-c="4"] { --sp: radial-gradient(ellipse 0.094em 0.07em at 30% 40%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.06em 0.048em at 55% 28%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.08em 0.06em at 70% 54%, var(--spc) 0 72%, transparent 80%); }
+.skin-glowcap .brick[data-c="5"] { --sp: radial-gradient(ellipse 0.078em 0.06em at 26% 44%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.092em 0.07em at 52% 33%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.052em 0.042em at 76% 42%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.056em 0.044em at 50% 63%, var(--spc) 0 72%, transparent 80%); }
+.skin-glowcap .brick[data-c="6"] { --sp: radial-gradient(ellipse 0.086em 0.064em at 33% 37%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.06em 0.046em at 61% 30%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.07em 0.054em at 70% 55%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.046em 0.036em at 40% 63%, var(--spc) 0 72%, transparent 80%); }
+
+/* ---------------------------------------------------------------- Spellbook (Rare)
+   A small closed book seen from the front: leather in the brick's colour with a faint grain and a darker spine strip on the left, gilt
+   corner guards, the colour's sigil pressed in gold foil, cream page edges at the right and bottom and a ribbon bookmark tail. Static. */
+.skin-spellbook :where(.brick:not(.fusebrick)) .face {
+  inset: 5.5% 9% 9.5% 5.5%;
+  border-radius: 8% 14% 14% 8%;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.36) 0 9%, rgba(255, 255, 255, 0.22) 9% 10.4%, rgba(0, 0, 0, 0.3) 10.4% 13%, rgba(255, 255, 255, 0.07) 13% 15%, transparent 22%),
+    repeating-linear-gradient(33deg, rgba(0, 0, 0, 0.1) 0 0.011em, transparent 0.011em 0.03em),
+    repeating-linear-gradient(-57deg, rgba(255, 255, 255, 0.07) 0 0.01em, transparent 0.01em 0.027em),
+    radial-gradient(ellipse 70% 50% at 38% 18%, rgba(255, 255, 255, 0.22), transparent 70%),
+    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 78%, var(--lo)), color-mix(in srgb, var(--lo) 92%, #200));
+  box-shadow:
+    inset 0.025em 0.03em 0.03em rgba(255, 255, 255, 0.3), inset -0.03em -0.04em 0.06em rgba(0, 0, 0, 0.36),
+    0.035em 0.01em 0 #f4ead0, 0.05em 0.02em 0 #bba67a, 0.012em 0.05em 0 #f4ead0, 0.016em 0.075em 0 #bba67a,
+    0.03em 0.11em 0.1em rgba(0, 0, 0, 0.42);
+}
+/* the gilt corner guards */
+.skin-spellbook .brick:not(.fusebrick) .deco {
+  opacity: 1; inset: 0; border-radius: inherit;
+  background:
+    radial-gradient(circle at 0 0, #fff4b8 0, #e8b94c 0.085em, #9a6618 0.16em, transparent 0.165em),
+    radial-gradient(circle at 100% 0, #fff4b8 0, #e8b94c 0.085em, #9a6618 0.16em, transparent 0.165em),
+    radial-gradient(circle at 0 100%, #fff4b8 0, #e8b94c 0.085em, #9a6618 0.16em, transparent 0.165em),
+    radial-gradient(circle at 100% 100%, #fff4b8 0, #e8b94c 0.085em, #9a6618 0.16em, transparent 0.165em);
+}
+/* a gold tooled line just inside the cover */
+.skin-spellbook .brick:not(.fusebrick) .deco::before { content: ''; position: absolute; inset: 9% 7% 8% 19%; border-radius: 9%; border: 0.016em solid rgba(255, 224, 140, 0.7); }
+/* the ribbon bookmark hanging out of the bottom */
+.skin-spellbook .brick:not(.fusebrick) .deco::after { content: ''; position: absolute; left: 62%; bottom: -0.17em; width: 0.085em; height: 0.2em; background: linear-gradient(90deg, #f6d97c, #e6b244 55%, #b27b1c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
+:root:not(.shapes) .skin-spellbook .brick:not(.fusebrick) .stud { left: 56%; width: 46%; height: 46%; top: 48%; border-radius: 0; background: none; box-shadow: none; }
+html.shapes .skin-spellbook .brick:not(.fusebrick) .stud { left: 56%; }
+
+/* ---------------------------------------------------------------- Origami (Rare)
+   Folded matte paper, the only skin with no gloss at all. A flat sheet in the brick's colour with its four corners turned in, and in the
+   middle the fold of its sigil family: a rosette (Ruby), a kite (Sapphire), a triangle (Emerald), four flaps (Topaz), a hexagon twist
+   (Amethyst), a star fold (Amber) and a pinwheel cross (Aqua). The folds are flat light and dark facets of one conic gradient (the
+   lightness varies by about 18 percent, so the hue stays clear) with a pressed crease on every fold line. A second cue for colour-blind
+   players. No SVG, no gloss. Static. (Facet edges sit half a degree apart so they stay smooth at any pixel density.) */
+.skin-origami .brick { --oL: color-mix(in srgb, var(--hi) 88%, #fff); --oM: color-mix(in srgb, var(--hi) 82%, var(--lo)); --oG: color-mix(in srgb, var(--hi) 38%, var(--lo)); --oD: color-mix(in srgb, var(--lo) 92%, #204); --oC: rgba(40, 10, 50, 0.32); --oW: rgba(255, 255, 255, 0.5); }
+.skin-origami :where(.brick:not(.fusebrick)) .face {
+  border-radius: 7%;
+  background: conic-gradient(from 45deg at 50% 50%, color-mix(in srgb, var(--oG) 90%, #fff) 0 24.8%, var(--oG) 25.2% 49.8%, color-mix(in srgb, var(--oG) 88%, #000) 50.2% 74.8%, var(--oG) 75.2% 100%);
+  box-shadow: inset 0 0 0 0.014em rgba(255, 255, 255, 0.22), inset -0.02em -0.03em 0.05em rgba(0, 0, 0, 0.16), 0 0.04em 0 color-mix(in srgb, var(--lo) 58%, #000), 0 0.085em 0.1em rgba(0, 0, 0, 0.36);
+}
+/* the four corners turned in */
+.skin-origami .brick:not(.fusebrick) .deco {
+  opacity: 1; border-radius: inherit;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--oL) 78%, #fff) 0 44%, var(--oC) 47% 52%, transparent 54%) 0 0 / 24% 24% no-repeat,
+    linear-gradient(225deg, color-mix(in srgb, var(--oL) 66%, #fff) 0 44%, var(--oC) 47% 52%, transparent 54%) 100% 0 / 24% 24% no-repeat,
+    linear-gradient(45deg, color-mix(in srgb, var(--oD) 92%, #000) 0 44%, var(--oC) 47% 52%, transparent 54%) 0 100% / 24% 24% no-repeat,
+    linear-gradient(315deg, color-mix(in srgb, var(--oD) 88%, #000) 0 44%, var(--oC) 47% 52%, transparent 54%) 100% 100% / 24% 24% no-repeat;
+}
+/* the fold of the sigil family, raised in the middle of the sheet */
+:root:not(.shapes) .skin-origami .brick:not(.fusebrick) .stud { width: 66%; height: 66%; top: 49%; border-radius: 0; box-shadow: none; background: var(--fold); clip-path: var(--cut); }
+/* a rosette: eight petals round a hub, a pressed ring */
+.skin-origami .brick[data-c="0"] { --cut: circle(50%); --fold:
+  radial-gradient(circle at 50% 50%, var(--oL) 0 0.07em, var(--oC) 0.07em 0.078em, transparent 0.08em),
+  repeating-conic-gradient(from 22.5deg at 50% 50%, var(--oC) 0 0.8deg, var(--oW) 0.8deg 1.6deg, transparent 1.6deg 45deg),
+  conic-gradient(from 22.5deg at 50% 50%, var(--oL) 0 12.3%, var(--oM) 12.7% 24.8%, var(--oD) 25.2% 37.3%, var(--oM) 37.7% 49.8%, var(--oL) 50.2% 62.3%, var(--oM) 62.7% 74.8%, var(--oD) 75.2% 87.3%, var(--oM) 87.7% 100%); }
+/* a kite: a diamond folded from four triangles */
+.skin-origami .brick[data-c="1"] { --cut: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); --fold:
+  repeating-conic-gradient(from 0deg at 50% 50%, var(--oC) 0 0.9deg, var(--oW) 0.9deg 1.8deg, transparent 1.8deg 90deg),
+  conic-gradient(from 0deg at 50% 50%, var(--oM) 0 24.8%, var(--oD) 25.2% 49.8%, var(--oM) 50.2% 74.8%, var(--oL) 75.2% 100%); }
+/* a triangle: three folds meeting at the middle */
+.skin-origami .brick[data-c="2"] { --cut: polygon(50% 6%, 100% 94%, 0 94%); --fold:
+  repeating-conic-gradient(from 0deg at 50% 62%, var(--oC) 0 0.9deg, var(--oW) 0.9deg 1.8deg, transparent 1.8deg 120deg),
+  conic-gradient(from 0deg at 50% 62%, var(--oL) 0 33.1%, var(--oD) 33.5% 66.5%, var(--oM) 66.9% 100%); }
+/* four flaps meeting in the middle, like a folded envelope */
+.skin-origami .brick[data-c="3"] { --cut: inset(0 round 12%); --fold:
+  repeating-conic-gradient(from 45deg at 50% 50%, var(--oC) 0 0.9deg, var(--oW) 0.9deg 1.8deg, transparent 1.8deg 90deg),
+  conic-gradient(from -45deg at 50% 50%, var(--oL) 0 24.8%, var(--oM) 25.2% 49.8%, var(--oD) 50.2% 74.8%, var(--oM) 75.2% 100%); }
+/* a hexagon twist: six wedges, each a little different */
+.skin-origami .brick[data-c="4"] { --cut: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); --fold:
+  radial-gradient(circle at 50% 50%, var(--oL) 0 0.05em, transparent 0.054em),
+  repeating-conic-gradient(from 0deg at 50% 50%, var(--oC) 0 0.8deg, var(--oW) 0.8deg 1.6deg, transparent 1.6deg 60deg),
+  conic-gradient(from 0deg at 50% 50%, var(--oL) 0 16.5%, var(--oM) 16.9% 33.1%, var(--oD) 33.5% 49.8%, var(--oM) 50.2% 66.5%, var(--oL) 66.9% 83.1%, var(--oD) 83.5% 100%); }
+/* a star fold: ten narrow facets round a point */
+.skin-origami .brick[data-c="5"] { --cut: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); --fold:
+  repeating-conic-gradient(from 0deg at 50% 52%, var(--oC) 0 0.8deg, var(--oW) 0.8deg 1.6deg, transparent 1.6deg 36deg),
+  conic-gradient(from 0deg at 50% 52%, var(--oL) 0 9.8%, var(--oD) 10.2% 19.8%, var(--oL) 20.2% 29.8%, var(--oD) 30.2% 39.8%, var(--oL) 40.2% 49.8%, var(--oD) 50.2% 59.8%, var(--oL) 60.2% 69.8%, var(--oD) 70.2% 79.8%, var(--oL) 80.2% 89.8%, var(--oD) 90.2% 100%); }
+/* a pinwheel cross: four blades that each fade from light to dark */
+.skin-origami .brick[data-c="6"] { --cut: polygon(34% 0, 66% 0, 66% 34%, 100% 34%, 100% 66%, 66% 66%, 66% 100%, 34% 100%, 34% 66%, 0 66%, 0 34%, 34% 34%); --fold:
+  repeating-conic-gradient(from 0deg at 50% 50%, var(--oC) 0 1deg, var(--oW) 1deg 2deg, transparent 2deg 90deg),
+  conic-gradient(from 0deg at 50% 50%, var(--oL) 0, var(--oD) 24.6%, var(--oL) 25.4%, var(--oD) 49.6%, var(--oL) 50.4%, var(--oD) 74.6%, var(--oL) 75.4%, var(--oD) 100%); }
+html.shapes .skin-origami .brick:not(.fusebrick) .deco { opacity: 0.5; }
+
