@@ -25,12 +25,16 @@ function dome() {
   // panel shading: the dome gets darker toward the edges
   b += `<rect width='${W}' height='${H}' fill='url(#pn2)' opacity='.35'/>`;
   // ring beams
-  [[17, 5], [83, 6]].forEach(([y, h]) => { b += `<rect y='${y}' width='${W}' height='${h}' fill='url(#br)' opacity='.95'/><rect y='${y}' width='${W}' height='.9' fill='#fff6d0' opacity='.7'/><rect y='${y + h}' width='${W}' height='2' fill='#000' opacity='.35'/>`; for (let x = 8; x < W; x += 28) b += `<circle cx='${x}' cy='${y + h / 2}' r='1.1' fill='#2a1c06'/>`; });
+  [[17, 5], [83, 6]].forEach(([y, h]) => {
+    const hl = 238 - 14 * (y / 100) - 1, hr = 282 + 14 * (y / 100) + 1;   // the beams stop at the slit's edges
+    [[0, hl], [hr, W]].forEach(([x0, x1]) => { b += `<rect x='${n(x0)}' y='${y}' width='${n(x1 - x0)}' height='${h}' fill='url(#br)' opacity='.95'/><rect x='${n(x0)}' y='${y}' width='${n(x1 - x0)}' height='.9' fill='#fff6d0' opacity='.7'/><rect x='${n(x0)}' y='${y + h}' width='${n(x1 - x0)}' height='2' fill='#000' opacity='.35'/>`; });
+    for (let x = 8; x < W; x += 28) if (x < hl - 2 || x > hr + 2) b += `<circle cx='${x}' cy='${y + h / 2}' r='1.1' fill='#2a1c06'/>`;
+  });
   // the seam post
   b += `<rect x='-6' width='12' height='${H}' fill='url(#br)'/><rect x='${W - 6}' width='12' height='${H}' fill='url(#br)'/><rect x='-6' width='1' height='${H}' fill='#fff6d0' opacity='.6'/>`;
   // the slit's trim: brass edges and little rails
   b += `<path d='M238 0L224 ${H}M282 0L296 ${H}' stroke='url(#br)' stroke-width='3.4' fill='none'/><path d='M238 0L224 ${H}M282 0L296 ${H}' stroke='#fff6d0' stroke-width='.7' fill='none' opacity='.7'/>`;
-  [[126, 46], [392, 46]].forEach(([x, y]) => { b += `<circle cx='${x}' cy='${y}' r='26' fill='url(#lm)'/><path d='M${x - 5} ${y - 12}h10v9q0 6 -5 6t-5 -6z' fill='#ffe29a'/><path d='M${x - 7} ${y - 12}h14' stroke='url(#br)' stroke-width='2.6'/><path d='M${x} ${y - 12}V${y - 22}' stroke='url(#br)' stroke-width='1.6'/><path d='M${x - 4.4} ${y - 8}v5' stroke='#fff' stroke-width='1' opacity='.7'/>`; });
+  [[132, 34], [388, 34]].forEach(([x, y]) => { b += `<circle cx='${x}' cy='${y}' r='22' fill='url(#lm)'/><path d='M${x - 5} ${y - 12}h10v9q0 6 -5 6t-5 -6z' fill='#ffe29a'/><path d='M${x - 7} ${y - 12}h14' stroke='url(#br)' stroke-width='2.6'/><path d='M${x} ${y - 12}V${y - 22}' stroke='url(#br)' stroke-width='1.6'/><path d='M${x - 4.4} ${y - 8}v5' stroke='#fff' stroke-width='1' opacity='.7'/>`; });
   b += `<rect width='${W}' height='10' fill='url(#sh)'/>`;
   return svgc(W, H, b, defs, '');
 }
@@ -217,7 +221,7 @@ function css() {
   const stat = [pScope, pMount, sShutL, sShutR, tDome, pStars, pSky, pGlobe, pOrrS, floorGlow, tFloor, wallFade, wallL, base];
   const run = [pGlobe, pOrr, floorGlow, tFloor, pSky, wallFade, wallL, base];
   return {
-    plate: [4, 9, 24, 0.7],
+    plate: [4, 9, 24, 0.8],
     vars: `
   --a-bg: ${stat.join(',\n    ')};
   --a-bg-run: ${run.join(',\n    ')};

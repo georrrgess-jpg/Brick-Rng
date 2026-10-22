@@ -32,6 +32,8 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
     }, ids);
     await page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 20000 });
     await page.waitForTimeout(350);
+    // the entrance (bricks dropping in, the board settling) is finished before anything is measured, however slow the machine is
+    await page.evaluate(() => Promise.race([Promise.all(document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {}))), new Promise((r) => setTimeout(r, 3000))]));
   };
   const SAFE = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale']);
   // animations that run behind or on the board (the scene) and what they animate
@@ -195,12 +197,15 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
     const base = new Set(document.getAnimations());
     const parts0 = BR.App.fx.parts.length;
     const seen = new Map(); let maxConc = 0, maxParts = 0;
-    const t0 = performance.now();
+    // times are read off the animation timeline (start time + the animation's own end time), not off the sampler, so a slow machine cannot stretch them;
+    // the wait for the first frame after the event is taken out, every other delay (a timed second beat) stays in
+    const T0 = document.timeline.currentTime;
     const sample = () => {
-      const now = performance.now() - t0; let conc = 0;
+      let conc = 0;
       document.getAnimations().forEach((a) => {
         if (base.has(a) || !mine(a)) return;
-        if (!seen.has(a)) { const ct = a.effect.getComputedTiming(); const props = a.effect.getKeyframes ? Array.from(new Set(a.effect.getKeyframes().flatMap((k) => Object.keys(k)))).filter((p) => !['offset', 'easing', 'composite', 'computedOffset'].includes(p)) : [a.transitionProperty]; seen.set(a, { end: now + Math.max(0, ct.endTime - (ct.localTime || 0)), props, who: a.effect.target.className }); }
+        if (!seen.has(a)) { const ct = a.effect.getComputedTiming(); const props = a.effect.getKeyframes ? Array.from(new Set(a.effect.getKeyframes().flatMap((k) => Object.keys(k)))).filter((p) => !['offset', 'easing', 'composite', 'computedOffset'].includes(p)) : [a.transitionProperty]; seen.set(a, { a, et: ct.endTime, props, who: a.effect.target.className }); }
+        const e = seen.get(a); if (a.startTime != null) e.stt = a.startTime;
         if (a.playState === 'running') conc++;
       });
       maxConc = Math.max(maxConc, conc); maxParts = Math.max(maxParts, BR.App.fx.parts.length - parts0);
@@ -213,10 +218,14 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
     sample();
     await new Promise((res) => { const iv = setInterval(sample, 16); setTimeout(() => { clearInterval(iv); res(); }, watchMs); });
     const arr = Array.from(seen.values());
+    arr.forEach((s) => { s.st = s.stt == null ? null : s.stt - T0; });
+    const L = Math.min(...arr.filter((s) => s.st != null).map((s) => s.st), Infinity);
+    arr.forEach((s) => { s.end = (s.st == null ? 0 : s.st - L) + s.et; });
     return { count: arr.length, end: Math.max(0, ...arr.map((s) => s.end)), maxConc, maxParts, props: Array.from(new Set(arr.flatMap((s) => s.props))), who: arr.map((s) => s.who) };
   }, { type, watchMs });
   const layerState = () => page.evaluate(() => Array.from(document.querySelectorAll('#bg .s4x, #boardWrap .s4x')).map((el) => { const cs = getComputedStyle(el); return el.className + '|' + cs.opacity + '|' + cs.transform + '|' + cs.translate; }));
-  const stuck = () => page.evaluate(() => ({ running: document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.s4x')).length, beams: document.querySelectorAll('#fxlayer .s4x').length }));
+  // a moment leaves nothing running: the layers' own idle loops (bob, drift) are not moments, so endless animations are not counted
+  const stuck = () => page.evaluate(() => ({ running: document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.s4x') && a.effect.getComputedTiming().iterations !== Infinity).length, beams: document.querySelectorAll('#fxlayer .s4x.beam').length }));
 
   // ---- 4. low-end and reduced hold still: no idle animation, no moments, the static scene
   if (want('still')) {
@@ -284,7 +293,13 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
         const ga = await load(a), gb = await load(b), f = document.getElementById('field').getBoundingClientRect();
         const x = Math.round(f.left), y = Math.round(f.top), w = Math.round(f.width), h = Math.round(f.height);
         const da = ga.getImageData(x, y, w, h).data, db = gb.getImageData(x, y, w, h).data; let n = 0;
-        for (let i = 0; i < da.length; i += 4) if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > 6) n++;
+        // the four 10px corner squares are skipped: the board has rounded corners and the field's square corner pokes into that curve a pixel or two, whatever the frame is
+        const C = 10;
+        for (let i = 0; i < da.length; i += 4) {
+          const p = i / 4, px = p % w, py = Math.floor(p / w);
+          if ((px < C || px >= w - C) && (py < C || py >= h - C)) continue;
+          if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > 6) n++;
+        }
         return n;
       }, { a: a.toString('base64'), b: b.toString('base64') });
     };

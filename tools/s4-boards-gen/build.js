@@ -49,7 +49,7 @@ ${PREV}:is(${ALL.join(', ')}) { --s4-th: 28%; --s4-bh: 36%; --s4-free: 20%; --s4
 
 /* a soft dark plate behind the score (top right of the run column) and behind the message band: part of the run background so low-end
    phones get them too, and the score text keeps a shadow so it reads over any scene */
-${ISALL} { --s4-hud: radial-gradient(ellipse 132px 60px at calc(50% + var(--bw) / 2 - 56px) calc(var(--s4-free) + 24px), var(--s4-plate) 0, var(--s4-plate) 24%, transparent 100%); }
+${ISALL} { --s4-hud: radial-gradient(ellipse 152px 72px at calc(50% + var(--bw) / 2 - 56px) calc(var(--s4-free) + 24px), var(--s4-plate) 0, var(--s4-plate) 38%, transparent 100%); }
 ${ISALL} .run-active .bg { background: var(--s4-hud), var(--a-bg-run); }
 ${ISALL} .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--s4-plate) 0, var(--s4-plate) 60%, transparent 100%); }
 ${ISALL} .run-active .msgband:is([data-top="spark"], [data-top="aim"], [data-top="hint"], [data-top="combo"], [data-top="goal"])::before { opacity: 1; }
@@ -82,14 +82,14 @@ const tail = `
 /* short landscape screens (a phone on its side): the board sits left, the HUD column right; the bands stay thin */
 @media (orientation: landscape) and (max-height: 560px) {
   ${ISALL} { --s4-th: min(56px, 14%); --s4-bh: min(92px, 23%); --s4-cx: calc(50% - 158px); }
-  ${ISALL} { --s4-hud: radial-gradient(ellipse 132px 60px at calc(50% + (var(--bw) + 316px) / 2 - 56px) 28px, var(--s4-plate) 0, var(--s4-plate) 24%, transparent 100%); }
+  ${ISALL} { --s4-hud: radial-gradient(ellipse 152px 72px at calc(50% + (var(--bw) + 316px) / 2 - 56px) 28px, var(--s4-plate) 0, var(--s4-plate) 38%, transparent 100%); }
 }
 /* low-end phones and reduced motion: the whole scene holds still on the static --a-bg */
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg { background: var(--s4-hud), var(--a-bg); }
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg::before,
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg::after,
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg .scene-fx,
-html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg .s4x { display: none; }
+html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg .s4x,\nhtml:is(.low-end, .reduced):is(${ALL.join(', ')}) .board-wrap .s4x { display: none; }
 `;
 
 let css = head;

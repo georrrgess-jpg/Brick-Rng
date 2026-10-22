@@ -68,14 +68,14 @@ function top() {
       b += [0].concat(x < 24 ? [W] : [], x > W - 24 ? [-W] : []).map((dx) => leaf(x + dx, y, a, s, r.pick(classes))).join('');
     }
   };
-  layer(64, 52, 14, 22, ['a', 'b', 'a'], 3, 0.021);
+  layer(54, 52, 14, 22, ['a', 'b', 'a'], 3, 0.021);
   // trailing vines with fairy-light blossoms
   [[60, 38], [176, 30], [310, 42], [412, 32], [480, 26]].forEach(([x, len]) => {
     b += `<path d='M${x} 8Q${x + 7} ${len * 0.5} ${x + 2} ${len + 8}' stroke='#0d3c3a' stroke-width='1.2' fill='none'/>`;
     for (let k = 1; k < 5; k++) b += leaf(x + 3 * Math.sin(k), 8 + (len * k) / 4.6, 80 + k * 12, 0.5, 'b');
     b += `<circle cx='${x + 2}' cy='${len + 9}' r='7' fill='url(#bl)'/><circle cx='${x + 2}' cy='${len + 9}' r='1.7' fill='#ffd0ea'/>`;
   });
-  layer(52, 44, 18, 28, ['b', 'c', 'c'], 5, 0.017);
+  layer(44, 44, 18, 28, ['b', 'c', 'c'], 5, 0.017);
   layer(26, 30, 26, 38, ['c', 'd', 'd'], 7, 0.013);
   // a pale rim on the leaves that face the moon (the top edge of the near layer)
   for (let i = 0; i < 12; i++) { const x = rnd.between(0, W), y = rnd.between(0, 14); b += leaf(x, y - 1.2, 90 + rnd.between(-60, 60), rnd.between(22, 32) / 14, 'e'); }
@@ -96,7 +96,7 @@ function moon() {
 }
 function shafts() {
   const W = 260, H = 700;
-  const defs = S.lg('s', [[0, '#bfe8ff', 0.15], [0.55, '#9fe8e0', 0.05], [1, '#9fe8e0', 0]]);
+  const defs = S.lg('s', [[0, '#bfe8ff', 0.11], [0.55, '#9fe8e0', 0.04], [1, '#9fe8e0', 0]]);
   let b = '';
   [[40, 18, 120, 96], [92, 14, 190, 120], [150, 20, 250, 150]].forEach(([x, w, x2, w2]) => { b += `<path d='M${x} 0H${x + w}L${x2 + w2} ${H}H${x2}Z' fill='url(#s)'/>`; });
   return svgc(W, H, b, defs, '');
@@ -142,13 +142,13 @@ function floor() {
   [[96, 104, 1.3, 'a', 5], [210, 108, 1.2, 'a', 4], [330, 106, 1.3, 'a', 5], [440, 108, 1.2, 'a', 4]].forEach(([x, y, s, c, fr]) => { b += fern(x, y, s, c, fr); });
   // grass and fern fronds in front, nearly black, with a pale rim
   b += ridge(108, 8, '#04140f', 3);
-  for (let i = 0; i < 46; i++) {
+  for (let i = 0; i < 36; i++) {
     const x = rnd.between(0, W), h = rnd.between(8, 26), lean = rnd.between(-6, 6);
     b += `<path d='M${n(x)} ${H}Q${n(x + lean * 0.3)} ${n(H - h * 0.6)} ${n(x + lean)} ${n(H - h)}Q${n(x + lean * 0.6 + 1.6)} ${n(H - h * 0.5)} ${n(x + 2.2)} ${H}Z' class='d'/>`;
   }
   [[18, 114, 1.2], [112, 116, 1], [240, 116, 1.1], [352, 114, 1.2], [470, 116, 1]].forEach(([x, y, s]) => { b += fern(x, y, s, 'd', 4); });
   // tiny white flowers and fallen petals
-  for (let i = 0; i < 18; i++) b += `<circle cx='${n(rnd.between(0, W))}' cy='${n(rnd.between(92, 116))}' r='${n(rnd.between(0.7, 1.4))}' fill='#e8fff8' opacity='${n(rnd.between(0.4, 0.9))}'/>`;
+  for (let i = 0; i < 12; i++) b += `<circle cx='${n(rnd.between(0, W))}' cy='${n(rnd.between(92, 116))}' r='${n(rnd.between(0.7, 1.4))}' fill='#e8fff8' opacity='${n(rnd.between(0.4, 0.9))}'/>`;
   return svgc(W, H, b, defs, css);
 }
 
@@ -164,11 +164,11 @@ function glow() {
 /** fireflies (the moving layer's tile, wraps vertically) */
 function fireflies() {
   const W = 260, H = 520, rnd = rngOf(17);
-  const defs = glowDef('y', FF, 0.95, 0.32) + glowDef('t', TEAL, 0.9, 0.3);
+  const defs = glowDef('y', FF, 0.8, 0.24) + glowDef('t', TEAL, 0.75, 0.22);
   let b = '';
   for (let i = 0; i < 17; i++) {
     const x = rnd.between(8, W - 8), y = rnd.between(0, H), r = rnd.between(1.2, 2.6), g = rnd.chance(0.7) ? 'y' : 't', a = n(rnd.between(0.5, 1));
-    [0, -H].concat(y < 20 ? [H] : []).forEach((dy) => { b += `<circle cx='${n(x)}' cy='${n(y + dy)}' r='${n(r * 4.2)}' fill='url(#${g})' opacity='${a}'/><circle cx='${n(x)}' cy='${n(y + dy)}' r='${n(r * 0.6)}' fill='#fffff0'/>`; });
+    [0, -H].concat(y < 20 ? [H] : []).forEach((dy) => { b += `<circle cx='${n(x)}' cy='${n(y + dy)}' r='${n(r * 3.4)}' fill='url(#${g})' opacity='${a}'/><circle cx='${n(x)}' cy='${n(y + dy)}' r='${n(r * 0.6)}' fill='#fffff0'/>`; });
   }
   return svgc(W, H, b, defs, '');
 }
@@ -187,7 +187,7 @@ function capDraw() {
 function css() {
   const th = 'var(--s4-th)', bh = 'var(--s4-bh)', K = (v, k) => `calc(${v} * ${k})`;
   const P = {
-    moon: { fx: -0.12, band: 'top', h: K(th, 0.95), a: 1, dy: K(th, -0.06) },
+    moon: { fx: 'var(--s4-gl-mfx)', band: 'top', h: K(th, 0.95), a: 1, dy: K(th, -0.06) },
     shafts: { fx: -0.02, band: 'top', h: 'calc(var(--s4-free) * 0 + 70%)', a: 260 / 700, dy: '0px' },
   };
   const R = registry('glade');
@@ -199,7 +199,7 @@ function css() {
   const trunkR = `${ref.trunkR} repeat-y calc(var(--s4-cx) + var(--s4-cw) / 2 + 15px - 6px + 6px) 0 / 30px auto`;
   const pMoon = bgPiece(ref.moon, P.moon), pShafts = bgPiece(ref.shafts, P.shafts);
   const mist = 'linear-gradient(0deg, rgba(90, 255, 220, 0.05) 0, rgba(90, 255, 220, 0.02) 18%, transparent 36%)';
-  const sky = 'radial-gradient(ellipse 70% 30% at 36% 0%, rgba(150, 220, 255, 0.2), transparent 70%), linear-gradient(180deg, #04141c 0%, #072a30 34%, #0a3a38 62%, #06241f 86%, #031410 100%)';
+  const sky = 'radial-gradient(ellipse 70% 30% at 36% 0%, rgba(150, 220, 255, 0.2), transparent 70%), linear-gradient(180deg, #04141c 0%, #062229 34%, #082e2e 62%, #06241f 86%, #031410 100%)';
   return {
     plate: [2, 20, 18, 0.66],
     vars: `
@@ -207,7 +207,9 @@ function css() {
   --a-bg-run: ${[tFloor, trunkL, trunkR, tTop, pMoon, pShafts, mist, sky].join(',\n    ')};
   --a-board: linear-gradient(180deg, #071713, #030b09);
   --a-frame: #7fd4b8;
-  --a-glow: rgba(107, 255, 224, 0.3);${R.decls()}`,
+  --a-glow: rgba(107, 255, 224, 0.3);
+  --s4-gl-mfx: -0.12;${R.decls()}`,
+    media: `:is(.hero-board, .mini-board).board-glade { --s4-gl-mfx: -0.36; }\n`,
     run: `
 .board-glade .run-active .bg::before { display: block; left: 0; right: 0; bottom: 0; height: var(--s4-bh); background: ${ref.glow} repeat-x 50% 100% / auto 100%; will-change: opacity; animation: s4Glow 3.4s ease-in-out infinite alternate; }
 .board-glade .run-active .bg .scene-fx { display: block; height: calc(100% + 520px); background-image: ${ref.flies}; background-size: 260px 520px; animation: s4Wander 110s linear infinite; }
@@ -216,7 +218,7 @@ function css() {
     frame: L.frameCSS('board-glade', {
       ring: [[1.5, '#04120f'], [5, '#3a5a50'], [6, '#7fb09a'], [8, '#1d3a32'], [9, 'rgba(107, 255, 224, 0.75)']],
       drop: '0 0 14px rgba(107, 255, 224, 0.3), 0 8px 22px rgba(0, 0, 0, 0.55)',
-      tooled: 'inset 0 0 0 1.4px rgba(127, 212, 184, 0.55), inset 0 0 0 3px rgba(0, 0, 0, 0.35), inset 0 0 0 4.2px rgba(107, 255, 224, 0.25)',
+      tooled: 'inset 0 0 0 1.4px rgba(127, 212, 184, 0.55), inset 0 0 0 2.6px rgba(0, 0, 0, 0.35), inset 0 0 0 3.5px rgba(107, 255, 224, 0.25)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
       glow: 'rgba(107, 255, 224, 0.3)',
     }),

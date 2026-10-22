@@ -57,7 +57,7 @@ function far() {
   // a pale crescent
   b += `<circle cx='430' cy='30' r='34' fill='url(#mn)'/><circle cx='430' cy='30' r='9' fill='#fffbe8'/><circle cx='92' cy='26' r='10' fill='url(#mn)'/><path d='M92 18A8 8 0 1 0 92 34A6 6 0 1 1 92 18Z' fill='#fff7e6' opacity='.85'/>`;
   // soft clouds
-  [[70, 70, 90, 12], [190, 56, 70, 9], [330, 76, 110, 13], [440, 50, 80, 10]].forEach(([x, y, w, h]) => { [-W, 0, W].forEach((dx) => { b += `<g opacity='.8'>${cloud(x + dx, y, w, h, '#ffe2d0', '#e8b0c8')}</g>`; }); });
+  [[70, 70, 90, 12], [190, 56, 70, 9], [330, 76, 110, 13], [440, 50, 80, 10]].forEach(([x, y, w, h]) => { [-W, 0, W].filter((dx) => x + dx + w / 2 > 0 && x + dx - w / 2 < W).forEach((dx) => { b += `<g opacity='.8'>${cloud(x + dx, y, w, h, '#ffe2d0', '#e8b0c8')}</g>`; }); });
   // far islands in haze: the same islands, small, washed toward the sky; the farthest carries the Moonwick tower
   const haze = (x, top, w, d, seed, op, o) => `<g opacity='${op}'>${island(x, top, w, d, seed, o)}</g>`;
   b += haze(150, 70, 40, 12, 41, 0.42, { trees: 2 }) + haze(250, 84, 56, 16, 42, 0.36, { trees: 3, fall: 1, len: 14 });
@@ -100,7 +100,7 @@ function sea(layerFront) {
   const W = 520, H = 60, rnd = rngOf(layerFront ? 5 : 6);
   const defs = S.lg('bk', [[0, '#e8a0b8'], [1, '#c07898']]);
   let b = '';
-  const bank = (y, h, c1, c2, count, seed, op) => { const r = rngOf(seed); for (let i = 0; i < count; i++) { const x = (i + r.f() * 0.6) * (W / count), w = r.between(70, 130), hh = h * r.between(0.7, 1.15); [-W, 0].forEach((dx) => { b += `<g opacity='${op}'>${cloud(x + dx, y + r.between(-3, 3), w, hh, c1, c2)}</g>`; }); } };
+  const bank = (y, h, c1, c2, count, seed, op) => { const r = rngOf(seed); for (let i = 0; i < count; i++) { const x = (i + r.f() * 0.6) * (W / count), w = r.between(70, 130), hh = h * r.between(0.7, 1.15); [-W, 0].filter((dx) => x + dx + w * 0.6 > 0 && x + dx - w * 0.6 < W).forEach((dx) => { b += `<g opacity='${op}'>${cloud(x + dx, y + r.between(-3, 3), w, hh, c1, c2)}</g>`; }); } };
   if (!layerFront) { bank(20, 22, '#f0b0c0', '#c07898', 7, 31, 1); bank(34, 24, '#ffd0b0', '#e098b0', 7, 32, 1); }
   else { bank(44, 26, '#fff0e0', '#f0b8c0', 7, 33, 1); bank(56, 22, '#fffaf0', '#ffd8c8', 7, 34, 1); }
   return svgc(W, H, b, defs, '');
@@ -170,7 +170,7 @@ function css() {
 /* the bobbing islands (one DOM layer made by js/s4-scenes.js, under the cloud sea) with the surge layer on top of the falls */
 .board-isles .bg .s4x.isl { left: 0; right: 0; bottom: 0; height: var(--s4-isl); background: ${ref.isles} no-repeat 50% 100% / auto 100%; will-change: transform; animation: s4Bob2 7s ease-in-out infinite alternate; transition: translate 0.8s ease-in-out; }
 .board-isles .bg .s4x.isl > i { position: absolute; inset: 0; background: ${ref.falls} no-repeat 50% 100% / auto 100%; opacity: 0; }
-.board-isles .bg .s4x.rainbow { left: calc(var(--s4-cx) - var(--s4-cw) * 0.62); width: calc(var(--s4-cw) * 1.24); top: 36%; height: calc(var(--s4-cw) * 0.68); background: ${ref.rainbow} no-repeat center bottom / 100% 100%; opacity: 0; }
+.board-isles .bg .s4x.rainbow { left: calc(var(--s4-cx) - var(--s4-cw) * 0.575); width: calc(var(--s4-cw) * 1.15); top: calc(50% - var(--s4-cw) * 0.63); height: calc(var(--s4-cw) * 0.63); background: ${ref.rainbow} no-repeat center bottom / 100% 100%; opacity: 0; }
 .board-isles .bg .s4x.rays { width: calc(var(--s4-cw) * 2.4); height: calc(var(--s4-cw) * 2.4); background: repeating-conic-gradient(from 0deg, rgba(255, 240, 200, 0.6) 0 6deg, transparent 6deg 20deg), radial-gradient(circle, rgba(255, 214, 150, 0.6) 0, rgba(255, 190, 140, 0.26) 26%, transparent 52%); -webkit-mask-image: radial-gradient(circle, #000 14%, transparent 64%); mask-image: radial-gradient(circle, #000 14%, transparent 64%); opacity: 0; }
 .board-isles .bg .s4x.birds { left: -130px; top: calc(var(--s4-th) * 0.12); width: 120px; height: 44px; background: ${ref.birds} no-repeat center / 100% 100%; opacity: 0; }
 `,
@@ -182,7 +182,7 @@ function css() {
     frame: L.frameCSS('board-isles', {
       ring: [[1.5, '#4a4868'], [5, '#d8d4e6'], [6, '#ffffff'], [8, '#a8a4bc'], [9, '#6a6888']],
       drop: '0 0 14px rgba(255, 190, 140, 0.3), 0 8px 22px rgba(10, 8, 40, 0.55)',
-      tooled: 'inset 0 0 0 1.4px rgba(220, 216, 240, 0.6), inset 0 0 0 3px rgba(0, 0, 0, 0.4), inset 0 0 0 4.2px rgba(255, 190, 140, 0.3)',
+      tooled: 'inset 0 0 0 1.4px rgba(220, 216, 240, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4), inset 0 0 0 3.5px rgba(255, 190, 140, 0.3)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
       glow: 'rgba(255, 190, 140, 0.34)',
     }),

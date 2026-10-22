@@ -71,7 +71,8 @@
     const bg = $('bg'), wrap = $('boardWrap');
     if (!board || !bg) return;
     if (board === 'alchemy') {
-      ['flasklit', 'plume', 'sweep', 'drop'].forEach((k) => { spr[k] = add(bg, k); });
+      ['flasklit', 'plume', 'sweep'].forEach((k) => { spr[k] = add(bg, k); });
+      if (wrap) spr.drop = add(bg, 'drop', null, $('fxlayer'));
     } else if (board === 'observatory') {
       ['shutL', 'shutR', 'shoot'].forEach((k) => { spr[k] = add(bg, k, 'under'); });
       spr.scope = add(bg, 'scope');
@@ -137,26 +138,34 @@
       f.style.opacity = '';
       play(f, [{ opacity: 1 }, { opacity: 0 }], { duration: 580, easing: 'ease-in' });
     },
+    /** a drop of brew runs along the top pipe, down the copper edge of the screen and along the floor into the cauldron (a bright streak on the
+        board's effect layer: it travels through the empty gutter, over no HUD) */
     alchemyStageUp(d, ctx) {
-      const dr = spr.drop, pl = spr.plume, bg = $('bg');
-      if (!dr || !pl || !bg) return;
-      const b = bg.getBoundingClientRect(), r = pl.getBoundingClientRect(), d0 = dr.getBoundingClientRect();
-      const x1 = r.left + r.width / 2 - d0.width / 2 - d0.left, y1 = r.top + r.height * 0.75 - d0.top - d0.height / 2;
-      const yEnd = b.bottom - b.top;
+      const dr = spr.drop, pl = spr.plume, wrap = $('boardWrap'), fl = spr.flasklit;
+      if (!dr || !pl || !wrap || !fl) return;
+      const w = wrap.getBoundingClientRect(), r = pl.getBoundingClientRect(), th = fl.getBoundingClientRect().height;
+      const X = (x) => x - w.left, Y = (y) => y - w.top;
+      const gx = X(w.left - 6), pipeY = Y(th * 0.165 + 2), cx0 = X(window.innerWidth / 2 + 6);
+      const bx = X(r.left + r.width / 2), by = Y(r.top + r.height * 0.75), ey = Y(r.top + r.height * 0.72), lip = bx - r.height * 0.3;
+      const T = (x, y, a) => `translate(${(x - 13).toFixed(1)}px, ${(y - 53).toFixed(1)}px) rotate(${a}deg)`;
       play(dr, [
-        { transform: 'translate(0, 0)', opacity: 0 },
-        { transform: 'translate(0, 8px)', opacity: 1, offset: 0.08 },
-        { transform: `translate(0, ${(yEnd * 0.86).toFixed(0)}px)`, opacity: 1, offset: 0.72, easing: 'cubic-bezier(0.5, 0, 0.9, 0.6)' },
-        { transform: `translate(${x1.toFixed(0)}px, ${y1.toFixed(0)}px)`, opacity: 0.9, offset: 0.97 },
-        { transform: `translate(${x1.toFixed(0)}px, ${y1.toFixed(0)}px)`, opacity: 0 },
-      ], { duration: 880, easing: 'ease-in' });
+        { transform: T(cx0, pipeY, 90), opacity: 0 },
+        { transform: T(cx0 - 14, pipeY, 90), opacity: 1, offset: 0.05 },
+        { transform: T(gx, pipeY, 90), opacity: 1, offset: 0.3, easing: 'ease-in' },
+        { transform: T(gx, pipeY + 12, 0), opacity: 1, offset: 0.36 },
+        { transform: T(gx, ey - 6, 0), opacity: 1, offset: 0.7, easing: 'ease-in' },
+        { transform: T(gx + 12, ey, -90), opacity: 1, offset: 0.75 },
+        { transform: T(lip, ey, -90), opacity: 1, offset: 0.9, easing: 'ease-out' },
+        { transform: T(bx, by, -20), opacity: 1, offset: 0.97 },
+        { transform: T(bx, by + 4, 0), opacity: 0 },
+      ], { duration: 880, easing: 'linear' });
       later(() => {
         const q = rectOf(pl); if (!q) return;
         const x = q.left + q.width / 2, y = q.top + q.height * 0.75;
         ctx.fx.ring(x, y, '#c8ff6a', 44, 0.4, 2);
         for (let i = 0; i < 7; i++) ctx.fx.emit({ kind: 'spark', x, y, vx: ctx.rnd(-90, 90), vy: ctx.rnd(-260, -90), g: 460, drag: 0.8, size: ctx.rnd(2, 3.6), max: 0.4, color: '#e8ffb0' });
         tone({ f: 880, to: 1320, dur: 0.14, vol: 0.09, attack: 0.002 }); tone({ f: 1320, dur: 0.2, vol: 0.05, at: 0.05 });
-      }, 780);
+      }, 800);
     },
   };
 
@@ -231,15 +240,15 @@
     const isl = spr.isl, rb = spr.rainbow; if (!isl || !rb) return;
     hold.rush = true;
     isl.style.translate = '0 -12px';                                   // (a short CSS transition on the layer, see css/s4-scenes.css)
-    play(rb, [{ opacity: 0 }, { opacity: 0.8 }], { duration: 760, easing: 'ease-out' });
-    rb.style.opacity = '0.8';
+    play(rb, [{ opacity: 0 }, { opacity: 0.55 }], { duration: 760, easing: 'ease-out' });
+    rb.style.opacity = '0.55';
   };
   shapes.islesRushEnd = function () {
     const isl = spr.isl, rb = spr.rainbow; if (!isl || !rb || !hold.rush) return;
     hold.rush = false;
     isl.style.translate = '';
     rb.style.opacity = '';
-    play(rb, [{ opacity: 0.8 }, { opacity: 0 }], { duration: 700, easing: 'ease-in' });
+    play(rb, [{ opacity: 0.55 }, { opacity: 0 }], { duration: 700, easing: 'ease-in' });
   };
   shapes.islesStageUp = function (d, ctx) {
     const rays = spr.rays, wrap = $('boardWrap'), bg = $('bg'); if (!rays || !wrap || !bg) return;

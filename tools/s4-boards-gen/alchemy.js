@@ -167,9 +167,9 @@ function sweep() {
   return svgc(W, H, `<rect width='${W}' height='${H}' fill='url(#s)'/>`, defs, '');
 }
 function drop() {
-  const W = 16, H = 26;
-  const defs = glowDef('g', GOLDG, 0.9, 0.35) + S.rg('d', [[0, '#fff'], [0.5, '#e8ffb0'], [1, GOLDG]], 0.4, 0.35, 0.7);
-  return svgc(W, H, `<circle cx='8' cy='15' r='8' fill='url(#g)'/><path d='M8 2Q13 11 13 16Q13 22 8 22Q3 22 3 16Q3 11 8 2Z' fill='url(#d)'/><ellipse cx='6.4' cy='16' rx='1.2' ry='2.4' fill='#fff' opacity='.8'/>`, defs, '');
+  const W = 20, H = 50;
+  const defs = glowDef('g', GOLDG, 0.95, 0.4) + S.lg('t', [[0, GOLDG, 0], [1, '#e8ffb0', 0.95]], 0, 0, 0, 1) + S.rg('d', [[0, '#fff'], [0.5, '#e8ffb0'], [1, GOLDG]], 0.4, 0.35, 0.7);
+  return svgc(W, H, `<path d='M10 0L14 36A4.4 4.4 0 1 1 6 36Z' fill='url(#t)'/><circle cx='10' cy='41' r='9.4' fill='url(#g)'/><circle cx='10' cy='41' r='4.6' fill='url(#d)'/><circle cx='8.6' cy='39.4' r='1.4' fill='#fff'/>`, defs, '');
 }
 
 function capDraw() {
@@ -201,11 +201,11 @@ function css() {
   const rest = [fireHalo, brewHalo, bgPiece(ref.cauldron, P.cauldron), bgPiece(ref.props, P.props), tFloor, tTop, soot, paper, base];
   const bgList = [fireHalo, brewHalo, bgPiece(ref.cauldron, P.cauldron), bgPiece(ref.props, P.props), tFloor, tGlow, tTop, soot, paper, base];
   const rivets = (c1, c2) => {
-    const r = `radial-gradient(circle at 50% 50%, #ffe8d0 0 0.9px, ${c1} 1.7px, ${c2} 2.5px, transparent 3.1px)`;
-    return `${r} 0 3px / 24px 8px repeat-x, ${r} 12px calc(100% - 3px) / 24px 8px repeat-x, ${r} 3px 12px / 8px 24px repeat-y, ${r} calc(100% - 3px) 0 / 8px 24px repeat-y`;
+    const r = `radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, ${c1} 1.5px, ${c2} 2.2px, transparent 2.7px)`;
+    return `${r} 0 0.4px / 24px 8px repeat-x, ${r} 12px calc(100% - 0.4px) / 24px 8px repeat-x, ${r} 0.4px 12px / 8px 24px repeat-y, ${r} calc(100% - 0.4px) 0 / 8px 24px repeat-y`;
   };
   return {
-    plate: [16, 9, 6, 0.7],
+    plate: [16, 9, 6, 0.82],
     vars: `
   --a-bg: ${bgList.join(',\n    ')};
   --a-bg-run: ${rest.join(',\n    ')};
@@ -221,12 +221,12 @@ function css() {
 .board-alchemy .bg .s4x.flasklit { left: 0; right: 0; top: 0; height: var(--s4-th); background: ${ref.lit} repeat-x 50% 0 / auto 100%; }
 .board-alchemy .bg .s4x.plume { ${boxCSS(P.plume)} background: ${ref.plume} no-repeat center / 100% 100%; transform-origin: 50% 75%; }
 .board-alchemy .bg .s4x.sweep { left: 0; top: calc(var(--s4-th) * 0.12); width: 46%; height: calc(var(--s4-th) * 0.62); background: ${ref.sweep} no-repeat center / 100% 100%; }
-.board-alchemy .bg .s4x.drop { left: calc(var(--s4-cx) - var(--s4-cw) / 2 - 8px); top: 0; width: 16px; height: 26px; background: ${ref.drop} no-repeat center / 100% 100%; }
+.board-alchemy #fxlayer .s4x.drop { position: absolute; z-index: 5; pointer-events: none; opacity: 0; left: 0; top: 0; width: 26px; height: 65px; background: ${ref.drop} no-repeat center / 100% 100%; transform-origin: 50% 82%; }
 `,
     frame: L.frameCSS('board-alchemy', {
       ring: [[1.5, '#1a0c05'], [5, CU.base], [6, '#f6b074'], [8, '#5a2a0e'], [9, 'rgba(61, 255, 160, 0.5)']],
       drop: '0 0 12px rgba(255, 150, 60, 0.25), 0 8px 22px rgba(0, 0, 0, 0.55)',
-      tooled: 'inset 0 0 0 1.4px rgba(246, 176, 116, 0.6), inset 0 0 0 3px rgba(0, 0, 0, 0.4)',
+      tooled: 'inset 0 0 0 1.4px rgba(246, 176, 116, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
       glow: 'rgba(255, 150, 60, 0.3)',
     }) + `.board-alchemy .board::after { background: ${rivets('#c46a2f', '#5a2a0e')}; }\n`,

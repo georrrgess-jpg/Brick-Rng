@@ -14,12 +14,12 @@ const CSS = '.g{fill:#e8b85a}.v{fill:#e8b85a;opacity:.55}.p{fill:#e9d8a6;opacity
 function book(x, base, w, h, ci, rnd, lean) {
   const y = base - h, X = n(x), W = n(w), Y = n(y);
   let b = `<path d='M${X} ${n(base)}V${n(y + 1.5)}Q${X} ${Y} ${n(x + 1.5)} ${Y}H${n(x + w - 1.5)}Q${n(x + w)} ${Y} ${n(x + w)} ${n(y + 1.5)}V${n(base)}Z' fill='url(#s${ci})'/>`;
-  if (rnd.chance(0.85)) b += `<path class='g' d='M${X} ${n(y + h * 0.1)}h${W}v1.1h-${W}zM${X} ${n(base - h * 0.13)}h${W}v1.1h-${W}z'/><path class='v' d='M${X} ${n(y + h * 0.1 + 2.2)}h${W}v.5h-${W}zM${X} ${n(base - h * 0.13 - 2)}h${W}v.5h-${W}z'/>`;
-  if (rnd.chance(0.6) && w > 8) {
+  if (rnd.chance(0.85)) b += `<path class='g' d='M${X} ${n(y + h * 0.1)}h${W}v1.1h-${W}zM${X} ${n(base - h * 0.13)}h${W}v1.1h-${W}z'/>`;
+  if (rnd.chance(0.5) && w > 8) {
     const ly = y + h * rnd.between(0.26, 0.42), lh = Math.min(10, h * 0.24);
     b += `<rect class='${rnd.chance(0.55) ? 'p' : 'd'}' x='${n(x + w * 0.2)}' y='${n(ly)}' width='${n(w * 0.6)}' height='${n(lh)}'/><path class='g' d='M${n(x + w * 0.3)} ${n(ly + lh * 0.3)}h${n(w * 0.4)}v.6h-${n(w * 0.4)}zM${n(x + w * 0.3)} ${n(ly + lh * 0.62)}h${n(w * 0.4)}v.6h-${n(w * 0.4)}z'/>`;
   } else if (w > 7) b += `<path class='v' d='M${n(x + w * 0.28)} ${n(y + h * 0.3)}h${n(w * 0.44)}v.7h-${n(w * 0.44)}zM${n(x + w * 0.28)} ${n(y + h * 0.42)}h${n(w * 0.44)}v.7h-${n(w * 0.44)}zM${n(x + w * 0.28)} ${n(y + h * 0.54)}h${n(w * 0.44)}v.7h-${n(w * 0.44)}z'/>`;
-  b += `<rect class='r' x='${n(x + 0.4)}' y='${n(y + 1.5)}' width='.7' height='${n(h - 3)}'/><rect class='d' x='${X}' y='${n(base - 2.4)}' width='${W}' height='2.4'/>`;
+  b += `<rect class='r' x='${n(x + 0.4)}' y='${n(y + 1.5)}' width='.7' height='${n(h - 3)}'/>`;
   return lean ? `<g transform='rotate(${n(lean)} ${n(x + (lean > 0 ? 0 : w))} ${n(base)})'>${b}</g>` : b;
 }
 
@@ -28,7 +28,7 @@ function shelfRow(W, base, maxH, rnd) {
   let x = 4, b = ''; const gaps = [];
   while (x < W - 10) {
     if (rnd.chance(0.075) && x > 50 && x < W - 70) { gaps.push(x); x += 30; continue; }
-    const w = Math.round(rnd.between(7, 15)), h = Math.round(maxH * rnd.between(0.7, 1));
+    const w = Math.round(rnd.between(8, 16)), h = Math.round(maxH * rnd.between(0.7, 1));
     b += book(x, base, Math.min(w, W - 6 - x), h, rnd.int(0, SPINES.length - 1), rnd, rnd.chance(0.07) ? rnd.between(-8, 8) : 0);
     x += w + (rnd.chance(0.1) ? 1.5 : 0);
   }
@@ -57,7 +57,7 @@ function top() {
   [[10, 52], [58, 96]].forEach(([y0, y1]) => { b += `<rect y='${y0}' width='${W}' height='${y1 - y0}' fill='#0e0703' opacity='.55'/><rect y='${y0}' width='${W}' height='10' fill='url(#shade)'/>`; });
   [[51, 38], [95, 38]].forEach(([base, maxH], r) => {
     const row = shelfRow(W, base, maxH, rngOf(100 + r * 17));
-    b += row.b;
+    b += row.b + `<rect y='${base - 3}' width='${W}' height='3' fill='#000' opacity='.34'/>`;
     row.gaps.forEach((gx, i) => { b += prop((i + r) % 3, gx + 14, base); });
     b += `<rect y='${base}' width='${W}' height='6' fill='url(#plank)'/><rect y='${base}' width='${W}' height='.9' fill='#d9a46a' opacity='.8'/><rect y='${base + 6}' width='${W}' height='3' fill='#000' opacity='.35'/>`;
     for (let i = 0; i < 22; i++) b += `<rect x='${Math.round(rnd.between(0, W))}' y='${n(base + 1.5 + rnd.between(0, 3))}' width='${Math.round(rnd.between(14, 60))}' height='.5' fill='#2c170a' opacity='.45'/>`;
@@ -233,7 +233,7 @@ function capDraw() {
 function css() {
   const th = 'var(--s4-th)', bh = 'var(--s4-bh)', K = (v, k) => `calc(${v} * ${k})`;
   const P = {
-    window: { fx: 0.1, band: 'top', h: K(th, 1.05), a: 84 / 110, dy: K(th, 0.04) },
+    window: { fx: 'var(--s4-lib-wfx)', band: 'top', h: K(th, 1.05), a: 84 / 110, dy: K(th, 0.04) },
     ladder: { fx: -0.34, band: 'top', h: K(th, 1.0), a: 30 / 104, dy: K(th, 0.06) },
     float: { fx: 0.36, band: 'top', h: K(th, 0.4), a: 56 / 44, dy: K(th, 0.3) },
     candle: { fx: -0.455, band: 'bottom', h: K(bh, 0.86), a: 44 / 96, dy: K(bh, 0.1) },
@@ -251,7 +251,7 @@ function css() {
   const pc = (k) => bgPiece(ref[k], P[k]);
   const halo = 'radial-gradient(ellipse 46% 42% at calc(var(--s4-cx) - var(--s4-cw) * 0.455) 96%, rgba(255, 170, 80, 0.55), rgba(255, 130, 50, 0.16) 55%, transparent 80%)';
   const lamp = 'radial-gradient(ellipse 70% 34% at 50% 0%, rgba(255, 190, 110, 0.22), transparent 72%)';
-  const moonlight = 'radial-gradient(ellipse 30% 34% at calc(var(--s4-cx) + var(--s4-cw) * 0.1) 0%, rgba(150, 190, 255, 0.2), transparent 70%)';
+  const moonlight = 'radial-gradient(ellipse 30% 34% at calc(var(--s4-cx) + var(--s4-cw) * var(--s4-lib-wfx)) 0%, rgba(150, 190, 255, 0.2), transparent 70%)';
   const wall = 'linear-gradient(180deg, #1c0f07 0%, #24140a 38%, #1b0f07 70%, #110a05 100%)';
   const warm = 'radial-gradient(ellipse 110% 38% at 50% 100%, rgba(255, 140, 50, 0.16), transparent 75%)';
   const rest = [halo, pc('candle'), pc('book'), pc('quill'), pc('stack'), tDesk, moonlight, pc('window'), pc('ladder'), tTop, lamp, warm, pil('-'), pil('+'), paper, wall];
@@ -263,7 +263,9 @@ function css() {
   --a-bg-run: ${rest.join(',\n    ')};
   --a-board: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.018) 0.7px, transparent 1.1px) 0 0 / 4px 4px, linear-gradient(180deg, #0b1a13, #060e0a);
   --a-frame: #d6a24a;
-  --a-glow: rgba(255, 170, 80, 0.3);${R.decls()}`,
+  --a-glow: rgba(255, 170, 80, 0.3);
+  --s4-lib-wfx: 0.1;${R.decls()}`,
+    media: `:is(.hero-board, .mini-board).board-library { --s4-lib-wfx: 0.37; }\n`,
     run: `
 .board-library .run-active .bg::before { display: block; ${boxCSS(P.float)} background: ${ref.float} no-repeat center / 100% 100%; will-change: transform; animation: s4Bob 5.2s ease-in-out infinite alternate; }
 .board-library .run-active .bg .scene-fx { display: block; height: calc(100% + 520px); background-image: ${ref.motes}; background-size: 260px 520px; animation: s4Rise 90s linear infinite; opacity: 0.9; }
@@ -271,7 +273,7 @@ function css() {
 `,
     frame: L.frameCSS('board-library', {
       ring: [[1.5, '#170b04'], [5, '#5a3418'], [6, '#b8763a'], [8, '#2c170a'], [9, '#e8b85a']],
-      tooled: 'inset 0 0 0 1.4px rgba(224, 172, 84, 0.7), inset 0 0 0 3px rgba(0, 0, 0, 0.35), inset 0 0 0 4.4px rgba(224, 172, 84, 0.4)',
+      tooled: 'inset 0 0 0 1.4px rgba(224, 172, 84, 0.7), inset 0 0 0 2.6px rgba(0, 0, 0, 0.35), inset 0 0 0 3.5px rgba(224, 172, 84, 0.4)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
       glow: 'rgba(255, 170, 80, 0.3)',
     }),

@@ -29,7 +29,7 @@ function clouds() {
   const W = 520, H = 120, rnd = rngOf(15);
   const defs = S.lg('c', [[0, '#9fb4e0', 0.5], [1, '#1a2a5a', 0.65]]) + S.lg('e', [[0, '#e8f0ff', 0], [0.5, '#e8f0ff', 0.4], [1, '#e8f0ff', 0]], 0, 0, 1, 0);
   let b = '';
-  const wisp = (x, y, w, h, op) => [-W, 0, W].map((dx) => { let s = ''; const k = Math.max(4, Math.round(w / 16)); for (let i = 0; i < k; i++) { const t = i / (k - 1), rr = h * (0.5 + 0.5 * Math.sin(t * Math.PI)); s += `<ellipse cx='${n(x + dx - w / 2 + t * w)}' cy='${n(y - rr * 0.1)}' rx='${n(rr * 1.7)}' ry='${n(rr * 0.7)}' fill='url(#c)' opacity='${op}'/>`; } return s + `<ellipse cx='${n(x + dx)}' cy='${n(y - h * 0.5)}' rx='${n(w * 0.46)}' ry='1' fill='url(#e)' opacity='${op}'/>`; }).join('');
+  const wisp = (x, y, w, h, op) => [-W, 0, W].filter((dx) => x + dx + w / 2 > 0 && x + dx - w / 2 < W).map((dx) => { let s = ''; const k = Math.max(4, Math.round(w / 16)); for (let i = 0; i < k; i++) { const t = i / (k - 1), rr = h * (0.5 + 0.5 * Math.sin(t * Math.PI)); s += `<ellipse cx='${n(x + dx - w / 2 + t * w)}' cy='${n(y - rr * 0.1)}' rx='${n(rr * 1.7)}' ry='${n(rr * 0.7)}' fill='url(#c)' opacity='${op}'/>`; } return s + `<ellipse cx='${n(x + dx)}' cy='${n(y - h * 0.5)}' rx='${n(w * 0.46)}' ry='1' fill='url(#e)' opacity='${op}'/>`; }).join('');
   [[60, 34, 130, 12, 0.85], [200, 62, 160, 14, 0.8], [350, 40, 120, 11, 0.85], [470, 74, 140, 13, 0.75], [120, 92, 150, 12, 0.7], [300, 100, 130, 10, 0.7]].forEach(([x, y, w, h, o]) => { b += wisp(x, y, w, h, o); });
   return svgc(W, H, b, defs, '');
 }
@@ -94,19 +94,19 @@ function town(layer) {
   const row = (base, hmin, hmax, wmin, wmax, col, rim, wp, seed) => { const r = rngOf(seed); let x = -6; while (x < W) { const w = Math.round(r.between(wmin, wmax)), h = Math.round(r.between(hmin, hmax)); b += roof(x, base, w, h, col, rim, wp, seed + x); x += w + Math.round(r.between(0, 2)); } };
   if (layer === 'base') {
     b += `<rect y='30' width='${W}' height='60' fill='url(#h)'/>`;
-    row(76, 14, 34, 12, 24, '#12204a', '#5a72b8', 0.12, 3);
+    row(76, 14, 34, 16, 30, '#12204a', '#5a72b8', 0.12, 3);
     // the church with its spire
     b += `<path d='M236 76V46L248 28L260 46V76Z' fill='#16265a'/><path d='M244 28L248 8L252 28Z' fill='#16265a'/><circle cx='248' cy='6' r='1' fill='#ffe9a8'/><path d='M236 46L248 28L260 46' stroke='#6a82c8' stroke-width='.8' fill='none' opacity='.7'/><circle cx='248' cy='40' r='3' fill='#0a1230'/><circle cx='248' cy='40' r='1.8' fill='${GOLD}' opacity='.8'/>`;
-    row(96, 12, 30, 14, 30, '#0d1838', '#4a62a8', 0.14, 7);
-    row(120, 10, 34, 18, 36, '#070d26', '#344a8a', 0.12, 11);
+    row(96, 12, 30, 20, 38, '#0d1838', '#4a62a8', 0.14, 7);
+    row(120, 10, 34, 24, 44, '#070d26', '#344a8a', 0.12, 11);
     // chimney smoke
     [[96, 52], [330, 60], [440, 56]].forEach(([x, y]) => { b += `<ellipse cx='${x}' cy='${y}' rx='5' ry='9' fill='#7a8cc0' opacity='.16'/><ellipse cx='${x + 5}' cy='${y - 14}' rx='7' ry='10' fill='#7a8cc0' opacity='.1'/>`; });
     // dim windows
-    wins.forEach(([x, y, a]) => { b += `<rect x='${n(x)}' y='${n(y)}' width='2.6' height='3.4' fill='${GOLD}' opacity='${n(0.35 + a * 0.4)}'/>`; });
-    return svgc(W, H, b, defs, '');
+    wins.forEach(([x, y, a]) => { b += `<rect class='${a > 0.8 ? 'w2' : 'w1'}' x='${Math.round(x)}' y='${Math.round(y)}' width='3' height='4'/>`; });
+    return svgc(W, H, b, defs, '.w1{fill:#ffcf6b;opacity:.5}.w2{fill:#ffcf6b;opacity:.72}');
   }
   // the flicker layer: bright halos at a subset of the same windows (rebuilt with the same random sequence)
-  row(76, 14, 34, 12, 24, '#000', '#000', 0.12, 3); row(96, 12, 30, 14, 30, '#000', '#000', 0.14, 7); row(120, 10, 34, 18, 36, '#000', '#000', 0.12, 11);
+  row(76, 14, 34, 16, 30, '#000', '#000', 0.12, 3); row(96, 12, 30, 20, 38, '#000', '#000', 0.14, 7); row(120, 10, 34, 24, 44, '#000', '#000', 0.12, 11);
   const defs2 = glowDef('w', '#ffcf6b', 0.9, 0.32);
   let f = '';
   wins.forEach(([x, y, a], i) => { if (i % 2 === 0) f += `<circle cx='${n(x + 1.3)}' cy='${n(y + 1.7)}' r='6' fill='url(#w)' opacity='${n(a)}'/><rect x='${n(x)}' y='${n(y)}' width='2.6' height='3.4' fill='#fff2c0'/>`; });
@@ -164,9 +164,9 @@ function capDraw(rw, size) {
 function css() {
   const th = 'var(--s4-th)', bh = 'var(--s4-bh)', K = (v, k) => `calc(${v} * ${k})`;
   const P = {
-    moon: { fx: -0.12, band: 'top', h: K(th, 2.1), a: 1, dy: K(th, -0.5) },
-    bell: { fx: 0.24, band: 'top', h: K(th, 0.62), a: 52 / 64, dy: K(th, 0.12) },
-    arch: { fx: 0.24, band: 'top', h: K(th, 0.82), a: 84 / 70, dy: '0px' },
+    moon: { fx: 'var(--s4-tw-mfx)', band: 'top', h: K(th, 2.1), a: 1, dy: K(th, -0.5) },
+    bell: { fx: 'var(--s4-tw-bfx)', band: 'top', h: K(th, 0.62), a: 52 / 64, dy: K(th, 0.12) },
+    arch: { fx: 'var(--s4-tw-bfx)', band: 'top', h: K(th, 0.82), a: 84 / 70, dy: '0px' },
   };
   const R = registry('tower');
   const svg = { moon: moon(), clouds: clouds(), stars: stars(), spireL: spire(false), spireR: spire(true), litL: lit(false), litR: lit(true), townBase: town('base'), townLit: town('lit'), arch: arch(), bell: bell(), owl: owl(), phases: phases() };
@@ -176,7 +176,7 @@ function css() {
   const spL = `${ref.spireL} repeat-y calc(var(--s4-cx) - var(--s4-cw) / 2 - ${RW}px - 8px) 0 / 16px 10%`;
   const spR = `${ref.spireR} repeat-y calc(var(--s4-cx) + var(--s4-cw) / 2 + ${RW}px + 8px) 0 / 16px 10%`;
   const pMoon = bgPiece(ref.moon, P.moon), pBell = bgPiece(ref.bell, P.bell), pArch = bgPiece(ref.arch, P.arch);
-  const halo = 'radial-gradient(ellipse calc(var(--s4-cw) * 0.7) calc(var(--s4-th) * 1.9) at calc(var(--s4-cx) - var(--s4-cw) * 0.12) calc(var(--s4-th) * 0.45), rgba(170, 200, 255, 0.28), rgba(110, 150, 230, 0.1) 55%, transparent 80%)';
+  const halo = 'radial-gradient(ellipse calc(var(--s4-cw) * 0.7) calc(var(--s4-th) * 1.9) at calc(var(--s4-cx) + var(--s4-cw) * var(--s4-tw-mfx)) calc(var(--s4-th) * 0.45), rgba(170, 200, 255, 0.28), rgba(110, 150, 230, 0.1) 55%, transparent 80%)';
   const warm = 'radial-gradient(ellipse 90% 30% at 50% 100%, rgba(255, 190, 110, 0.14), transparent 75%)';
   const sky = 'linear-gradient(180deg, #0a1636 0%, #0b1a42 30%, #0a1534 62%, #08102a 84%, #070c20 100%)';
   const tClouds = `${ref.clouds} repeat-x 30% calc(var(--s4-th) * 0.1) / 520px 120px`;
@@ -191,7 +191,9 @@ function css() {
   --a-bg-run: ${runL.join(',\n    ')};
   --a-board: linear-gradient(180deg, #080e24, #04071a);
   --a-frame: #9fb4e0;
-  --a-glow: rgba(160, 190, 255, 0.3);${R.decls()}`,
+  --a-glow: rgba(160, 190, 255, 0.3);
+  --s4-tw-mfx: -0.12; --s4-tw-bfx: 0.24;${R.decls()}`,
+    media: `:is(.hero-board, .mini-board).board-tower { --s4-tw-mfx: -0.35; --s4-tw-bfx: 0.4; }\n`,
     run: `
 .board-tower .run-active .bg::before { display: block; left: 0; right: 0; bottom: 0; height: var(--s4-bh); background: ${ref.townLit} repeat-x 50% 100% / auto 100%; will-change: opacity; animation: s4Flicker 4.6s ease-in-out infinite alternate; }
 .board-tower .run-active .bg .scene-fx { display: block; left: 0; width: calc(100% + 520px); top: calc(var(--s4-th) * 0.1); height: 120px; background: ${ref.clouds} repeat-x 0 0 / 520px 120px; will-change: transform; animation: s4Clouds 90s linear infinite; }
@@ -201,7 +203,7 @@ function css() {
 .board-tower .bg .s4x.moon { ${boxCSS(P.moon)} background: ${ref.moon} no-repeat center / 100% 100%; transform-origin: 50% 50%; will-change: auto; }
 .board-tower .bg .s4x.bell { ${boxCSS(P.bell)} background: ${ref.bell} no-repeat center / 100% 100%; transform-origin: 50% 3%; }
 .board-tower .bg .s4x.win { left: 0; right: 0; height: 10%; opacity: 0; background: ${ref.litL} no-repeat calc(var(--s4-cx) - var(--s4-cw) / 2 - ${RW}px - 8px) 0 / 16px 100%, ${ref.litR} no-repeat calc(var(--s4-cx) + var(--s4-cw) / 2 + ${RW}px + 8px) 0 / 16px 100%; }
-.board-tower .bg .s4x.silver { inset: 0; opacity: 0; background: ${litL}, ${litR}, radial-gradient(ellipse calc(var(--s4-cw) * 0.8) calc(var(--s4-th) * 2) at calc(var(--s4-cx) - var(--s4-cw) * 0.12) calc(var(--s4-th) * 0.5), rgba(232, 240, 255, 0.38), rgba(180, 205, 255, 0.12) 60%, transparent 80%); }
+.board-tower .bg .s4x.silver { inset: 0; opacity: 0; background: ${litL}, ${litR}, radial-gradient(ellipse calc(var(--s4-cw) * 0.8) calc(var(--s4-th) * 2) at calc(var(--s4-cx) + var(--s4-cw) * var(--s4-tw-mfx)) calc(var(--s4-th) * 0.5), rgba(232, 240, 255, 0.38), rgba(180, 205, 255, 0.12) 60%, transparent 80%); }
 .board-tower .bg .s4x.owl { left: -50px; top: calc(var(--s4-th) * 0.28); width: 40px; height: 24px; background: ${ref.owl} no-repeat center / 100% 100%; opacity: 0; }
 .board-tower .board-wrap .s4x.beam { position: absolute; z-index: 5; pointer-events: none; opacity: 0; transform-origin: 50% 0; background: linear-gradient(90deg, rgba(232, 240, 255, 0), rgba(232, 240, 255, 0.2) 28%, rgba(255, 255, 255, 0.95) 48.5%, rgba(255, 255, 255, 0.95) 51.5%, rgba(232, 240, 255, 0.2) 72%, rgba(232, 240, 255, 0)); }
 `,
@@ -209,7 +211,7 @@ function css() {
       rw: RW,
       ring: [[1.2, '#0a1226'], [3, '#5a6a9a'], [4, '#e8f0ff']],
       drop: '0 0 12px rgba(160, 190, 255, 0.3), 0 8px 22px rgba(0, 0, 0, 0.55)',
-      tooled: 'inset 0 0 0 1.4px rgba(200, 214, 240, 0.6), inset 0 0 0 3px rgba(0, 0, 0, 0.4), inset 0 0 0 4.2px rgba(160, 190, 255, 0.28)',
+      tooled: 'inset 0 0 0 1.4px rgba(200, 214, 240, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4), inset 0 0 0 3.5px rgba(160, 190, 255, 0.28)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
       boardBg: `${ref.phases} no-repeat 50% 1px / 60px 8px`,
       glow: 'rgba(160, 190, 255, 0.3)',
