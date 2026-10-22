@@ -11,12 +11,26 @@ html = (root / 'index.html').read_text()
 def font_uri(path):
     return 'data:font/woff2;base64,' + base64.b64encode((root / path).read_bytes()).decode()
 
+def minify_css(text):
+    """Comments and layout whitespace out; url(...) and strings are left exactly as they are (data URIs hold spaces and colons)."""
+    parts = re.split(r'''(url\([^)]*\)|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')''', re.sub(r'/\*.*?\*/', '', text, flags=re.S))
+    out = []
+    for i, part in enumerate(parts):
+        if i % 2:
+            out.append(part)
+            continue
+        part = re.sub(r'\s+', ' ', part)
+        part = re.sub(r' ?([{};,>]) ?', r'\1', part)
+        part = re.sub(r':\s+', ':', part)
+        out.append(part)
+    return ''.join(out).strip()
+
 css_files = re.findall(r'<link rel="stylesheet" href="([^"]+)">', html)
 css = ''
 for f in css_files:
     text = (root / f).read_text()
     text = re.sub(r"url\('\.\./(fonts/[^']+)'\)", lambda m: f"url('{font_uri(m.group(1))}')", text)
-    css += text + '\n'
+    css += (text if '--raw-css' in sys.argv else minify_css(text)) + '\n'
 
 body = re.search(r'<body>(.*?)<script src=', html, re.S).group(1)
 body = re.sub(r'<noscript>.*?</noscript>', '', body, flags=re.S)
