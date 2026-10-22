@@ -218,17 +218,20 @@
 
   /* generic crack lines (the bomb splits open when it panics) and frost (Rush) */
   const cracksURI = (hot, line) => uri(svg(`<path d='M33 9L29 19L35 26L28 36L34 44L30 54' fill='none' stroke='${hot}' stroke-opacity='.6' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/><path d='M33 9L29 19L35 26L28 36L34 44L30 54' fill='none' stroke='${line}' stroke-width='1.2' stroke-linejoin='round'/><path d='M35 26L45 28L49 36M28 36L19 38L15 46M29 19L21 16' fill='none' stroke='${line}' stroke-width='1' stroke-linecap='round'/>`));
-  /** Frost on the bomb in Rush: icing along the upper-left of the body with a few icicle points, and glints. */
+  /** Frost on the bomb in Rush: scalloped icing along the upper-left of the body (rounded drips, never points), a smaller patch low on the right, and glints. */
   const frostBombURI = (c) => {
     const pt = (r, deg) => `${f1(32 + r * Math.cos((deg * Math.PI) / 180))} ${f1(36 + r * Math.sin((deg * Math.PI) / 180))}`;
-    const spikes = { 210: 19.5, 234: 18.5, 252: 20 };
-    const outer = [], inner = [];
-    for (let a = 190; a <= 258; a += 6) outer.push(pt(27.6, a));
-    for (let a = 258; a >= 190; a -= 6) inner.push(pt(spikes[a] || 22.4 + ((a / 6) % 3) * 0.7, a));
-    const d = 'M' + outer.join('L') + 'L' + inner.join('L') + 'Z';
-    const d2 = 'M' + [48, 54, 60, 66, 72].map((a) => pt(27.6, a)).join('L') + 'L' + [72, 66, 60, 54, 48].map((a) => pt(a === 60 ? 16.5 : 23, a)).join('L') + 'Z';
+    const R0 = 27.4;
+    // a band hugging the rim from a0 to a1 degrees; its inner edge is a row of rounded scallops of the given depths
+    const cap = (a0, a1, depths) => {
+      const n = depths.length, st = (a1 - a0) / n;
+      let d = `M${pt(R0, a0)}A${R0} ${R0} 0 0 1 ${pt(R0, a1)}`;
+      for (let k = n - 1; k >= 0; k--) d += `Q${pt(R0 - 2 * depths[k], a0 + st * (k + 0.5))} ${pt(R0 - 1.4, a0 + st * k)}`;
+      return d + 'Z';
+    };
+    const main = cap(188, 262, [3.4, 5.6, 4.2, 6.6, 4, 5.2]), low = cap(52, 90, [3, 4.4, 3.2]);
     return uri(svg(
-      `<path d='${d}' fill='url(#fr)' stroke='#fff' stroke-width='.7' stroke-linejoin='round'/><path d='${d2}' fill='url(#fr)' stroke='#fff' stroke-width='.7' stroke-linejoin='round'/>` +
+      `<path d='${main}' fill='url(#fr)' stroke='#fff' stroke-width='.7' stroke-linejoin='round'/><path d='${low}' fill='url(#fr)' stroke='#fff' stroke-width='.7' stroke-linejoin='round'/>` +
       `<circle cx='32' cy='36' r='25.4' fill='none' stroke='#fff' stroke-opacity='.45' stroke-width='1.5'/>` +
       `<g fill='#fff'><path d='M14.5 20.5l.9 2.7 2.7.9-2.7.9-.9 2.7-.9-2.7-2.7-.9 2.7-.9z'/><path d='M49 41l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z' opacity='.9'/><path d='M22 9l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z' opacity='.85'/></g>`,
       lg('fr', [[0, '#ffffff'], [1, c]])));

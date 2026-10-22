@@ -114,7 +114,7 @@
 .fuse[data-z="frozen"] .fz-heat, .fuse[data-z="hold"] .fz-heat { opacity: 0.16; } .fuse[data-z="frozen"] .fz-ember, .fuse[data-z="hold"] .fz-ember, .fuse[data-z="frozen"] .fz-ash, .fuse[data-z="hold"] .fz-ash { opacity: 0.22; }
 .fuse[data-z="spark"] .fz-heat, .fuse[data-z="spark"] .fz-ember, .fuse[data-z="spark"] .fz-ash { opacity: 0; }
 .fz-flare { left: 0; top: 0; transform-origin: 0 0; }
-.fz-fl { position: absolute; left: 0; top: 0; transform: scale(var(--fz-fs, 1)); transition: transform 0.35s var(--ease-spring); }
+.fz-fl { position: absolute; left: 0; top: 0; transform: rotate(0deg) scale(var(--fz-fs, 1)); transition: transform 0.35s var(--ease-spring); }
 .fz-halo, .fz-tongue, .fz-core { position: absolute; }
 .fz-halo { left: -26px; top: -30px; width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, var(--fz-halo), transparent 68%); animation: fzHalo 0.34s ease-in-out infinite alternate; }
 .fz-tongue { left: -16px; top: -28px; width: 32px; height: 40px; background: var(--fz-tongue) center / 100% 100% no-repeat; transform-origin: 50% 72%; animation: fzTongue 0.22s ease-in-out infinite alternate; }
@@ -127,8 +127,8 @@
 @keyframes fzSputter { 0%, 100% { transform: scale(1); opacity: 1; } 10% { transform: scale(0.5, 0.6); opacity: 0.55; } 20% { transform: scale(1.18, 1.22); opacity: 1; } 38% { transform: scale(0.66, 0.5); opacity: 0.5; } 52% { transform: scale(1.1, 1.16); opacity: 1; } 66% { transform: scale(0.8, 0.62); opacity: 0.65; } 82% { transform: scale(1.05); opacity: 1; } }
 @keyframes fzSpin { to { transform: rotate(360deg); } }
 /* flame size by state, and its colors when time stops: plain property rules (state is data-z on the host, never a switched custom property) */
-.fuse[data-z="watch"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.04)); } .fuse[data-z="low"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.12)); } .fuse[data-z="crit"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.22)); }
-.fuse[data-z="spark"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.2)); } .fuse[data-z="frozen"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 0.92)); } .fuse[data-z="hold"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 0.86)); }
+.fuse[data-z="watch"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 1.04)); } .fuse[data-z="low"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 1.12)); } .fuse[data-z="crit"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 1.22)); }
+.fuse[data-z="spark"] .fz-fl { transform: rotate(46deg) scale(calc(var(--fz-fs, 1) * 1.05)); } .fuse[data-z="frozen"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 0.92)); } .fuse[data-z="hold"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 0.86)); }
 .fuse[data-z="crit"] .fz-tongue { animation: fzSputter 0.95s linear infinite; } .fuse[data-z="crit"] .fz-core { animation: fzSputter 1.35s linear infinite; } .fuse[data-z="crit"] .fz-halo { animation-duration: 0.14s; }
 .fuse[data-z="spark"] .fz-tongue { animation-duration: 0.12s; } .fuse[data-z="spark"] .fz-core { animation-duration: 0.1s; }
 .fuse[data-z="frozen"] .fz-tongue, .fuse[data-z="hold"] .fz-tongue { background-image: var(--fz-tongue-ice); } .fuse[data-z="frozen"] .fz-core, .fuse[data-z="hold"] .fz-core { background-image: var(--fz-core-ice); }
