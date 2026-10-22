@@ -328,6 +328,12 @@
     pts.forEach(({ pt, i }) => { for (let j = 0; j < 2; j++) if (B()) later(() => fx.emit({ kind: 'spark', x: pt.x + rnd(-10, 10), y: pt.y + rnd(-6, 8), vx: rnd(-18, 18), vy: rnd(-120, -60), g: -60, drag: 0.8, size: rnd(2.8, 4.8), max: rnd(0.3, 0.4), color: j ? '#ffffff' : color }), i * 20 + j * 50); });
     if (pts.length) sfx.glug();
   }
+  /** Rush start: every potion boils over for a moment, a rush of bubbles from the bottom of the board. */
+  function potionRush(d, ctx) {
+    const r = boardRect(d, 'rush', ctx), fx = ctx.fx, B = budget(24);
+    for (let j = 0; j < 24; j++) if (B()) later(() => fx.emit({ kind: 'spark', x: r.left + rnd(0.04, 0.96) * r.width, y: r.top + rnd(0.7, 1) * r.height, vx: rnd(-16, 16), vy: rnd(-200, -90), g: -40, drag: 0.8, size: rnd(2.6, 4.8), max: rnd(0.35, 0.45), color: j % 3 ? '#ffffff' : pick(BR.PALETTE).hi }), j * 16);
+    sfx.glug();
+  }
   /** Stage-up: the corks pop (every third bottle jumps up and drops back, 340 ms). */
   function potionStage(d, type) {
     flag(skinHost(d, type), 's4-corks', 520);
@@ -360,7 +366,7 @@
       { transform: tf(0, 0, 0.95, -10), opacity: 0.95, offset: 0.25 },
       { transform: tf(0, 0, 1, 14), opacity: 0.8, offset: 0.7 },
       { transform: tf(0, 0, 1.05, 24), opacity: 0 }], { duration: 440, delay: 130, easing: 'ease-in-out' }, ks);
-    for (let j = 0; j < 10; j++) if (B()) later(() => ctx.fx.emit({ kind: 'spark', x: c0.x + rnd(-30, 30), y: top + rnd(0, 60), vx: rnd(-60, 60), vy: rnd(20, 90), g: 0, drag: 1, size: rnd(2, 3.4), max: rnd(0.22, 0.28), color: pick(['#ffffff', '#ff8191', '#78adff', '#68f2ac', '#ffe272', '#ff8ff0']) }), 150 + j * 14);
+    for (let j = 0; j < 10; j++) if (B()) later(() => ctx.fx.emit({ kind: 'spark', x: c0.x + rnd(-30, 30), y: top + rnd(0, 60), vx: rnd(-60, 60), vy: rnd(20, 90), g: 0, drag: 1, size: rnd(2, 3.4), max: rnd(0.22, 0.28), color: (j % 3 ? pick(BR.PALETTE).hi : '#ffffff') }), 150 + j * 14);
     sfx.glint();
   }
   /** Line Blast: ten glints run along the beam. */
@@ -559,6 +565,16 @@
     update();
     runeTimer = setInterval(update, 200);
   }
+  /** Rush start: a gold ring spreads from the middle of the board and the eight runes spark as they light. */
+  function sigilRush(d, ctx) {
+    const r = boardRect(d, 'rush', ctx), fx = ctx.fx, B = budget(16);
+    fx.ring(r.left + r.width / 2, r.top + r.height / 2, GOLD, r.width * 0.55, 0.6, 4);
+    RUNE_SPOTS.forEach(([sx, sy], i) => {
+      const x = r.left + 6 + sx * (r.width - 12), y = r.top + 6 + sy * (r.height - 12);
+      for (let j = 0; j < 2; j++) if (B()) later(() => fx.emit({ kind: 'spark', x, y, vx: rnd(-50, 50), vy: rnd(-50, 50), g: 0, drag: 2, size: rnd(2.6, 4), max: rnd(0.3, 0.4), color: j ? GOLD2 : GOLD }), 120 + i * 40);
+    });
+    sfx.bell();
+  }
   /** Stage-up: every sigil flashes in a ripple from the centre (opacity and a small swell on .stud, every third brick, plus one ring). */
   function sigilRipple(d, type, ctx) {
     const bricks = [];
@@ -672,9 +688,10 @@
       if (ctx.M.sigil) sigilLine(type, d, ctx);
       if (ctx.M.moonglass) moonLine(type, d, ctx);
     } else if (type === 'rushStart') {
+      if (ctx.M.potion) potionRush(d, ctx);
       if (ctx.M.gem) gemRush(d, ctx);
       if (ctx.M.hourglass) sandRush(d, ctx);
-      if (ctx.M.sigil) runeFrame(true, d);
+      if (ctx.M.sigil) { runeFrame(true, d); sigilRush(d, ctx); }
       if (ctx.M.moonglass) { mgStart(); moonRush(d, ctx); }
     } else if (type === 'rushEnd') {
       if (ctx.M.hourglass) sandThaw(d, ctx);

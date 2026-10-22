@@ -465,6 +465,9 @@ html:is(.low-end, .reduced) .field.skin-moonglass::before, html:is(.low-end, .re
 .bdg:not(.still) .s4b.skin-gemcut .kh .brick:not(.fusebrick) .deco::after { animation: s4-glint 4.5s ease-in-out infinite; }
 .bdg:not(.still) .s4b.skin-sigil .kh .brick:not(.fusebrick) .deco { animation: sgTurn 18s linear infinite; }
 
+/* the floating bricks behind the Home screen wear the skin too: they stop moving while a run needs every frame */
+.run-active .bg-bricks .mb :is(.deco, .stud, .face)::before, .run-active .bg-bricks .mb :is(.deco, .stud, .face)::after, .run-active .bg-bricks .mb :is(.deco, .stud) { animation-play-state: paused; }
+
 /* ---------------------------------------------------------------- low-end phones and Reduce Motion: every skin of the series holds its pose */
 html:is(.low-end, .reduced) :is(.skin-potion, .skin-gemcut, .skin-hourglass, .skin-sigil) .brick .deco,
 html:is(.low-end, .reduced) :is(.skin-potion, .skin-gemcut, .skin-hourglass, .skin-sigil) .brick .deco::before,
