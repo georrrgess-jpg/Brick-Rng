@@ -8,6 +8,8 @@ const mods = ['classic', 'deepsea', 'foundry', 'market', 'orbit', 'greenhouse', 
 const CLS = { classic: 'board-classic', deepsea: 'board-deepsea', foundry: 'board-foundry', market: 'board-market', orbit: 'board-orbit', greenhouse: 'board-greenhouse', storm: 'board-storm', holo: 'board-holo' };
 const ALL = Object.values(CLS).map((c) => '.' + c);
 const is = (list) => ':is(' + list.join(', ') + ')';
+// a dark tint per board (the colour of the plate behind the message band and of the shadow behind the score)
+const PLATE = { 'board-classic': [20, 10, 46, 0.66], 'board-deepsea': [3, 38, 68, 0.62], 'board-foundry': [22, 10, 5, 0.7], 'board-market': [38, 10, 54, 0.68], 'board-orbit': [6, 9, 34, 0.66], 'board-greenhouse': [7, 42, 24, 0.64], 'board-storm': [8, 12, 34, 0.66], 'board-holo': [2, 24, 28, 0.7] };
 
 const head = `/* ===================================================================
    Update 4: the eight older boards as illustrated scenes (Midnight, Deep Sea, Foundry, Night Market, Orbit, Greenhouse, Thunderhead,
@@ -28,6 +30,25 @@ ${is(ALL)} .run-active .bg::before, ${is(ALL)} .run-active .bg::after { display:
 ${is(ALL)} .run-active .bg .scene-fx { display: none; }
 :is(.bdg-scene, .hero-board, .mini-board):is(${ALL.join(', ')}) .scene-fx { display: none; }
 
+/* band sizes in a run: the art takes the free room above the pause row and below the message band (the run column is centred, so
+   the two are about equal: --u4-free) plus a little overlap, and grows on tall phones. The art that does reach behind the message
+   band sits behind a soft plate (below) so the Goal and combo text always reads. */
+${is(ALL)} {
+  --u4-free: calc((100dvh - min(100vw - 24px, 100dvh - 340px, 540px) - 372px) / 2);
+  --u4-th: clamp(56px, calc(var(--u4-free) + 30px), 100px);
+  --u4-bh: clamp(84px, calc(var(--u4-free) + 58px), 128px);
+}
+.board-holo { --u4-bh: clamp(72px, calc(var(--u4-free) + 44px), 104px); }
+/* a soft dark plate behind the score (top right of the run column), part of the run background so low-end phones get it too */
+${is(ALL)} { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + var(--bw) / 2 - 56px) calc(var(--u4-free) + 24px), var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
+${is(ALL)} .run-active .bg { background: var(--u4-hud), var(--a-bg-run); }
+${is(ALL)} .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--u4-plate) 0, var(--u4-plate) 60%, transparent 100%); }
+${is(ALL)} .run-active .msgband:is([data-top="spark"], [data-top="aim"], [data-top="hint"], [data-top="combo"], [data-top="goal"])::before { opacity: 1; }
+${Object.entries(PLATE).map(([cls, [r, g, b, a]]) => `.${cls} { --u4-plate: rgba(${r}, ${g}, ${b}, ${a}); --u4-ink: rgba(${r}, ${g}, ${b}, 0.9); }`).join('\n')}
+/* the score sits under the top band: a lighter label and a soft shadow keep it readable over a bright sky or a glowing sign */
+${is(ALL)} .run-active .score-box .lbl { color: #e8eeff; text-shadow: 0 1px 2px var(--u4-ink), 0 0 6px var(--u4-ink); }
+${is(ALL)} .run-active .score-box b { text-shadow: 0 1px 3px var(--u4-ink), 0 0 8px var(--u4-ink); }
+
 /* in badges, previews and the reveal the bands grow so the scene still reads around the little board */
 :is(.bdg-scene, .hero-board, .mini-board):is(${ALL.join(', ')}) { --u4-th: 28%; --u4-bh: 36%; }
 .mini-board:is(${ALL.join(', ')}) { --u4-th: 32%; --u4-bh: 40%; }
@@ -44,19 +65,25 @@ ${is(ALL)} .run-active .bg .scene-fx { display: none; }
 
 `;
 const tail = `
-/* small phones (640 tall): the bands shrink a little so the art does not sit behind the power-up slots */
-@media (max-height: 700px) {
-  :is(.board-classic, .board-foundry, .board-market, .board-orbit, .board-storm, .board-deepsea, .board-greenhouse) { --u4-th: min(112px, 13%); --u4-bh: min(176px, 20%); }
-  .board-holo { --u4-th: min(112px, 13%); --u4-bh: min(116px, 15%); }
+/* small phones: the run column is tighter (see css/run.css), so the free room is measured with its numbers */
+@media (max-height: 720px) and (orientation: portrait) {
+  ${is(ALL)} { --u4-free: calc((100dvh - min(100vw - 24px, 100dvh - 352px, 540px) - 294px) / 2); }
 }
-/* short landscape screens (a phone on its side): the bands shrink so they never crowd the HUD */
-@media (max-height: 520px) {
-  .board-classic, .board-foundry, .board-market, .board-orbit, .board-storm { --u4-th: min(112px, 12%); --u4-bh: min(176px, 19%); }
-  .board-deepsea, .board-greenhouse { --u4-th: min(112px, 12%); --u4-bh: min(184px, 20%); }
-  .board-holo { --u4-th: min(112px, 12%); --u4-bh: min(116px, 14%); }
+/* tablets and desktop: the column stays in the middle and the art spreads along the whole width, so the bands follow the screen height */
+@media (min-width: 701px) and (min-height: 561px) {
+  ${is(ALL)} { --u4-th: min(96px, 12dvh); --u4-bh: min(128px, 15dvh); }
+  .board-holo { --u4-bh: min(104px, 12dvh); }
+  html.board-deepsea { --u4-subx: 14%; } html.board-orbit { --u4-moonx: 12%; }
+}
+/* short landscape screens (a phone on its side): the board sits left, the HUD column right; the bands stay thin */
+@media (orientation: landscape) and (max-height: 560px) {
+  ${is(ALL)} { --u4-th: min(56px, 14%); --u4-bh: min(92px, 23%); }
+  .board-holo { --u4-bh: min(76px, 20%); }
+  html.board-deepsea { --u4-subx: 70%; } html.board-orbit { --u4-moonx: 66%; }
+  ${is(ALL)} { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + (var(--bw) + 316px) / 2 - 56px) 28px, var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
 }
 /* low-end phones and reduced motion: the whole scene holds still on the static --a-bg */
-html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg { background: var(--a-bg); }
+html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg { background: var(--u4-hud), var(--a-bg); }
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg::before,
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg::after,
 html:is(.low-end, .reduced):is(${ALL.join(', ')}) .run-active .bg .scene-fx { display: none; }

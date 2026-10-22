@@ -66,7 +66,6 @@ function build() {
    A storm ceiling of heavy cloud that glows from inside when sheet lightning goes off, a dark city on the horizon with red beacons and lit
    windows, and rain. Lightning moments (js/skins.js) still flash behind the board. The board frame has a pale top highlight. */
 .board-storm {
-  --u4-th: min(112px, 15%); --u4-bh: min(176px, 23%);
   --u4-top: ${T} repeat-x 50% 0 / auto var(--u4-th);
   --u4-flash-img: ${Fl};
   --u4-flash: var(--u4-flash-img) repeat-x 50% 0 / auto var(--u4-th);
@@ -78,7 +77,6 @@ function build() {
   --a-frame: #bcd0ff;
   --a-glow: rgba(150, 180, 255, 0.36);
 }
-.board-storm .run-active .bg { background: var(--a-bg-run); }
 .board-storm .run-active .bg::before { display: block; left: 0; right: 0; top: 0; height: var(--u4-th); background: var(--u4-flash-img) repeat-x 50% 0 / auto 100%; opacity: 0; animation: u4Sheet 9s linear infinite; }
 .board-storm .run-active .bg .scene-fx { display: block; top: -200px; height: calc(100% + 200px); background-image: ${R}; background-size: 160px 200px; animation: u4Rain 0.7s linear infinite; }
 .board-storm .run-active .bg .scene-fx.b { display: none; }

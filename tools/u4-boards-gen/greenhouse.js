@@ -90,19 +90,17 @@ function build() {
    Inside a glass house in full sun: panes and steel mullions overhead with hanging baskets of ivy, and below a bench of pots with
    monstera, ferns, a snake plant and flowers. Sunbeams slant through the glass and shimmer; pollen drifts up. */
 .board-greenhouse {
-  --u4-th: min(112px, 15%); --u4-bh: min(184px, 24%);
   --u4-top: ${T} repeat-x 50% 0 / auto var(--u4-th);
   --u4-bench: ${B} repeat-x 50% 100% / auto var(--u4-bh);
   --u4-beams-img: ${M};
   --u4-beams: var(--u4-beams-img) no-repeat 50% 0 / 100% 100%;
-  --u4-sky: radial-gradient(ellipse 90% 26% at 50% 0%, rgba(255, 250, 190, 0.55), transparent 72%), linear-gradient(180deg, #2f8d4e 0%, #1d6d3d 30%, #104b2d 62%, #08301d 100%);
+  --u4-sky: radial-gradient(ellipse 90% 20% at 50% 0%, rgba(255, 250, 190, 0.3), transparent 72%), linear-gradient(180deg, #26793f 0%, #1a6338 30%, #104b2d 62%, #08301d 100%);
   --a-bg-run: var(--u4-top), var(--u4-bench), var(--u4-sky);
   --a-bg: var(--u4-top), var(--u4-bench), var(--u4-beams), var(--u4-sky);
   --a-board: linear-gradient(180deg, rgba(6, 27, 17, 0.97), rgba(3, 17, 11, 0.98));
   --a-frame: #b7f2a0;
   --a-glow: rgba(170, 255, 130, 0.38);
 }
-.board-greenhouse .run-active .bg { background: var(--a-bg-run); }
 .board-greenhouse .run-active .bg::before { display: block; inset: 0; background: var(--u4-beams-img) no-repeat 50% 0 / 100% 100%; animation: u4Pulse 7s ease-in-out infinite alternate; }
 .board-greenhouse .run-active .bg .scene-fx { display: block; height: calc(100% + 520px); background-image: ${P}; background-size: 260px 520px; animation: u4Rise 38s linear infinite; }
 .board-greenhouse .run-active .bg .scene-fx.b { display: none; }
