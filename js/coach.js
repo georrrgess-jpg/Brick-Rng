@@ -1,6 +1,7 @@
-/* Coach cards: a short help card the first time the player opens each part of the game. Each one is shown once
-   (remembered in Storage.data.seen) and can be brought back from Profile. They use the normal centered Sheet,
-   so the Back button and tapping outside both close them. Never shown during a run or while a chest is open. */
+/* Help for new players, kept short. Three moments get a card (Welcome, the first chest, the Pop Pass); every other screen
+   gets a one-line banner at its top with a close button, so nothing blocks the screen. Each is shown once (remembered in
+   Storage.data.seen) and can be brought back from Profile. Cards use the normal centered Sheet, so the Back button and
+   tapping outside both close them. Never shown during a run or while a chest is open. */
 (function () {
   const BR = (window.BR = window.BR || {});
 
@@ -15,25 +16,6 @@
       ],
       cta: "Let's pop",
     },
-    boosts: {
-      icon: 'bolt', title: 'Boosts cost Coins',
-      lines: [
-        ['plus', 'A Boost is bought with Coins and lasts for one run.'],
-        ['check', 'You see the total and what you will have left before you pay.'],
-        ['play', 'Nothing is charged until you press the Start button. Skipping Boosts is always free.'],
-      ],
-      cta: 'Got it',
-    },
-    shop: {
-      icon: 'shop', title: 'How chests work',
-      lines: [
-        ['gift', 'Every chest gives one item you do not own yet. No duplicates, ever.'],
-        ['info', 'The odds are on every card. Tap the (i) to see everything inside.'],
-        ['star', 'About every 8th chest of a type gives an Epic or better.'],
-        ['bolt', 'Coins come from playing: points, stages, missions and the Pop Pass.'],
-      ],
-      cta: 'Got it',
-    },
     opening: {
       icon: 'gift', title: 'Opening a chest',
       lines: [
@@ -42,24 +24,6 @@
         ['check', 'Your item is saved the moment the chest bursts open.'],
       ],
       cta: 'Open it',
-    },
-    collection: {
-      icon: 'collection', title: 'Your collection',
-      lines: [
-        ['check', 'Tap an item to watch it in action and equip it.'],
-        ['lock', 'Dark shapes are items you have not found yet. They tell you which chest has them.'],
-        ['star', 'Use the rarity buttons to filter. Finish a set to see Complete in the Shop.'],
-      ],
-      cta: 'Got it',
-    },
-    missions: {
-      icon: 'missions', title: 'Missions',
-      lines: [
-        ['check', 'Three new missions every day. Each one pays Coins.'],
-        ['reroll', `Not feeling one? Swap it for ${BR.CFG ? BR.CFG.rerollCost : 30} Coins.`],
-        ['gift', 'The weekly challenge pays Coins and a Golden Chest.'],
-      ],
-      cta: 'Got it',
     },
     pass: {
       icon: 'flag', title: 'The Pop Pass',
@@ -70,15 +34,14 @@
       ],
       cta: 'Got it',
     },
-    profile: {
-      icon: 'profile', title: 'Profile and settings',
-      lines: [
-        ['sound', 'Set music and sound volume, vibration and screen shake.'],
-        ['leaf', 'Reduce Motion makes every animation calmer and shorter.'],
-        ['info', 'You can show all of these tips again from the Help card.'],
-      ],
-      cta: 'Got it',
-    },
+  };
+
+  /** One-line tips: [icon, text]. */
+  const BANNERS = {
+    shop: ['gift', 'Every chest gives one item you do not own yet. The odds are on every card, and Coins come from playing.'],
+    collection: ['check', 'Tap an item to see it and equip it. Dark shapes are items you have not found yet.'],
+    missions: ['check', 'Three new missions every day, each paying Coins. Swap one you do not like.'],
+    profile: ['info', 'Sound, vibration and Reduce Motion live here. Help brings every tip back.'],
   };
 
   let showing = false;
@@ -87,6 +50,13 @@
   BR.Coach = {
     CARDS,
     has(id) { return !!seen()[id]; },
+    /** The one-line banner for a screen, or '' once the player has closed it. */
+    banner(id) {
+      const b = BANNERS[id];
+      if (!b || seen()['b_' + id]) return '';
+      return `<div class="tipbar" data-tip="${id}"><span class="tb-ico">${BR.icon(b[0])}</span><p>${b[1]}</p><button class="tb-x" data-act="close-tip" data-tip="${id}" aria-label="Close this tip">${BR.icon('close')}</button></div>`;
+    },
+    dismiss(id) { seen()['b_' + id] = true; BR.Storage.save(); },
     /** Show a card once. Returns false if it was already seen or something else is on screen. */
     show(id, o = {}) {
       const c = CARDS[id];
@@ -106,27 +76,29 @@
     /** Called by the router when a tab opens. Waits a beat so the screen has settled. */
     onScreen(id) {
       const key = id === 'missions' ? (BR.Router.screens.missions.tab === 'pass' ? 'pass' : 'missions') : id;
-      if (!CARDS[key] || (seen()[key] && !(id === 'home' && !seen().whatsnew3))) return;
+      if (!CARDS[key] || (seen()[key] && !(id === 'home' && !seen().whatsnew4))) return;
       clearTimeout(this._t);
       this._t = setTimeout(() => { if (BR.Router.current !== id) return; if (id === 'home') this.whatsNew(); this.show(key); }, 650);
     },
     /** Players who come from an older version get one "what's new" card (new players get the Welcome card instead). */
     whatsNew() {
       const d = BR.Storage.data, n = d.notice;
-      if (seen().whatsnew3 || showing) return;
-      if (!(d.runs > 0 || n)) { seen().whatsnew3 = true; BR.Storage.save(); return; }
-      seen().whatsnew3 = true; seen().home = true; delete d.notice; BR.Storage.save();
+      if (seen().whatsnew4 || showing) return;
+      if (!(d.runs > 0 || n)) { seen().whatsnew4 = true; BR.Storage.save(); return; }
+      seen().whatsnew4 = true; seen().home = true; delete d.notice; BR.Storage.save();
       const lines = [
-        ['star', '28 new skins, pops, boards and fuses in the Carnival series.'],
-        ['gift', 'Chests never give the same item twice, so Trade-ups are gone.'],
-        ['bolt', 'Boosts now cost Coins, and the Rush fuse has a Last Spark.'],
+        ['bolt', 'Menus and runs are much smoother, especially on phones.'],
+        ['clock', 'A clearer run screen: the stage, the multiplier and your power-ups are all labelled.'],
+        ['gift', 'A daily streak with bigger rewards, and a goal to chase in every run.'],
       ];
       if (n && n.kind === 'dupes' && n.coins) lines.splice(2, 0, ['plus', `Your spare duplicates were turned into ${BR.fmt(n.coins)} Coins.`]);
       showing = true;
-      const body = `<div class="coach-hero"><span class="ch-glow"></span><span class="ch-ico">${BR.icon('gift')}</span></div><h2 class="coach-title display">Update 3: Carnival</h2><ul class="coach-list">${lines.map(([ic, t]) => `<li><span class="cl-ico">${BR.icon(ic)}</span><span>${t}</span></li>`).join('')}</ul>`;
+      const body = `<div class="coach-hero"><span class="ch-glow"></span><span class="ch-ico">${BR.icon('gift')}</span></div><h2 class="coach-title display">Update 4: Ignite</h2><ul class="coach-list">${lines.map(([ic, t]) => `<li><span class="cl-ico">${BR.icon(ic)}</span><span>${t}</span></li>`).join('')}</ul>`;
       BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: 'Let\'s go', cls: 'btn-xl' }], onClose: () => { showing = false; } });
     },
+    /** Marks every card, banner and run tip as seen (the tests use this so help does not cover what they check). */
+    markAllSeen() { const d = seen(); Object.keys(CARDS).forEach((k) => { d[k] = true; }); Object.keys(BANNERS).forEach((k) => { d['b_' + k] = true; }); ['fuse', 'stage', 'rush', 'power'].forEach((k) => { d['rt_' + k] = true; }); d.whatsnew3 = true; d.whatsnew4 = true; },
     /** Profile > Help: every card comes back the next time its screen opens. */
-    reset() { BR.Storage.data.seen = { whatsnew3: true }; BR.Storage.save(); },
+    reset() { BR.Storage.data.seen = { whatsnew3: true, whatsnew4: true }; BR.Storage.save(); },
   };
 })();

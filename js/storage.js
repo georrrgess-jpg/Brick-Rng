@@ -18,11 +18,12 @@
     seenTutorial: false,
     lastDay: '',
     installNudged: false,
-    settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, reduced: prefersReduced, perf: 'auto', musicVol: 0.7, sfxVol: 1 },
+    settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, large: false, reduced: prefersReduced, perf: 'auto', musicVol: 0.7, sfxVol: 1 },
     seen: {},                       // coach cards and one-time hints already shown
     recent: { rush: [], daily: [], chill: [] }, // last scores per mode (for the score to beat)
     daily: { day: '', score: 0, stage: 0 },
     profile: {
+      name: 'Player',                  // shown on the Profile (stays on this device)
       level: 1, xp: 0, coins: BR.CFG ? BR.CFG.startCoins : 200,
       chests: { brick: 1, pop: 0, board: 0, fuse: 0, golden: 0 }, // one welcome chest so the opening is easy to find
       vault: [], // { uid, itemId, shine, seed }  (one entry per item: chests never give duplicates)
@@ -31,6 +32,9 @@
       seq: 0, opened: 0, passTier: 0, passClaimed: 0,
       missions: { day: '', list: [], rerolls: 0, week: '', weekly: null },
       trophies: {},
+      streak: { ring: 0, weeks: 0, last: '', shield: 1, best: 0 },   // the daily ring (js/retention.js)
+      goalHist: [],                                                // the last run goals, so they do not repeat
+      records: { maxLines: 0, maxRushes: 0, history: [] },         // extra personal records and the last 20 Rush scores
       stats: { runs: 0, bricks: 0, rushes: 0, bigPops: 0, powerups: 0, lineBlasts: 0, stages: 0, coinsEarned: 0, chests: 0, dailyRuns: 0, bestCombo: 0, maxGroup: 0, defused: 0 },
     },
   });
@@ -126,6 +130,28 @@
     /** Coalesce rapid saves (called a lot during play). */
     saveSoon() { clearTimeout(timer); timer = setTimeout(() => this.save(), 400); },
     reset() { data = defaults(); this.save(); this.clearRun(); },
+    /** A save code: the whole save as one line of text, with a checksum, so progress can be moved or kept safe without an account. */
+    exportCode() {
+      const json = JSON.stringify(data);
+      let h = 2166136261; for (let i = 0; i < json.length; i++) { h ^= json.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+      const b64 = G.btoa ? G.btoa(unescape(encodeURIComponent(json))) : Buffer.from(json, 'utf8').toString('base64');
+      return 'POPRUSH4.' + h.toString(36) + '.' + b64;
+    },
+    /** Read a save code. Returns the save, or null when the text is not a whole, valid code (nothing is changed). */
+    parseCode(text) {
+      try {
+        const m = /^POPRUSH4\.([0-9a-z]+)\.([A-Za-z0-9+/=]+)$/.exec(String(text).trim());
+        if (!m) return null;
+        const json = G.atob ? decodeURIComponent(escape(G.atob(m[2]))) : Buffer.from(m[2], 'base64').toString('utf8');
+        let h = 2166136261; for (let i = 0; i < json.length; i++) { h ^= json.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+        if (h.toString(36) !== m[1]) return null;
+        const o = JSON.parse(json);
+        if (!o || typeof o !== 'object' || !o.profile || typeof o.profile.level !== 'number') return null;
+        return deepMerge(defaults(), o);
+      } catch (e) { return null; }
+    },
+    /** Replace the save with a parsed code. */
+    restore(save) { data = save; this.save(); this.clearRun(); },
     saveRun(snap) { try { G.localStorage && G.localStorage.setItem(RUN_KEY, JSON.stringify(snap)); } catch (e) { /* ignore */ } },
     loadRun() { return read(RUN_KEY); },
     clearRun() { try { G.localStorage && G.localStorage.removeItem(RUN_KEY); } catch (e) { /* ignore */ } },

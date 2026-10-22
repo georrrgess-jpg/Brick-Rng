@@ -14,6 +14,8 @@
       this.mode = opts.mode || 'rush';
       this.boosts = opts.boosts || {};
       this.startHammer = !!opts.startHammer;
+      this.waitFirstPop = !!opts.waitFirstPop;   // the very first run: the fuse does not burn until the player has popped once
+      this.gentle = !!opts.gentle;               // ... and burns 15% slower until stage 2, so the first minute is for learning
       this.reset(opts.snapshot);
     }
 
@@ -49,7 +51,7 @@
 
     /* ---------- queries ---------- */
     get mult() { return (this.chill ? 1 : BR.stageMult(this.stage)) * (this.rush.active ? BR.CFG.rush.mult : 1); }
-    get burn() { return this.chill ? 0 : BR.burnRate(this.stage); }
+    get burn() { return this.chill ? 0 : BR.burnRate(this.stage) * (this.gentle && this.stage < 2 ? 0.85 : 1); }
     stageCleared() { return this.stageScore >= this.goal; }
     outOfMoves() { return this.chill && this.movesLeft <= 0 && !this.stageCleared(); }
     bestGroup() { return this.board.bestGroup(null); }
@@ -57,7 +59,7 @@
     /* ---------- the clock ---------- */
     /** Advance real time by dt seconds. Returns events: rushEnd, fuseOut. */
     tick(dt) {
-      if (this.over || this.chill) return [];
+      if (this.over || this.chill || (this.waitFirstPop && this.stats.pops === 0)) return [];
       const C = BR.CFG, ev = [];
       this.time += dt;
       const r = this.rush;
@@ -320,6 +322,18 @@
       return { tap, removed, moves, spawns, recolors: [], shuffle, dir: 'down', movesLeft: this.movesLeft };
     }
 
+    /** The power-up the next full charge gives: the one held least, taking turns; null when every slot is full. */
+    nextPower() {
+      const order = BR.BOOSTER_ORDER, cap = BR.CFG.power.cap;
+      let best = null;
+      for (let i = 0; i < order.length; i++) {
+        const t = order[(this.cursor + i) % order.length];
+        if (this.inv[t] >= cap) continue;
+        if (best === null || this.inv[t] < this.inv[best]) best = t;
+      }
+      return best;
+    }
+
     _addCharge(gain) {
       const gained = [];
       if (gain <= 0) return gained;
@@ -327,12 +341,7 @@
       this.charge += gain;
       const order = BR.BOOSTER_ORDER;
       while (this.charge >= P.charge) {
-        let best = null;
-        for (let i = 0; i < order.length; i++) {
-          const t = order[(this.cursor + i) % order.length];
-          if (this.inv[t] >= P.cap) continue;
-          if (best === null || this.inv[t] < this.inv[best]) best = t;
-        }
+        const best = this.nextPower();
         if (best === null) { this.charge = P.charge - 1; break; }
         this.inv[best]++;
         this.cursor = (order.indexOf(best) + 1) % order.length;

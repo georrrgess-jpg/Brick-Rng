@@ -25,7 +25,7 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 /* ---------- stage + chest ---------- */
 .op-stage { position: relative; z-index: 2; flex: 1; min-height: 0; display: grid; place-items: center; }
 .op-chest-wrap { position: relative; width: min(82vw, 340px); aspect-ratio: 200 / 180; margin-top: -4vh; }
-.op-pedestal { position: absolute; left: 50%; bottom: -7%; width: 138%; height: 26%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--ac) 60%, transparent), transparent 68%); filter: blur(2px); opacity: calc(0.55 + var(--hold) * 0.45); }
+.op-pedestal { position: absolute; left: 50%; bottom: -7%; width: 138%; height: 26%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--ac) 60%, transparent), transparent 68%); opacity: calc(0.55 + var(--hold) * 0.45); }
 .op-pedestal::after { content: ''; position: absolute; inset: 22% 14%; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--ac) 80%, #fff); opacity: 0.6; box-shadow: 0 0 22px var(--ac); }
 .op-shake { position: absolute; inset: 0; will-change: transform; }
 .op-chest { position: absolute; inset: 0; transform-origin: 50% 90%; }
@@ -39,6 +39,7 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .op-chest .chest { position: absolute; inset: 0; aspect-ratio: auto; }
 .chest .cp { position: absolute; inset: 0; pointer-events: none; transform-origin: 50% 56%; }
 .chest .cp svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.chest.lite svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 .chest .cz-shadow { position: absolute; left: 8%; right: 8%; bottom: 0; height: 9%; border-radius: 50%; background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55), transparent 70%); }
 .chest .cp-glow, .chest .cp-leak, .chest .cp-frost, .chest .cp-cracks { opacity: 0; }
 .chest .cp-needle { transform: rotate(-120deg); }
@@ -85,7 +86,7 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .op-shard { position: absolute; width: 22px; height: 26px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(150, 220, 255, 0.35)); clip-path: polygon(50% 0, 100% 90%, 0 100%); pointer-events: none; will-change: transform; }
 
 /* ---------- odds strip under the chest ---------- */
-.op-odds { position: relative; z-index: 2; flex: none; margin: 0 calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px); padding: 12px 14px 12px; border-radius: 20px; background: rgba(12, 8, 26, 0.72); border: 1px solid var(--line-2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: opacity 0.4s, transform 0.5s var(--ease-out); }
+.op-odds { position: relative; z-index: 2; flex: none; margin: 0 calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px); padding: 12px 14px 12px; border-radius: 20px; background: rgba(12, 8, 26, 0.92); border: 1px solid var(--line-2); transition: opacity 0.4s, transform 0.5s var(--ease-out); }
 .op-odds .odds-sentence { font: 700 14px/1.3 var(--f-ui); color: #e9defb; text-align: center; margin-bottom: 8px; }
 .op-odds .odds-bar { margin-bottom: 4px; }
 .op-odds .op-see { display: flex; justify-content: center; align-items: center; gap: 4px; width: 100%; margin-top: 6px; min-height: 36px; font: 700 14px var(--f-ui); color: var(--cyan); }
@@ -138,12 +139,13 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .rc { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 6px 12px; border-radius: 18px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 20%, #1d1438), #110a24); border: 2px solid color-mix(in srgb, var(--rc) 70%, #000); }
 .reel-h .rc { width: clamp(118px, 32vw, 140px); height: 196px; }
 .reel-v .rc { width: 100%; height: 108px; flex-direction: row; justify-content: flex-start; gap: 14px; padding: 8px 14px 8px 12px; }
+.rc-art { flex: none; display: grid; place-items: center; }
 .rc .bdg { box-shadow: 0 0.3em 0.6em rgba(0, 0, 0, 0.4); }
 .rc-txt { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
 .reel-v .rc-txt { align-items: flex-start; flex: 1; }
 .rc-name { font: 700 16px/1.1 var(--f-display); text-align: center; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
 .reel-v .rc-name { text-align: left; font-size: 19px; }
-.rc-rar { font: 800 11px var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 55%, #fff); }
+.rc-rar { font: 800 12px var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 55%, #fff); }
 .rc.at { border-color: color-mix(in srgb, var(--rc) 60%, #fff); }
 .rc.win { border-color: #fff; box-shadow: 0 0 0 2px var(--rc), 0 0 30px var(--rc); }
 .reel.landed .rc:not(.win) { opacity: 0.3; }
@@ -175,6 +177,8 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .rv-spot { position: absolute; left: 50%; top: -10%; width: 900px; height: 130%; margin-left: -450px; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 80%); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); mix-blend-mode: screen; opacity: 0; will-change: transform; }
 .rv.fx-spot .rv-spot { opacity: 0.55; animation: spotSweep 6s ease-in-out infinite alternate; } @keyframes spotSweep { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
 .rv-black { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 9; }
+.rv-black::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--rc) 60%, transparent), transparent 58%); opacity: 0; }   /* the dark is never empty: a glow in the rarity color swells inside it */
+.rv-black.go::before { animation: blackGlow 1.5s ease-in forwards; } @keyframes blackGlow { 0% { opacity: 0; transform: scale(0.2); } 35% { opacity: 0.45; } 80% { opacity: 1; transform: scale(1.5); } 100% { opacity: 0; transform: scale(1.7); } }
 .rv-black.go { animation: blackGo 1.5s ease-in-out forwards; } @keyframes blackGo { 0% { opacity: 0; } 18% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
 .rv-banner { position: absolute; left: 0; right: 0; top: calc(var(--sat) + 40px); text-align: center; font: 700 30px var(--f-display); letter-spacing: 0.34em; text-transform: uppercase; color: var(--rc); text-shadow: 0 0 22px var(--rc), 0 3px 0 rgba(0, 0, 0, 0.5); opacity: 0; transform: scale(1.4); }
 .rv-banner.go { animation: bannerGo 0.9s var(--ease-out) forwards; } @keyframes bannerGo { 0% { opacity: 0; transform: scale(1.8); letter-spacing: 0.8em; } 100% { opacity: 1; transform: none; } }

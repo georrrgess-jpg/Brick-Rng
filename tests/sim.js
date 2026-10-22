@@ -118,6 +118,11 @@ console.log('mode chill:');
     const withBoost = (need - oneTime) / (perRun - 20) * (r.time / 60 + MENU_MIN) / 60;
     console.log(`  ${k.padEnd(8)} ${r.coins.toFixed(0)} Coins/run (+${(MIS / RUNS_DAY + WEEK / (7 * RUNS_DAY)).toFixed(0)} missions) -> ${runs.toFixed(0)} runs, ${hours.toFixed(1)} hours to own everything (${withBoost.toFixed(1)} h if one Boost is bought every run); a chest every ${(avgPrice / perRun * (r.time / 60 + MENU_MIN)).toFixed(0)} min`);
     results[k].hours = hours;
+    // Update 4: run goals (10 to 20 Coins, hit about half to two thirds of the time) and a 7-day streak (day 3: 120, day 7: 200 + a Golden Chest)
+    const HIT = { casual: 0.4, average: 0.6, sharp: 0.7 }[k], GOAL = 14.5, STREAK_WEEK = BR.CFG.streak.day3 + BR.CFG.streak.day7Coins + avgPrice;
+    const extra = HIT * GOAL + STREAK_WEEK / (7 * RUNS_DAY), perRun4 = perRun + extra;
+    const hours4 = ((need - oneTime) / perRun4) * (r.time / 60 + MENU_MIN) / 60;
+    console.log(`           + goals and a daily streak: +${extra.toFixed(0)} Coins/run (${(extra / perRun * 100).toFixed(0)}% more) -> ${hours4.toFixed(1)} hours for someone who plays every day`);
   }
 }
 console.log('invariants held');

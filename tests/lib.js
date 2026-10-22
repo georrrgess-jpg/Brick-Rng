@@ -14,7 +14,7 @@ async function launch({ width = 390, height = 844, mobile = true, dsf = 2, setup
   await page.goto(URL);
   await page.waitForFunction(() => window.__app, null, { timeout: 8000 }).catch(() => {});
   // the first-time tip cards would cover the screen, so tests start with them already seen (tests/coach.js asks for them)
-  if (!coach) await page.evaluate(() => { Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; });
+  if (!coach) await page.evaluate(() => { BR.Coach.markAllSeen(); });
   return { browser, ctx, page, errors };
 }
 module.exports = { launch, URL };

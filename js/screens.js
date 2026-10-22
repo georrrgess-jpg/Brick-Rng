@@ -6,31 +6,68 @@
   const S = () => BR.Storage.data;
   const P = BR.Progress;
   const R = (id) => BR.rarityById[id];
+  const FIRST_LOCKED = 9;    // small "not found yet" tiles built up front
+  const FIRST_CARDS = 8;     // cards the Collection grid builds before its first frame; the rest fill in afterwards
+  const LITE = { lite: true };   // static chest art for lists: one flat SVG instead of a stack of layers
   const ringSVG = (frac, size = 44, w = 5) => {
     const r = (size - w) / 2, c = 2 * Math.PI * r;
     return `<svg class="ring" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="ring-bg" stroke-width="${w}"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="ring-fg" stroke-width="${w}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1)}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
   };
   BR.ringSVG = ringSVG;
+  /** The sliding highlight of a segmented control is placed by CSS from --i (the index) and --n (the count): nothing is measured. */
+  const slideThumb = (seg) => { if (seg) requestAnimationFrame(() => seg.style.setProperty('--i', seg.dataset.i)); };
+
+  /** Fill a list in after the screen's first frames, a few at a time: a long grid or track opens on its first screenful instead of
+      building everything in one frame. `fill(el, i)` finishes one placeholder; hydration stops when the list is replaced. */
+  function hydrate(root, sel, fill, order) {
+    const els = Array.from(root.querySelectorAll(sel));
+    const list = order ? order(els) : els;
+    let k = 0;
+    const step = () => {
+      if (k >= list.length || !list[k].isConnected) return;     // a re-render replaced this list: the new one hydrates itself
+      const t0 = performance.now();
+      do { fill(list[k], k); k++; } while (k < list.length && list[k].isConnected && performance.now() - t0 < 5);
+      requestAnimationFrame(step);
+    };
+    setTimeout(() => requestAnimationFrame(step), 260);
+  }
 
   const topbar = (title) => `<header class="topbar">
-      <button class="lvl-badge" data-act="go-profile" aria-label="Level ${P.level}">${ringSVG(P.xp / P.need, 48, 5)}<b>${P.level}</b></button>
+      <button class="lvl-badge" data-act="go-pass" aria-label="Level ${P.level}. Open the Pop Pass">${ringSVG(P.xp / P.need, 36, 4)}<b>Lv ${P.level}</b></button>
       ${title ? `<h1>${title}</h1>` : '<div style="flex:1"></div>'}
-      <button class="pill gold coin-btn" data-act="go-shop" aria-label="Coins">${BR.coin()}<b class="num" data-coins>${fmt(P.coins)}</b><i>${BR.icon('plus')}</i></button>
+      <button class="pill gold coin-btn" data-act="go-coins" aria-label="Your Coins">${BR.coin()}<b class="num" data-coins>${fmt(P.coins)}</b></button>
     </header>`;
+
+  /** Tap the Coin pill: what you have, how to earn more, and the cheapest chest you could open. */
+  BR.coinSheet = function () {
+    const cheapest = BR.CHEST_ORDER.map((id) => ({ id, c: BR.CHESTS[id], st: P.chestStatus(id) })).filter((x) => !x.st.complete && x.c.cost != null).sort((a, b) => a.c.cost - b.c.cost)[0];
+    const next = cheapest
+      ? (P.coins >= cheapest.c.cost
+        ? `<div class="cs-next ok"><span class="rw-ico chest">${BR.chestSVG(cheapest.id, LITE)}</span><p><b>You can open a ${cheapest.c.name}</b> for <span class="nw">${BR.coin()} ${cheapest.c.cost}</span>.</p></div>`
+        : `<div class="cs-next"><span class="rw-ico chest">${BR.chestSVG(cheapest.id, LITE)}</span><p><b>${fmt(cheapest.c.cost - P.coins)} more Coins</b> opens a ${cheapest.c.name} (<span class="nw">${BR.coin()} ${cheapest.c.cost}</span>).</p></div>`)
+      : '';
+    BR.Sheet.open({
+      title: 'Your Coins',
+      body: `<div class="cs-bal">${BR.coin()}<b class="num">${fmt(P.coins)}</b></div>${next}
+        <h3 class="sec-title">Ways to earn Coins</h3>
+        <ul class="cs-list"><li><span>${BR.icon('play')}</span>Finish runs: points and every stage you clear</li><li><span>${BR.icon('sun')}</span>Daily Rush, and your first run each day</li><li><span>${BR.icon('missions')}</span>Daily and weekly missions</li><li><span>${BR.icon('trophy')}</span>Trophies and the Pop Pass</li></ul>`,
+      actions: [{ label: 'Go to the Shop', cls: '', onClick: () => BR.Router.go('shop') }],
+    });
+  };
 
   const resetsIn = () => { const n = new Date(), m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1); const s = Math.max(0, Math.floor((m - n) / 1000)); const h = Math.floor(s / 3600), mi = Math.floor((s % 3600) / 60); return `${h}h ${String(mi).padStart(2, '0')}m`; };
 
   /** Reward art/label for the Pass, missions and sheets. */
   function rewardChip(r, big) {
     if (r.kind === 'coins') return `<span class="rw-ico coins">${BR.coin()}</span><span class="rw-txt"><b>${r.amount}</b> Coins</span>`;
-    if (r.kind === 'chest') return `<span class="rw-ico chest">${BR.chestSVG(r.chest)}</span><span class="rw-txt"><b>${BR.CHESTS[r.chest].name}</b></span>`;
+    if (r.kind === 'chest') return `<span class="rw-ico chest">${BR.chestSVG(r.chest, LITE)}</span><span class="rw-txt"><b>${BR.CHESTS[r.chest].name}</b></span>`;
     const it = BR.itemById[r.itemId];
     return `<span class="rw-ico item" style="--rc:${R(it.rarity).color}">${BR.Badge.html(it, { shine: r.shine, seed: 7 }, { size: 48, still: true })}</span><span class="rw-txt"><b>${it.name}</b> ${R(it.rarity).name} ${BR.ITEM_TYPES[it.type].name}</span>`;
   }
   /** Big art for a reward (the Pop Pass track and the next-reward spotlight). */
   function rewardArt(r, size) {
     if (r.kind === 'coins') return `<span class="pt-coin" style="--sz:${size}px">${BR.coin()}</span>`;
-    if (r.kind === 'chest') return `<span class="pt-chest" style="--sz:${size}px">${BR.chestSVG(r.chest)}</span>`;
+    if (r.kind === 'chest') return `<span class="pt-chest" style="--sz:${size}px">${BR.chestSVG(r.chest, LITE)}</span>`;
     return BR.Badge.html(BR.itemById[r.itemId], { shine: r.shine, seed: 7 }, { size, still: true });
   }
   BR.rewardChip = rewardChip;
@@ -66,7 +103,7 @@
 
   BR.showOdds = function (chestId) {
     let type = BR.CHESTS[chestId].type;
-    const sh = BR.Sheet.open({ title: `${BR.CHESTS[chestId].name} odds`, body: `<div class="chest-mini">${BR.chestSVG(chestId)}</div>${BR.oddsHTML(chestId, type || 'skin', { pityIn: P.chestStatus(chestId).pityIn })}` });
+    const sh = BR.Sheet.open({ title: `${BR.CHESTS[chestId].name} odds`, body: `<div class="chest-mini">${BR.chestSVG(chestId, LITE)}</div>${BR.oddsHTML(chestId, type || 'skin', { pityIn: P.chestStatus(chestId).pityIn })}` });
     sh.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) toggleInside(sh.el.querySelector('.odds')); });
   };
 
@@ -93,6 +130,17 @@
       const resume = BR.Storage.loadRun();
       const owned = P.openableChests();
       const logo = ['P', 'O', 'P'].map((ch, i) => `<div class="brick lb" data-c="${[0, 3, 1][i]}" style="--i:${i}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b><span class="ltr">${ch}</span></div></div>`).join('');
+      const sk = BR.Streak.status();
+      const dots = Array.from({ length: BR.Streak.LEN }, (_, i) => {
+        const day = i + 1, lit = day <= sk.ring, today = sk.playedToday && day === sk.ring;
+        const prize = day === 3 ? `<small>${BR.coin()}${BR.CFG.streak.day3}</small>` : day === 7 ? `<small>${BR.icon('gift')}</small>` : '<small>&nbsp;</small>';
+        return `<span class="sk-day ${lit ? 'on' : ''} ${today ? 'today' : ''} ${day === 3 || day === 7 ? 'prize' : ''}"><i>${lit ? BR.icon('check') : day}</i>${prize}</span>`;
+      }).join('');
+      const skNote = sk.playedToday ? (sk.ring >= BR.Streak.LEN ? 'Week complete! A new one starts tomorrow.' : `Day ${sk.ring} done. Come back tomorrow for day ${sk.ring + 1}.`)
+        : !sk.alive ? 'Play today to start a new week. The weeks you finished stay.'
+        : sk.ring === 0 ? 'Finish a run today to light the first day.'
+        : `Finish a run today for day ${sk.ring + 1}${sk.ring + 1 === 3 ? `: ${BR.CFG.streak.day3} Coins` : sk.ring + 1 === 7 ? `: ${BR.CFG.streak.day7Coins} Coins and a Golden Chest` : ''}.`;
+      const streakCard = `<article class="card streak-card stg"><div class="pc-head"><span class="pc-title display">Daily streak</span><span class="tag ${sk.playedToday ? '' : 'gold'}">${sk.playedToday ? BR.icon('check') + ' Today done' : 'Play today'}</span></div><div class="sk-row" role="img" aria-label="Streak: ${sk.ring} of 7 days">${dots}</div><p class="sk-note">${skNote}${sk.shield && sk.ring > 0 && sk.alive ? ' One missed day is forgiven.' : ''}</p></article>`;
       this.el.innerHTML = `${topbar()}<div class="scroll">
         <div class="logo stg" aria-label="Pop Rush">
           <div class="logo-pop" data-skin-host>${logo}</div>
@@ -107,28 +155,29 @@
             <span class="tag hot">${BR.icon('fire')} Main mode</span>
             <span class="hero-title display">Rush</span>
             <span class="hero-sub">Pop fast to keep the fuse lit. Chain big pops for Rush Mode.</span>
-            <span class="hero-stats"><span><small>Best</small><b class="num">${fmt(st.best.rush)}</b></span><span><small>Stage</small><b class="num">${st.bestStage.rush || '-'}</b></span>${par(st.recent.rush) ? `<span><small>Par</small><b class="num">${fmt(par(st.recent.rush))}</b></span>` : ''}</span>
+            <span class="hero-stats"><span><small>Best</small><b class="num">${fmt(st.best.rush)}</b></span><span><small>Stage</small><b class="num">${st.bestStage.rush || '-'}</b></span>${par(st.recent.rush) ? `<span><small>Recent avg</small><b class="num">${fmt(par(st.recent.rush))}</b></span>` : ''}</span>
           </span>
-          <span class="btn btn-gold btn-xl hero-play">Play</span>
+          <span class="btn btn-xl hero-play">Play</span>
         </button>
         <div class="row2 stg">
           <button class="mode-card daily ${dailyDone ? 'done' : ''}" data-act="play-daily">
             <span class="mc-ico"><span class="cal"><small>${new Date().toLocaleString('en-US', { month: 'short' })}</small><b>${new Date().getDate()}</b></span></span>
             <span class="mc-title display">Daily Rush</span>
-            <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : par(st.recent.daily) ? `Your par: ${fmt(par(st.recent.daily))}` : 'Same board for everyone. Bonus Coins.'}</span>
+            <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : par(st.recent.daily) ? `Recent average: ${fmt(par(st.recent.daily))}` : 'Same board for everyone. Bonus Coins.'}</span>
             <span class="tag ${dailyDone ? '' : 'gold'}">${dailyDone ? BR.icon('check') + ' Come back tomorrow' : '+15 Coins'}</span>
           </button>
           <button class="mode-card chill ${chillOpen ? '' : 'locked'}" data-act="play-chill">
             <span class="mc-ico">${BR.icon('leaf')}</span>
             <span class="mc-title display">Chill</span>
             <span class="mc-sub">20 moves a round. No clock.</span>
-            ${chillOpen ? `<span class="tag">Best ${fmt(st.best.chill)}</span>` : `<span class="lock-badge">${BR.icon('lock')} Level ${BR.CFG.chill.unlockLevel}</span>`}
+            ${chillOpen ? `<span class="tag">${st.best.chill > 0 ? 'Best ' + fmt(st.best.chill) : 'New'}</span>` : `<span class="lock-badge">${BR.icon('lock')} Level ${BR.CFG.chill.unlockLevel}</span>`}
           </button>
         </div>
+        ${streakCard}
         ${owned ? `<button class="banner stg" data-act="go-shop"><span class="bn-ico">${BR.icon('gift')}</span><span class="bn-txt"><b>You have ${owned} chest${owned > 1 ? 's' : ''} to open</b><small>Free to open. Tap to see.</small></span><span class="bn-go">${BR.icon('arrow')}</span></button>` : ''}
         <button class="card pass-card stg" data-act="go-pass">
           <div class="pc-head"><span class="pc-title display">Pop Pass</span><span class="tag">Level ${P.level}</span></div>
-          <div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next reward</small><div class="bar"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small>${fmt(P.need - P.xp)} XP to go</small></div></div>
+          <div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next reward</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small>${fmt(P.need - P.xp)} XP to go</small></div></div>
         </button>
         <button class="card mission-card stg" data-act="go-missions">
           <div class="pc-head"><span class="pc-title display">Today's missions</span><span class="tag">${m.list.filter((x) => x.done).length}/3 done</span></div>
@@ -137,9 +186,6 @@
       </div>`;
       BR.Skins.apply();
     },
-    onShow() { this.tick = setInterval(() => this.refreshCoins(), 1500); },
-    onHide() { clearInterval(this.tick); },
-    refreshCoins() { document.querySelectorAll('[data-coins]').forEach((n) => { n.textContent = fmt(P.coins); }); },
   };
 
   /* ------------------------------------------------------------------ Ready sheet (boosts) */
@@ -208,22 +254,21 @@
         if (st.complete) action = `<span class="btn btn-dark btn-sm done-badge">${BR.icon('check')} Complete</span>`;
         else if (n > 0) action = `<button class="btn btn-green btn-sm" data-act="open" data-chest="${id}">Open free${n > 1 ? ` <b>x${n}</b>` : ''}</button>`;
         else action = c.cost != null ? `<button class="btn btn-gold btn-sm ${can ? '' : 'short'}" data-act="open" data-chest="${id}">${BR.coin()} ${c.cost}</button>` : '';
-        const left = c.golden ? '' : st.complete ? `<small class="cc-left">You own all ${st.total} ${c.sub}</small>` : `<small class="cc-left">${st.left} of ${st.total} ${c.sub} left to find${st.pityIn ? ` · Epic or better in ${st.pityIn}` : ''}</small>`;
+        const N = BR.CFG.pityEvery, filled = st.pityIn ? N - st.pityIn : 0;
+        const pity = st.pityIn ? `<div class="pity" role="img" aria-label="An Epic or better is guaranteed within ${st.pityIn} chest${st.pityIn === 1 ? '' : 's'}"><span class="pips">${Array.from({ length: N }, (_, k) => `<i class="${k < filled ? 'on' : ''}"></i>`).join('')}</span><small>Epic or better guaranteed within ${N} chests</small></div>` : '';
+        const left = c.golden ? '' : st.complete ? `<small class="cc-left">You own all ${st.total} ${c.sub}</small>` : `<small class="cc-left">${st.left} of ${st.total} ${c.sub} left to find</small>${pity}`;
         return `<article class="chest-card stg cc-${id} ${st.complete ? 'complete' : ''}" style="--ac:${c.accent}">
-          <div class="cc-art"><span class="cc-halo"></span>${BR.chestSVG(id)}${n > 0 ? `<em class="cc-badge">${n}</em>` : ''}</div>
+          <div class="cc-art"><span class="cc-halo"></span>${BR.chestSVG(id, LITE)}${n > 0 ? `<em class="cc-badge">${n}</em>` : ''}</div>
           <div class="cc-info">
             <div class="cc-top"><h3 class="display">${c.name}</h3><button class="info-btn" data-act="odds" data-chest="${id}" aria-label="Odds for ${c.name}">${BR.icon('info')}</button></div>
-            <span class="tag" style="--rc:${c.accent}">${c.sub}</span>
             <p class="cc-blurb">${c.blurb}</p>
             <div class="odds-mini" title="Odds"><div class="om-bar">${mini}</div><small>${live0(odds)}</small></div>${left}
             <div class="cc-act">${action}</div>
           </div></article>`;
       }).join('');
       this.el.innerHTML = `${topbar('Shop')}<div class="scroll">
-        <p class="shop-intro stg">Every chest holds one item you do not own yet. The odds are always shown, and Coins come from playing.</p>
+        ${BR.Coach.banner('shop')}
         ${cards}
-        <h2 class="sec-title stg">Run boosts <small>Pick them before a run</small></h2>
-        <div class="boost-info stg">${Object.values(BR.CFG.boosts).map((b) => `<div class="bi"><span class="bo-ico">${BR.icon(BOOST_ICON[b.id])}</span><b>${b.name}</b><small>${b.desc}</small><span class="bo-cost">${BR.coin()}<b>${b.cost}</b></span></div>`).join('')}</div>
         <h2 class="sec-title stg">How to earn Coins</h2>
         <div class="card card-pad earn stg"><ul>
           <li><span>${BR.icon('play')}</span>Finish runs: points and every stage you clear</li>
@@ -246,7 +291,8 @@
       const segs = BR.TYPE_ORDER.map((t) => `<button data-type="${t}" class="${t === type ? 'on' : ''}">${BR.ITEM_TYPES[t].plural}<small>${have(t)}/${total(t)}</small></button>`).join('');
       const filters = BR.RARITIES.map((r) => `<button class="chip-btn ${this.filter === r.id ? 'on' : ''}" data-rar="${r.id}" style="--rc:${r.color}">${r.name}</button>`).join('');
       this.el.innerHTML = `${topbar('Collection')}<div class="scroll">
-        <div class="seg stg" id="colSeg">${segs}<i class="thumb"></i></div>
+        ${BR.Coach.banner('collection')}
+        <div class="seg stg" id="colSeg" style="--n:${BR.TYPE_ORDER.length};--i:${this._prev != null ? this._prev : BR.TYPE_ORDER.indexOf(type)}" data-i="${BR.TYPE_ORDER.indexOf(type)}">${segs}<i class="thumb"></i></div>
         <div class="col-head stg"><div class="eq-now" style="--rc:${R(eq.item.rarity).color}"><span class="eq-prev">${BR.Skins.previewHTML(eq.item, eq.inst)}</span><span class="eq-txt"><small>Equipped</small><b class="display">${eq.item.name}</b></span></div>
           <div class="col-prog" aria-label="Collected">${ringSVG(have(type) / total(type), 52, 6)}<b>${have(type)}<small>/${total(type)}</small></b></div></div>
         <div class="filters stg">${filters}</div>
@@ -254,16 +300,14 @@
         <p class="tiny center">Tap an item to see it or equip it. Every chest gives something new.</p>
       </div>`;
       this.placeThumb();
+      this.hydrateGrid();
     },
-    placeThumb() {
-      const seg = this.el.querySelector('#colSeg'); if (!seg) return;
-      const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb');
-      th.style.width = on.offsetWidth + 'px'; th.style.transform = `translateX(${on.offsetLeft - 4}px)`;
-    },
+    placeThumb() { const seg = this.el.querySelector('#colSeg'); this._prev = BR.TYPE_ORDER.indexOf(this.type); slideThumb(seg); },
     gridHTML() {
       const type = this.type, vault = S().profile.vault;
       const order = BR.RARITIES.map((r) => r.id);
       const byR = (a, b) => order.indexOf(b.rarity) - order.indexOf(a.rarity) || a.name.localeCompare(b.name);
+      const byRasc = (a, b) => order.indexOf(a.rarity) - order.indexOf(b.rarity) || a.name.localeCompare(b.name);
       const out = [];
       let i = 0;
       const def = BR.DEFAULTS[type];
@@ -275,25 +319,50 @@
         out.push(card(o.item, o.inst, { i: i++, eq: eqd }));
       }
       const have = new Set(owned.map((o) => o.item.id));
-      for (const item of BR.itemsOfType(type).sort(byR)) {
-        if (have.has(item.id) || (this.filter && this.filter !== item.rarity)) continue;
-        out.push(card(item, null, { i: i++, locked: true }));
-      }
-      if (!out.length) return `<div class="empty-state col-span">${BR.icon('collection')}<p>Nothing here yet.<br>Open chests in the Shop to fill your collection.</p></div>`;
-      return out.join('');
+      // what is left to find: Common first, so the first thing a player sees is something they can actually get
+      const missing = BR.itemsOfType(type).filter((item) => !have.has(item.id) && (!this.filter || this.filter === item.rarity)).sort(byRasc);
+      this._rest = out;
+      this._lockedTiles = missing.map((item) => lockedTile(item));
+      const lockedBlock = missing.length
+        ? `<div class="col-locked-head col-span"><h3>Not found yet <small>${missing.length}</small></h3><p>Tap one to see where it comes from.</p></div><div class="col-locked-grid col-span" id="colLocked">${this._lockedTiles.slice(0, FIRST_LOCKED).join('')}${missing.slice(FIRST_LOCKED).map((_, k) => `<div class="lk ph" data-k="${k + FIRST_LOCKED}"></div>`).join('')}</div>`
+        : '';
+      if (!out.length && !missing.length) return `<div class="empty-state col-span">${BR.icon('collection')}<p>Nothing here yet.<br>Open chests in the Shop to fill your collection.</p></div>`;
+      return out.slice(0, FIRST_CARDS).join('') + out.slice(FIRST_CARDS).map((_, k) => `<div class="icard ph" data-k="${k + FIRST_CARDS}"></div>`).join('') + lockedBlock;
+    },
+    hydrateGrid() {
+      const rest = this._rest, locked = this._lockedTiles;
+      if (rest && rest.length > FIRST_CARDS) hydrate(this.el, '.icard.ph', (el) => { el.insertAdjacentHTML('afterend', rest[+el.dataset.k].replace('class="icard ', 'class="icard late ')); el.remove(); });
+      if (locked && locked.length > FIRST_LOCKED) hydrate(this.el, '.lk.ph', (el) => { el.insertAdjacentHTML('afterend', locked[+el.dataset.k]); el.remove(); });
     },
     onRetap() { this.el.querySelector('.scroll').scrollTo({ top: 0, behavior: 'smooth' }); },
     onShow() { this.placeThumb(); },
   };
+  /** A small tile for something you have not found: its silhouette and rarity, never its name. */
+  function lockedTile(item) {
+    const r = R(item.rarity);
+    return `<button class="lk" data-locked="${item.id}" style="--rc:${r.color}" aria-label="${r.name} ${BR.ITEM_TYPES[item.type].name}, not found yet"><span class="lk-prev">${BR.Badge.html(item, null, { size: 52, locked: true, still: true })}</span><small>${r.name}</small></button>`;
+  }
   function card(item, inst, o) {
     const r = R(item.rarity);
     const shine = inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
-    if (o.locked) return `<div class="icard locked" style="--rc:${r.color};--i:${o.i}"><div class="ic-prev">${BR.Badge.html(item, null, { size: 64, locked: true, still: true })}</div><b class="ic-name">???</b><span class="tag rar" style="--rc:${r.color}">${r.name}</span><small class="ic-hint">${item.pass ? 'Pop Pass reward' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name}</small></div>`;
     return `<div class="icard ${o.eq ? 'eq' : ''}" data-uid="${inst ? inst.uid : 'default'}" data-type="${item.type}" style="--rc:${r.color};--i:${o.i}">
       ${o.eq ? `<span class="eq-flag">${BR.icon('check')}</span>` : ''}
-      <div class="ic-prev">${BR.Skins.previewHTML(item, inst)}</div><b class="ic-name">${esc(item.name)}</b>
+      <div class="ic-prev">${BR.Badge.html(item, inst, { size: 64, still: true })}</div><b class="ic-name">${esc(item.name)}</b>
       <div class="ic-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span>${shine}</div></div>`;
   }
+
+  /** Where an item you have not found comes from. */
+  BR.lockedSheet = function (itemId) {
+    const item = BR.itemById[itemId];
+    if (!item) return;
+    const r = R(item.rarity), chest = item.pass ? null : BR.CHESTS[BR.ITEM_TYPES[item.type].chest];
+    const st = chest ? P.chestStatus(BR.ITEM_TYPES[item.type].chest) : null;
+    const body = `<div class="detail" style="--rc:${r.color}"><div class="detail-prev locked-prev"><span class="dp-glow"></span>${BR.Badge.html(item, null, { size: 120, locked: true, still: true })}</div>
+        <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">${BR.ITEM_TYPES[item.type].name}</span></div>
+        <p class="detail-desc">${item.pass ? 'A reward on the Pop Pass. Reach its level to get it.' : `Found in the <b>${chest.name}</b>. ${st && st.left ? `${st.left} of ${st.total} ${chest.sub} are still waiting.` : ''}`}</p>
+        <div class="detail-where"><small>Comes from</small><b>${item.pass ? 'Pop Pass' : chest.name}</b></div></div>`;
+    BR.Sheet.open({ title: 'Not found yet', body, actions: [{ label: item.pass ? 'See the Pop Pass' : 'Go to the Shop', cls: '', onClick: () => { if (item.pass) { Missions.tab = 'pass'; } BR.Router.go(item.pass ? 'missions' : 'shop'); } }] });
+  };
 
   /* item detail sheet */
   BR.itemSheet = function (uid, type) {
@@ -313,6 +382,13 @@
     const sheet = BR.Sheet.open({ title: esc(item.name), body, actions, onClose: () => { if (demo) demo.stop(); } });
     demo = BR.Openings.demo(sheet.body.querySelector('.hero-host'), item, inst || { shine: 'plain', seed: 0 }, { silent: true, power: 1.2 });
   };
+  /** A trophy: what it asks for, what it pays, and whether you have it. */
+  BR.trophySheet = function (id) {
+    const t = BR.TROPHIES.find((x) => x.id === id);
+    if (!t) return;
+    const got = !!S().profile.trophies[id];
+    BR.Sheet.open({ title: esc(t.name), body: `<div class="detail"><div class="reward-big trophy-art ${got ? 'got' : ''}">${BR.icon(got ? (TROPHY_ICON[id] || 'trophy') : 'lock')}</div><div class="detail-tags"><span class="tag ${got ? 'gold' : ''}">${got ? 'Earned' : 'Not yet'}</span><span class="tag gold">${BR.coin()} ${t.coins}</span></div><p class="detail-desc">${esc(t.desc)}.</p><div class="detail-where"><small>${got ? 'Reward' : 'Pays'}</small><b>${got ? 'Paid when you earned it' : t.coins + ' Coins and some XP'}</b></div></div>` });
+  };
   /** What a Pop Pass tier gives: tap a tier on the track. */
   BR.rewardSheet = function (tier) {
     const r = BR.passReward(tier);
@@ -331,6 +407,7 @@
   };
 
   /* ------------------------------------------------------------------ Missions */
+  const TROPHY_ICON = { first_run: 'play', first_rush: 'fire', stage5: 'flag', stage10: 'bomb', score100k: 'star', score250k: 'star', big100: 'bolt', bricks5k: 'collection', line5: 'bolt', power25: 'bolt', defuse10: 'bomb', daily1: 'sun', chests10: 'gift', own10: 'collection', own25: 'collection', commons: 'check', mythic: 'star', complete: 'check', lv10: 'trophy' };
   const KIND_ICON = { bricks: 'collection', color: 'star', stage: 'bolt', rushRun: 'fire', big: 'star', power: 'bomb', lines: 'bolt', defuse: 'bomb', runs: 'play', dailyScore: 'sun', weeklyStage: 'bolt', weeklyBricks: 'collection' };
   const Missions = {
     tab: 'daily',
@@ -344,12 +421,12 @@
           <h2 class="sec-title stg">Weekly challenge</h2>
           <article class="mission weekly stg ${m.weekly.done ? 'done' : ''}"><span class="m-ico">${BR.icon(KIND_ICON[m.weekly.kind])}</span>
             <div class="m-body"><b class="m-text">${esc(m.weekly.text)}</b><div class="bar gold"><i style="width:${(m.weekly.progress / m.weekly.target) * 100}%"></i></div><small class="num">${fmt(m.weekly.progress)} / ${fmt(m.weekly.target)}</small></div>
-            <div class="m-reward gold-r"><span class="rw-ico chest sm">${BR.chestSVG('golden')}</span><b>${BR.coin()} ${m.weekly.reward}</b><small>+ Golden Chest</small></div></article>`;
+            <div class="m-reward gold-r"><span class="rw-ico chest sm">${BR.chestSVG('golden', LITE)}</span><b>${BR.coin()} ${m.weekly.reward}</b><small>+ Golden Chest</small></div></article>`;
       } else if (this.tab === 'pass') body = this.passHTML();
       else body = this.trophiesHTML();
-      this.el.innerHTML = `${topbar('Missions')}<div class="scroll"><div class="seg stg" id="misSeg">${seg}<i class="thumb"></i></div>${body}</div>`;
+      this.el.innerHTML = `${topbar('Missions')}<div class="scroll">${this.tab === 'daily' ? BR.Coach.banner('missions') : ''}<div class="seg stg" id="misSeg" style="--n:3;--i:${this._prev != null ? this._prev : ['daily', 'pass', 'trophies'].indexOf(this.tab)}" data-i="${['daily', 'pass', 'trophies'].indexOf(this.tab)}">${seg}<i class="thumb"></i></div>${body}</div>`;
       this.placeThumb();
-      if (this.tab === 'pass') this.centerTrack(false);
+      if (this.tab === 'pass') { this.centerTrack(false); this.hydrateTrack(); }
       BR.Router.screens.missions.hasDot();
     },
     missionCard(x, i) {
@@ -361,11 +438,18 @@
     passHTML() {
       const L = P.level, need = P.need, next = BR.passReward(L), S3 = BR.PASS_SEASON;
       const big = (t) => t.kind !== 'coins';
-      const tiers = BR.PASS.map((t) => {
+      const card = (t) => {
         const state = t.tier < L ? 'claimed' : t.tier === L ? 'next' : 'locked';
         const mark = state === 'claimed' ? `<i class="pt-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="pt-lk">${BR.icon('lock')}</i>` : '<span class="pt-now">Next</span>';
+        return `${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${BR.rewardLabel(t)}</span>${mark}`;
+      };
+      this._passCards = {};
+      const tiers = BR.PASS.map((t) => {
+        const state = t.tier < L ? 'claimed' : t.tier === L ? 'next' : 'locked';
+        const near = t.tier >= L - 2 && t.tier <= L + 3;     // the tiers in view when the track centres on the next reward
+        if (!near) this._passCards[t.tier] = card(t);
         return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}"><span class="pt-n"><b>${t.tier + 1}</b></span>
-          <div class="pt-card">${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${BR.rewardLabel(t)}</span>${mark}</div></div>`;
+          <div class="pt-card${near ? '' : ' ph'}">${near ? card(t) : ''}</div></div>`;
       }).join('');
       return `<article class="pass-hero stg">
           <div class="ph-head"><div><span class="ph-season">${S3.label}</span><h2 class="display">Pop Pass</h2><small>Free. Every level pays the next reward.</small></div>
@@ -380,12 +464,14 @@
     trophiesHTML() {
       const got = S().profile.trophies;
       const n = Object.keys(got).length;
-      return `<div class="reset-note stg">${BR.icon('trophy')} ${n} of ${BR.TROPHIES.length} earned</div>` + BR.TROPHIES.map((t) => `<article class="trophy stg ${got[t.id] ? 'got' : ''}"><span class="tr-ico">${BR.icon(got[t.id] ? 'trophy' : 'lock')}</span><div class="tr-body"><b>${t.name}</b><small>${t.desc}</small></div><span class="tr-rw">${BR.coin()}<b>${t.coins}</b></span></article>`).join('');
+      return `<div class="reset-note stg">${BR.icon('trophy')} ${n} of ${BR.TROPHIES.length} earned</div>` + BR.TROPHIES.map((t) => `<button class="trophy stg ${got[t.id] ? 'got' : ''}" data-trophy="${t.id}"><span class="tr-ico">${BR.icon(got[t.id] ? (TROPHY_ICON[t.id] || 'trophy') : 'lock')}</span><div class="tr-body"><b>${t.name}</b><small>${t.desc}</small></div><span class="tr-rw">${got[t.id] ? BR.icon('check') : BR.coin() + '<b>' + t.coins + '</b>'}</span></button>`).join('');
     },
-    placeThumb() {
-      const seg = this.el.querySelector('#misSeg'); if (!seg) return;
-      const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb');
-      th.style.width = on.offsetWidth + 'px'; th.style.transform = `translateX(${on.offsetLeft - 4}px)`;
+    placeThumb() { const seg = this.el.querySelector('#misSeg'); this._prev = ['daily', 'pass', 'trophies'].indexOf(this.tab); slideThumb(seg); },
+    /** The far tiers of the track get their art after the first frames, nearest to the next reward first. */
+    hydrateTrack() {
+      const cards = this._passCards, L = P.level;
+      hydrate(this.el, '.pt-card.ph', (el) => { const html = cards[el.closest('.pt').dataset.tier]; el.classList.remove('ph'); if (html) el.innerHTML = html; },
+        (els) => els.sort((a, b) => Math.abs(+a.closest('.pt').dataset.tier - L) - Math.abs(+b.closest('.pt').dataset.tier - L)));
     },
     centerTrack(smooth) {
       const tr = this.el.querySelector('#passTrack'), n = tr && tr.querySelector('.pt.next');
@@ -400,6 +486,55 @@
     },
   };
 
+  /** Copy text to the clipboard; falls back to selecting it so the player can copy by hand. */
+  const copyText = async (text, box) => {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+    try { box.focus(); box.select(); return document.execCommand('copy'); } catch (e) { return false; }
+  };
+  /** Profile > Data: the save as one line of text, to keep or to move to another device. */
+  BR.saveCodeSheet = function () {
+    const code = BR.Storage.exportCode();
+    BR.Sheet.open({
+      title: 'Save code',
+      body: `<p class="ready-sub">Your progress is saved on this device only. Copy this code and keep it somewhere safe, like a note to yourself. If the browser ever clears its data, paste it into Restore to get everything back.</p><textarea class="code-box" readonly rows="5" aria-label="Save code">${code}</textarea>`,
+      actions: [{ label: 'Copy code', close: false, onClick: async (api) => { const ok = await copyText(code, api.el.querySelector('textarea')); BR.toast(ok ? 'Code copied' : 'Select the code and copy it', ok ? 'good' : ''); } }],
+    });
+  };
+  /** Profile > Data: put a save code back. Asks twice, and changes nothing unless the code is whole and valid. */
+  BR.restoreSheet = function () {
+    let armed = null;
+    BR.Sheet.open({
+      title: 'Restore from a code',
+      body: `<p class="ready-sub">Paste a save code. It replaces the progress on this device, so use it on a new device or after your data was cleared.</p><textarea class="code-box" rows="5" placeholder="POPRUSH4...." aria-label="Paste your save code" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea><p class="code-info tiny"></p>`,
+      actions: [{
+        label: 'Check the code', close: false,
+        onClick: (api, btn) => {
+          const box = api.el.querySelector('textarea'), info = api.el.querySelector('.code-info');
+          if (armed) {
+            BR.Storage.restore(armed); armed = null;
+            BR.App.applySettings(); BR.Skins.apply(); BR.Router.go('home'); BR.Router.rerender();
+            BR.toast('Progress restored', 'good'); api.close(); return;
+          }
+          const parsed = BR.Storage.parseCode(box.value);
+          if (!parsed) { info.textContent = 'That is not a whole, valid save code. Check that you copied all of it.'; info.classList.add('bad'); BR.haptic('err'); return; }
+          armed = parsed; info.classList.remove('bad');
+          info.textContent = `This save: level ${parsed.profile.level}, ${BR.fmt(parsed.profile.coins)} Coins, ${parsed.profile.vault.length} items. Tap again to replace this device's progress.`;
+          btn.textContent = 'Replace my progress'; btn.classList.add('pay');
+          box.addEventListener('input', () => { armed = null; btn.textContent = 'Check the code'; btn.classList.remove('pay'); info.textContent = ''; }, { once: true });
+        },
+      }],
+    });
+  };
+
+  /** Records: the numbers worth beating, and the last 20 Rush runs so progress shows even when no run beat the best. */
+  function recordsCard() {
+    const r = BR.Records.list();
+    const stat = (label, val) => `<div class="rec"><b class="num">${val}</b><small>${label}</small></div>`;
+    const h = r.history, top = Math.max(1, ...h, r.bestScore);
+    const bars = h.length >= 2 ? `<div class="rec-chart" role="img" aria-label="Your last ${h.length} Rush scores">${h.map((v) => `<i class="${v >= r.bestScore && v > 0 ? 'best' : ''}" style="height:${Math.max(6, Math.round((v / top) * 100))}%"></i>`).join('')}</div><small class="rec-cap">Your last ${h.length} Rush runs</small>` : '<small class="rec-cap">Play a few Rush runs to see your progress here.</small>';
+    return `<article class="card card-pad stg"><div class="sec-title">Records</div><div class="rec-grid">${stat('Best score', fmt(r.bestScore))}${stat('Best stage', r.bestStage || '-')}${stat('Biggest pop', r.biggestPop || '-')}${stat('Best combo', r.bestCombo ? 'x' + r.bestCombo : '-')}${stat('Line Blasts in a run', r.maxLines || '-')}${stat('Rush Modes in a run', r.maxRushes || '-')}</div>${bars}</article>`;
+  }
+
   /* ------------------------------------------------------------------ Profile */
   const Profile = {
     render() {
@@ -410,29 +545,29 @@
       const stat = (label, val) => `<div class="stat"><b class="num">${val}</b><small>${label}</small></div>`;
       const installRow = BR.App && BR.App.canInstall() ? `<article class="card card-pad install stg"><div><b class="display">Play it like an app</b><small>Add Pop Rush to your home screen. It works offline.</small></div><button class="btn btn-sm" data-act="install">Add</button></article>` : '';
       this.el.innerHTML = `${topbar('Profile')}<div class="scroll">
+        ${BR.Coach.banner('profile')}
         <article class="card prof-hero stg"><div class="ph-ring">${ringSVG(P.xp / P.need, 96, 8)}<b class="display">${P.level}</b></div>
-          <div class="ph-info"><span class="display ph-name">Player</span><small>Level ${P.level}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.need - P.xp)} XP to level ${P.level + 1}</small></div></article>
-        <div class="stats-grid stg">${stat('Best Rush', fmt(st.best.rush))}${stat('Best stage', st.bestStage.rush || '-')}${stat('Best Daily', fmt(st.best.daily))}${stat('Runs played', fmt(st.runs))}${stat('Bricks popped', fmt(pr.stats.bricks))}${stat('Biggest pop', pr.stats.maxGroup || '-')}</div>
+          <div class="ph-info"><label class="ph-name"><span class="sr-only">Your name</span><input class="display" type="text" maxlength="14" value="${esc(pr.name || 'Player')}" data-name autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Your name"></label><small>Level ${P.level}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.need - P.xp)} XP to level ${P.level + 1}</small></div></article>
+        <div class="stats-grid stg">${stat('Runs played', fmt(st.runs))}${stat('Bricks popped', fmt(pr.stats.bricks))}${stat('Best Daily', fmt(st.best.daily))}</div>
+        ${recordsCard()}
         <article class="card card-pad stg"><div class="sec-title">Trophies <small>${earned.length}/${BR.TROPHIES.length}</small></div><div class="badges">${earned.length ? earned.slice(-6).map((t) => `<span class="badge-ico" title="${t.name}">${BR.icon('trophy')}</span>`).join('') : '<small class="muted">Finish runs to earn trophies.</small>'}</div></article>
         ${installRow}
         <article class="card card-pad stg"><div class="sec-title">Settings</div>
-          ${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
-          <div class="perf"><div><b>Performance</b><small>Auto lowers effects if your phone struggles</small></div><div class="seg mini" id="perfSeg">${['auto', 'high', 'low'].map((p) => `<button data-perf="${p}" class="${set.perf === p ? 'on' : ''}">${p[0].toUpperCase() + p.slice(1)}</button>`).join('')}<i class="thumb"></i></div></div>
+          ${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
+          <div class="perf"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--i:${['auto', 'low', 'high'].indexOf(set.perf)}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}">${l}</button>`).join('')}<i class="thumb"></i></div></div>
         </article>
         <article class="card card-pad stg help-card"><div class="sec-title">Help</div><p class="tiny">New to something? Every part of the game shows a short tip the first time. Show them all again:</p><button class="btn btn-dark btn-sm" data-act="tips">Show the tips again</button></article>
-        <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device.</p><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
-        <p class="tiny center version">Pop Rush 3.0 · Carnival</p>
+        <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device. A save code lets you keep a copy or move to a new device.</p><div class="data-btns"><button class="btn btn-dark btn-sm" data-act="save-code">Save code</button><button class="btn btn-dark btn-sm" data-act="restore-code">Restore</button></div><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
+        <p class="tiny center version">Pop Rush 4.0 · Ignite</p>
       </div>`;
-      const seg = this.el.querySelector('#perfSeg');
-      if (seg) { const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb'); requestAnimationFrame(() => { th.style.width = on.offsetWidth + 'px'; th.style.transform = `translateX(${on.offsetLeft - 4}px)`; }); }
     },
-    onShow() { const seg = this.el.querySelector('#perfSeg'); if (seg) { const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb'); th.style.width = on.offsetWidth + 'px'; th.style.transform = `translateX(${on.offsetLeft - 4}px)`; } },
+    onShow() { },
   };
 
   /* ------------------------------------------------------------------ events + registration */
   function bind(screen, handler) {
     screen.el.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-perf],[data-tier]');
+      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-perf],[data-tier],[data-trophy],[data-locked]');
       if (!t || !screen.el.contains(t)) return;
       handler(t, e);
     });
@@ -441,6 +576,8 @@
     switch (a) {
       case 'go-profile': BR.Router.go('profile'); return true;
       case 'go-shop': BR.Router.go('shop'); return true;
+      case 'go-coins': BR.coinSheet(); return true;
+      case 'close-tip': BR.Coach.dismiss(t.dataset.tip); { const bar = t.closest('.tipbar'); if (bar) bar.remove(); } return true;
       case 'go-missions': Missions.tab = 'daily'; BR.Router.go('missions'); return true;
       case 'go-pass': Missions.tab = 'pass'; BR.Router.go('missions'); return true;
       case 'odds': BR.showOdds(t.dataset.chest); return true;
@@ -456,7 +593,7 @@
       const a = t.dataset.act;
       if (common(a, t)) return;
       BR.audio.ui(); BR.haptic('tap');
-      if (a === 'play-rush') BR.readySheet('rush');
+      if (a === 'play-rush') { if (S().runs < BR.CFG.boostsFromRun) BR.App.startRun({ mode: 'rush', boosts: {} }); else BR.readySheet('rush'); }   // the first runs start at once: Boosts need Coins, and a new player has not played yet
       else if (a === 'play-daily') { if (S().daily.day === BR.dayKey()) { BR.toast('You already played today. Come back tomorrow!'); return; } BR.readySheet('daily'); }
       else if (a === 'play-chill') { if (P.level < BR.CFG.chill.unlockLevel) { BR.toast(`Chill unlocks at level ${BR.CFG.chill.unlockLevel}`); BR.haptic('err'); return; } BR.readySheet('chill'); }
       else if (a === 'resume') BR.App.resume();
@@ -476,19 +613,25 @@
       if (t.dataset.rar) { Collection.filter = Collection.filter === t.dataset.rar ? null : t.dataset.rar; BR.audio.ui(); BR.Router.rerender(); return; }
       const a = t.dataset.act;
       if (common(a, t)) return;
+      if (t.dataset.locked) { BR.audio.ui(); BR.haptic('tick'); BR.lockedSheet(t.dataset.locked); return; }
       if (t.dataset.uid) { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(t.dataset.uid, t.dataset.type); }
     });
     bind(Missions, (t) => {
       if (t.dataset.tab) { Missions.tab = t.dataset.tab; BR.audio.ui(); BR.Router.rerender(); Missions.placeThumb(); Missions.onShow(); BR.Coach.onScreen('missions'); return; }
       if (t.dataset.tier) { BR.audio.ui(); BR.haptic('tick'); BR.rewardSheet(+t.dataset.tier); return; }
+      if (t.dataset.trophy) { BR.audio.ui(); BR.haptic('tick'); BR.trophySheet(t.dataset.trophy); return; }
+      if (t.dataset.act === 'close-tip') { common('close-tip', t); return; }
       if (t.dataset.act === 'reroll') {
         if (BR.Missions.reroll(+t.dataset.i)) { BR.audio.scrap(); BR.toast('New mission!', 'good'); BR.Router.rerender(); } else BR.toast('Not enough Coins', 'bad');
       }
     });
     bind(Profile, (t) => {
+      if (t.dataset.act === 'close-tip') { common('close-tip', t); return; }
       if (t.dataset.perf) { S().settings.perf = t.dataset.perf; BR.Storage.save(); BR.App.applySettings(); BR.Router.rerender(); return; }
       const a = t.dataset.act;
       if (a === 'install') BR.App.install();
+      if (a === 'save-code') BR.saveCodeSheet();
+      if (a === 'restore-code') BR.restoreSheet();
       if (a === 'tips') { BR.Coach.reset(); BR.audio.ui(); BR.toast('Tips will show again as you visit each screen', 'good'); }
       if (a === 'reset') {
         if (t.dataset.armed !== '1') { t.dataset.armed = '1'; t.textContent = 'Tap again to erase everything'; setTimeout(() => { t.dataset.armed = ''; t.textContent = 'Reset all progress'; }, 3500); return; }
@@ -501,6 +644,7 @@
       BR.App.applySettings();
     });
     Profile.el.addEventListener('change', (e) => {
+      if (e.target.dataset.name !== undefined) { const v = e.target.value.replace(/[<>&"]/g, '').trim().slice(0, 14) || 'Player'; e.target.value = v; S().profile.name = v; BR.Storage.save(); return; }
       if (e.target.dataset.vol) { BR.Storage.save(); if (BR.audio && BR.audio.ui) BR.audio.ui(); return; }
       if (e.target.dataset.set === 'music' && e.target.checked && BR.Music) setTimeout(() => BR.Music.start('menu'), 50);
       const k = e.target.dataset.set;

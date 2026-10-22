@@ -120,10 +120,12 @@
         const el = document.createElement('div');
         el.className = 'rc';
         el.style.setProperty('--rc', R.color);
-        el.innerHTML = `${BR.Badge.html(it, c.inst || null, { size: this.h ? 104 : 84, still: true })}<div class="rc-txt"><b class="rc-name">${it.name}</b><span class="rc-rar">${R.name}</span></div>`;
+        const sz = this.h ? 104 : 84;
+        el.innerHTML = `<div class="rc-art" style="width:${sz}px;height:${sz}px"></div><div class="rc-txt"><b class="rc-name">${it.name}</b><span class="rc-rar">${R.name}</span></div>`;
         frag.appendChild(el);
         return el;
       });
+      this.ready = this.fillArt();
       this.strip.appendChild(frag);
       host.appendChild(this.strip);
       this.speedFx = document.createElement('i');
@@ -134,6 +136,29 @@
       this.marker.innerHTML = '<i></i><i></i>';
       host.appendChild(this.marker);
       this.measure();
+    }
+    /** The cards start as light shells and get their artwork a few at a time, so building 44 of them never freezes a frame.
+        Resolves once every card is drawn (the spin waits for it). */
+    fillArt() {
+      const { o } = this, n = this.cardEls.length;
+      const order = [];
+      for (let i = 0; i < Math.min(8, n); i++) order.push(i);
+      for (let i = Math.max(8, o.target - 4); i < Math.min(n, o.target + 5); i++) order.push(i);
+      for (let i = 0; i < n; i++) if (!order.includes(i)) order.push(i);
+      const sz = this.h ? 104 : 84;
+      let k = 0;
+      return new Promise((resolve) => {
+        const step = () => {
+          if (this.done || !this.host.isConnected) { resolve(); return; }
+          const t0 = performance.now();
+          while (k < order.length && (k === 0 || performance.now() - t0 < 4)) {
+            const i = order[k++], c = o.cards[i], el = this.cardEls[i];
+            el.firstChild.innerHTML = BR.Badge.html(c.item, c.inst || null, { size: sz, still: true });
+          }
+          if (k < order.length) requestAnimationFrame(step); else resolve();
+        };
+        step();
+      });
     }
     measure() {
       const r = this.host.getBoundingClientRect();
@@ -222,7 +247,11 @@
       if (i === target) { cards.push({ item: BR.itemById[drop.itemId], inst: { shine: drop.shine, seed: drop.seed } }); continue; }
       const r = rng.weighted(weights.filter((x) => x.w > 0), (x) => x.w).r;
       const list = pool.filter((x) => x.rarity === r.id);
-      const item = rng.pick(list.length ? list : pool);
+      // never the same item twice in a row, and never the winner next to itself
+      const near = (x) => (cards[i - 1] && cards[i - 1].item.id === x.id) || (i + 1 === target && drop.itemId === x.id);
+      let pickFrom = (list.length ? list : pool).filter((x) => !near(x));
+      if (!pickFrom.length) pickFrom = pool.filter((x) => !near(x));
+      const item = rng.pick(pickFrom.length ? pickFrom : pool);
       const shine = rng.weighted(BR.SHINES, (f) => f.weight);
       cards.push({ item, inst: { shine: shine.id, seed: rng.int(10000) } });
     }

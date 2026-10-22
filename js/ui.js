@@ -3,13 +3,15 @@
   const BR = (window.BR = window.BR || {});
   const $ = (id) => document.getElementById(id);
   BR.$ = $;
-  BR.fmt = (n) => Math.round(n).toLocaleString('en-US');
+  const NF = typeof Intl !== 'undefined' ? new Intl.NumberFormat('en-US') : null;   // built once: the first toLocaleString call alone cost 75 ms on a slowed phone
+  BR.fmt = (n) => (NF ? NF.format(Math.round(n)) : String(Math.round(n)));
   BR.el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
   BR.esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   /* ---------- icons (24x24, stroke) ---------- */
   const I = {
     play: '<path d="M8 5.5v13l11-6.5z"/>',
+    home: '<path d="M4 11.5L12 4.5l8 7"/><path d="M6.2 10v8.8a1 1 0 0 0 1 1h3.3v-5.3h3v5.3h3.3a1 1 0 0 0 1-1V10"/>',
     shop: '<path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
     collection: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
     missions: '<path d="M6 21V4"/><path d="M6 5h11l-2.5 4L17 13H6"/>',
@@ -52,19 +54,44 @@
     document.body.appendChild(s);
   };
   BR.coin = (cls) => `<svg viewBox="0 0 24 24" class="coin ${cls || ''}" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="url(#gCoin)" stroke="#a8620a" stroke-width="1.2"/><circle cx="12" cy="12" r="7.4" fill="url(#gCoinIn)" stroke="#c97a10" stroke-width="1"/><path d="M12 7.2l1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z" fill="#fff4c4" stroke="#b86d0c" stroke-width=".6" stroke-linejoin="round"/></svg>`;
+  /** Coin counters follow the balance when it changes (once per frame), instead of being rewritten on a timer. */
+  let coinRaf = 0;
+  BR.refreshCoins = () => {
+    if (coinRaf) return;
+    coinRaf = requestAnimationFrame(() => { coinRaf = 0; const t = BR.fmt(BR.Progress.coins); document.querySelectorAll('[data-coins]').forEach((n) => { if (n.textContent !== t) n.textContent = t; }); });
+  };
   BR.coinPill = (n) => `<span class="pill gold">${BR.coin()}<b class="num" data-coins>${BR.fmt(n)}</b></span>`;
 
   /* ---------- haptics ---------- */
   const PAT = { tick: 6, tap: 10, pop: 14, big: [18, 24, 30], rush: [24, 30, 24, 30, 60], stage: [20, 40, 20], open: [10, 20, 14, 20, 18, 20, 24], boom: [40, 30, 90], win: [20, 30, 20, 30, 60], err: [30, 50, 30] };
+  // iPhone Safari has no navigator.vibrate. Safari 17.4 and later plays a light haptic tick when a switch checkbox is toggled, so a
+  // hidden switch stands in: one toggle per tick. (It only fires from a touch handler, which is where taps and pops call it.)
+  const IOS = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  const TICKS = { tick: 1, tap: 1, pop: 1, big: 2, rush: 3, stage: 2, open: 3, boom: 2, win: 3, err: 2 };
+  let swEl = null;
+  const switchTick = (n) => {
+    if (!swEl) {
+      swEl = document.createElement('label');
+      swEl.setAttribute('aria-hidden', 'true');
+      swEl.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0.01;pointer-events:none';
+      const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1;
+      swEl.appendChild(i); document.body.appendChild(swEl);
+    }
+    swEl.click();
+    for (let k = 1; k < n; k++) setTimeout(() => swEl.click(), 55 * k);
+  };
   BR.haptic = function (kind) {
     const s = BR.Storage && BR.Storage.data.settings;
-    if (!s || !s.haptics || !navigator.vibrate) return;
+    if (!s || !s.haptics) return;
+    if (!navigator.vibrate) { if (IOS) { try { switchTick(typeof kind === 'string' ? TICKS[kind] || 1 : 1); } catch (e) { /* ignore */ } } return; }
     try { navigator.vibrate(PAT[kind] != null ? PAT[kind] : kind); } catch (e) { /* ignore */ }
   };
+  BR.hapticsAvailable = () => !!navigator.vibrate || IOS;
 
   /* ---------- number count-up ---------- */
   const anims = new WeakMap();
   BR.countTo = function (el, to, dur = 700, from = null, fmt = BR.fmt) {
+    if (!el) return;   // the element can be gone when a screen closes mid-count
     const prev = anims.get(el);
     if (prev && prev.raf) cancelAnimationFrame(prev.raf);
     const start = from != null ? from : prev ? prev.value : parseInt(String(el.textContent).replace(/\D/g, ''), 10) || 0;
@@ -79,7 +106,18 @@
     st.raf = requestAnimationFrame(tick);
     anims.set(el, st);
   };
-  BR.bump = (el) => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
+  /**
+   * Play a CSS animation class again from the start without reading layout: add the class the first time, and after that
+   * restart the running animation object. (`classList.remove; void el.offsetWidth; classList.add` forces a layout every time.)
+   */
+  BR.replay = (el, cls) => {
+    if (!el) return;
+    if (!el.classList.contains(cls)) { el.classList.add(cls); return; }
+    const list = el.getAnimations ? el.getAnimations().filter((a) => a.animationName) : [];
+    if (!list.length) { el.classList.remove(cls); requestAnimationFrame(() => el.classList.add(cls)); return; }
+    list.forEach((a) => { a.cancel(); a.play(); });
+  };
+  BR.bump = (el) => BR.replay(el, 'bump');
 
   /** Give every .stg child inside root a stagger index (document order). */
   BR.stagger = function (root) { root.querySelectorAll('.stg').forEach((n, i) => n.style.setProperty('--i', i)); };
@@ -111,6 +149,10 @@
   });
   window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && BR.Back.depth) { ev.preventDefault(); BR.Back.closeTop(); } });
 
+  /** Something opaque or modal sits over the app (a sheet, a chest opening): everything under it holds its animations still. */
+  let underN = 0;
+  BR.under = (d) => { underN = Math.max(0, underN + d); document.documentElement.classList.toggle('under-overlay', underN > 0); };
+
   /* ---------- bottom sheets ---------- */
   BR.Sheet = {
     /**
@@ -130,13 +172,14 @@
       if (typeof o.body === 'string') bodyEl.innerHTML = o.body; else if (o.body) bodyEl.appendChild(o.body);
       layer.style.pointerEvents = 'auto';
       layer.append(back_, sheet);
+      BR.under(1);
       let closed = false;
       const api = { el: sheet, body: bodyEl };
       let entry;
       const close = (fromBack) => {
         if (closed) return; closed = true;
         if (!fromBack && entry) BR.Back.release(entry);
-        back_.classList.remove('on'); sheet.classList.remove('on');
+        back_.classList.remove('on'); sheet.classList.remove('on'); BR.under(-1);
         setTimeout(() => { back_.remove(); sheet.remove(); if (!layer.children.length) layer.style.pointerEvents = 'none'; }, 480);
         if (o.onClose) o.onClose();
       };
@@ -171,7 +214,7 @@
 
   /* ---------- screens + tab router ---------- */
   const TAB_ORDER = ['shop', 'collection', 'home', 'missions', 'profile'];
-  const TAB_ICON = { shop: 'shop', collection: 'collection', home: 'play', missions: 'missions', profile: 'profile' };
+  const TAB_ICON = { shop: 'shop', collection: 'collection', home: 'home', missions: 'missions', profile: 'profile' };
   BR.Router = {
     screens: {}, current: null, busy: 0,
     register(id, obj) { this.screens[id] = obj; obj.el = $('s-' + id); },
@@ -188,8 +231,7 @@
       document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b === tab));
       if (!tab) { ind.style.opacity = 0; return; }
       ind.style.opacity = id === 'home' ? 0 : 1;   // the Play disc is its own "you are here"; the line would cut across it
-      const bar = $('tabbar').getBoundingClientRect(), r = tab.getBoundingClientRect();
-      ind.style.transform = `translateX(${r.left - bar.left + r.width / 2 - 22}px)`;
+      ind.style.setProperty('--i', TAB_ORDER.indexOf(id));   // placed by CSS from the index: nothing is measured
     },
     go(id, opts = {}) {
       const next = this.screens[id];
@@ -197,30 +239,32 @@
       const prev = this.current ? this.screens[this.current] : null;
       if (prev === next) { if (next.onRetap) next.onRetap(); return; }
       const dir = prev && TAB_ORDER.includes(this.current) && TAB_ORDER.includes(id) ? (TAB_ORDER.indexOf(id) > TAB_ORDER.indexOf(this.current) ? 'fwd' : 'back') : 'none';
-      if (next.render) next.render();
-      BR.stagger(next.el);
       if (prev) {
         const el = prev.el;
-        el.classList.remove('on');
-        if (dir !== 'none') el.classList.add(dir === 'fwd' ? 'from-left' : 'from-right');
-        setTimeout(() => el.classList.remove('from-left', 'from-right'), 480);
+        const psc = el.querySelector('.scroll'); el._scrolled = !!(psc && psc.scrollTop > 0);   // (layout is clean here, so this read is free)
+        el.classList.remove('on', 'from-left', 'from-right');   // the screen being left just goes: animating it out would repaint all of it
+        // a tab that is not showing keeps no content (every visit renders it again), so its nodes and memory are freed
+        if (prev.render) { clearTimeout(el._purge); el._purge = setTimeout(() => { if (!el.classList.contains('on')) el.textContent = ''; }, 800); }
         if (prev.onHide) prev.onHide();
       }
-      next.el.classList.remove('from-left', 'from-right');
-      if (dir !== 'none' && !opts.instant) next.el.classList.add(dir === 'fwd' ? 'from-right' : 'from-left');
-      void next.el.offsetWidth;
-      next.el.classList.add('on');
-      next.el.classList.remove('from-left', 'from-right');
+      // show first (a screen that is not displayed has no layout), then fill it
+      const nel = next.el;
+      clearTimeout(nel._purge);
+      nel.classList.remove('from-left', 'from-right');
+      nel.classList.toggle('instant', !!opts.instant);
+      if (dir !== 'none' && !opts.instant) nel.classList.add(dir === 'fwd' ? 'from-right' : 'from-left');
+      nel.classList.add('on');
+      if (next.render) next.render();
+      BR.stagger(nel);
       this.current = id;
       this.placeIndicator(TAB_ORDER.includes(id) ? id : null);
       this.setTabs(TAB_ORDER.includes(id));
       document.getElementById('app').classList.toggle('run-active', id === 'run');
       if (next.onShow) next.onShow();
-      const sc = next.el.querySelector('.scroll'); if (sc && !opts.keepScroll) sc.scrollTop = 0;
+      if (nel._scrolled && !opts.keepScroll) { const sc = nel.querySelector('.scroll'); if (sc) sc.scrollTop = 0; nel._scrolled = false; }   // writing scrollTop forces a layout, so only when it matters
       if (BR.Coach) BR.Coach.onScreen(id);
       if (id !== 'run' && BR.audioUnlocked && BR.Music && BR.Music.start) BR.Music.start('menu');   // (the browser creates the audio context only after the first tap)
     },
     rerender() { const s = this.screens[this.current]; if (s && s.render) { const sc = s.el.querySelector('.scroll'); const top = sc ? sc.scrollTop : 0; s.render(); const sc2 = s.el.querySelector('.scroll'); if (sc2) sc2.scrollTop = top; s.el.querySelectorAll('.stg').forEach((n) => { n.style.animation = 'none'; n.style.opacity = 1; n.style.transform = 'none'; }); } },
   };
-  window.addEventListener('resize', () => BR.Router.placeIndicator(BR.Router.current));
 })();

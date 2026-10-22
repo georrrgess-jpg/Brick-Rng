@@ -15,8 +15,8 @@
     get coins() { return P().coins; },
 
     /* ---------- Coins ---------- */
-    earn(n) { n = Math.max(0, Math.round(n)); P().coins += n; P().stats.coinsEarned += n; BR.Storage.saveSoon(); return n; },
-    spend(n) { if (P().coins < n) return false; P().coins -= n; BR.Storage.saveSoon(); return true; },
+    earn(n) { n = Math.max(0, Math.round(n)); P().coins += n; P().stats.coinsEarned += n; BR.Storage.saveSoon(); if (BR.refreshCoins) BR.refreshCoins(); return n; },
+    spend(n) { if (P().coins < n) return false; P().coins -= n; BR.Storage.saveSoon(); if (BR.refreshCoins) BR.refreshCoins(); return true; },
 
     /**
      * Coins for a finished run: square-root of the score plus a small bonus per cleared stage (capped).

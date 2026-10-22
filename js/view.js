@@ -42,12 +42,15 @@
       this.layout();
       if (window.ResizeObserver) new ResizeObserver(() => this.layout()).observe(this.field);
       window.addEventListener('resize', () => this.layout());
+      window.addEventListener('scroll', () => { this._rc = null; }, true);
     }
 
     /* ---------- geometry ---------- */
     layout() {
+      this._rc = null;
       const w = this.field.clientWidth;
       if (!w) return;
+      this._ww = this.wrap.clientWidth;
       this.cell = w / this.cols;
       this.field.style.setProperty('--cell', this.cell + 'px');
       this.bricks.forEach((rec) => this._place(rec));
@@ -55,22 +58,28 @@
     }
     _place(rec) { rec.el.style.transform = `translate3d(${rec.c * this.cell}px,${rec.r * this.cell}px,0)`; }
 
+    /** Where the board sits on the page. Measured once and kept (it only moves when the layout does), because reading
+        it in the middle of a pop forces the browser to restyle the whole board. */
+    _rects() {
+      if (!this._rc) { const f = this.field.getBoundingClientRect(), w = this.wrap.getBoundingClientRect(); this._rc = { fl: f.left, ft: f.top, wl: w.left, wt: w.top }; }
+      return this._rc;
+    }
     cellAt(clientX, clientY) {
-      const rect = this.field.getBoundingClientRect();
-      const x = clientX - rect.left, y = clientY - rect.top;
+      const rc = this._rects();
+      const x = clientX - rc.fl, y = clientY - rc.ft;
       const c = Math.floor(x / this.cell), r = Math.floor(y / this.cell);
       if (r < 0 || c < 0 || r >= this.rows || c >= this.cols) return null;
       return { r, c };
     }
     /** Center of cell r,c in page coordinates (for canvas particles). */
     pagePoint(r, c) {
-      const rect = this.field.getBoundingClientRect();
-      return { x: rect.left + (c + 0.5) * this.cell, y: rect.top + (r + 0.5) * this.cell };
+      const rc = this._rects();
+      return { x: rc.fl + (c + 0.5) * this.cell, y: rc.ft + (r + 0.5) * this.cell };
     }
     /** Center of cell r,c relative to the fx layer (for DOM floaters). */
     layerPoint(r, c) {
-      const f = this.field.getBoundingClientRect(), w = this.wrap.getBoundingClientRect();
-      return { x: f.left - w.left + (c + 0.5) * this.cell, y: f.top - w.top + (r + 0.5) * this.cell };
+      const rc = this._rects();
+      return { x: rc.fl - rc.wl + (c + 0.5) * this.cell, y: rc.ft - rc.wt + (r + 0.5) * this.cell };
     }
 
     /* ---------- brick lifecycle ---------- */
@@ -97,7 +106,7 @@
     }
 
     /** Move a brick with constant-acceleration fall, a tiny rebound and a squash on landing. */
-    _fall(rec, fromR, toR, delay, dir, T = 172) {
+    _fall(rec, fromR, toR, delay, dir, T = 172, calm = false) {
       const d = Math.abs(toR - fromR);
       if (d === 0) return { land: 0, end: 0 };
       const cell = this.cell, x = rec.c * cell;
@@ -105,7 +114,7 @@
       const fall = (this.reduced ? T * 0.6 : T * this.tune.fall) * Math.sqrt(d);
       const total = fall / 0.8;
       const sgn = dir === 'down' ? 1 : -1;
-      const bounce = Math.min(0.11, 0.025 * d + 0.02) * cell;
+      const bounce = calm ? 0 : Math.min(0.11, 0.025 * d + 0.02) * cell;
       rec.el.style.transform = `translate3d(${x}px,${y1}px,0)`;
       if (!rec.el.animate) return { land: delay + fall, end: delay + total };
       rec.el.animate([
@@ -114,7 +123,7 @@
         { transform: `translate3d(${x}px,${y1 - sgn * bounce}px,0)`, easing: 'cubic-bezier(0.6,0,0.8,0.4)', offset: 0.9 },
         { transform: `translate3d(${x}px,${y1}px,0)`, offset: 1 },
       ], { duration: total, delay, fill: 'backwards' });
-      if (!this.reduced) {
+      if (!this.reduced && !calm) {
         const s = Math.min(1, 0.45 + d * 0.16);
         rec.face.style.transformOrigin = dir === 'down' ? '50% 100%' : '50% 0%';
         rec.face.animate([
@@ -198,24 +207,29 @@
       this.field.classList.add('has-hl');
 
       // preview chip: points, plus time / combo / Line Blast tags
-      const tags = [];
-      if (plan.timeGain > 0) tags.push(`<span class="fuel plus">+${plan.timeGain.toFixed(1)}s</span>`);
-      if (plan.line) tags.push('<span class="fuel plus">LINE BLAST</span>');
-      else if (plan.combo > 1) tags.push(`<span class="fuel plus">x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}</span>`);
-      this.chip.innerHTML = `<span>+${plan.points.toLocaleString()}</span>${tags.join('')}`;
+      const tags = [];   // time is green, combo is orange: they never look alike
+      let tagChars = 0;
+      const tag = (cls, text) => { tags.push(`<span class="fuel ${cls}">${text}</span>`); tagChars += text.length + 2; };
+      if (plan.timeGain > 0) tag('plus', `+${plan.timeGain.toFixed(1)}s`);
+      if (plan.line) tag('combo', 'LINE BLAST');
+      else if (plan.combo > 1) tag('combo', `Combo x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}`);
+      const pts = '+' + BR.fmt(plan.points);
+      this.chip.innerHTML = `<span>${pts}</span>${tags.join('')}`;
       let minR = 99, maxR = -1, sumC = 0;
       plan.primary.forEach((p) => { minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r); sumC += p.c; });
       const top = this.layerPoint(minR, sumC / plan.primary.length);
       const bot = this.layerPoint(maxR, sumC / plan.primary.length);
-      const cw = this.chip.offsetWidth || 120, ch = this.chip.offsetHeight || 28;
-      const ww = this.wrap.clientWidth;
+      // the chip is centred by CSS on the point we give it, so its size is only needed to keep it on screen: estimated, not measured
+      const cw = this._chipW(pts.length + tagChars * 0.8), ch = 30;
+      const ww = this._ww || (this._ww = this.wrap.clientWidth);
       let x = Math.max(cw / 2 + 4, Math.min(ww - cw / 2 - 4, top.x));
       let y = top.y - this.cell * 0.5 - ch / 2 - 6;
       if (y < ch / 2 + 2) y = bot.y + this.cell * 0.5 + ch / 2 + 6;
-      this.chip.style.transform = `translate(${x - cw / 2}px, ${y - ch / 2}px)`;
+      this.chip.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
       this.chip.classList.add('show');
     }
 
+    _chipW(chars) { return 26 + chars * 9.5; }
     /** Highlight an arbitrary cell set (Booster aim preview). */
     setCellHighlight(cells, label) {
       if (this._hl) this._hl.forEach((el) => el.classList.remove('hl', 'hlx'));
@@ -228,9 +242,9 @@
       cells.forEach((p) => { sr += p.r; sc += p.c; });
       const mid = this.layerPoint(sr / cells.length, sc / cells.length);
       this.chip.innerHTML = `<span>${label}</span>`;
-      const cw = this.chip.offsetWidth || 90, ch = this.chip.offsetHeight || 28, ww = this.wrap.clientWidth;
+      const cw = this._chipW(label.length), ch = 30, ww = this._ww || (this._ww = this.wrap.clientWidth);
       const x = Math.max(cw / 2 + 4, Math.min(ww - cw / 2 - 4, mid.x));
-      this.chip.style.transform = `translate(${x - cw / 2}px, ${Math.max(2, mid.y - ch - this.cell * 0.9)}px)`;
+      this.chip.style.transform = `translate(${x}px, ${Math.max(ch / 2 + 2, mid.y - ch / 2 - this.cell * 0.9)}px) translate(-50%, -50%)`;
       this.chip.classList.add('show');
     }
 
@@ -276,14 +290,15 @@
       const originPt = this.pagePoint(tap.r, tap.c);
       let maxDelay = 0;
       const perBrick = total > 28 ? 3 : total > 14 ? 5 : total > 6 ? 7 : 9;
+      const hitStop = total >= 8 && !this.reduced ? Math.min(70, 40 + total) : 0;   // a big group holds for a beat (the lifted bricks, then the burst) so the hit has weight
       for (const p of res.removed) {
         const rec = this.bricks.get(p.id);
         if (!rec) continue;
         this.bricks.delete(p.id);
         const dist = Math.abs(p.r - tap.r) + Math.abs(p.c - tap.c);
-        const delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop;
+        const delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop + hitStop;
         maxDelay = Math.max(maxDelay, delay);
-        this._pop(rec, delay, p, perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null);
+        this._pop(rec, delay, p, perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null, hitStop > 0);
       }
       await sleep(this.reduced ? 100 : (maxDelay + 90) * this.tune.pop);
       if (!alive()) return false;
@@ -291,16 +306,17 @@
       // 2) gravity + refill
       let land = 0, end = 0, landedCount = 0;
       const colDelay = (c) => (this.reduced ? 0 : c * 7);
+      const calm = res.moves.length + res.spawns.length > 24;   // a big refill drops without the bounce, so the next move is readable sooner
       for (const m of res.moves) {
         const rec = this.bricks.get(m.id);
         if (!rec) continue;
-        const t = this._fall(rec, rec.r, m.toR, colDelay(m.c), res.dir);
+        const t = this._fall(rec, rec.r, m.toR, colDelay(m.c), res.dir, 172, calm);
         rec.r = m.toR;
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
       for (const s of res.spawns) {
         const rec = this._make({ id: s.id, color: s.color, fb: s.fb || 0 }, s.r, s.c, s.fromR);
-        const t = this._fall(rec, s.fromR, s.r, colDelay(s.c), res.dir);
+        const t = this._fall(rec, s.fromR, s.r, colDelay(s.c), res.dir, 172, calm);
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
       if (landedCount) setTimeout(() => alive() && this.audio.land(Math.min(1, landedCount / 10)), 160);
@@ -313,12 +329,13 @@
       return true;
     }
 
-    _pop(rec, delay, p, shardCount, origin, fuseKind) {
+    _pop(rec, delay, p, shardCount, origin, fuseKind, held) {
       const pal = BR.PALETTE[p.color];
       const sgn = Math.random() < 0.5 ? -1 : 1;
       if (rec.face.animate) {
         const a = rec.face.animate([
-          { transform: 'scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)', offset: 0 },
+          // a big pop starts where the press left the bricks (lifted and bright), holds for the hit-stop, then bursts
+          held ? { transform: 'translateY(-5%) scale(1.045) rotate(0deg)', opacity: 1, filter: 'brightness(1.12) saturate(1.12)', offset: 0 } : { transform: 'scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)', offset: 0 },
           { transform: `scale(1.24) rotate(${sgn * 6}deg)`, opacity: 1, filter: 'brightness(1.7)', offset: 0.34, easing: 'ease-in' },
           { transform: `scale(0.05) rotate(${sgn * 22}deg)`, opacity: 0, filter: 'brightness(2)', offset: 1 },
         ], { duration: this.reduced ? 160 : 270, delay, fill: 'both', easing: 'ease-out' });
@@ -329,7 +346,7 @@
       setTimeout(() => {
         const pt = this.pagePoint(p.r, p.c);
         const sk = BR.Skins;
-        if (fuseKind === 'burst') { this.fx.explosion(pt.x, pt.y, '#ff4d6d', 0.9); this.fx.flash('#ff4d6d', 0.25, 400); this.fx.shake(document.getElementById('app'), 9, 380); BR.haptic('boom'); }
+        if (fuseKind === 'burst') { this.fx.explosion(pt.x, pt.y, '#ff4d6d', 0.9); this.fx.flash('#ff4d6d', 0.25, 400); this.fx.shake(document.getElementById('boardWrap'), 7, 380); BR.haptic('boom'); }
         else if (fuseKind === 'defuse') { this.fx.sparks(pt.x, pt.y, '#3ddc97', 18, 1.4, 0.7); this.fx.ring(pt.x, pt.y, '#3ddc97', 80, 0.5, 4); }
         this.fx.pop(sk.pop, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.popShine);
         if (sk.pop === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);
@@ -342,7 +359,7 @@
       if (!rec) return;
       rec.b.fb = n;
       const em = rec.el.querySelector('.fcount');
-      if (em) { em.textContent = n; em.classList.remove('tick'); void em.offsetWidth; em.classList.add('tick'); }
+      if (em) { em.textContent = n; BR.replay(em, 'tick'); }
       rec.el.classList.toggle('danger', n <= 2);
     }
 

@@ -22,21 +22,27 @@
       this.app = app;
       this.fx = app.fx;
       this.view = new BR.BoardView({ boardEl: $('board'), field: $('field'), wrap: $('boardWrap'), layer: $('fxlayer'), fx: this.fx, audio: BR.audio });
-      BR.Router.register('run', { onShow: () => { BR.Skins.apply(); this.view.layout(); this.measure(); } });
+      BR.Router.register('run', {
+        onShow: () => { BR.Skins.apply(); this.view.layout(); this.measure(); this.kick(); },
+        // leaving the run empties the board (a new run builds it again), so a menu session does not carry 300 hidden nodes
+        onHide: () => setTimeout(() => { if (BR.Router.current !== 'run') this.view.reset(); }, 700),
+      });
       this.el = $('run');
       BR.Fuse.init($('fuse'));
       this.buildSlots();
       this.bind();
       document.addEventListener('visibilitychange', () => { if (document.hidden && this.active && !this.over && !this.paused && !this.modal && this.clock) this.pause(true); });
       window.addEventListener('resize', () => this.measure());
-      requestAnimationFrame((t) => { this.last = t; this.frame(t); });
+      this.kick();
     },
+    /** The frame loop only runs while the run screen is showing: menus do not wake the page every frame for nothing. */
+    kick() { if (this._looping) return; this._looping = true; requestAnimationFrame((t) => { this.last = t; this.frame(t); }); },
     get active() { return BR.Router.current === 'run'; },
     get canAct() { return this.active && !this.over && !this.paused && !this.modal && this.clock; },
     measure() { BR.Fuse.layout(); },
 
     buildSlots() {
-      $('slots').innerHTML = BR.BOOSTER_ORDER.map((id) => `<button class="bslot empty" data-b="${id}" aria-label="${BR.BOOSTERS[id].name}: ${BR.BOOSTERS[id].desc}">${BR.powerIcon(id)}<span class="bname">${BR.BOOSTERS[id].name}</span><em class="bcount">0</em></button>`).join('');
+      $('slots').innerHTML = BR.BOOSTER_ORDER.map((id) => `<button class="bslot empty" data-b="${id}" aria-label="${BR.BOOSTERS[id].name}: ${BR.BOOSTERS[id].desc}"><i class="bfill"></i>${BR.powerIcon(id)}<span class="bname">${BR.BOOSTERS[id].name}</span><span class="bsub"></span><em class="bcount">0</em></button>`).join('');
       this.slotEls = {};
       $('slots').querySelectorAll('.bslot').forEach((el) => { this.slotEls[el.dataset.b] = el; });
     },
@@ -48,6 +54,7 @@
       el.addEventListener('pointerdown', (e) => {
         if (e.button != null && e.button > 0) return;
         this.pressed = true;
+        if (this._tipDone) this._tipDone();
         try { el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
         this.markActive();
         this.updateHover(e);
@@ -64,10 +71,20 @@
       el.addEventListener('pointerleave', (e) => { if (!this.pressed && e.pointerType === 'mouse') this.clearHover(); });
       el.addEventListener('contextmenu', (e) => { e.preventDefault(); if (this.armed) this.disarm(); });
       window.addEventListener('keydown', (e) => {
+        if (this.resultsEl && (e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) { const b = this.resultsEl.querySelector('[data-r="again"]'); if (b) { e.preventDefault(); b.click(); } return; }
         if (!this.active || this.over || this.modal) return;
         if (e.key === 'p' || e.key === 'P') { if (!this.paused) this.pause(); }
         else if (e.key === 'Escape' && this.armed) this.disarm();
         else if (this.canAct && ['1', '2', '3'].includes(e.key)) this.onSlot(BR.BOOSTER_ORDER[+e.key - 1]);
+        // play with the keyboard: arrows move a cursor over the board (the group under it is previewed), Enter or Space pops it
+        else if (this.canAct && !this.busy && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+          e.preventDefault();
+          const k = this.kbCell || { r: 3, c: 3 }, d = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[e.key];
+          this.kbCell = { r: Math.max(0, Math.min(BR.CFG.rows - 1, k.r + d[0])), c: Math.max(0, Math.min(BR.CFG.cols - 1, k.c + d[1])) };
+          this.hoverCell = this.kbCell; this.hoverVer = this.engine.board.version; this.hoverArmed = this.armed;
+          if (this.armed) { const cells = this.engine.boosterCells(this.armed, this.kbCell.r, this.kbCell.c); this.hoverPlan = null; this.view.setCellHighlight(cells, cells.length ? `${cells.length} bricks` : ''); }
+          else { this.hoverPlan = this.engine.plan(this.kbCell.r, this.kbCell.c); this.view.setHighlight(this.hoverPlan); }
+        } else if (this.canAct && !this.busy && this.kbCell && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); this.tap(this.kbCell.r, this.kbCell.c); }
       });
     },
 
@@ -78,15 +95,15 @@
       if (mode === 'daily') { st.daily = { day: BR.dayKey(), score: 0, stage: 0 }; BR.Storage.save(); }
       const tutorial = !st.seenTutorial && mode === 'rush';
       const seed = mode === 'daily' ? BR.dailySeed('d' + BR.dayKey()) : undefined;
-      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial });
+      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial, waitFirstPop: tutorial, gentle: tutorial });
       BR.Storage.clearRun();
-      return this.begin(engine, { tutorial });
+      return this.begin(engine, { tutorial, goal: mode === 'rush' ? BR.Goals.pick() : null });
     },
     resume() {
       const snap = BR.Storage.loadRun();
       if (!snap) return;
       const engine = new BR.Engine({ mode: snap.mode, seed: snap.seed, boosts: snap.boosts || {}, snapshot: snap });
-      return this.begin(engine, { resumed: true });
+      return this.begin(engine, { resumed: true, goal: snap.goal || null });
     },
 
     async begin(engine, o = {}) {
@@ -94,8 +111,10 @@
       this.engine = engine; this.mode = engine.mode; this.boosts = engine.boosts;
       this.clock = false; this.busy = true; this.paused = false; this.modal = false; this.over = false; this.leaving = false;
       this.armed = null; this.buffered = null; this.popsThisRun = 0; this.tutorial = !!o.tutorial; this.warned = false; this.hb = 0;
+      this.goal = o.goal || null; this.renderGoal();
       this.el.classList.toggle('chill', engine.chill);
       this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
+      if (this._tipDone) this._tipDone();
       $('bomb').getAnimations().forEach((a) => a.cancel()); $('bomb').classList.remove('gone');   // the fuse-out explosion leaves the bomb gone; every run starts with it back
       BR.Fuse.reset(this.fuseState());
       this.bestBase = S().best[this.mode] || 0; this.beatFired = false; this.chillStars = 0;
@@ -125,17 +144,33 @@
       this.saveSnap();
     },
 
-    saveSnap() { if (this.engine && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(this.engine.snapshot()); },
+    saveSnap() { if (this.engine && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(Object.assign(this.engine.snapshot(), { goal: this.goal })); },
+
+    /** The run goal sits in the message band when nothing more urgent is showing. */
+    renderGoal() {
+      const g = this.goal, el = $('goalLine');
+      el.innerHTML = g ? `<span class="gl-ico">${g.done ? BR.icon('check') : BR.icon('flag')}</span><span class="gl-txt">${g.done ? 'Goal reached' : 'Goal'}: <b>${BR.esc(g.text)}</b></span><span class="gl-rw">+${g.reward}</span>` : '';
+      el.classList.toggle('show', !!g); el.classList.toggle('done', !!(g && g.done));
+      this.band();
+    },
+    /** After every action: is the run goal met? Pays at the end of the run, celebrates now. */
+    checkGoal() {
+      const g = this.goal;
+      if (!g || g.done || !BR.Goals.met(g, this.engine.summary())) return;
+      g.done = true; this.renderGoal();
+      BR.audio.boosterGain(); BR.haptic('win'); this.callout(`GOAL! +${g.reward} Coins`, '#7ee8ff');
+    },
 
     /* ===================================================================== per-frame loop */
     frame(now) {
+      if (!this.active) { this._looping = false; return; }
       requestAnimationFrame((t) => this.frame(t));
       const dt = Math.min(0.1, Math.max(0, (now - this.last) / 1000)); this.last = now;
-      if (!this.active || !this.engine) return;
+      if (!this.engine) return;
       // performance probe: lower effects automatically if the phone is struggling
-      if (this.clock && !this.paused && BR.Storage.data.settings.perf === 'auto' && !BR.autoLow) {
+      if (this.clock && !this.paused && !this.modal && BR.Storage.data.settings.perf === 'auto') {
         this.perfSum += dt; this.perfN++;
-        if (this.perfN >= 180) { if (this.perfSum / this.perfN > 0.026) { BR.autoLow = true; BR.App.applySettings(); } this.perfN = 0; this.perfSum = 0; }
+        if (this.perfN >= 180) { const avg = this.perfSum / this.perfN; this.perfN = 0; this.perfSum = 0; BR.Gfx.sample(avg); }
       }
       const e = this.engine;
       if (this.clock && !this.paused && !this.modal && !this.over) {
@@ -145,7 +180,7 @@
           else if (ev.type === 'spark') this.sparkStart();
           else if (ev.type === 'fuseOut') this.endRun('fuse');
         }
-        if (e.spark > 0) this.sparkTick();
+        if (e.spark > 0) this.sparkTick(dt);
       }
       if (!e.chill) this.hudFuse(dt);
     },
@@ -154,21 +189,21 @@
     sparkStart() {
       const e = this.engine;
       this.el.classList.add('sparking');
-      $('lastSpark').classList.add('on');
+      $('lastSpark').classList.add('on'); this.band();
       BR.audio.lastSpark && BR.audio.lastSpark(); BR.haptic('boom'); BR.Fuse.sparkStart();
       this.fx.flash('#ff4d6d', 0.3, 360); this.fx.shake($('app'), 10, 360);
       if (BR.Music && BR.Music.duck) BR.Music.duck(true);
       this.hideHint(); this.view.showHint(e.bestGroup());
     },
-    sparkTick() {
+    sparkTick(dt) {
       const e = this.engine;
       $('lsFill').style.transform = `scaleX(${Math.max(0, e.spark / BR.CFG.fuse.spark).toFixed(3)})`;
-      this.hb -= 0.016;
+      this.hb -= dt;
       if (this.hb <= 0) { BR.audio.heartbeat(1); BR.haptic('tick'); this.hb = 0.3; }
     },
     sparkEnd(saved) {
       this.el.classList.remove('sparking');
-      $('lastSpark').classList.remove('on');
+      $('lastSpark').classList.remove('on'); this.band();
       this.view.hideHint();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
       BR.Fuse.sparkEnd(saved);
@@ -217,9 +252,9 @@
       this.setScore(e.score, false);
       $('stageNum').textContent = e.stage;
       this.setMult(false);
+      this.band();
       this.hudStageBar(false);
       this.renderPower(null);
-      $('chargeFill').style.width = (e.charge / BR.CFG.power.charge) * 100 + '%';
       $('rushFill').style.width = '0%';
       if (e.chill) this.hudChill(false);
       else this.hudFuse(0);
@@ -246,15 +281,16 @@
       else { el.className = 'best-line'; $('bestText').textContent = `BEST ${fmt(base)}`; }
     },
     setMult(slam) {
-      const e = this.engine, m = e.chill ? 1 : BR.stageMult(e.stage);
-      const t = $('multTag'); t.textContent = 'x' + m.toFixed(1);
-      if (slam) { t.classList.remove('slam'); void t.offsetWidth; t.classList.add('slam'); }
+      const e = this.engine, m = e.mult;   // the real multiplier: the stage's, times Rush's while Rush is on
+      const t = $('multTag'); t.textContent = 'x' + (Number.isInteger(m) ? m : m.toFixed(1)) + ' points';
+      if (slam) BR.replay(t, 'slam');
     },
     hudStageBar(animate = true) {
       const e = this.engine, f = $('stageFill');
       if (!animate) f.style.transition = 'none';
       f.style.width = Math.max(0, Math.min(100, (e.stageScore / e.goal) * 100)).toFixed(1) + '%';
-      if (!animate) { void f.offsetWidth; f.style.transition = ''; }
+      $('stageGoal').textContent = `${fmt(Math.min(e.stageScore, e.goal))} / ${fmt(e.goal)}`;
+      if (!animate) requestAnimationFrame(() => { f.style.transition = ''; });
     },
     hudChill(animate = true) {
       const e = this.engine;
@@ -262,18 +298,24 @@
       const f = $('chillFill');
       if (!animate) f.style.transition = 'none';
       f.style.width = Math.min(100, (e.stageScore / e.goal) * 100) + '%';
-      if (!animate) { void f.offsetWidth; f.style.transition = ''; }
-      $('chillText').textContent = e.stageScore >= e.goal ? 'Goal reached!' : `${fmt(e.stageScore)} / ${fmt(e.goal)}`;
+      if (!animate) requestAnimationFrame(() => { f.style.transition = ''; });
+      $('chillText').textContent = e.stageScore >= e.goal ? `Stage ${e.stage} · goal reached!` : `Stage ${e.stage} · ${fmt(e.stageScore)} / ${fmt(e.goal)}`;
       $('stageNum').textContent = e.stage;
     },
     renderPower(gained) {
-      const e = this.engine;
+      const e = this.engine, next = e.nextPower(), pct = Math.round((e.charge / BR.CFG.power.charge) * 100);
       for (const id of BR.BOOSTER_ORDER) {
-        const el = this.slotEls[id];
-        el.querySelector('.bcount').textContent = e.inv[id];
-        el.classList.toggle('empty', e.inv[id] <= 0);
+        const el = this.slotEls[id], n = e.inv[id], isNext = id === next;
+        const sub = el.querySelector('.bsub'), cnt = el.querySelector('.bcount');
+        if (cnt.textContent !== String(n)) cnt.textContent = n;
+        // the next slot to fill shows the charge inside it, so there is no separate bar to decode
+        const label = isNext && n <= 0 ? pct + '%' : isNext ? '+' + pct + '%' : '';
+        if (sub.textContent !== label) sub.textContent = label;
+        el.querySelector('.bfill').style.transform = isNext ? `scaleY(${(pct / 100).toFixed(2)})` : 'scaleY(0)';
+        el.classList.toggle('empty', n <= 0);
+        el.classList.toggle('next', isNext);
         el.classList.toggle('armed', this.armed === id);
-        if (gained && gained.includes(id)) { el.classList.remove('gain'); void el.offsetWidth; el.classList.add('gain'); }
+        if (gained && gained.includes(id)) BR.replay(el, 'gain');
       }
     },
     callout(text, color) {
@@ -306,18 +348,26 @@
     fuseFloat(text, color, from) { BR.Fuse.chip(text, color, from); },
     hint(html, ms = 4200) {
       const h = $('hint'); clearTimeout(this.hintT);
-      h.innerHTML = html; h.classList.add('show');
-      if (ms) this.hintT = setTimeout(() => h.classList.remove('show'), ms);
+      h.innerHTML = `<span>${html}</span>`; h.classList.add('show'); this.band();
+      if (ms) this.hintT = setTimeout(() => { h.classList.remove('show'); this.band(); }, ms);
     },
-    hideHint() { clearTimeout(this.hintT); $('hint').classList.remove('show'); },
+    hideHint() { clearTimeout(this.hintT); $('hint').classList.remove('show'); this.band(); },
     setCombo(streak, mult, popped) {
       const c = $('combo');
       if (streak >= 2) {
-        $('comboX').textContent = 'x' + (Number.isInteger(mult) ? mult : mult.toFixed(1));
+        $('comboX').textContent = 'Combo x' + (Number.isInteger(mult) ? mult : mult.toFixed(1));
+        $('comboSub').textContent = `${streak} big pops in a row`;
         c.classList.add('show'); c.classList.toggle('hot', mult >= 2.5); c.classList.toggle('max', mult >= 4);
-        if (popped) { c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+        if (popped) BR.replay(c, 'pop');
         this.comboOn = true;
       } else if (this.comboOn) { c.classList.remove('show', 'hot', 'max', 'pop'); this.comboOn = false; }
+      this.band();
+    },
+    /** The message band shows one thing at a time: Last Spark, then a power-up being aimed, then a hint, then the combo. */
+    band() {
+      const b = $('msgBand');
+      const top = $('lastSpark').classList.contains('on') ? 'spark' : $('aimBanner').classList.contains('show') ? 'aim' : $('hint').classList.contains('show') ? 'hint' : $('combo').classList.contains('show') ? 'combo' : $('goalLine').classList.contains('show') ? 'goal' : '';
+      if (b.dataset.top !== top) b.dataset.top = top;
     },
 
     /* ===================================================================== input */
@@ -366,7 +416,7 @@
     onSlot(type) {
       if (!this.canAct || this.busy) return;
       const e = this.engine;
-      if (e.inv[type] <= 0) { BR.audio.deny(); BR.haptic('err'); this.hint('Pops of 4+ fill the bar. Every full bar earns a power-up.', 3200); return; }
+      if (e.inv[type] <= 0) { BR.audio.deny(); BR.haptic('err'); this.hint('Pop <b>4 or more</b> bricks at once to charge a power-up', 3200); return; }
       if (this.armed === type) { this.disarm(); return; }
       this.armed = type; BR.audio.boosterArm(); BR.haptic('tap');
       this.clearHover(); this.view.hideHint(); this.hideHint();
@@ -377,7 +427,7 @@
     disarm() { this.armed = null; this.clearHover(); this.aimBanner(''); this.renderPower(null); },
     aimBanner(text, color) {
       const b = $('aimBanner'); b.textContent = text || ''; b.style.setProperty('--bc', color || '');
-      b.classList.toggle('show', !!text); $('boardWrap').classList.toggle('aiming', !!text); $('boardWrap').style.setProperty('--bc', color || '');
+      b.classList.toggle('show', !!text); $('boardWrap').classList.toggle('aiming', !!text); $('boardWrap').style.setProperty('--bc', color || ''); this.band();
     },
     async usePower(type, r, c) {
       const e = this.engine;
@@ -404,11 +454,12 @@
       this.callout(BR.BOOSTERS[res.type].name.toUpperCase() + '!', PCOL[res.type]);
       const pt = view.pagePoint(res.tap.r, res.tap.c);
       this.fx.flash(PCOL[res.type], 0.28, 380);
-      this.fx.shake($('app'), res.type === 'hammer' ? 13 : 9, 420);
+      this.fx.shake($('boardWrap'), res.type === 'hammer' ? 9 : 6, 380);
       if (res.type === 'hammer') this.fx.explosion(pt.x, pt.y, '#ffb347', 1.1);
       else if (res.type === 'beam') { this.beam('row', res.tap.r, '#7ae8ff'); this.beam('col', res.tap.c, '#7ae8ff'); }
       else { this.fx.ring(pt.x, pt.y, '#d27aff', 160, 0.7, 6); res.removed.slice(0, 14).forEach((q, i) => { const t = view.pagePoint(q.r, q.c); setTimeout(() => this.fx.bolt(pt.x, pt.y, t.x, t.y, BR.PALETTE[q.color].hi), i * 22); }); }
       if (res.timeGain) BR.Fuse.gain(res.timeGain, { x: pt.x, y: pt.y }, 'power');
+      this.checkGoal();
     },
 
     /* ===================================================================== one turn */
@@ -447,7 +498,6 @@
       this.setScore(e.score);
       this.hudStageBar();
       if (e.chill) this.hudChill();
-      $('chargeFill').style.width = (e.charge / BR.CFG.power.charge) * 100 + '%';
       this.setCombo(e.streak, BR.comboMult(e.streak), true);
       if (res.comboBefore >= 2 && e.streak < 2) this.callout('Combo lost', '#9aa8d6');
       if (res.boostersGained && res.boostersGained.length) {
@@ -469,10 +519,11 @@
 
       const pt = view.pagePoint(sr, sc);
       if (n >= 5) this.fx.ring(pt.x, pt.y, '#ffffff', 60 + n * 9, 0.5, 4);
-      if (n >= 6) this.fx.shake($('app'), Math.min(11, 2 + n * 0.7), 300 + Math.min(300, n * 20));
+      if (n >= 6) this.fx.shake($('boardWrap'), Math.min(7, 1.5 + n * 0.45), 260 + Math.min(240, n * 16));   // the board shakes, not the whole screen, and never much
       if (n >= 10) this.fx.flash('#ffffff', Math.min(0.28, n * 0.014), 280);
       if (p.line) {
-        BR.audio.line(); BR.haptic('boom'); this.fx.flash('#9ff0ff', 0.3, 520); this.fx.shake($('app'), 12, 480);
+        BR.audio.line(); BR.haptic('boom'); this.fx.flash('#9ff0ff', 0.3, 520); this.fx.shake($('boardWrap'), 7, 420);
+        if (!BR.reducedMotion) $('board').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.02)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 170, easing: 'ease-out' });   // a small camera punch
         if (p.lineH) this.beam('row', p.r); if (p.lineV) this.beam('col', p.c);
       }
       if (res.shuffle.length) setTimeout(() => this.callout('Reshuffle', '#c4b5ff'), 700);
@@ -490,14 +541,39 @@
         else if (this.el.classList.contains('sparking') && e.spark <= 0) this.sparkEnd(!!res.sparkSave);
         if (res.shuffleRefund) { const bw = $('boardWrap').getBoundingClientRect(); BR.Fuse.gain(res.shuffleRefund, { x: bw.left + bw.width / 2, y: bw.top + bw.height / 2 }, 'shuffle', 700); }
       }
+      this.checkGoal();
       if (BR.Skins.onEvent) BR.Skins.onEvent('pop', { res, view, run: this });
       if (p.line && BR.Skins.onEvent) BR.Skins.onEvent('line', { res, view, run: this });
 
-      if (this.tutorial) {
-        if (this.popsThisRun === 1) this.hint('Every pop adds time to the <b>fuse</b>. Bigger pops add more.', 4800);
-        else if (this.popsThisRun === 4) this.hint('Chain pops of 4+ to fill the <b>Rush</b> bar below.', 5200);
-        else if (this.popsThisRun === 8) { this.hint('Pops of 4+ also charge your <b>power-ups</b>. Tap one, then the board.', 5200); S().seenTutorial = true; BR.Storage.save(); this.tutorial = false; }
+      if (this.popsThisRun === 1) this.hideHint();   // "tap a group" has done its job
+      // the first runs name each part of the HUD the first time it does something (one arrow callout at a time, once per player)
+      if (S().runs < 3 || this.tutorial) {
+        if (res.timeGain > 0) this.tip('fuse', 'fuse', 'This is your <b>time</b>. Every pop adds more.');
+        if (this.popsThisRun >= 2) this.tip('stage', 'stageStrip', 'Fill this to clear the <b>stage</b>. Each stage pays more.');
+        if (e.rush.meter > 0 && !e.rush.active) this.tip('rush', 'rushBar', 'Pops of 4+ fill <b>Rush</b>. Full: 3x points!');
+        if (e.charge > 0) this.tip('power', 'slots', 'Pops of 4+ also charge a <b>power-up</b>. Tap one, then the board.');
       }
+      if (this.tutorial && this.popsThisRun === 8) { S().seenTutorial = true; BR.Storage.save(); this.tutorial = false; }
+    },
+
+    /** An arrow callout that names a HUD part. Shown once per player; only one at a time; gone after a few seconds or the next tap. */
+    tip(key, targetId, html, ms = 4200) {
+      const seen = S().seen, flag = 'rt_' + key;
+      if (seen[flag] || this._tip) return;
+      seen[flag] = true; BR.Storage.save();
+      const t = $(targetId).getBoundingClientRect(), run = this.el.getBoundingClientRect();
+      const el = BR.el(`<div class="tip-arrow"><span>${html}</span></div>`);
+      this.el.appendChild(el);
+      const w = Math.min(280, run.width - 24), cx = t.left - run.left + t.width / 2;
+      const left = Math.max(12, Math.min(run.width - w - 12, cx - w / 2));
+      const below = t.top - run.top < run.height * 0.5;
+      el.style.cssText = `width:${w}px;left:${left}px;${below ? `top:${t.bottom - run.top + 8}px` : `bottom:${run.bottom - t.top + 8}px`}`;
+      el.style.setProperty('--ax', Math.max(18, Math.min(w - 18, cx - left)) + 'px');
+      el.classList.add(below ? 'below' : 'above');
+      this._tip = el;
+      const done = () => { clearTimeout(timer); el.classList.add('out'); setTimeout(() => el.remove(), 260); if (this._tip === el) { this._tip = null; this._tipDone = null; } };
+      const timer = setTimeout(done, ms);
+      this._tipDone = done;
     },
 
     beam(kind, idx, color) {
@@ -515,18 +591,17 @@
 
     /* ===================================================================== Rush Mode + stages */
     rushStart() {
-      this.el.classList.add('rushing');
+      this.el.classList.add('rushing'); this.setMult(true);
       BR.audio.rushStart(); BR.haptic('rush'); BR.Fuse.rushStart();
-      const b = $('rushBanner'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+      BR.replay($('rushBanner'), 'go');
       this.fx.flash('#ff3d8b', 0.4, 600); this.fx.shake($('app'), 14, 600);
-      const run = this.el.getBoundingClientRect();
-      this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, run.top);
+      this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, 0);
       if (BR.Music) BR.Music.setRush(true);
       if (BR.Skins.onEvent) BR.Skins.onEvent('rushStart', { run: this, view: this.view });
       this.hideHint();
     },
     rushEnd() {
-      this.el.classList.remove('rushing');
+      this.el.classList.remove('rushing'); this.setMult(true);
       BR.audio.rushEnd(); BR.haptic('tick'); BR.Fuse.rushEnd();
       this.callout('Rush over', '#c4b5ff');
       if (BR.Music) BR.Music.setRush(false);
@@ -536,10 +611,10 @@
       const e = this.engine;
       BR.audio.stageUp(); BR.haptic('stage'); BR.Fuse.stageUp();
       $('swNum').textContent = info.to; $('swMult').textContent = 'x' + info.mult.toFixed(1);
-      const w = $('stageWipe'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go');
+      const w = $('stageWipe'); BR.replay(w, 'go');
       setTimeout(() => w.classList.remove('go'), 1300);
       $('stageNum').textContent = info.to;
-      const t = $('stageTag'); t.classList.remove('slam'); void t.offsetWidth; t.classList.add('slam');
+      BR.replay($('stageTag'), 'slam');
       this.setMult(true);
       setTimeout(() => this.hudStageBar(), 60);
       this.fx.flash('#ffffff', 0.35, 500); this.fx.shake($('app'), 10, 420);
@@ -634,7 +709,7 @@
       const token = this.token;
       this.over = true; this.ending = true; this.clock = false; this.busy = true;
       this.clearHover(); this.view.hideHint(); this.hideHint(); this.aimBanner(''); this.armed = null;
-      $('warnVignette').classList.remove('on'); $('lastSpark').classList.remove('on');
+      $('warnVignette').classList.remove('on'); $('lastSpark').classList.remove('on'); this.band();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);   // a missed Last Spark leaves the held duck on
       if (this.el.classList.contains('rushing') && BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });   // so Rush-only moments clean up
       this.el.classList.remove('rushing', 'sparking');
@@ -684,10 +759,15 @@
       const xp = P.addXp(rows.reduce((a, r) => a + r.xp, 0));
       P.trackRun(sum, mode);
       const missions = BR.Missions.applyRun(sum, mode);
+      const goal = this.goal && mode === 'rush' ? { text: this.goal.text, reward: this.goal.reward, done: !!(this.goal.done || BR.Goals.met(this.goal, sum)) } : null;
+      if (goal && goal.done) P.earn(goal.reward);
+      this.goal = null;
+      const streak = BR.Streak.advance();
+      BR.Records.update(sum, mode);
       const trophies = P.checkTrophies();
       BR.Storage.save();
       void e; void reason; void silent;
-      return { coins, isBest, rows, xp, missions, trophies, daily, prevBest, par };
+      return { coins, isBest, rows, xp, missions, trophies, daily, prevBest, par, goal, streak };
     },
 
     showResults(sum, r, reason) {
@@ -698,38 +778,47 @@
       const mis = r.missions.map((m) => `<div class="res-mis rev ${m.justDone ? 'done' : ''}"><div class="t"><span>${m.justDone ? BR.icon('check', 'ck') + ' ' : ''}${BR.esc(m.mission.text)}</span><b>${m.justDone ? '+' + m.mission.reward + ' Coins' : fmt(m.after) + '/' + fmt(m.mission.target)}</b></div><div class="bar ${m.weekly ? 'gold' : 'green'}"><i data-to="${(m.after / m.mission.target) * 100}" style="width:${(m.before / m.mission.target) * 100}%"></i></div></div>`).join('');
       const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pass level ${u.level} reward</small></span><span class="lu-rw">${BR.rewardChip(u.paid ? { kind: 'coins', amount: u.paid } : u.reward)}</span></div>`).join('');
       const trophies = r.trophies.map((t) => `<div class="lvl-up rev"><span class="lu-n">${BR.icon('trophy')}</span><span class="lu-t"><b>${t.name}</b><small>Trophy earned · +${t.coins} Coins</small></span></div>`).join('');
+      // what the run unlocked sits right under the score, so it is never below the fold behind the buttons
+      const banners = r.xp.ups.map((u) => `<div class="res-banner lvl rev"><span>${BR.icon('star')}</span><b>Level ${u.level}!</b><small>${u.paid ? '+' + u.paid + ' Coins' : BR.rewardLabel(u.reward)}</small></div>`).join('')
+        + r.trophies.map((t) => `<div class="res-banner trophy rev"><span>${BR.icon('trophy')}</span><b>Trophy: ${BR.esc(t.name)}</b><small>+${t.coins} Coins</small></div>`).join('')
+        + (r.streak ? `<div class="res-banner streak rev"><span>${BR.icon('sun')}</span><b>${r.streak.ring >= 7 ? 'Streak: week complete!' : `Streak: day ${r.streak.ring}`}</b><small>${[r.streak.coins ? '+' + r.streak.coins + ' Coins' : '', r.streak.chest ? 'a Golden Chest' : '', r.streak.shielded ? 'a missed day was forgiven' : '', r.streak.broken ? 'a new week starts' : ''].filter(Boolean).join(' and ') || 'Come back tomorrow'}</small></div>` : '');
+      // after the very first run: players who cannot tell the colors apart can get a symbol on every brick
+      const shapesOffer = !S().settings.shapes && !S().seen.shapesTip && S().runs <= 2 ? `<div class="res-card rev shapes-offer"><h3>Hard to tell the colors apart?</h3><p class="tiny">Shape hints put a small symbol on every brick.</p><button class="btn btn-dark btn-sm" data-r="shapes">Turn on shape hints</button></div>` : '';
+      const goalLine = r.goal ? `<div class="res-goal rev ${r.goal.done ? 'done' : ''}"><span>${BR.icon(r.goal.done ? 'check' : 'flag')}</span><b>${r.goal.done ? 'Goal reached' : 'Goal missed'}: ${BR.esc(r.goal.text)}</b>${r.goal.done ? `<em>+${r.goal.reward} Coins</em>` : ''}</div>` : '';
+      const nextLine = BR.nextGoal({ stage: sum.stage });
       let chase = '';
       if (r.isBest && sum.score > 0) chase = `<div class="new-best rev">New best</div>${r.prevBest > 0 ? `<div class="res-gap rev good">${fmt(sum.score - r.prevBest)} more than your old best</div>` : ''}`;
       else if (r.prevBest > 0) {
         const gap = r.prevBest - sum.score, near = sum.score >= r.prevBest * 0.85;
         chase = `<div class="res-gap rev ${near ? 'near' : ''}">${near ? `So close: ${fmt(gap)} short of your best` : `Your best is ${fmt(r.prevBest)}`}</div>`;
       }
-      if (mode === 'daily' && r.par > 0) chase += `<div class="res-gap rev ${sum.score >= r.par ? 'good' : ''}">${sum.score >= r.par ? 'Above' : 'Below'} your par of ${fmt(r.par)}</div>`;
+      if (mode === 'daily' && r.par > 0) chase += `<div class="res-gap rev ${sum.score >= r.par ? 'good' : ''}">${sum.score >= r.par ? 'Above' : 'Below'} your recent average of ${fmt(r.par)}</div>`;
       const beatIt = !r.isBest && r.prevBest > 0 && mode !== 'daily';
       const html = `<div class="results" id="results"><div class="res-scroll">
           <div class="res-title out rev">${titles[reason] || 'RUN OVER'}</div>
           <div class="res-sub rev">${mode === 'daily' ? 'Daily Rush' : mode === 'chill' ? 'Chill' : 'Rush'} · Stage ${sum.stage} · ${Math.floor(sum.time / 60)}:${String(Math.floor(sum.time % 60)).padStart(2, '0')}</div>
           <div class="res-score rev"><small>Score</small><b id="resScore">0</b></div>
-          ${chase}
+          ${chase}${banners}${goalLine}${nextLine ? `<div class="res-next rev">Next: ${BR.esc(nextLine)}</div>` : ''}
           <div class="res-chips rev"><div class="res-chip"><b>${sum.stagesCleared}</b><small>Stages cleared</small></div><div class="res-chip"><b>${sum.biggest}</b><small>Biggest pop</small></div><div class="res-chip"><b>${sum.rushes}</b><small>Rush Modes</small></div></div>
           <div class="res-card rev"><h3>Coins <span class="coins-total">${BR.coin()}<b id="resCoins">0</b></span></h3>
-            <div class="res-row"><span>Points</span><b>${r.coins.points}</b></div><div class="res-row"><span>Stages cleared</span><b>${r.coins.stages}</b></div>
-            ${r.coins.daily ? `<div class="res-row"><span>Daily Rush</span><b>+${r.coins.daily}</b></div>` : ''}${r.coins.first ? `<div class="res-row"><span>First run of the day</span><b>+${r.coins.first}</b></div>` : ''}</div>
+            <div class="res-row"><span>Points</span><b>+${r.coins.points}</b></div><div class="res-row"><span>Stages cleared</span><b>+${r.coins.stages}</b></div>
+            ${r.coins.daily ? `<div class="res-row"><span>Daily Rush</span><b>+${r.coins.daily}</b></div>` : ''}${r.coins.first ? `<div class="res-row"><span>First run of the day</span><b>+${r.coins.first}</b></div>` : ''}${r.goal && r.goal.done ? `<div class="res-row"><span>Run goal</span><b>+${r.goal.reward}</b></div>` : ''}</div>
           ${mis ? `<div class="res-card rev"><h3>Missions</h3>${mis}</div>` : ''}
           <div class="res-card rev"><h3>XP <span class="muted num">+${fmt(r.rows.reduce((a, x) => a + x.xp, 0))}</span></h3>
             ${r.rows.map((x) => `<div class="res-row"><span>${BR.esc(x.label)}</span><b>+${fmt(x.xp)}</b></div>`).join('')}
             <div class="xp-line"><div class="bar tall cyan"><i id="resXp" style="width:${(r.xp.from.xp / r.xp.from.need) * 100}%"></i></div><small class="num" id="resXpText">Level ${r.xp.from.level} · ${fmt(r.xp.from.xp)} / ${fmt(r.xp.from.need)}</small></div></div>
           ${ups}${trophies}
+          ${shapesOffer}
         </div>
         <div class="res-actions rev">
           ${mode === 'daily' ? `<button class="btn btn-xl" data-r="share">${BR.icon('share')} Share result</button>` : `<button class="btn btn-xl" data-r="again">${BR.icon('play')} ${beatIt ? 'Beat it' : 'Play again'}</button>`}
-          <div class="row">${canShop ? `<button class="btn btn-gold" data-r="shop">${BR.icon('gift')} Open a chest</button>` : ''}<button class="btn btn-dark" data-r="home">Home</button></div>
+          <div class="row">${canShop ? `<button class="btn btn-gold" data-r="shop">${BR.icon('gift')} Chests</button>` : ''}<button class="btn btn-dark" data-r="home">Home</button></div>
         </div></div>`;
       const host = $('layer-overlays');
       const node = BR.el(html);
       host.appendChild(node);
       host.style.pointerEvents = 'auto';
-      this.resultsEl = node;
+      this.resultsEl = node; BR.under(1);
       if (BR.Music && BR.Music.resultsSting) BR.Music.resultsSting();
       requestAnimationFrame(() => node.classList.add('on'));
       BR.Router.setTabs(false);
@@ -738,7 +827,7 @@
       const step = BR.reducedMotion ? 0 : 140;
       revs.forEach((n, i) => setTimeout(() => n.classList.add('in'), 250 + i * step));
       setTimeout(() => { BR.countTo($('resScore'), sum.score, BR.reducedMotion ? 10 : 1300, 0); BR.audio.xpTick(0); }, 400);
-      setTimeout(() => { BR.countTo($('resCoins'), r.coins.total, BR.reducedMotion ? 10 : 1100, 0); for (let i = 0; i < 6 && !BR.reducedMotion; i++) setTimeout(() => BR.audio.coin(i), i * 120); }, 900 + step * 3);
+      setTimeout(() => { BR.countTo($('resCoins'), r.coins.total + (r.goal && r.goal.done ? r.goal.reward : 0), BR.reducedMotion ? 10 : 1100, 0); for (let i = 0; i < 6 && !BR.reducedMotion; i++) setTimeout(() => BR.audio.coin(i), i * 120); }, 900 + step * 3);
       setTimeout(() => node.querySelectorAll('.bar i[data-to]').forEach((b) => { b.style.width = b.dataset.to + '%'; }), 1500);
       if (r.isBest && sum.score > 0) setTimeout(() => BR.audio.newBest(), 1000);
       this.animateXp(r.xp, r.xp.ups.length);
@@ -748,6 +837,7 @@
         const k = b.dataset.r;
         if (k === 'again') { this.closeResults(); this.start({ mode, boosts: {} }); }
         else if (k === 'share') this.share(sum);
+        else if (k === 'shapes') { S().settings.shapes = true; S().seen.shapesTip = true; BR.Storage.save(); BR.App.applySettings(); BR.toast('Shape hints are on. Change it any time in Profile.', 'good'); b.closest('.shapes-offer').remove(); }
         else if (k === 'shop') {
           this.closeResults(); BR.Router.go('shop');
           const own = ['golden'].concat(BR.CHEST_ORDER).find((id) => BR.Progress.chestCount(id) > 0 && !BR.Progress.chestStatus(id).complete);
@@ -777,6 +867,7 @@
     },
     closeResults() {
       const n = this.resultsEl; if (!n) return;
+      BR.under(-1);
       n.classList.remove('on');
       setTimeout(() => { n.remove(); $('layer-overlays').style.pointerEvents = 'none'; }, 400);
       this.resultsEl = null; this.modal = false; this.ending = false;
