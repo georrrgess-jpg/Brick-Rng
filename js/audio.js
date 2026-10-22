@@ -409,10 +409,12 @@
     if (streak >= 6) tone({ f: Math.min(2800, f * 2), dur: 0.18, vol: v * 0.16 * hi, at: 0.03, attack: 0.004, pan: -pan });
     const fn = flavor && Object.prototype.hasOwnProperty.call(FLAVOR, flavor) ? FLAVOR[flavor] : null;
     if (fn) fn(f, v, n, pan);
+    else if (flavor && A.flavors[flavor]) A.flavors[flavor](f, v, n, pan, { tone, noise, note, rnd, sub });   // Series 4 pop textures, registered from js/s4-pops.js
   }
 
   /* ---------- the public API ---------- */
   const A = {
+    flavors: {},   // BR.Audio.flavors[recipe] = (f, v, n, pan, { tone, noise, note, rnd, sub }) => void; each ends inside 210 ms
     get enabled() { return enabled; },
     get volume() { return sfxVol; },
     get key() { return keyShift; },

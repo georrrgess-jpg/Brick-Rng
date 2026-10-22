@@ -1,4 +1,4 @@
-/* Item catalogue (Series 2 "Arcade"): 28 chest items + 2 Rush Pass exclusives. Items are plain data;
+/* Item catalogue (Series 2 "Arcade" 28 + 2, Series 3 "Carnival" 28, Series 4 "Moonwick" 28 + 2 Pass exclusives). Items are plain data;
    `cls` names a CSS class in css/skins.css, `recipe` names an fx.js pop recipe, `moment` names a
    signature moment in js/skins.js. */
 (function () {
@@ -40,6 +40,15 @@
     it('f_slime', 'skin', 'legendary', 'Slime', 'Living goo with eyes that follow your finger.', { cls: 'skin-slime', moment: 'slime', series: 3, hero: 2 }),
     it('f_galaxy', 'skin', 'mythic', 'Galaxy', 'A tiny nebula in every brick. Rush Mode lights the whole board.', { cls: 'skin-galaxy', moment: 'galaxy', series: 3, hero: 4 }),
     it('f_phoenix', 'skin', 'mythic', 'Phoenix', 'Feathers of flame. Big pops send a phoenix across the board.', { cls: 'skin-phoenix', moment: 'phoenix', series: 3, hero: 3 }),
+    // ---- Series 4 "Moonwick": Skins ----
+    it('f_patchwork', 'skin', 'common', 'Patchwork', 'Quilted fabric squares, each stitched with its colour\'s sigil.', { cls: 'skin-patchwork', series: 4, hero: 5 }),
+    it('f_glowcap', 'skin', 'common', 'Glowcap', 'Spotted mushroom caps that glow from underneath.', { cls: 'skin-glowcap', series: 4, hero: 0, set: 'glade' }),
+    it('f_spellbook', 'skin', 'rare', 'Spellbook', 'Little leather spellbooks with a gold-foil sigil.', { cls: 'skin-spellbook', series: 4, hero: 2, set: 'library' }),
+    it('f_origami', 'skin', 'rare', 'Origami', 'Folded paper, each colour folded in the shape of its sigil.', { cls: 'skin-origami', series: 4, hero: 3 }),
+    it('f_potion', 'skin', 'epic', 'Potion', 'Sigil-shaped bottles of sloshing elixir. They boil in Rush Mode.', { cls: 'skin-potion', moment: 'potion', series: 4, hero: 6, set: 'alchemy' }),
+    it('f_gemcut', 'skin', 'epic', 'Gemcut', 'Every colour a gem with its own cut. Big pops fire a prism of light.', { cls: 'skin-gemcut', moment: 'gem', series: 4, hero: 0 }),
+    it('f_hourglass', 'skin', 'legendary', 'Hourglass', 'Sand runs in every brick. At a stage-up they all turn over in a wave.', { cls: 'skin-hourglass', moment: 'hourglass', series: 4, hero: 1, set: 'vault' }),
+    it('f_sigil', 'skin', 'mythic', 'Sigil', 'Glowing runes. Big pops cast a spell circle; Rush lights a ring of runes.', { cls: 'skin-sigil', moment: 'sigil', series: 4, hero: 4, set: 'spire' }),
     // ---- Pops ----
     it('b_ember', 'pop', 'common', 'Embers', 'Pops throw rising sparks.', { recipe: 'ember', color: '#ff9a3d' }),
     it('b_petal', 'pop', 'common', 'Petals', 'Pops release soft falling petals.', { recipe: 'petal', color: '#ff8fc0' }),
@@ -58,6 +67,15 @@
     it('b_ink', 'pop', 'legendary', 'Ink Splash', 'Ink splatters behind the group, then fades.', { recipe: 'ink', color: '#a56bff', series: 3, moment: 'ink' }),
     it('b_nova', 'pop', 'mythic', 'Nova Burst', 'Every pop implodes into a flash. Big pops ripple the board.', { recipe: 'supernova', color: '#fff2a8', series: 3, moment: 'novapop' }),
     it('b_dragon', 'pop', 'mythic', 'Dragon Fire', 'Flame sweeps out of the group. Big pops roar.', { recipe: 'dragonfire', color: '#ff7a2a', series: 3, moment: 'firepop' }),
+    // ---- Series 4 "Moonwick": Pops ----
+    it('b_fireflies', 'pop', 'common', 'Fireflies', 'Fireflies wander off and blink out.', { recipe: 'fireflies', color: '#d9ff7a', series: 4, set: 'glade' }),
+    it('b_wishdust', 'pop', 'common', 'Wishdust', 'Glitter that spirals upward.', { recipe: 'wishdust', color: '#ffe9a8', series: 4 }),
+    it('b_birds', 'pop', 'rare', 'Paper Birds', 'The bricks fold into paper birds that flap away.', { recipe: 'birds', color: '#f4ecd8', series: 4, set: 'library' }),
+    it('b_runes', 'pop', 'rare', 'Rune Burst', 'The popped colour\'s sigil flies out of the pop.', { recipe: 'runes', color: '#cfe0ff', series: 4 }),
+    it('b_goldleaf', 'pop', 'epic', 'Gold Leaf', 'Bricks turn to gold and crumble into flickering leaf.', { recipe: 'goldleaf', color: '#ffcf6b', moment: 'goldleaf', series: 4, set: 'alchemy' }),
+    it('b_sandfall', 'pop', 'epic', 'Sandfall', 'Bricks pour away as sand. In Rush the sand hangs in the air.', { recipe: 'sandfall', color: '#f0cf8c', moment: 'sandfall', series: 4, set: 'vault' }),
+    it('b_whirlgate', 'pop', 'legendary', 'Whirlgate', 'A spiral vortex. Big pops open a portal with an eye inside.', { recipe: 'whirlgate', color: '#a8d4ff', moment: 'whirlgate', series: 4 }),
+    it('b_constellation', 'pop', 'mythic', 'Constellation', 'Every pop is drawn in star lines. Big pops summon a star creature.', { recipe: 'constellation', color: '#e8f0ff', moment: 'constellation', series: 4, set: 'spire' }),
     // ---- Boards ----
     it('a_deepsea', 'board', 'common', 'Deep Sea', 'Bubbles rise through blue water.', { cls: 'board-deepsea', beam: '#7ae8ff' }),
     it('a_foundry', 'board', 'common', 'Foundry', 'Furnace glow and floating sparks.', { cls: 'board-foundry', beam: '#ffb35a' }),
@@ -71,6 +89,13 @@
     it('a_beach', 'board', 'rare', 'Beach', 'Sun, sand and waves rolling in.', { cls: 'board-beach', beam: '#7fe8ff', series: 3 }),
     it('a_volcano', 'board', 'epic', 'Volcano', 'Lava glow and drifting ash.', { cls: 'board-volcano', beam: '#ff7a3d', series: 3 }),
     it('a_aurora', 'board', 'legendary', 'Aurora Sky', 'Northern lights that ripple on every Line Blast.', { cls: 'board-aurora', beam: '#7affd9', moment: 'auroraSky', series: 3 }),
+    // ---- Series 4 "Moonwick": Boards ----
+    it('a_library', 'board', 'common', 'Grand Library', 'Walnut shelves, warm candlelight and drifting dust.', { cls: 'board-library', beam: '#ffcf6b', series: 4, set: 'library' }),
+    it('a_glade', 'board', 'rare', 'Moonlit Glade', 'A night forest ringed by glowing mushrooms.', { cls: 'board-glade', beam: '#7ae8d0', series: 4, set: 'glade' }),
+    it('a_alchemy', 'board', 'epic', 'Alchemy Lab', 'Copper pipes and bubbling flasks. A Line Blast boils the cauldron over.', { cls: 'board-alchemy', beam: '#6bff9e', moment: 'alchemy', series: 4, set: 'alchemy' }),
+    it('a_observatory', 'board', 'legendary', 'Observatory', 'A brass dome and orrery. Each stage turns the dial one notch.', { cls: 'board-observatory', beam: '#ffe2a0', moment: 'observatory', series: 4, set: 'vault' }),
+    it('a_isles', 'board', 'legendary', 'Floating Isles', 'Islands in a dawn sky, with waterfalls. The first light scene.', { cls: 'board-isles', beam: '#fff1c9', moment: 'isles', series: 4 }),
+    it('a_tower', 'board', 'mythic', 'Moonwick Tower', 'A window lights every stage; the bell tolls on Line Blasts and the moon rises in Rush.', { cls: 'board-tower', beam: '#e8f0ff', moment: 'tower', series: 4, set: 'spire' }),
     // ---- Fuses ----
     it('u_rope', 'fuse', 'common', 'Rope', 'A thick braided rope fuse.', { cls: 'fuse-rope', glow: '#ffb347' }),
     it('u_wire', 'fuse', 'common', 'Copper Wire', 'A shiny copper wire fuse.', { cls: 'fuse-wire', glow: '#ff9a5a' }),
@@ -82,9 +107,28 @@
     it('u_rod', 'fuse', 'epic', 'Lightning Rod', 'Copper rod with arcs that crackle in Rush Mode.', { cls: 'fuse-rod', glow: '#9fd8ff', moment: 'rod', series: 3 }),
     it('u_phoenix', 'fuse', 'legendary', 'Phoenix Tail', 'Feathers burn down the fuse. The bomb hatches at Rush start.', { cls: 'fuse-phoenix', glow: '#ff9a3d', moment: 'hatch', series: 3 }),
     it('u_dragon', 'fuse', 'mythic', 'Dragon', 'Dragon breath burns the fuse. Rush Mode roars.', { cls: 'fuse-dragon', moment: 'dragon', glow: '#ff7a2a' }),
+    // ---- Series 4 "Moonwick": Fuses ----
+    it('u_candle', 'fuse', 'common', 'Candlewick', 'A waxed wick. Fizz is a melting wax bomb.', { cls: 'fuse-candle', glow: '#ffcf6b', series: 4, set: 'library' }),
+    it('u_wand', 'fuse', 'rare', 'Star Wand', 'A wooden wand with a star tip. Fizz wears a starry robe.', { cls: 'fuse-wand', glow: '#ffe27a', series: 4, set: 'glade' }),
+    it('u_elixir', 'fuse', 'epic', 'Elixir', 'A tube of potion. Fizz is a flask that drinks it when Rush starts.', { cls: 'fuse-elixir', glow: '#7affb0', moment: 'elixir', series: 4, set: 'alchemy' }),
+    it('u_sandglass', 'fuse', 'legendary', 'Sandglass', 'A rope of sand. Fizz is an hourglass that stops its sand in Rush.', { cls: 'fuse-sandglass', glow: '#ffd98a', moment: 'sandglass', series: 4, set: 'vault' }),
+    it('u_runechain', 'fuse', 'legendary', 'Runechain', 'A chain of runes. Fizz is a stone golem that gains a rune each stage.', { cls: 'fuse-runechain', glow: '#8fd8ff', moment: 'runechain', series: 4 }),
+    it('u_moonrise', 'fuse', 'mythic', 'Moonrise', 'Fizz is the moon, and its phase shows the time left. The Last Spark is an eclipse.', { cls: 'fuse-moonrise', glow: '#e8f0ff', moment: 'moonrise', series: 4, set: 'spire' }),
+    // ---- Series 4 "Moonwick": Pop Pass Season 4 exclusives (not in chests) ----
+    it('b_wisps', 'pop', 'epic', 'Wisps', 'Friendly ghosts float up from every brick.', { recipe: 'wisps', color: '#cdeaff', moment: 'wisps', series: 4, pass: true }),
+    it('f_moonglass', 'skin', 'mythic', 'Moonglass', 'Leaded glass bricks. In Rush the board becomes one window onto the full moon.', { cls: 'skin-moonglass', moment: 'moonglass', series: 4, hero: 1, pass: true }),
   ];
 
   BR.ITEMS = LIST;
+  /** Moonwick sets: wearing all four items together adds a crest and one flourish (cosmetic only). */
+  BR.SETS = {
+    library: { id: 'library', name: 'Library', flourish: 'Bookstorm' },
+    glade: { id: 'glade', name: 'Glade', flourish: 'Fairy Ring' },
+    alchemy: { id: 'alchemy', name: 'Alchemy', flourish: 'Great Work' },
+    vault: { id: 'vault', name: 'Time Vault', flourish: 'Time Turn' },
+    spire: { id: 'spire', name: 'Spire', flourish: 'Moonwick Ascendant' },
+  };
+  BR.setItems = (id) => LIST.filter((x) => x.set === id);
   BR.DROP_ITEMS = LIST.filter((x) => !x.pass);
   BR.DEFAULTS = {
     skin: { id: 'default:skin', type: 'skin', rarity: 'common', name: 'Classic', cls: 'skin-classic', desc: 'The original glossy brick.', isDefault: true },

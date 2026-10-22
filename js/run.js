@@ -229,6 +229,7 @@
       this.fx.flash('#ff4d6d', 0.3, 360); this.fx.shake($('app'), 10, 360);
       if (BR.Music && BR.Music.duck) BR.Music.duck(true);
       this.hideHint(); this.view.showHint(e.bestGroup());
+      if (BR.Skins.onEvent) BR.Skins.onEvent('spark', { run: this, view: this.view });
     },
     sparkTick(dt) {
       const e = this.engine;
@@ -242,6 +243,7 @@
       this.view.hideHint();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
       BR.Fuse.sparkEnd(saved);
+      if (BR.Skins.onEvent) BR.Skins.onEvent('sparkEnd', { run: this, saved: !!saved });
       if (saved) {
         BR.audio.lastSparkSave && BR.audio.lastSparkSave(); BR.haptic('win');
         this.callout('RELIT!', '#ffd66b'); this.fx.flash('#ffd66b', 0.3, 400);

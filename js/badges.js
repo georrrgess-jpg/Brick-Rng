@@ -86,6 +86,7 @@
   }
 
   BR.Badge = {
+    custom: {},
     /**
      * The badge markup. o.size: pixel width (default 72). o.still: no animation. o.locked: dark silhouette with a "?".
      * o.cls: extra classes.
@@ -94,7 +95,10 @@
       const R = BR.rarityById[item.rarity], lv = level(item.rarity) + 1;
       const size = o.size || 72;
       let art;
-      if (item.type === 'skin') art = skinArt(item, inst);
+      // Series 4 items draw their own badge art: BR.Badge.custom[id] = (item, inst, still) => markup for the .bdg-art box
+      const own = BR.Badge.custom[item.id];
+      if (own) art = own(item, inst, !!(o.still || o.locked));
+      else if (item.type === 'skin') art = skinArt(item, inst);
       else if (item.type === 'pop') art = popArt(item);
       else if (item.type === 'board') art = boardArt(item, inst, o.still || o.locked);
       else art = fuseArt(item, inst);

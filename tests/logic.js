@@ -8,7 +8,7 @@ const assert = require('assert');
 const P = BR.Progress;
 
 // ---- catalogue
-assert.strictEqual(BR.ITEMS.length - BR.DROP_ITEMS.length, 2, 'two pass exclusives');
+assert.strictEqual(BR.ITEMS.length - BR.DROP_ITEMS.length, 4, 'four pass exclusives (Chrome, Prism Heart, Wisps, Moonglass)');
 assert(new Set(BR.ITEMS.map((x) => x.id)).size === BR.ITEMS.length, 'item ids are unique');
 for (const t of BR.TYPE_ORDER) for (const r of BR.RARITIES) assert(BR.DROP_ITEMS.some((x) => x.type === t && x.rarity === r.id), `pool exists: ${t}/${r.id}`);
 assert(!BR.DROP_ITEMS.some((x) => x.pass));

@@ -9,6 +9,7 @@
       this.parts = [];
       this.rings = [];
       this.bolts = [];
+      this.links = [];
       this.rockets = [];
       this.running = false;
       this.last = 0;
@@ -263,6 +264,16 @@
         ctx.globalCompositeOperation = 'source-over';
       }
 
+      for (let i = this.links.length - 1; i >= 0; i--) {
+        const l = this.links[i];
+        l.life += dt;
+        if (l.life >= l.max) { this.links.splice(i, 1); continue; }
+        const t = l.life / l.max;
+        ctx.globalAlpha = Math.min(1, t * 8) * (1 - t) * 0.9;
+        ctx.strokeStyle = l.color; ctx.lineWidth = l.width; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(l.x0, l.y0); ctx.lineTo(l.x1, l.y1); ctx.stroke();
+      }
+
       for (let i = this.parts.length - 1; i >= 0; i--) {
         const p = this.parts[i];
         p.life += dt;
@@ -275,7 +286,16 @@
         else if (p.shape === 'petal') p.x += Math.sin(p.life * 5 + p.sway) * 40 * dt;
         if (p.rot !== undefined) p.rot += p.vr * dt;
 
-        if (p.kind === 'spark') {
+        if (p.kind === 'img') {
+          const a = p.a * Math.min(1, (1 - t) * 2.2) * (p.fadeIn ? Math.min(1, t / p.fadeIn) : 1);
+          if (a > 0.01) {
+            const w = p.size * (1 + p.grow * t), h = w * (p.img.height / p.img.width);
+            ctx.globalAlpha = a;
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(p.sx, p.sy);
+            ctx.drawImage(p.img, -w / 2, -h / 2, w, h);
+            ctx.restore();
+          }
+        } else if (p.kind === 'spark') {
           ctx.globalCompositeOperation = 'lighter';
           ctx.globalAlpha = (1 - t) * 0.95;
           ctx.fillStyle = p.color;
@@ -304,8 +324,24 @@
       }
       ctx.globalAlpha = 1;
 
-      if (this.parts.length || this.rings.length || this.bolts.length || this.rockets.length) requestAnimationFrame(this.loop);
+      if (this.parts.length || this.rings.length || this.bolts.length || this.links.length || this.rockets.length) requestAnimationFrame(this.loop);
       else { this.running = false; ctx.clearRect(0, 0, this.w, this.h); }
+    }
+
+    /** A straight line that fades (Constellation's star lines, Sigil's circle spokes). Colour, width in px, life in seconds. */
+    link(x0, y0, x1, y1, color = '#ffffff', life = 0.5, width = 1.6) {
+      if (this.settings.reduced || this.links.length > 60) return;
+      this.links.push({ x0, y0, x1, y1, color, life: 0, max: life, width });
+      this._kick();
+    }
+
+    /** A particle that draws a baked bitmap (see FX.bake): paper birds, ghosts, glyphs, fireflies, gold leaf.
+        o: { img, x, y, vx, vy, g, drag, size (width in px), rot, vr, sx, sy, max, a (peak alpha), grow, fadeIn }.
+        sx and sy scale the bitmap (a flap is sy going 1 to 0.3 and back) and may be steered each frame. */
+    sprite(o) {
+      if (this.parts.length >= 520 || !o.img) return;
+      this.parts.push(Object.assign({ kind: 'img', x: 0, y: 0, vx: 0, vy: 0, g: 0, drag: 1, size: 16, rot: 0, vr: 0, sx: 1, sy: 1, life: 0, max: 0.8, a: 1, grow: 0, fadeIn: 0, color: '#fff' }, o));
+      this._kick();
     }
 
     /** Decaying random camera shake on an element. */
@@ -328,6 +364,20 @@
       el.animate([{ opacity: alpha }, { opacity: 0 }], { duration: dur, easing: 'ease-out' });
     }
   }
+
+  /** Bake a small bitmap once and reuse it for every particle (a bitmap per palette colour, never one per particle).
+      draw(ctx, w, h) paints it; the result is cached under `key` (add the colour to the key). Cheap enough to call per pop. */
+  const baked = new Map();
+  FX.bake = function (key, w, h, draw) {
+    let c = baked.get(key);
+    if (c) return c;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c = document.createElement('canvas'); c.width = Math.ceil(w * dpr); c.height = Math.ceil(h * dpr);
+    const x = c.getContext('2d'); x.scale(dpr, dpr); draw(x, w, h);
+    if (baked.size > 160) baked.delete(baked.keys().next().value);
+    baked.set(key, c);
+    return c;
+  };
 
   BR.FX = FX;
 })();

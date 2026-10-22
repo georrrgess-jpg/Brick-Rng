@@ -56,7 +56,12 @@
       this.bricks.forEach((rec) => this._place(rec));
       this.hintEl.style.fontSize = this.cell + 'px';
     }
-    _place(rec) { rec.el.style.transform = `translate3d(${rec.c * this.cell}px,${rec.r * this.cell}px,0)`; }
+    _place(rec) {
+      rec.el.style.transform = `translate3d(${rec.c * this.cell}px,${rec.r * this.cell}px,0)`;
+      // the brick's row and column as custom properties, for skins that draw one picture across the whole board (Moonglass)
+      if (rec._pr !== rec.r) { rec._pr = rec.r; rec.el.style.setProperty('--r', rec.r); }
+      if (rec._pc !== rec.c) { rec._pc = rec.c; rec.el.style.setProperty('--c', rec.c); }
+    }
 
     /** Where the board sits on the page. Measured once and kept (it only moves when the layout does), because reading
         it in the middle of a pop forces the browser to restyle the whole board. */
