@@ -46,6 +46,20 @@ const { launch } = require('./lib');
   ok(hit.stillThere === 1 && hit.n === 0, 'a closing sheet still catches taps', JSON.stringify(hit));
   await page.waitForTimeout(700);
   ok(await page.evaluate(() => document.getElementById('layer-sheets').style.pointerEvents === 'none' && !document.getElementById('layer-sheets').children.length), 'the sheet layer kept catching taps after it closed');
+  // keyboard play: arrows move a cursor (the group under it is previewed), Enter pops it; keys 1 to 3 arm a power-up
+  await page.waitForFunction(() => !BR.Run.busy && !BR.Run.modal);
+  const kc = await page.evaluate(() => { const e = BR.Run.engine; for (let r = 0; r < 8; r++) for (let c = 1; c < 8; c++) if (e.plan(r, c)) { BR.Run.kbCell = { r, c: c - 1 }; return { r, c }; } return null; });
+  await page.keyboard.press('ArrowRight'); await page.waitForTimeout(120);
+  ok(await page.evaluate((k) => BR.Run.kbCell.r === k.r && BR.Run.kbCell.c === k.c && document.querySelectorAll('#field .brick.hl').length >= 2, kc), 'an arrow key did not move the cursor and preview the group');
+  const sk = await page.evaluate(() => BR.Run.engine.score);
+  await page.keyboard.press('Enter'); await page.waitForTimeout(500);
+  ok(await page.evaluate((v) => BR.Run.engine.score > v, sk), 'Enter did not pop the group under the cursor');
+  await page.waitForFunction(() => !BR.Run.busy, null, { timeout: 10000 });
+  // graphics quality that looks after itself: a slow stretch steps effects down, a long fast one steps them back up
+  const gfx = await page.evaluate(() => { const G = BR.Gfx, keep = JSON.stringify(G.st); G.st = { low: false, flips: 0 }; const out = [];
+    G.sample(0.016); out.push(G.st.low); G.sample(0.034); out.push(G.st.low, !!BR.autoLow); G.sample(0.02); out.push(G.st.low); G.sample(0.008); out.push(G.st.low, !!BR.autoLow);
+    G.st = JSON.parse(keep); BR.autoLow = !!G.st.low; BR.App.applySettings(); return out; });
+  ok(JSON.stringify(gfx) === JSON.stringify([false, true, true, true, false, false]), 'the graphics quality did not step down and back up', JSON.stringify(gfx));
   // touch targets
   const small = await page.evaluate(() => Array.from(document.querySelectorAll('#btnPause, .bslot')).filter((b) => b.getBoundingClientRect().height < 44 || b.getBoundingClientRect().width < 44).map((b) => b.id || b.className));
   ok(small.length === 0, 'touch targets under 44px', small);
