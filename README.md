@@ -9,8 +9,9 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
 `python3 tools/bundle.py out.html` produces a single self-contained file.
 
 ## How to play
-- **Tap** a group of 2+ touching same-color bricks. On touch, press to preview (it shows the points and the seconds
-  you will gain), release to pop, slide away to cancel.
+- **Tap** a group of 2+ touching same-color bricks. On touch, press to preview (it shows the points, the seconds you will gain
+  and the combo), release to pop, slide away to cancel. On a keyboard the arrow keys move a cursor and Enter pops; P pauses,
+  1 to 3 use power-ups, R plays again from the results.
 - **The fuse** burns down all the time. Every pop adds seconds: bigger pops add more, a Line Blast adds 5. When the fuse
   reaches the bomb the run ends. The fuse burns faster for the first eight stages and then stops speeding up, and from
   stage 6 a pop of 3+ always pays at least 1.4 seconds, so a long run is never lost to the clock alone.
@@ -20,8 +21,16 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
 - **Stages** have a score goal. Clear it and the fuse refills, the score multiplier goes up and a new color joins.
 - **Rush Mode**: pops of 4+ fill the Rush bar. When it is full the fuse freezes for 8 seconds and every pop scores x3.
 - **Fuse bricks** (from stage 4) count down. Pop them in a group to defuse them for +3 seconds, or they burst and cost 5.
-- **Power-ups** are earned by charging the bar with big pops: **Hammer** (3x3), **Beam** (a row and a column) and
-  **Prism** (every brick of one color).
+- **Power-ups** are earned by big pops of 4+: the next empty slot fills as you play and shows its charge. **Hammer** (3x3),
+  **Beam** (a row and a column) and **Prism** (every brick of one color).
+- **The run screen** is labelled: *Stage 3 · score of goal · x4.5 points* (the real multiplier, Rush included), the fuse with
+  its bomb Fizz, the Rush bar, the three power-up slots, and a message band under them for hints, the combo, the run goal and
+  Last Spark, so nothing covers the board.
+- **Run goal**: every Rush run shows one small goal ("Make a Line Blast"). Reaching it pays 10 to 20 Coins.
+- **Daily streak**: finish a run each day to light the 7-day ring on Home. Day 3 pays 120 Coins; day 7 pays 200 Coins and a
+  Golden Chest. One missed day a week is forgiven, and a broken week only restarts the ring (finished weeks stay).
+- **Records** (Profile) keep your best score, stage, biggest pop and the last 20 Rush runs. **Try it** (item sheet) puts any
+  item on a ten-second practice board without saving anything.
 - Modes: **Rush** (the main run), **Daily Rush** (one seeded board a day) and **Chill** (the relaxed 20-move rounds).
 
 ## Coins, chests and Skins
@@ -47,7 +56,8 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
 - There are 58 items. Series 3 "Carnival" adds 10 skins, 10 pops, 4 boards and 4 fuses.
 - Cosmetics never change scoring. Run Boosts (Long Fuse 25, Head Start 15, Rush Start 20 Coins) are a purchase: the
   sheet before a run shows each price, the total and what you will have left, and nothing is charged until you press Start.
-- Every menu shows a short **tip card** the first time you open it (Profile > Help shows them again).
+- Help is short: three cards (Welcome, the first chest, the Pop Pass) and a one-line banner with a close button on the other
+  screens (Profile > Help shows them again). The first three runs start straight away; the Boosts sheet comes from run 4.
 
 ## Layout
 ```
@@ -63,8 +73,8 @@ css/s3-skins.css css/s3-scenes.css    Series 3 skins and boards
 css/fuse.css        the fuse: Fizz, rope, flame, readout, chips, the urgency states (every fuse cosmetic is drawn from tokens)
 css/badges.css      item badges (rarity frame and art, the still version used in the reel)
 css/coach.css       the first-time tip cards
-js/rng.js board.js config.js boosters.js items.js chests.js engine.js storage.js pass.js progress.js missions.js
-                    pure logic, runs in Node (tests use it)
+js/rng.js board.js config.js boosters.js items.js chests.js engine.js storage.js pass.js progress.js missions.js retention.js
+                    pure logic, runs in Node (tests use it); retention.js is the streak, run goals, records and next goal
 js/audio.js         every sound effect, synthesized: pentatonic pops, a quiet low-passed SFX bus, loudness-tested
 js/music.js         adaptive soundtrack: menu and run arrangements that crossfade on bar lines, stems that join per stage,
                     a tense low-fuse layer, a Rush key lift, ducking under big moments, no repeat within 10 minutes
@@ -82,7 +92,7 @@ js/spin.js          reel physics (solved landing) and the reel strip
 js/openings.js      hold to open, bursts, spin, rarity reveals
 js/screens.js       the five tab screens and the odds panel
 js/run.js           the run controller (HUD, input, Rush, stages, results)
-js/main.js          boot and settings
+js/main.js          boot, settings, the self-tuning Graphics setting, the error guard, the splash
 tools/bundle.py     single-file bundle
 tests/              logic, balance bots, spin physics, Playwright UI tests
 ```
@@ -104,6 +114,11 @@ node tests/moments.js   # every signature moment plays without errors
 node tests/fusesheet.js <dir> [--quick]   # every fuse in every state (sheets) and frame strips of the time-gain chip, Last Spark, Rush start and end, stage-up, a Fuse brick; fails on a wrong state or a filter on the fuse
 node tests/fuseperf.js [--fast] [--root=<old checkout>]   # main-thread cost of the fuse per frame under a 4x CPU throttle (budget 1.5 ms on a phone)
 node tests/gallery.js <dir> [type]   # screenshots every skin, board and fuse for review
+node tests/perfbudget.js [quick]   # frame times under a 4x CPU throttle against budgets: every menu, scrolling, a sheet, a tab switch, a run, a pop, the reel, startup
+node tests/visual.js    # regressions that were once seen: the logo, odds text, Pass numbering, the bomb after a fuse-out, the run HUD at four phone sizes
+node tests/uiaudit.js [--list]   # every screen and sheet: text is 12px or larger, controls are 44px or larger
+node tests/tryit.js     # Try it leaves the loadout, a saved run and the run counter alone
+node tests/u4cosmetics.js   # the older boards, skins and pops after the Update 4 touch-up
 ```
 UI tests use Playwright's Chromium (paths in `tests/lib.js`). Progress is stored in `localStorage` under
 `poprush.v4`. Saves from earlier versions are migrated on first launch: Update 1 (Shardfall) Shards become Coins, and

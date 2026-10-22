@@ -112,6 +112,7 @@
       this.clock = false; this.busy = true; this.paused = false; this.modal = false; this.over = false; this.leaving = false;
       this.armed = null; this.buffered = null; this.popsThisRun = 0; this.tutorial = !!o.tutorial; this.warned = false; this.hb = 0;
       this.goal = o.goal || null; this.renderGoal();
+      this.practice = o.practice || null;
       this.el.classList.toggle('chill', engine.chill);
       this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
       if (this._tipDone) this._tipDone();
@@ -139,12 +140,46 @@
       BR.audio.go(); BR.haptic('tap');
       this.callout('GO!', '#ffd66b');
       this.busy = false; this.clock = true;
+      if (this.practice) this.practiceTimer();
       if (this.tutorial) { this.hint('<b>Tap</b> a group of 2 or more matching bricks', 0); this.view.showHint(engine.bestGroup()); }
       this.armIdle(this.tutorial ? 1800 : 5000);
       this.saveSnap();
     },
 
-    saveSnap() { if (this.engine && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(Object.assign(this.engine.snapshot(), { goal: this.goal })); },
+    saveSnap() { if (this.engine && !this.practice && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(Object.assign(this.engine.snapshot(), { goal: this.goal })); },
+
+    /**
+     * Try it: ten seconds on a practice board that wears the item you were looking at. Nothing is saved or paid, a run in
+     * progress is left alone, and the loadout you had is put back the moment it ends.
+     */
+    practiceItem(item, inst) {
+      const pr = BR.Storage.data.profile, type = item.type;
+      this.practice = { item, type, prev: pr.loadout[type], iv: 0 };
+      pr.loadout[type] = inst && inst.uid ? inst.uid : 'default';
+      const engine = new BR.Engine({ mode: 'rush', seed: (Date.now() ^ 0x5bd1e995) >>> 0, boosts: {} });
+      if (type !== 'fuse') engine.tick = () => [];   // the fuse does not burn: this is a look, not a run
+      return this.begin(engine, { practice: this.practice, goal: null });
+    },
+    practiceTimer() {
+      const pz = this.practice, end = performance.now() + 10000;
+      const tick = () => {
+        if (this.practice !== pz) return;
+        const left = Math.max(0, Math.ceil((end - performance.now()) / 1000));
+        if (!this.paused) this.hint(`Trying <b>${BR.esc(pz.item.name)}</b> · ${left}s. Pop some bricks!`, 0);
+        if (left <= 0) this.endPractice();
+      };
+      tick(); pz.iv = setInterval(tick, 400);
+    },
+    endPractice() {
+      const pz = this.practice; if (!pz) return;
+      clearInterval(pz.iv); this.practice = null;
+      BR.Storage.data.profile.loadout[pz.type] = pz.prev;   // the real loadout comes back before anything can save it
+      this.over = true; this.clock = false; this.token++; this.modal = false;
+      this.hideHint(); this.clearHover(); this.view.hideHint();
+      BR.Skins.apply();
+      for (let i = 0; i < 10 && BR.Back && BR.Back.depth; i++) BR.Back.closeTop();
+      BR.Router.go('collection');
+    },
 
     /** The run goal sits in the message band when nothing more urgent is showing. */
     renderGoal() {
@@ -699,12 +734,14 @@
       BR.Storage.clearRun();
     },
     exitToHome() {
+      if (this.practice) { this.endPractice(); return; }
       this.over = true; this.clock = false; this.token++;
       BR.Router.go('home');
     },
 
     /* ===================================================================== ending + results */
     async endRun(reason) {
+      if (this.practice) { this.endPractice(); return; }
       if (this.over && this.ending) return;
       const token = this.token;
       this.over = true; this.ending = true; this.clock = false; this.busy = true;
