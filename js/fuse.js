@@ -641,10 +641,10 @@
       el.getAnimations().forEach((a) => a.cancel());
       if (BR.reducedMotion) { el.animate([{ opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 1, offset: 0.2, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }], { duration: 800, fill: 'both' }); return; }
       el.animate([
-        { opacity: 0, transform: `translate3d(${x}px,${y}px,0) translate(-50%,-50%) scale(0.6)` },
-        { opacity: 1, offset: 0.14, transform: `translate3d(${x + 4}px,${y + 10}px,0) translate(-50%,-50%) scale(1.15)` },
-        { opacity: 1, offset: 0.5, transform: `translate3d(${x + 10}px,${y + 34}px,0) translate(-50%,-50%) scale(1) rotate(5deg)` },
-        { opacity: 0, transform: `translate3d(${x + 16}px,${y + 78}px,0) translate(-50%,-50%) scale(0.9) rotate(10deg)` },
+        { opacity: 0, transform: `translate3d(${x}px,${y + 14}px,0) translate(-50%,-50%) scale(0.6)` },
+        { opacity: 1, offset: 0.14, transform: `translate3d(${x + 4}px,${y + 26}px,0) translate(-50%,-50%) scale(1.15)` },
+        { opacity: 1, offset: 0.5, transform: `translate3d(${x + 10}px,${y + 48}px,0) translate(-50%,-50%) scale(1) rotate(5deg)` },
+        { opacity: 0, transform: `translate3d(${x + 16}px,${y + 86}px,0) translate(-50%,-50%) scale(0.9) rotate(10deg)` },
       ], { duration: 820, easing: 'cubic-bezier(0.3,0.1,0.6,1)', fill: 'both' });
     },
     /** a chip with no time change behind it (a label like "+2s" from the board's middle) */

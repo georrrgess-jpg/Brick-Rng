@@ -6,12 +6,13 @@
 //   node tests/fuseperf.js                  the new fuse (this checkout)
 //   node tests/fuseperf.js --root=/path     another checkout of the game, for comparison (for the old HUD: the commit before Update 4)
 //   node tests/fuseperf.js --fast           fewer cosmetics (what the check run uses)
+//   --only=default,u_rope  just these cosmetics     --scen=calm,crit  just these situations
 const path = require('path');
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
 const flag = (n) => (process.argv.find((a) => a.startsWith('--' + n + '=')) || '').split('=')[1];
 const ROOT = path.resolve(flag('root') || path.join(__dirname, '..'));
 const RATE = +(flag('rate') || 4), FAST = process.argv.includes('--fast'), SECS = +(flag('secs') || 3), BUDGET = 1.5 * RATE;
-const FUSES = FAST ? ['default', 'u_dragon'] : ['default', 'u_rope', 'u_candy', 'u_vine', 'u_phoenix', 'u_dragon'];
+const FUSES = flag('only') ? flag('only').split(',') : FAST ? ['default', 'u_dragon'] : ['default', 'u_rope', 'u_candy', 'u_vine', 'u_phoenix', 'u_dragon'];
 
 // engine states to hold while measuring
 const SCEN = [
@@ -89,7 +90,7 @@ const SCEN = [
     await equip(id);
     await page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 30000 });
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: RATE });
-    for (const sc of SCEN) {
+    for (const sc of SCEN.filter((x) => !flag("scen") || flag("scen").split(",").includes(x.id))) {
       await hold(sc.hold, sc.gains);
       await page.waitForTimeout(500);
       // alternate on / off / on / off ... and take the medians, so slow drift in the machine does not read as a cost

@@ -159,6 +159,7 @@ const SLOWMO = () => {
     const bigPop = () => page.evaluate(() => { const e = BR.Run.engine; let best = null; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = e.plan(r, c); if (p && (!best || p.cells.length > best.n)) best = { r, c, n: p.cells.length }; } return best && BR.Run.view.pagePoint(best.r, best.c); });
     const popNow = async () => { const a = await bigPop(); await page.mouse.click(a.x, a.y); };
     const calm = (fuse) => page.evaluate((fuse) => { const e = BR.Run.engine; e.rush.active = false; e.rush.meter = 0; e.rush.left = 0; e.freeze = 0; e.spark = 0; e.stageScore = 0; e.streak = 0; e.fuse = fuse; }, fuse);
+    await equip(ONLY ? ONLY[0] : 'default'); await ready();   // (a run must be showing to measure the fuse's place on the screen)
     const fr = await rect();
     const tall = { x: 0, y: fr.y, width: fr.width, height: 340 };
     const scenarios = [
