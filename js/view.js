@@ -94,7 +94,8 @@
       el.dataset.c = b.color;
       el.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
       const rec = { b: { id: b.id, color: b.color, fb: b.fb || 0 }, el, face: el.firstChild, r: atR, c };
-      if (b.fb) { el.classList.add('fusebrick'); el.firstChild.insertAdjacentHTML('beforeend', `<em class="fcount">${b.fb}</em>`); }
+      // a Fuse brick keeps its colour (it still groups by it): the ring, the fuse stub and the countdown are drawn on top of the skin's brick
+      if (b.fb) { el.classList.add('fusebrick'); el.firstChild.insertAdjacentHTML('beforeend', `<i class="fring"></i><i class="fcap"></i><em class="fcount">${b.fb}</em>`); }
       this._place(rec);
       this.field.appendChild(el);
       this.bricks.set(b.id, rec);
@@ -295,7 +296,10 @@
       const originPt = this.pagePoint(tap.r, tap.c);
       let maxDelay = 0;
       const perBrick = total > 28 ? 3 : total > 14 ? 5 : total > 6 ? 7 : 9;
-      const hitStop = total >= 8 && !this.reduced ? Math.min(70, 40 + total) : 0;   // a big group holds for a beat (the lifted bricks, then the burst) so the hit has weight
+      // A big group holds for a beat (the lifted bricks, then the burst) so the hit has weight. The bigger the moment, the longer the beat:
+      // a group of 8 holds about 50 ms, 24 bricks about 85 ms, and a Line Blast, a Rush start or a cleared stage add a little more.
+      const big = total >= 8 || (res.plan && res.plan.line) || res.stageUp || res.rushStart;
+      const hitStop = big && !this.reduced ? Math.min(120, 40 + total * 1.3 + (res.plan && res.plan.line ? 24 : 0) + (res.stageUp ? 16 : 0) + (res.rushStart ? 16 : 0)) : 0;
       for (const p of res.removed) {
         const rec = this.bricks.get(p.id);
         if (!rec) continue;
@@ -356,6 +360,19 @@
         this.fx.pop(sk.pop, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.popShine);
         if (sk.pop === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);
       }, delay + 70);
+    }
+
+    /** A colour joined the board: every brick of that colour gives one bright pulse, so the player sees where the new colour landed. */
+    pulseColor(color) {
+      if (this.reduced) return;
+      this.bricks.forEach((rec) => {
+        if (rec.b.color !== color || !rec.face.animate) return;
+        rec.face.animate([
+          { transform: 'scale(1)', filter: 'brightness(1)' },
+          { transform: 'scale(1.16)', filter: 'brightness(1.5) saturate(1.25)', offset: 0.35 },
+          { transform: 'scale(1)', filter: 'brightness(1)' },
+        ], { duration: 640, delay: (rec.c + rec.r) * 22, easing: 'ease-out' });
+      });
     }
 
     /** Update a Fuse brick's countdown (called after every pop). */

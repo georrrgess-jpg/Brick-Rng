@@ -156,9 +156,11 @@
       const items = BR.setItems(sid), left = items.filter((x) => !own.has(x.id)).length;
       if (left > 0 && left < items.length - 1) cand.push({ near: (left / items.length) * 0.5, text: `${left} item${left > 1 ? 's' : ''} to finish the ${BR.SETS[sid].name} set` });
     });
-    // the stage record
-    const bs = BR.Storage.data.bestStage.rush || 0;
-    if (ctx && ctx.stage >= bs - 1 && ctx.stage > 0) cand.push({ near: 0.3, text: `Stage ${ctx.stage + 1} would be a new record` });
+    // the stage record: only a stage ABOVE the best is a record (reaching the best again would just tie it), so the line names best + 1.
+    // It is offered when the run got within a stage of the best (the results have already counted this run, so the best is at least this stage).
+    const mode = (ctx && ctx.mode) || 'rush', round = mode === 'chill' ? 'Round' : 'Stage';
+    const bs = BR.Storage.data.bestStage[mode] || 0;
+    if (ctx && ctx.stage >= bs - 1 && ctx.stage > 0) cand.push({ near: 0.3, text: `${round} ${bs + 1} would be a new record` });
     // the streak
     const ss = BR.Streak.status();
     if (ss.playedToday && ss.ring > 0 && ss.ring < BR.Streak.LEN) cand.push({ near: ss.daysToNext / 7 + 0.1, text: `${ss.daysToNext} more day${ss.daysToNext > 1 ? 's' : ''} to the next streak prize` });

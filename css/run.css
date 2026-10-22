@@ -80,12 +80,16 @@
 .chip .fuel.zero { color: #9fb0dc; }
 
 /* floating text + callouts */
-.float { position: absolute; z-index: 8; pointer-events: none; white-space: nowrap; font-family: var(--f-display); font-weight: 700; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 14px var(--fc, rgba(255, 255, 255, 0.4)); will-change: transform, opacity; }
+/* Message hierarchy on the board: the CALLOUT owns the middle of the board (one at a time, js/run.js lane), the score FLOAT rises from the
+   popped group and keeps out of that band, the time chip flies to the fuse, the run goal speaks in the message band. */
+.float { position: absolute; z-index: 8; pointer-events: none; white-space: nowrap; display: flex; flex-direction: column; align-items: center; line-height: 1.05; font-family: var(--f-display); font-weight: 700; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 0 14px var(--fc, rgba(255, 255, 255, 0.4)); will-change: transform, opacity; }
+.float b { font-weight: 700; }
+.float i { font: 700 14px/1.1 var(--f-ui); font-style: normal; color: #ffb547; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 150, 40, 0.7); }
 .callout {
-  position: absolute; left: 50%; top: 30%; z-index: 9; pointer-events: none; font-family: var(--f-display); font-weight: 700; letter-spacing: 0.06em; white-space: nowrap;
-  font-size: clamp(28px, 8vw, 48px);
+  position: absolute; left: 50%; top: 50%; z-index: 9; pointer-events: none; font-family: var(--f-display); font-weight: 700; letter-spacing: 0.06em; white-space: nowrap;
+  font-size: clamp(26px, 8vw, 46px); line-height: 1.1;
   background: linear-gradient(180deg, #fff, var(--cc, #ffd66b)); -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.4)) drop-shadow(0 0 18px var(--cc, #ffd66b));
+  filter: drop-shadow(0 3px 0 rgba(8, 4, 20, 0.78)) drop-shadow(0 0 16px var(--cc, #ffd66b));   /* a dark edge under the glow keeps pale colours readable on bright scenes */
 }
 
 /* ---------- the message band: under the power-ups, where nothing covers the board or the slots ----------
@@ -93,7 +97,11 @@
 .msgband { position: relative; height: 44px; }
 .msgband > * { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; opacity: 0; transform: translateY(8px); transition: opacity 0.18s, transform 0.3s var(--ease-out); pointer-events: none; text-align: center; }
 .msgband[data-top="spark"] .last-spark, .msgband[data-top="aim"] .aim-banner, .msgband[data-top="hint"] .hint, .msgband[data-top="combo"] .combo, .msgband[data-top="goal"] .m-goal { opacity: 1; transform: none; }
-.m-goal { inset: 4px 0 !important; margin: 0 auto; width: max-content; max-width: 100%; padding: 0 12px; border-radius: 14px; background: rgba(10, 6, 24, 0.88); border: 1px solid var(--line-2); font: 700 14px var(--f-ui); color: #cfe9ff; } .m-goal b { color: #fff; }
+.m-goal { inset: 3px 0 !important; margin: 0 auto; width: max-content; max-width: 100%; gap: 8px; padding: 0 10px; border-radius: 14px; background: rgba(10, 6, 24, 0.88); border: 1px solid var(--line-2); font: 700 13px/1.12 var(--f-ui); color: #cfe9ff; } .m-goal b { color: #fff; }
+/* the goal text may take two lines (never overflow the pill); the icon and the reward keep their size */
+.m-goal .gl-txt { min-width: 0; text-align: left; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.m-goal .gl-ico, .m-goal .gl-rw { flex: none; } .m-goal .gl-rw { white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; } .m-goal .gl-coin { width: 15px; height: 15px; }
+.m-goal.hit { animation: goalHit 0.8s var(--ease-spring); } @keyframes goalHit { 0% { transform: scale(0.8); } 40% { transform: scale(1.1); box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.7), 0 0 26px rgba(61, 220, 151, 0.7); } 100% { transform: none; } }
 .m-goal .gl-ico { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(61, 225, 255, 0.2); } .m-goal .gl-ico svg { width: 14px; height: 14px; fill: none; stroke: #7ee8ff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 .m-goal .gl-rw { padding: 2px 9px; border-radius: 99px; background: rgba(255, 200, 61, 0.2); color: #ffe7a1; border: 1px solid rgba(255, 200, 61, 0.5); font: 800 13px var(--f-ui); }
 .m-goal.done .gl-ico { background: var(--green); } .m-goal.done .gl-ico svg { stroke: #06301f; }
@@ -164,26 +172,31 @@
 .aim-banner { padding: 0 14px; font: 700 14px var(--f-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
 .aim-banner::before { content: ''; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--bc, #fff); box-shadow: 0 0 10px var(--bc, #fff); }
 
-/* ---------- Fuse bricks ---------- */
-.brick.fusebrick .face { background: radial-gradient(circle at 34% 28%, #6d5a96, #241a3e 55%, #0c0716); box-shadow: inset 0 0 0 0.04em #ff4d6d, inset 0 -0.07em 0 rgba(0, 0, 0, 0.5), 0 0.06em 0 #000, 0 0 0.3em rgba(255, 77, 109, 0.7); }
-.brick.fusebrick .stud, .brick.fusebrick .deco, .brick.fusebrick .sheen { display: none; }
-.brick.fusebrick .face::after { content: ''; position: absolute; left: 50%; top: -0.1em; width: 0.16em; height: 0.2em; margin-left: -0.08em; border-radius: 0.04em; background: #d9a72a; z-index: 2; }
-.fcount { position: absolute; inset: 0; display: grid; place-items: center; font: 700 0.54em var(--f-display); font-style: normal; color: #ffb3c0; text-shadow: 0 0 0.3em #ff4d6d; padding-top: 0.1em; }
-.fcount.tick { animation: fcTick 0.4s var(--ease-spring); } @keyframes fcTick { 30% { transform: scale(1.5); color: #fff; } }
-.brick.fusebrick.danger .face { animation: fuseDanger 0.5s ease-in-out infinite alternate; } @keyframes fuseDanger { to { box-shadow: inset 0 0 0 0.05em #ff4d6d, 0 0 0.6em #ff4d6d, 0 0.06em 0 #000; transform: scale(1.06); } }
+/* ---------- Fuse bricks ----------
+   A Fuse brick KEEPS ITS COLOUR and its skin (it still groups with that colour): a red ring, a fuse stub and the countdown are
+   drawn on top of it. The countdown sits in a dark disc at the middle; with Shape hints on it moves to the corner so the symbol stays. */
+.brick.fusebrick .fring { position: absolute; inset: -0.045em; border-radius: 0.26em; border: 0.05em solid #ff4d6d; box-shadow: 0 0 0.3em rgba(255, 77, 109, 0.8), inset 0 0 0.16em rgba(255, 77, 109, 0.55); pointer-events: none; z-index: 3; }
+.brick.fusebrick .fcap { position: absolute; left: 50%; top: -0.1em; width: 0.16em; height: 0.2em; margin-left: -0.08em; border-radius: 0.04em; background: #d9a72a; box-shadow: 0 0 0.12em rgba(0, 0, 0, 0.6); z-index: 4; pointer-events: none; }
+.fcount { position: absolute; left: 50%; top: 50%; z-index: 4; width: 0.54em; height: 0.54em; margin: -0.27em 0 0 -0.27em; display: grid; place-items: center; border-radius: 50%; background: rgba(12, 6, 24, 0.84); border: 0.04em solid #ff4d6d; box-shadow: 0 0.03em 0.1em rgba(0, 0, 0, 0.55); font: 700 0.36em/1 var(--f-display); font-style: normal; color: #fff; text-shadow: 0 0 0.3em #ff4d6d; padding-top: 0.02em; pointer-events: none; }
+.shapes .brick.fusebrick .fcount { left: auto; top: auto; right: -0.06em; bottom: -0.06em; margin: 0; width: 0.46em; height: 0.46em; font-size: 0.3em; }
+.fcount.tick { animation: fcTick 0.4s var(--ease-spring); } @keyframes fcTick { 30% { transform: scale(1.4); } }
+.brick.fusebrick.danger .fcount { background: #ff4d6d; border-color: #fff; }
+.brick.fusebrick.danger .fring { animation: fuseRing 0.5s ease-in-out infinite alternate; } @keyframes fuseRing { to { opacity: 0.45; transform: scale(1.07); } }
 
 /* ---------- stage wipe, Rush banner, low-fuse vignette ---------- */
 .stage-wipe { position: absolute; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; display: none; } .stage-wipe.go { display: block; }
-.sw-band { position: absolute; left: -20%; right: -20%; top: 50%; height: 190px; margin-top: -95px; transform: translateX(-120%) skewX(-14deg); background: linear-gradient(90deg, rgba(138, 77, 255, 0), rgba(138, 77, 255, 0.9) 20%, rgba(255, 61, 139, 0.95) 60%, rgba(255, 154, 61, 0)); box-shadow: 0 0 80px 10px rgba(255, 61, 139, 0.5); }
-.stage-wipe.go .sw-band { animation: swBand 1.25s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
-@keyframes swBand { 0% { transform: translateX(-120%) skewX(-14deg); } 35%, 65% { transform: translateX(0) skewX(-14deg); } 100% { transform: translateX(120%) skewX(-14deg); } }
-.sw-text { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: baseline; justify-content: center; gap: 12px; opacity: 0; }
-.stage-wipe.go .sw-text { animation: swText 1.25s var(--ease-out) forwards; }
-@keyframes swText { 0% { opacity: 0; transform: translateY(-50%) scale(0.5); } 25% { opacity: 1; transform: translateY(-50%) scale(1.15); } 38% { transform: translateY(-50%) scale(1); } 72% { opacity: 1; } 100% { opacity: 0; transform: translateY(-50%) scale(1.3); } }
+/* the wipe and the Rush banner sit on the middle of the BOARD (--mid is set from the board's position), the same place the callouts own;
+   they take turns (js/run.js: stage-up first, then Rush), so they never print on each other */
+.sw-band { position: absolute; left: -20%; right: -20%; top: var(--mid, 50%); height: 190px; margin-top: -95px; transform: translateX(-120%) skewX(-14deg); background: linear-gradient(90deg, rgba(138, 77, 255, 0), rgba(138, 77, 255, 0.9) 20%, rgba(255, 61, 139, 0.95) 60%, rgba(255, 154, 61, 0)); box-shadow: 0 0 80px 10px rgba(255, 61, 139, 0.5); }
+.stage-wipe.go .sw-band { animation: swBand 1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+@keyframes swBand { 0% { transform: translateX(-120%) skewX(-14deg); } 30%, 62% { transform: translateX(0) skewX(-14deg); } 100% { transform: translateX(120%) skewX(-14deg); } }
+.sw-text { position: absolute; left: var(--midx, 50%); top: var(--mid, 50%); width: max-content; max-width: 100vw; transform: translate(-50%, -50%); display: flex; align-items: baseline; justify-content: center; gap: 12px; opacity: 0; }
+.stage-wipe.go .sw-text { animation: swText 1s var(--ease-out) forwards; }
+@keyframes swText { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 24% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 36% { transform: translate(-50%, -50%) scale(1); } 70% { opacity: 1; } 92%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
 .sw-text span { font: 800 20px var(--f-ui); letter-spacing: 0.3em; } .sw-text b { font: 700 96px/0.9 var(--f-display); text-shadow: 0 6px 0 rgba(0, 0, 0, 0.35); } .sw-text em { font: 700 34px var(--f-display); font-style: normal; color: #ffe58a; }
-.rush-banner { position: absolute; left: 0; right: 0; top: 34%; z-index: 31; pointer-events: none; text-align: center; opacity: 0; }
-.rush-banner span { display: inline-block; font: 700 clamp(64px, 24vw, 120px)/1 var(--f-display); letter-spacing: 0.06em; transform: skewX(-9deg); background: linear-gradient(180deg, #fff6c8, #ffb23d 45%, #ff3d8b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 #4a0f3a) drop-shadow(0 0 30px rgba(255, 61, 139, 0.9)); }
-.rush-banner.go { animation: rushBanner 1.1s var(--ease-out) forwards; } @keyframes rushBanner { 0% { opacity: 0; transform: scale(0.3) rotate(-6deg); } 22% { opacity: 1; transform: scale(1.25) rotate(2deg); } 36% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
+.rush-banner { --rf: min(19vw, 104px); position: absolute; left: var(--midx, 50%); top: var(--mid, 40%); width: max-content; max-width: 100vw; transform: translate(-50%, -50%); z-index: 31; pointer-events: none; text-align: center; opacity: 0; }
+.rush-banner span { display: inline-block; font: 700 var(--rf)/1 var(--f-display); letter-spacing: 0.06em; transform: skewX(-9deg); background: linear-gradient(180deg, #fff6c8, #ffb23d 45%, #ff3d8b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 #4a0f3a) drop-shadow(0 0 30px rgba(255, 61, 139, 0.9)); }
+.rush-banner.go { animation: rushBanner 1.1s var(--ease-out) forwards; } @keyframes rushBanner { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-6deg); } 22% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(2deg); } 36% { transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); } }
 
 /* ---------- pause + results overlays ---------- */
 .dim { position: absolute; inset: 0; background: rgba(5, 3, 12, 0.84); opacity: 0; transition: opacity 0.3s; } .dim.on { opacity: 1; }
@@ -280,3 +293,62 @@
 .res-banner { flex-wrap: wrap; text-align: center; }
 .res-goal { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line-2); font: 700 15px var(--f-ui); } .res-goal span { display: grid; place-items: center; } .res-goal svg { width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; } .res-goal.done { border-color: rgba(61, 220, 151, 0.6); background: rgba(61, 220, 151, 0.12); } .res-goal.done svg { stroke: var(--green); } .res-goal em { font-style: normal; color: #ffe7a1; }
 .res-next { text-align: center; font: 700 15px var(--f-ui); color: #cfc3ec; } .res-next::first-letter { color: #fff; }
+
+/* ===================================================================
+   Update 5: the run screen's small fixes and the new results screen
+   =================================================================== */
+/* a tag by the stage label names the mode that is not plain Rush (Daily) */
+.ss-mode { display: none; flex: none; align-self: center; padding: 2px 8px; border-radius: 99px; font: 800 11px/1.3 var(--f-ui); letter-spacing: 0.12em; text-transform: uppercase; font-style: normal; color: #06301f; background: var(--green); }
+.run.daily .ss-mode { display: inline-block; }
+/* the header (Pause, score) draws above the fuse, so the Last Spark flame on Fizz's wick passes behind the Pause button instead of over it */
+.run-top { position: relative; z-index: 6; }
+/* time chips fly to the fuse behind the stage strip, never over its "x points" pill */
+.stagestrip { position: relative; z-index: 2; } .fuse { position: relative; z-index: 1; }
+/* the landscape pause sheet keeps every choice in view: two columns */
+@media (orientation: landscape) and (max-height: 560px) {
+  .pause-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pause-list .btn { width: 100%; } .pause-list .btn-xl { grid-column: 1 / -1; min-height: 56px; font-size: 20px; }
+}
+
+/* ---------- results ---------- */
+.res-scroll { padding-top: calc(var(--sat) + 12px); gap: 12px; }
+.res-top { display: flex; justify-content: flex-end; margin-bottom: -6px; } .res-bal { min-width: 88px; justify-content: center; font-variant-numeric: tabular-nums; }
+/* the action bar belongs to the screen, not to the stagger: it is there within a third of a second */
+.res-actions { opacity: 0; transform: translateY(14px); transition: opacity 0.28s ease 0.1s, transform 0.38s var(--ease-out) 0.1s; }
+.results.on .res-actions { opacity: 1; transform: none; }
+.rev.rwait { /* level-up banners wait for the XP bar to fill (js/run.js animateXp) */ }
+.res-coins h3, .res-xpc h3 { font-size: 17px; }
+.res-coins .coins-total { font-size: 30px; }
+.res-bd { display: flex; flex-direction: column; gap: 3px; }
+.res-bd .res-row { font-size: 13px; }
+.res-xpc .xp-line { display: flex; flex-direction: column; gap: 6px; } .xp-line small { font: 700 13px var(--f-ui); color: var(--muted); }
+.xp-src { display: flex; flex-wrap: wrap; gap: 2px 14px; font: 700 12.5px var(--f-ui); color: var(--muted); } .xp-src b { color: var(--text); font-weight: 800; }
+.res-banner { padding: 8px 14px; gap: 4px 10px; } .res-banner b { font-size: 18px; } .res-banner span { width: 26px; height: 26px; } .res-banner span svg { width: 22px; height: 22px; }
+.res-mis .ck { width: 18px; height: 18px; vertical-align: -3px; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.res-none h3 { font-size: 20px; } .res-none .tiny { font-size: 14px; color: var(--muted); }
+.results { transition: opacity 0.26s ease-out; }
+.res-actions { transition: opacity 0.2s ease 0.03s, transform 0.3s var(--ease-out) 0.03s; }
+/* R-8: in the Last Spark the flame sits on Fizz's wick, right under the Pause button: the button is opaque then, so the flame passes behind it */
+.run.sparking #btnPause { background: #1a1233; border-color: rgba(255, 255, 255, 0.28); }
+/* short phones: the Last Spark band keeps the title and the draining bar (the readout already says "Pop 4+"), so nothing is clipped in 38px */
+@media (max-height: 720px) and (orientation: portrait) { .last-spark span { display: none; } .last-spark { padding: 4px 12px; } }
+/* short phones: the results tighten up so the Coins and the XP bar both reach the screen above the action bar */
+@media (max-height: 720px) and (orientation: portrait) {
+  .res-scroll { gap: 8px; padding-top: calc(var(--sat) + 8px); }
+  .res-title { font-size: 34px; } .res-score b { font-size: 52px; } .res-sub { font-size: 14px; margin-top: -4px; }
+  .res-card { padding: 10px 12px; gap: 6px; } .res-bd { gap: 1px; } .res-bd .res-row { font-size: 12.5px; line-height: 1.25; } .res-coins .coins-total { font-size: 26px; }
+  .res-actions { gap: 8px; padding-top: 6px; padding-bottom: calc(var(--sab) + 10px); } .res-actions .btn-xl { min-height: 52px; font-size: 20px; }
+}
+/* the results come in two parts: the hero (title, score) and the rest (Coins, XP, banners, missions). Portrait: one column. */
+.res-hero, .res-rest { display: contents; }
+/* landscape phones: the hero stays on the left, the rest scrolls beside it, and the buttons share one row under both (nothing is hidden behind a tall button stack) */
+@media (orientation: landscape) and (max-height: 560px) {
+  .res-scroll { flex-direction: row; gap: 18px; overflow: hidden; padding-top: calc(var(--sat) + 8px); padding-bottom: 6px; }
+  .res-hero { display: flex; flex-direction: column; gap: 8px; flex: 0 0 40%; align-self: center; }
+  .res-rest { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; overflow-y: auto; align-self: stretch; scrollbar-width: none; padding: 2px 2px 8px; } .res-rest::-webkit-scrollbar { display: none; } .res-rest > * { flex: none; }
+  .res-title { font-size: 34px; } .res-score b { font-size: 52px; }
+  .res-actions { flex-direction: row; align-items: stretch; gap: 10px; padding-top: 8px; padding-bottom: calc(var(--sab) + 10px); }
+  .res-actions .btn-xl { flex: 2; min-height: 48px; font-size: 20px; padding: 0 16px; } .res-actions .row { flex: 1.5; } .res-actions .row .btn { min-height: 48px; }
+}
+/* the "x points" pill is opaque, so a time chip passing under it (the red -5s drops out of the readout) goes cleanly behind it */
+.mult { background: #2b2150; }
