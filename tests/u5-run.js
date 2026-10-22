@@ -73,17 +73,20 @@ const SAMPLER = () => {
 };
 
 const overlap = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
-function analyse(samples, name) {
-  let worst = 0, where = '', calls = 0;
+function analyse(samples, name, vw) {
+  let worst = 0, where = '', calls = 0, out = 0, outWhere = '';
   for (const s of samples) {
     const co = s.items.filter((i) => i[0].startsWith('callout')).length;
     calls = Math.max(calls, co);
+    // the big banners (RUSH!, the stage text) stay inside the screen at their peak size (they were clipped at both edges on small phones)
+    for (const it of s.items) if (/^(rush|stage)$/.test(it[0]) && (it[1][0] < -1 || it[1][2] > vw + 1)) { const o = Math.max(-it[1][0], it[1][2] - vw); if (o > out) { out = o; outWhere = `${s.t}ms ${it[0]} [${it[1].map(Math.round)}]`; } }
     for (let i = 0; i < s.items.length; i++) for (let j = i + 1; j < s.items.length; j++) {
       const a = overlap(s.items[i][1], s.items[j][1]);
       if (a > worst) { worst = a; where = `${s.t}ms ${s.items[i][0]} x ${s.items[j][0]}`; }
     }
   }
   ok(worst <= 8, `${name}: text overlaps by ${Math.round(worst)} px2 at ${where}`);
+  ok(out <= 1, `${name}: a banner runs ${Math.round(out)} px off the screen at ${outWhere}`);
   ok(calls <= 1, `${name}: ${calls} callouts at once`);
   return { worst: Math.round(worst), maxCallouts: calls };
 }
@@ -109,7 +112,7 @@ function analyse(samples, name) {
       const p = page.evaluate(({ r, c }) => { window.__ev.t0 = performance.now(); return BR.Run.tap(r, c); }, { r: tap[0], c: tap[1] });
       const samples = await page.evaluate(() => window.__sample(5400, 25));
       await p; await idle(page);
-      const res = analyse(samples, `${w}x${h} ${name}`);
+      const res = analyse(samples, `${w}x${h} ${name}`, w);
       if (process.env.DUMP && name.includes(process.env.DUMP) && w === +(process.env.DUMPW || 393)) samples.forEach((s) => console.log(String(s.t).padStart(5), s.items.map((i) => i[0] + '[' + i[1].map(Math.round).join(',') + ']').join('  ')));
       const texts = [...new Set(samples.flatMap((s) => s.items.map((i) => i[0].replace(/^callout:/, '').replace(/^float$/, 'float'))))];
       const ev = await page.evaluate(() => window.__ev);

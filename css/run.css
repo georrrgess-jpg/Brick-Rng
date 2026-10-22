@@ -328,3 +328,7 @@
 .res-none h3 { font-size: 20px; } .res-none .tiny { font-size: 14px; color: var(--muted); }
 .results { transition: opacity 0.26s ease-out; }
 .res-actions { transition: opacity 0.2s ease 0.03s, transform 0.3s var(--ease-out) 0.03s; }
+/* R-8: in the Last Spark the flame sits on Fizz's wick, right under the Pause button: the button is opaque then, so the flame passes behind it */
+.run.sparking #btnPause { background: #1a1233; border-color: rgba(255, 255, 255, 0.28); }
+/* short phones: the Last Spark band keeps the title and the draining bar (the readout already says "Pop 4+"), so nothing is clipped in 38px */
+@media (max-height: 720px) and (orientation: portrait) { .last-spark span { display: none; } .last-spark { padding: 4px 12px; } }
