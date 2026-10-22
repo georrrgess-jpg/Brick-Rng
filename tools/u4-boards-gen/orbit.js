@@ -3,13 +3,20 @@ const { S, mulberry32, n, url } = require('./lib');
 
 function top() {
   const W = 480, H = 120, rnd = mulberry32(77);
-  const defs = S.rg('nb1', [[0, '#8a5cff', 0.3], [1, '#8a5cff', 0]]) + S.rg('nb2', [[0, '#4a8cff', 0.24], [1, '#4a8cff', 0]]) + S.rg('mn', [[0, '#ffe0b0'], [0.55, '#e8964a'], [1, '#8a4a2a']], 0.34, 0.3, 0.8);
+  const defs = S.rg('nb1', [[0, '#8a5cff', 0.3], [1, '#8a5cff', 0]]) + S.rg('nb2', [[0, '#4a8cff', 0.24], [1, '#4a8cff', 0]]);
   let b = S.ell(120, 40, 120, 40, 'url(#nb1)') + S.ell(390, 70, 110, 34, 'url(#nb2)');
   const cols = ['#ffffff', '#cfe0ff', '#fff0cc', '#b8c8ff'];
   for (let i = 0; i < 40; i++) b += S.circ(Math.round(rnd() * 480), Math.round(rnd() * 104), +(0.5 + rnd() * rnd() * 1.4).toFixed(1), cols[i % 4], { 'fill-opacity': +(0.45 + rnd() * 0.55).toFixed(2) });
   [[48, 20, 4.4], [212, 14, 3.4], [330, 36, 5], [440, 16, 3.6], [150, 46, 3.2]].forEach(([x, y, r]) => { b += S.star4(x, y, r, '#fff', { 'fill-opacity': 0.9 }); });
-  b += S.circ(72, 62, 10, 'url(#mn)') + S.circ(72, 62, 14, '#ff9a4a', { 'fill-opacity': 0.12 });
-  b += S.path('M64 58a10 10 0 0 1 8-6', 'none', { stroke: '#fff3d8', 'stroke-opacity': 0.6, 'stroke-width': 1.2, 'stroke-linecap': 'round' });
+  return S.svg(W, H, b, defs);
+}
+
+// the little orange moon is its own picture (one moon, however wide the screen is)
+function moon() {
+  const W = 44, H = 120;
+  const defs = S.rg('mn', [[0, '#ffe0b0'], [0.55, '#e8964a'], [1, '#8a4a2a']], 0.34, 0.3, 0.8);
+  let b = S.circ(22, 62, 10, 'url(#mn)') + S.circ(22, 62, 14, '#ff9a4a', { 'fill-opacity': 0.12 });
+  b += S.path('M14 58a10 10 0 0 1 8-6', 'none', { stroke: '#fff3d8', 'stroke-opacity': 0.6, 'stroke-width': 1.2, 'stroke-linecap': 'round' });
   return S.svg(W, H, b, defs);
 }
 
@@ -56,28 +63,28 @@ function stars() {
 }
 
 module.exports = build;
-module.exports.parts = { top, planet, satellite, stars };
+module.exports.parts = { top, moon, planet, satellite, stars };
 function build() {
-  const T = url(top()), P = url(planet()), Sat = url(satellite()), St = url(stars());
+  const T = url(top()), Mo = url(moon()), P = url(planet()), Sat = url(satellite()), St = url(stars());
   return `/* ================================================================ Orbit (Epic)
    A deep-blue starfield with a little orange moon, and a big ringed planet coming up over the bottom edge. A satellite crosses the top
    every so often and the brighter stars twinkle. */
 .board-orbit {
-  --u4-th: min(112px, 15%); --u4-bh: min(176px, 23%);
   --u4-top: ${T} repeat-x 50% 0 / auto var(--u4-th);
+  --u4-moonx: 24%;
+  --u4-moon: ${Mo} no-repeat var(--u4-moonx) 0 / auto var(--u4-th);
   --u4-planet: ${P} no-repeat 100% 100% / auto var(--u4-bh);
   --u4-sat-img: ${Sat};
   --u4-sat: var(--u4-sat-img) no-repeat 66% 30% / auto min(30px, 4%);
   --u4-stars-img: ${St};
   --u4-sky: radial-gradient(ellipse 70% 24% at 12% 22%, rgba(120, 70, 230, 0.26), transparent 70%), radial-gradient(ellipse 60% 26% at 92% 86%, rgba(70, 120, 255, 0.3), transparent 70%), linear-gradient(180deg, #02030b 0%, #060a1c 30%, #0b1135 62%, #131a52 88%, #1b2266 100%);
-  --a-bg-run: var(--u4-top), var(--u4-planet), var(--u4-sky);
-  --a-bg: var(--u4-sat), var(--u4-top), var(--u4-planet), var(--u4-sky);
+  --a-bg-run: var(--u4-moon), var(--u4-top), var(--u4-planet), var(--u4-sky);
+  --a-bg: var(--u4-sat), var(--u4-moon), var(--u4-top), var(--u4-planet), var(--u4-sky);
   --a-board: linear-gradient(180deg, rgba(12, 18, 56, 0.9), rgba(5, 8, 30, 0.95));
   --a-frame: #a9bcff;
   --a-glow: rgba(120, 160, 255, 0.4);
 }
-.board-orbit .run-active .bg { background: var(--a-bg-run); }
-.board-orbit .run-active .bg::before { display: block; left: 0; top: 28px; width: 64px; height: 30px; background: var(--u4-sat-img) no-repeat 0 0 / 100% 100%; will-change: transform; animation: u4Orbit 75s linear infinite; }
+.board-orbit .run-active .bg::before { display: block; left: 0; top: calc(var(--u4-th) * 0.14); width: 56px; height: 26px; background: var(--u4-sat-img) no-repeat 0 0 / 100% 100%; will-change: transform; animation: u4Orbit 75s linear infinite; }
 .board-orbit .run-active .bg .scene-fx { display: block; height: var(--u4-th); background-image: var(--u4-stars-img); background-size: auto 100%; background-position: 50% 0; animation: u4Twinkle 3.6s ease-in-out infinite; }
 .board-orbit .run-active .bg .scene-fx.b { display: none; }
 .board-orbit .board::after { inset: -30% -18%; border: 1px solid rgba(180, 205, 255, 0.35); border-radius: 50%; transform: rotate(-16deg); box-shadow: 0 0 14px rgba(150, 180, 255, 0.25); }

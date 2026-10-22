@@ -92,7 +92,6 @@ function build() {
    pouring white-hot metal into a mould, an anvil and a molten seam in the floor. The glow breathes and sparks rise. The board is a
    riveted iron frame. */
 .board-foundry {
-  --u4-th: min(112px, 15%); --u4-bh: min(184px, 24%);
   --u4-top: ${T} repeat-x 50% 0 / auto var(--u4-th);
   --u4-floor: ${F} repeat-x 50% 100% / auto var(--u4-bh);
   --u4-glow-img: ${G};
@@ -104,7 +103,6 @@ function build() {
   --a-frame: #9a7a64;
   --a-glow: rgba(255, 120, 30, 0.42);
 }
-.board-foundry .run-active .bg { background: var(--a-bg-run); }
 .board-foundry .run-active .bg::before { display: block; left: 0; right: 0; bottom: 0; height: var(--u4-bh); background: var(--u4-glow-img) repeat-x 50% 100% / auto 100%; animation: u4Pulse 3.6s ease-in-out infinite alternate; }
 .board-foundry .run-active .bg .scene-fx { display: block; height: calc(100% + 520px); background-image: ${K}; background-size: 240px 520px; animation: u4Rise 12s linear infinite; }
 .board-foundry .run-active .bg .scene-fx.b { display: none; }

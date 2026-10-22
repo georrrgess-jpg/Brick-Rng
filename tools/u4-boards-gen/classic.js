@@ -3,14 +3,21 @@ const { S, mulberry32, n, url } = require('./lib');
 
 function top() {
   const W = 480, H = 120, rnd = mulberry32(101);
-  const defs = S.rg('mh', [[0, '#d8ccff', 0.34], [0.3, '#9a86ff', 0.12], [1, '#9a86ff', 0]]) + S.rg('mc', [[0, '#fffdf0'], [0.7, '#f3e9d2'], [1, '#d9c9a8']], 0.4, 0.4, 0.7)
-    + `<mask id='mm'><rect width='480' height='120' fill='#fff'/><circle cx='339' cy='37' r='17' fill='#000'/></mask>`;
-  let b = S.circ(332, 44, 78, 'url(#mh)');
+  let b = '';
   const cols = ['#ffffff', '#d8e0ff', '#fff0d8', '#c8b8ff'];
   for (let i = 0; i < 34; i++) b += S.circ(Math.round(rnd() * 480), Math.round(rnd() * 108), +(0.5 + rnd() * rnd() * 1.3).toFixed(1), cols[i % 4], { 'fill-opacity': +(0.4 + rnd() * 0.6).toFixed(2) });
   [[40, 24, 4], [180, 16, 3.2], [270, 62, 3.6], [96, 74, 3]].forEach(([x, y, r]) => { b += S.star4(x, y, r, '#fff', { 'fill-opacity': 0.9 }); });
-  b += S.circ(332, 44, 20, 'url(#mc)', { mask: 'url(#mm)' });
-  b += S.circ(324, 48, 2.4, '#c8b894', { 'fill-opacity': 0.45, mask: 'url(#mm)' }) + S.circ(328, 38, 1.6, '#c8b894', { 'fill-opacity': 0.4, mask: 'url(#mm)' });
+  return S.svg(W, H, b);
+}
+
+// the moon is its own picture (one moon, however wide the screen is); the sky tile repeats, the moon does not
+function moon() {
+  const W = 150, H = 120;
+  const defs = S.rg('mh', [[0, '#d8ccff', 0.34], [0.3, '#9a86ff', 0.12], [1, '#9a86ff', 0]]) + S.rg('mc', [[0, '#fffdf0'], [0.7, '#f3e9d2'], [1, '#d9c9a8']], 0.4, 0.4, 0.7)
+    + `<mask id='mm'><rect width='150' height='120' fill='#fff'/><circle cx='82' cy='37' r='17' fill='#000'/></mask>`;
+  let b = S.circ(75, 44, 72, 'url(#mh)');
+  b += S.circ(75, 44, 20, 'url(#mc)', { mask: 'url(#mm)' });
+  b += S.circ(67, 48, 2.4, '#c8b894', { 'fill-opacity': 0.45, mask: 'url(#mm)' }) + S.circ(71, 38, 1.6, '#c8b894', { 'fill-opacity': 0.4, mask: 'url(#mm)' });
   return S.svg(W, H, b, defs);
 }
 
@@ -59,27 +66,27 @@ function stars() {
 }
 
 module.exports = build;
-module.exports.parts = { top, wisps, skyline, stars };
+module.exports.parts = { top, moon, wisps, skyline, stars };
 function build() {
-  const T = url(top()), Wi = url(wisps()), Sk = url(skyline()), St = url(stars());
+  const T = url(top()), M = url(moon()), Wi = url(wisps()), Sk = url(skyline()), St = url(stars());
   return `/* ================================================================ Midnight (the default board)
    The original night sky, finished: violet sky glowing pink at the horizon, a crescent moon with a soft halo, scattered stars that
    twinkle, thin wisps of cloud drifting past, and a quiet town skyline with a clock tower and lit windows. */
 .board-classic {
-  --u4-th: min(112px, 15%); --u4-bh: min(168px, 22%);
   --u4-top: ${T} repeat-x 50% 0 / auto var(--u4-th);
+  --u4-moonx: 76%;
+  --u4-moon: ${M} no-repeat var(--u4-moonx) 0 / auto var(--u4-th);
   --u4-wisps-img: ${Wi};
   --u4-wisps: var(--u4-wisps-img) repeat-x 0 0 / 480px var(--u4-th);
   --u4-stars-img: ${St};
   --u4-town: ${Sk} repeat-x 50% 100% / auto var(--u4-bh);
   --u4-sky: radial-gradient(ellipse 46% 16% at 70% 7%, rgba(150, 120, 255, 0.2), transparent 72%), radial-gradient(ellipse 90% 22% at 50% 100%, rgba(255, 90, 160, 0.36), transparent 76%), linear-gradient(180deg, #0b0722 0%, #160c3a 32%, #26124f 60%, #3b1a62 82%, #55226e 100%);
-  --a-bg-run: var(--u4-top), var(--u4-town), var(--u4-sky);
-  --a-bg: var(--u4-top), var(--u4-wisps), var(--u4-town), var(--u4-sky);
+  --a-bg-run: var(--u4-moon), var(--u4-top), var(--u4-town), var(--u4-sky);
+  --a-bg: var(--u4-moon), var(--u4-top), var(--u4-wisps), var(--u4-town), var(--u4-sky);
   --a-board: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%), linear-gradient(180deg, #17122e, #0e0a20);
   --a-frame: rgba(255, 255, 255, 0.18);
   --a-glow: rgba(140, 110, 255, 0.2);
 }
-.board-classic .run-active .bg { background: var(--a-bg-run); }
 .board-classic .run-active .bg::before { display: block; left: 0; top: 0; width: calc(100% + 480px); height: var(--u4-th); background: var(--u4-wisps-img) repeat-x 0 0 / 480px 100%; will-change: transform; animation: u4Drift 150s linear infinite; }
 .board-classic .run-active .bg .scene-fx { display: block; height: var(--u4-th); background-image: var(--u4-stars-img); background-size: auto 100%; background-position: 50% 0; animation: u4Twinkle 4.2s ease-in-out infinite; }
 .board-classic .run-active .bg .scene-fx.b { display: none; }

@@ -81,7 +81,6 @@ function build() {
    with scalloped awnings, fruit, flowers and steaming dumplings, each lit by a hanging lamp that breathes. The board is a dark
    plum panel strung with bulbs. */
 .board-market {
-  --u4-th: min(112px, 15%); --u4-bh: min(176px, 23%);
   --u4-top-img: ${T};
   --u4-top: var(--u4-top-img) repeat-x 50% 0 / auto var(--u4-th);
   --u4-stalls-img: ${B};
@@ -95,7 +94,6 @@ function build() {
   --a-frame: #f08ad0;
   --a-glow: rgba(255, 110, 200, 0.38);
 }
-.board-market .run-active .bg { background: var(--a-bg-run); }
 .board-market .run-active .bg::after { display: block; left: 0; right: 0; bottom: 0; height: var(--u4-bh); background: var(--u4-lamps-img) repeat-x 50% 100% / auto 100%; animation: u4Pulse 3.2s ease-in-out infinite alternate; }
 /* a string of bulbs round the board */
 .board-market .board::after { background:

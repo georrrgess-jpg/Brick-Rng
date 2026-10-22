@@ -52,7 +52,6 @@ function build() {
    perspective grid runs to the horizon with a scan pulse that sweeps toward you. A faint scan texture and a rare flicker sit on the board
    itself; Line Blasts scan the grid (js/skins.js). */
 .board-holo {
-  --u4-th: min(112px, 15%); --u4-bh: min(116px, 15%);
   --u4-top: ${T} repeat-x 50% 0 / auto var(--u4-th);
   --u4-floor: ${F} no-repeat 50% 100% / 100% var(--u4-bh);
   --u4-sky: radial-gradient(ellipse 80% 30% at 50% 100%, rgba(40, 255, 200, 0.2), transparent 75%), radial-gradient(ellipse 90% 40% at 50% 38%, rgba(40, 255, 200, 0.12), transparent 72%), linear-gradient(180deg, #02131b 0%, #031e29 52%, #021017 100%);
@@ -62,7 +61,6 @@ function build() {
   --a-frame: rgba(93, 255, 217, 0.85);
   --a-glow: rgba(93, 255, 217, 0.5);
 }
-.board-holo .run-active .bg { background: var(--a-bg-run); }
 .board-holo .run-active .bg::before { display: block; left: 0; right: 0; bottom: 0; height: var(--u4-bh); background: linear-gradient(90deg, transparent, #a8fff0 30%, #d8fff6 50%, #a8fff0 70%, transparent) 0 0 / 100% 2px no-repeat; opacity: 0; will-change: transform, opacity; animation: u4Scan 5s cubic-bezier(0.45, 0, 1, 0.8) infinite; }
 .board-holo .board { animation: u4Flicker 5s steps(1) infinite; }
 .board-holo .board::before { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(93, 255, 217, 0.06) 0 1px, transparent 1px 3px); }

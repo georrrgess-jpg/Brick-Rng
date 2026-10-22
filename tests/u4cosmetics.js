@@ -70,6 +70,37 @@ const POPS = ['b_ember', 'b_petal', 'b_glass', 'b_pixel', 'b_bolt', 'b_fire'];
     }
     console.log(`contrast ${w}x${h}: Midnight worst mid ${base.mid.toFixed(2)} lo ${base.lo.toFixed(2)}`);
   }
+  // ---- 1b. the run HUD text stays readable over the scene: the Goal / combo message band, and the score label and number
+  //          (text hidden, 90th percentile luminance of the scene behind it against the text colour; a soft plate and a text shadow sit on top of this)
+  const hudContrast = async () => {
+    await page.addStyleTag({ content: '.msgband>*,.score-box{visibility:hidden!important}' });
+    const buf = await page.screenshot();
+    return page.evaluate(async ({ b64 }) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
+      const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+      const lum = (r, gg, b) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(b);
+      const p90 = (el, inset) => {
+        const b = el.getBoundingClientRect(), x0 = Math.max(0, Math.round(b.left + b.width * inset)), x1 = Math.min(img.width, Math.round(b.right - b.width * inset)), y0 = Math.max(0, Math.round(b.top)), y1 = Math.min(img.height, Math.round(b.bottom));
+        const d = g.getImageData(x0, y0, x1 - x0, y1 - y0).data, L = [];
+        for (let i = 0; i < d.length; i += 16) L.push(lum(d[i], d[i + 1], d[i + 2]));
+        L.sort((a, b) => a - b); return L[Math.floor(L.length * 0.9)];
+      };
+      const col = (el) => { const m = getComputedStyle(el).color.match(/[\d.]+/g).map(Number); return lum(m[0], m[1], m[2]); };
+      const cr = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      const lbl = document.querySelector('.score-box .lbl'), num = document.querySelector('.score-box b');
+      return { msg: cr(col(document.querySelector('.m-goal')), p90(document.getElementById('msgBand'), 0.12)), lbl: cr(col(lbl), p90(lbl, 0)), num: cr(col(num), p90(num, 0)) };
+    }, { b64: buf.toString('base64') });
+  };
+  for (const [w, h] of [[393, 852], [360, 640], [430, 932]]) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const id of ['default:board'].concat(BOARDS)) {
+      await run(id.startsWith('default') ? [] : [id]);
+      const s = await hudContrast();
+      ok(s.msg >= 6 && s.lbl >= 3.8 && s.num >= 4.5, `${id} at ${w}x${h}: HUD text over the scene is hard to read (goal ${s.msg.toFixed(1)}, score label ${s.lbl.toFixed(1)}, score ${s.num.toFixed(1)}; needs 6 / 3.8 / 4.5)`);
+    }
+  }
+  console.log('hud text over the scenes checked at 393x852, 360x640, 430x932');
   await page.reload(); await page.waitForFunction(() => window.__app); await page.setViewportSize({ width: 393, height: 852 });
   await page.evaluate(() => { Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 3; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); });
 
