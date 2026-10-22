@@ -145,10 +145,10 @@
   /* ===================================================================== PIXELS
      Update 5: the pixels were a sparse scatter of small squares that were gone in under half a second. Now every brick breaks into a proper sprite
      explosion: a white block flashes where the brick was, chunky pixels burst out along the eight directions of an old arcade game one 6px cell at
-     a time, then fall faster and faster; each flashes white, then holds its own tone (the brick's light colour, its glow or white) and ends dark and the leaders leave a short trail of
+     a time, then fall faster and faster; each flashes white, then holds its own tone (the brick's light colour, its glow or white), ends dark, and the leaders leave a short trail of
      afterimages in the cells they just left. Pixels live 0.45 to 0.6 s (the pop moment still ends inside 600 ms). A hop sets the pixel's position
-     on the grid directly, so it lands exactly on a cell at any frame rate. Budget per brick: ceil(2.4n) pixels (all steered), a trail of two afterimages
-     behind every third one, and one flash block while the crowd is small enough to read (n >= 7). */
+     on the grid directly, so it lands exactly on a cell at any frame rate. Budget per brick: ceil(2.2n) pixels (1.8n in a crowd; all steered), a trail of two afterimages
+     behind every fourth one (one in a crowd), and one flash block while the crowd is small enough to read (n >= 7). */
   const GRID = 6, STEP = 0.052;
   const DIRS = [[1, 0], [-1, 0], [0, -1], [0, 1], [1, -1], [-1, -1], [1, 1], [-1, 1]];
   function pixelStep(p, dt, e) {
@@ -169,10 +169,10 @@
     const gx = Math.round(x / GRID), gy = Math.round(y / GRID);
     const lo = mixHex(glow, '#12081e', 0.55);
     if (!crowd) fx.emit({ kind: 'shard', shape: 'pixel', x: gx * GRID, y: gy * GRID, vx: 0, vy: 0, g: 0, drag: 0, size: 12, spread: 0, max: 0.07, color: '#ffffff' });
-    for (let i = 0; i < Math.ceil(n * 2.4); i++) {
+    for (let i = 0; i < Math.ceil(n * (crowd ? 1.8 : 2.2)); i++) {
       const d = pick(DIRS), mag = Math.random() < 0.55 ? 3 : 2, s = pick(sizes);
       const p = put(fx, { kind: 'shard', shape: 'pixel', x: gx * GRID, y: gy * GRID, vx: 0, vy: 0, g: 0, drag: 0, size: s, spread: 0, max: rnd(0.46, 0.6), color: '#ffffff' });
-      steer(p, pixelStep, { fx, tone: tones[i % 5], lo, s, gx, gy, dx: d[0] * mag, dy: d[1] * mag, burst: 3 + ((Math.random() * 3) | 0), fall: 0, k: 0, next: rnd(0.012, 0.04), trail: i % 3 === 0 ? 2 : 0 });
+      steer(p, pixelStep, { fx, tone: tones[i % 5], lo, s, gx, gy, dx: d[0] * mag, dy: d[1] * mag, burst: 3 + ((Math.random() * 3) | 0), fall: 0, k: 0, next: rnd(0.012, 0.04), trail: i % 4 === 0 ? (crowd ? 1 : 2) : 0 });
     }
   };
 

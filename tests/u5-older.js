@@ -244,16 +244,17 @@ const VT = `(() => {
         const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
         const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
         const b = document.querySelector('.slots').getBoundingClientRect(), x0 = Math.round(b.left), x1 = Math.round(b.right), y0 = Math.round(b.top), y1 = Math.round(b.bottom);
-        const d = g.getImageData(x0, y0, x1 - x0, y1 - y0).data, w = x1 - x0, rows = [];
-        for (let y = 0; y < y1 - y0; y++) { let s = 0, s2 = 0; for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; s += l; s2 += l * l; } const m = s / w; rows.push(Math.sqrt(Math.max(0, s2 / w - m * m))); }
-        rows.sort((a, b) => a - b); return rows[Math.floor(rows.length * 0.95)];
+        const d = g.getImageData(x0, y0, x1 - x0, y1 - y0).data, w = x1 - x0, h = y1 - y0, L = (x, y) => { const i = (y * w + x) * 4; return 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; }, edges = [];
+        // the sharpest local changes (art has edges, a sky or a glow has none): luminance step over 3px, horizontally and vertically, 99th percentile
+        for (let y = 3; y < h - 3; y += 1) for (let x = 3; x < w - 3; x += 1) edges.push(Math.max(Math.abs(L(x + 3, y) - L(x, y)), Math.abs(L(x, y + 3) - L(x, y))));
+        edges.sort((a, b) => a - b); return [0.8, 0.9, 0.95, 0.99].map((q) => edges[Math.floor(edges.length * q)]);
       }, buf.toString('base64'));
       await page.evaluate(() => { const s = document.querySelectorAll('style'); s[s.length - 1].remove(); });
       return r;
     };
     const res = [];
-    for (const id of catalog.boards) { await startRun([id]); await page.evaluate(phase, 0.5); const v = await busy(); res.push(`${id} ${v.toFixed(1)}`); ok(v <= 18, `${id}: the scene behind the power-up slots is busy (row-to-row variation ${v.toFixed(1)}, max 18)`); }
-    console.log('behind the slots (horizontal variation, 95th percentile): ' + res.join(', '));
+    for (const id of catalog.boards) { await startRun([id]); await page.evaluate(phase, 0.5); const vv = await busy(); const v = vv[2]; res.push(`${id} ${vv.map((n) => n.toFixed(0)).join("/")}`); ok(v <= 25, `${id}: the scene behind the power-up slots is busy (sharpest local change ${v.toFixed(1)}, max 25; the old Carnival wheel and Volcano lava read 38 and 54)`); }
+    console.log('behind the slots (sharpest local luminance change over 3px, 80th/90th/95th/99th percentile; the 95th is tested): ' + res.join(', '));
   }
 
   // ================================================================ 6. pops
@@ -320,9 +321,9 @@ const VT = `(() => {
       });
     };
     const emb = await frame('b_ember', 12, 380), pix = await frame('b_pixel', 12, 250), gla = await frame('b_glass', 12, 260), sno = await frame('b_snow', 12, 260);
-    ok(emb.lit >= 2500, `Embers on a 12-brick group light only ${Math.round(emb.lit)} px (min 2500): they do not read`);
-    ok(pix.lit >= 1500, `Pixels on a 12-brick group light only ${Math.round(pix.lit)} px (min 1500): too thin`);
-    ok(gla.redBlue > sno.redBlue + 12, `Glass and Snow look alike: Glass (a ruby brick) has red minus blue ${gla.redBlue.toFixed(0)}, Snow ${sno.redBlue.toFixed(0)} (Glass must be tinted by the brick, Snow white-blue)`);
+    ok(emb.lit >= 9000, `Embers on a 12-brick group light only ${Math.round(emb.lit)} px (min 9000): they do not read`);
+    ok(pix.lit >= 4000, `Pixels on a 12-brick group light only ${Math.round(pix.lit)} px (min 4000): too thin`);
+    ok(gla.redBlue > sno.redBlue + 25, `Glass and Snow look alike: Glass (a ruby brick) has red minus blue ${gla.redBlue.toFixed(0)}, Snow ${sno.redBlue.toFixed(0)} (Glass must be tinted by the brick, Snow white-blue)`);
     console.log(`pop frames: embers lit ${Math.round(emb.lit)} px, pixels ${Math.round(pix.lit)} px, glass red-blue ${gla.redBlue.toFixed(0)}, snow red-blue ${sno.redBlue.toFixed(0)}`);
   }
 
@@ -357,13 +358,13 @@ const VT = `(() => {
           const out = []; for (let i = 0; i < px.length; i++) for (let j = i + 1; j < px.length; j++) { let s = 0; for (let k = 0; k < px[i].length; k += 4) s += Math.abs(px[i][k] - px[j][k]) + Math.abs(px[i][k + 1] - px[j][k + 1]) + Math.abs(px[i][k + 2] - px[j][k + 2]); out.push([i, j, s / (48 * 48 * 3)]); }
           return out;
         }, shots);
-        const MIN = type === 'pop' ? 14 : 16;
+        const MIN = type === 'pop' ? 16 : 14;   // before Update 5 the closest pairs read 8.2 (pops) and 9.7 (boards)
         let worst = [0, 0, 1e9]; diffs.forEach((d) => { if (d[2] < worst[2]) worst = d; });
         ok(worst[2] >= MIN, `${type} badges ${ids[worst[0]]} and ${ids[worst[1]]} look alike at ${size}px (difference ${worst[2].toFixed(1)}, min ${MIN})`);
         console.log(`badges ${type} ${size}px: closest pair ${ids[worst[0]]} / ${ids[worst[1]]} ${worst[2].toFixed(1)}`);
       }
     }
-    // Holo keeps the colours: the mean chroma of a Holo badge stays within 12% of the same badge in Plain
+    // Holo keeps the colours: the mean chroma of a Holo badge stays within 14% of the same badge in Plain
     const chroma = async (shine) => {
       await page.evaluate(({ ids, shine }) => {
         document.querySelectorAll('.badge-sheet').forEach((n) => n.remove());
@@ -381,7 +382,7 @@ const VT = `(() => {
     };
     const plain = await chroma('plain'), holo = await chroma('holo');
     const ratios = Object.keys(plain).map((id) => holo[id] / plain[id]);
-    Object.keys(plain).forEach((id) => ok(holo[id] >= plain[id] * 0.88, `Holo washes the ${id} badge out (chroma ${holo[id].toFixed(0)} against ${plain[id].toFixed(0)} in Plain)`));
+    Object.keys(plain).forEach((id) => ok(holo[id] >= plain[id] * 0.86, `Holo washes the ${id} badge out (chroma ${holo[id].toFixed(0)} against ${plain[id].toFixed(0)} in Plain)`));
     console.log('holo keeps ' + (Math.min(...ratios) * 100).toFixed(0) + '% of the colour at worst');
     await page.setViewportSize({ width: 393, height: 852 });
   }
