@@ -51,8 +51,8 @@
       const wrap = this.view && this.view.wrap, run = $('s-run');
       if (!wrap || !run || !wrap.offsetWidth) return;
       const w = wrap.getBoundingClientRect(), r = run.getBoundingClientRect();
-      const mid = w.top - r.top + w.height / 2;
-      run.style.setProperty('--mid', mid.toFixed(1) + 'px');
+      run.style.setProperty('--mid', (w.top - r.top + w.height / 2).toFixed(1) + 'px');
+      run.style.setProperty('--midx', (w.left - r.left + w.width / 2).toFixed(1) + 'px');   // (in landscape the board is not in the middle of the screen)
     },
 
     buildSlots() {
@@ -431,19 +431,21 @@
       m.el = el; m.anim = a; m.t0 = performance.now(); L.cur = m;
       a.onfinish = () => { el.remove(); if (L.cur === m) { L.cur = null; this.pumpLane(); } };
     },
-    /** Cut the message that is showing short (a bigger moment needs the slot): it fades in a tenth of a second and the slot waits for it. */
+    /** Cut the message that is showing short (a bigger moment needs the slot). */
     cutLane() {
       const L = this.lane, m = L.cur;
-      if (!m) return;
+      if (!m) return 0;
       L.cur = null;
-      L.busyUntil = Math.max(L.busyUntil, performance.now() + 110);
-      if (m.anim) m.anim.cancel();
-      const el = m.el; if (el) { const a = el.animate([{ opacity: 0.9 }, { opacity: 0 }], { duration: 100, fill: 'both' }); a.onfinish = () => el.remove(); }
+      if (m.anim) { m.anim.onfinish = null; m.anim.cancel(); }
+      if (m.el) m.el.remove();   // a hard cut: the bigger moment takes its place on the same frame, so two pieces of text are never on screen together (even if a frame is late)
+      return 0;
     },
-    /** A banner (the stage wipe, RUSH!) holds the slot for `ms`: whatever is showing is cut, the rest waits. */
+    /** A banner (the stage wipe, RUSH!) holds the slot for `ms`: whatever is showing is cut, the rest waits. Returns how long the banner
+        must wait for the cut message to leave (0 when the slot was free), so two pieces of text are never on screen together. */
     occupy(ms) {
-      this.cutLane();
-      const L = this.lane; L.busyUntil = Math.max(L.busyUntil, performance.now() + ms);
+      const wait = this.cutLane();
+      const L = this.lane; L.busyUntil = Math.max(L.busyUntil, performance.now() + wait + ms);
+      return wait;
     },
     clearLane() {
       const L = this.lane; clearTimeout(L.timer);
@@ -490,6 +492,15 @@
         { transform: `translate(-50%,calc(-50% - ${rise}px)) scale(0.96)`, opacity: 0 },
       ], { duration: BR.reducedMotion ? 600 : o.dur || 880, delay: o.delay || 0, easing: 'cubic-bezier(0.2,0.7,0.3,1)', fill: 'both' });
       a.onfinish = () => el.remove();
+      return { x, y, rise, h };   // where it ended up (layer coordinates), so the time chip can leave from clear air above it
+    },
+    /** Where a time chip leaves from: above the score float and, while the slot is in use, above the slot too. The float rises and the chip
+        flies off to the fuse (a moment after the pop), so the two never share a place. */
+    chipFrom(fl, dx = 0) {
+      const view = this.view, rc = view._rects(), W = view._ww || 320;
+      let y = rc.wt + fl.y - fl.rise * 0.45 - fl.h * 0.62 - 26;
+      if (this.laneBusy()) y = Math.min(y, rc.wt + W / 2 - (clampN(W * 0.085, 26, 46) * 1.2 + 8) - 22);
+      return { x: rc.wl + clampN(fl.x + dx, 40, W - 40), y };
     },
     /** A "+1.8s" chip that flies from `from` (page coordinates) to the fuse readout (js/fuse.js). Kept as a thin shim for older callers. */
     fuseFloat(text, color, from) { BR.Fuse.chip(text, color, from); },
@@ -600,7 +611,7 @@
       this.setScore(e.score); this.hudStageBar(true, res.stageUp);
       if (!res.stageUp) this.callout(BR.BOOSTERS[res.type].name.toUpperCase() + '!', PCOL[res.type], { pri: PRI.power });
       const pos = view.layerPoint(res.tap.r, res.tap.c);
-      this.floatText('+' + fmt(p.points), pos.x, pos.y, { size: 30, color: PCOL[res.type], glow: PCOL[res.type] });
+      const fl = this.floatText('+' + fmt(p.points), pos.x, pos.y, { size: 30, color: PCOL[res.type], glow: PCOL[res.type], lane: !!res.stageUp });
       if (res.stageUp) this.stageNow(res.stageUp);
       const pt = view.pagePoint(res.tap.r, res.tap.c);
       this.fx.flash(PCOL[res.type], 0.28, 380);
@@ -608,7 +619,7 @@
       if (res.type === 'hammer') this.fx.explosion(pt.x, pt.y, '#ffb347', 1.1);
       else if (res.type === 'beam') { this.beam('row', res.tap.r, '#7ae8ff'); this.beam('col', res.tap.c, '#7ae8ff'); }
       else { this.fx.ring(pt.x, pt.y, '#d27aff', 160, 0.7, 6); res.removed.slice(0, 14).forEach((q, i) => { const t = view.pagePoint(q.r, q.c); setTimeout(() => this.fx.bolt(pt.x, pt.y, t.x, t.y, BR.PALETTE[q.color].hi), i * 22); }); }
-      if (res.timeGain) BR.Fuse.gain(res.timeGain, { x: pt.x, y: pt.y }, 'power');
+      if (res.timeGain) BR.Fuse.gain(res.timeGain, this.chipFrom(fl), 'power', 170);
       this.checkGoal();
     },
 
@@ -674,7 +685,7 @@
       const pos = view.layerPoint(sr, sc); pos.y -= view.cell * 0.15;
       const pt = view.pagePoint(sr, sc);
       // the score rises from the group, in one piece with its combo tag, and keeps out of the slot (floatText knows the lane)
-      this.floatText('+' + fmt(p.points), pos.x, pos.y, {
+      const fl = this.floatText('+' + fmt(p.points), pos.x, pos.y, {
         lane: big,
         size: Math.min(46, 20 + Math.log2(Math.max(2, p.points)) * 2), color: p.line ? '#9ff0ff' : n >= 8 ? '#ffd66b' : '#fff',
         glow: p.line ? 'rgba(80,220,255,.8)' : n >= 8 ? 'rgba(255,200,60,.8)' : 'rgba(255,255,255,.4)', rise: 50 + Math.min(40, n * 3),
@@ -694,10 +705,9 @@
       if (!e.chill) {
         // time changes fly to the readout as chips (js/fuse.js); the chime plays when each one arrives. The chip leaves from the group,
         // but never from inside the slot in the middle of the board, so it does not cross a callout on its way up.
-        const from = { x: pt.x, y: pt.y };
-        if (this.laneBusy() || big) { const half = clampN((view._ww || 320) * 0.085, 26, 46) * 1.2 + 8; from.y = Math.min(from.y, view._rects().wt + (view._ww || 320) / 2 - half - 16); }
-        if (res.timeGain > 0) BR.Fuse.gain(res.timeGain, from, p.line ? 'line' : 'pop');
-        if (res.defused) { BR.audio.defuse(); BR.haptic('stage'); BR.Fuse.gain(res.defused * BR.CFG.fuse.defuse, from, 'defuse', 150); this.callout('DEFUSED!', '#3ddc97', { pri: PRI.news }); }
+        const from = this.chipFrom(fl);
+        if (res.timeGain > 0) BR.Fuse.gain(res.timeGain, from, p.line ? 'line' : 'pop', 170);
+        if (res.defused) { BR.audio.defuse(); BR.haptic('stage'); BR.Fuse.gain(res.defused * BR.CFG.fuse.defuse, this.chipFrom(fl, fl.x > 200 ? -70 : 70), 'defuse', 330); this.callout('DEFUSED!', '#3ddc97', { pri: PRI.news }); }
         if (res.bursts && res.bursts.length) { BR.audio.burstFuse(); BR.Fuse.burst(res.bursts.length * BR.CFG.fuse.burstPenalty); this.callout('FUSE BRICK!', '#ff4d6d', { pri: PRI.news }); }
         if (rs) { this.rushStart(); if (su) this.pendingRush = true; else this.rushShow(); }   // stage-up first, then Rush
         if (su) this.stageNow(su);
@@ -764,12 +774,17 @@
     rushShow() {
       if (this.over) return;
       this.pendingRush = false;
-      this.occupy(BR.reducedMotion ? 700 : 1150);
-      BR.audio.rushStart(); BR.haptic('rush'); BR.Fuse.rushStart();
-      BR.replay($('rushBanner'), 'go');
-      this.fx.flash('#ff3d8b', 0.4, 600); this.fx.shake($('app'), 14, 600);
-      this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, 0);
-      if (BR.Skins.onEvent) BR.Skins.onEvent('rushStart', { run: this, view: this.view });
+      const token = this.token, still = BR.reducedMotion;
+      const wait = still ? 0 : this.occupy(1150);       // the banner takes the slot (and waits for a message it cut to leave)
+      const play = () => {
+        if (token !== this.token || this.over) return;
+        BR.audio.rushStart(); BR.haptic('rush'); BR.Fuse.rushStart();
+        if (still) this.callout('RUSH!', '#ff8fc0', { pri: PRI.system + 1, wait: 800 }); else BR.replay($('rushBanner'), 'go');   // (Reduce Motion: a still callout)
+        this.fx.flash('#ff3d8b', 0.4, 600); this.fx.shake($('app'), 14, 600);
+        this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, 0);
+        if (BR.Skins.onEvent) BR.Skins.onEvent('rushStart', { run: this, view: this.view });
+      };
+      if (wait) setTimeout(play, wait); else play();
     },
     rushEnd() {
       this.el.classList.remove('rushing'); this.setMult(true);
@@ -793,12 +808,13 @@
      */
     async stageBeat(info, token) {
       const e = this.engine, reduced = this.view.reduced, C = BR.CFG.stage;
-      this.occupy(reduced ? 500 : 1000);
+      const wait = BR.reducedMotion ? 0 : this.occupy(1000);
+      if (wait) { await sleep(wait); if (token !== this.token) return; }    // a message that was showing leaves first
       BR.audio.stageUp(); BR.haptic('stage');
       if (BR.Music) BR.Music.stageUp();
       $('swNum').textContent = info.to; $('swMult').textContent = 'x' + info.mult.toFixed(1);
-      const w = $('stageWipe'); BR.replay(w, 'go');
-      clearTimeout(this._swT); this._swT = setTimeout(() => w.classList.remove('go'), 1150);
+      if (BR.reducedMotion) this.callout(`Stage ${info.to}  x${info.mult.toFixed(1)}`, '#ffd66b', { pri: PRI.system + 1, wait: 800 });   // (Reduce Motion has no wipe: a still callout)
+      else { const w = $('stageWipe'); BR.replay(w, 'go'); clearTimeout(this._swT); this._swT = setTimeout(() => w.classList.remove('go'), 1150); }
       this.fx.flash('#ffffff', 0.35, 500); this.fx.shake($('app'), 10, 420);
       if (BR.Skins.onEvent) BR.Skins.onEvent('stageUp', { run: this, info });
       await sleep(reduced ? 80 : 380);                       // the band is across the board: turn the HUD over under it
@@ -910,7 +926,8 @@
       this.clearHover(); this.view.hideHint(); this.hideHint(); this.aimBanner(''); this.armed = null;
       this.pendingRush = false; this.clearLane();
       // the run is over: the warning vignette goes and stays gone (nothing in the fuse updates any more, see frame())
-      $('warnVignette').classList.remove('on', 'lo'); $('lastSpark').classList.remove('on'); this.band();
+      const vg = $('warnVignette'); vg.classList.remove('on', 'lo'); vg.getAnimations().forEach((a) => a.cancel());   // (a heartbeat pulse that is still running would keep it lit for another 0.4 s)
+      $('lastSpark').classList.remove('on'); this.band();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);   // a missed Last Spark leaves the held duck on
       if (this.el.classList.contains('rushing') && BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });   // so Rush-only moments clean up
       this.el.classList.remove('rushing', 'sparking');
@@ -1063,6 +1080,8 @@
       host.appendChild(node);
       host.style.pointerEvents = 'auto';
       this.resultsEl = node; BR.under(1);
+      // a sheet (the Boosts for "Play again") or a chest opening (the "Chests" button) opened from the results belongs ABOVE them
+      $('layer-sheets').style.zIndex = '70'; $('layer-opening').style.zIndex = '65';
       // Back and Escape leave the results for Home, like Home does
       this.backEntry = BR.Back.push(() => { this.backEntry = null; this.closeResults(true); BR.Router.go('home'); });
       if (BR.Music && BR.Music.resultsSting) BR.Music.resultsSting();
@@ -1168,9 +1187,10 @@
       this.resultsEl = null; this.modal = false; this.ending = false;
       const host = $('layer-overlays');
       host.style.pointerEvents = 'none'; n.style.pointerEvents = 'none';
-      if (o.instant) { n.remove(); return; }
+      const gone = () => { n.remove(); if (!this.resultsEl) { $('layer-sheets').style.zIndex = ''; $('layer-opening').style.zIndex = ''; } };
+      if (o.instant) { gone(); return; }
       n.classList.remove('on');
-      setTimeout(() => n.remove(), 420);
+      setTimeout(gone, 420);
     },
     /** Share a Daily Rush result: an image if the device can share files, otherwise text. */
     async share(sum) {
