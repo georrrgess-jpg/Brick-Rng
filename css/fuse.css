@@ -130,7 +130,7 @@
 @keyframes fzSpin { to { transform: rotate(360deg); } }
 /* flame size by state, and its colors when time stops: plain property rules (state is data-z on the host, never a switched custom property) */
 .fuse[data-z="watch"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 1.04)); } .fuse[data-z="low"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 1.12)); } .fuse[data-z="crit"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 1.22)); }
-.fuse[data-z="spark"] .fz-fl { transform: rotate(46deg) scale(calc(var(--fz-fs, 1) * 1.05)); } .fuse[data-z="frozen"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 0.92)); } .fuse[data-z="hold"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 0.86)); }
+.fuse[data-z="spark"] .fz-fl { transform: rotate(98deg) scale(calc(var(--fz-fs, 1) * 1.05)); } .fuse[data-z="frozen"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 0.92)); } .fuse[data-z="hold"] .fz-fl { transform: rotate(0deg) scale(calc(var(--fz-fs, 1) * 0.86)); }
 .fuse[data-z="crit"] .fz-tongue { animation: fzSputter 0.95s linear infinite; } .fuse[data-z="crit"] .fz-core { animation: fzSputter 1.35s linear infinite; } .fuse[data-z="crit"] .fz-halo { animation-duration: 0.14s; }
 .fuse[data-z="spark"] .fz-tongue { animation-duration: 0.12s; } .fuse[data-z="spark"] .fz-core { animation-duration: 0.1s; }
 .fuse[data-z="frozen"] .fz-tongue, .fuse[data-z="hold"] .fz-tongue { background-image: var(--fz-tongue-ice); } .fuse[data-z="frozen"] .fz-core, .fuse[data-z="hold"] .fz-core { background-image: var(--fz-core-ice); }
