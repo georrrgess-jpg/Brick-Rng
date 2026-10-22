@@ -387,7 +387,7 @@ const ALLOWED = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale',
     }
     // a fuse change keeps the hat and re-anchors it; taking it off removes it; a new run puts it back after a blast
     await equip('default'); await ready();
-    await page.evaluate(() => BR.Fuse.setHat('h_top'));
+    await page.evaluate(() => { BR.Progress.grantHat('h_top'); BR.Progress.equipHat('h_top'); BR.Skins.apply(); });   // (worn the way a player wears it: through the loadout, which Skins.apply puts on Fizz)
     const a1 = await page.evaluate(() => { const h = document.querySelector('#fuse .fz-hat'); return h && [h.style.getPropertyValue('--hy'), h.style.getPropertyValue('--hs')]; });
     await equip('u_elixir'); await ready();
     const a2 = await page.evaluate(() => { const h = document.querySelector('#fuse .fz-hat'); return h && [h.style.getPropertyValue('--hy'), h.style.getPropertyValue('--hs')]; });
