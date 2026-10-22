@@ -227,7 +227,7 @@ const ROOT_PC = [0, 7, 9, 5];
   console.log('BR.Music:', Object.keys(api.mType).filter((k) => !k.startsWith('_') && api.mType[k] === 'function').join(' '));
 
   /* ================= 1. pops ================= */
-  const FLAVORS = [null, 'ember', 'petal', 'glass', 'pixel', 'lightning', 'fireworks', 'confetti', 'bubbles', 'coins', 'leaves', 'neon', 'snow', 'thunder', 'ink', 'supernova', 'dragonfire', 'no-such-flavor'];
+  const FLAVORS = [null, 'ember', 'petal', 'glass', 'pixel', 'lightning', 'fireworks', 'confetti', 'bubbles', 'coins', 'leaves', 'neon', 'snow', 'thunder', 'ink', 'supernova', 'dragonfire', 'fireflies', 'wishdust', 'birds', 'runes', 'goldleaf', 'sandfall', 'whirlgate', 'constellation', 'wisps', 'no-such-flavor'];
   console.log('\n== Pops: every flavor x group size 2..14 x 3 timbres (max over the grid) ==');
   const popAgg = { peak: 0, rms50: 0, dur: 0, hf: 0, worstDur: '', worstHf: '' };
   const popRows = [];

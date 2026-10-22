@@ -95,6 +95,7 @@ js/music.js         adaptive soundtrack: menu and run arrangements that crossfad
 js/fx.js            canvas particles, fireworks
 js/skins.js         applies the loadout, previews, signature moments (Series 3 plugs in via handlers)
 js/s3-skins.js s3-pops.js s3-scenes.js   Series 3 moments and pop recipes
+js/s4-pops.js       Series 4 "Moonwick" pops (9): recipes, moments, sounds and badge art
 js/fuse-art.js      the 11 fuse cosmetics as data (rope textures, flame, ember, particles, bomb body, face style, frost tint)
 js/fuse.js          the shared fuse engine, BR.Fuse: rope, burning end, readout, time chips, urgency ramp, one small particle canvas
 js/badges.js        the item badge (used in the reel, Collection, Pass, reveals)
@@ -136,6 +137,7 @@ node tests/perfbudget.js [quick]   # frame times under a 4x CPU throttle against
 node tests/visual.js    # regressions that were once seen: the logo, odds text, Pass numbering, the bomb after a fuse-out, the run HUD at four phone sizes
 node tests/uiaudit.js [--list]   # every screen and sheet: text is 12px or larger, controls are 44px or larger
 node tests/tryit.js     # Try it leaves the loadout, a saved run and the run counter alone
+node tests/u5-pops.js     # the 9 Moonwick pops: particles per brick, moment durations, leaks, sounds, badges (about 12 minutes)
 node tests/u4cosmetics.js   # the older boards, skins and pops after the Update 4 touch-up
 node tests/keyframes.js # no @keyframes name is defined twice (the later file would silently replace the first)
 node tests/u5-menus.js  # menus: focus in sheets, tab badges, the fixed status bar, keyboard reach, hero overflow, landscape Play, sheet widths, Larger text, Reduce Motion, toasts, swaps, Boosts memory, the Pass track
