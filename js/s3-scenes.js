@@ -10,25 +10,18 @@
   const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); fn(); }, ms); timers.add(t); return t; };
 
   /* ------------------------------------------------------------------ scaffolding (runs on every apply())
-     - tip particles inside the fuse's spark for the Candy Cane (sprinkles), Vine (leaves) and Phoenix Tail (feather embers)
      - the Aurora's ripple band inside the background
-     - any leftover moment state from a previous run is cleared */
-  const TIPS = /fuse-(candy|vine|phoenix)\b/;
+     - any leftover moment state from a previous run is cleared
+     (the fuses' own particles, sprinkles, leaves and feathers, are drawn by js/fuse.js on the fuse's canvas) */
   function clearMoments() {
     timers.forEach(clearTimeout); timers.clear();
-    const run = $('run'), fuse = $('fuse'), app = $('app');
-    if (run) run.classList.remove('sc-rod-on');
+    const fuse = $('fuse'), app = $('app');
     if (fuse) fuse.classList.remove('sc-hatching');
     if (app) app.classList.remove('sc-hot');
     document.querySelectorAll('.sc-hatch').forEach((n) => n.remove());
   }
   S.applyHooks.push((M, root) => {
     clearMoments();
-    const spark = $('spark');
-    if (spark) {
-      spark.querySelectorAll('.sc-tip').forEach((n) => n.remove());
-      if (TIPS.test(S.fuseCls || '')) for (let i = 0; i < 4; i++) spark.appendChild(Object.assign(document.createElement('i'), { className: 'sc-tip' }));
-    }
     const bg = $('bg');
     if (bg) {
       const have = bg.querySelector('.sc-surge');
@@ -58,9 +51,9 @@
     audio('whoosh');
   }
 
-  /* ------------------------------------------------------------------ rod: arcs crackle along the fuse for the length of a Rush */
+  /* ------------------------------------------------------------------ rod: arcs crackle along the fuse for the length of a Rush
+     (the small arcs that run along the rope are particles on the fuse's own canvas, js/fuse.js; these are the big bolts on the effects canvas) */
   function rodStart(d, ctx) {
-    d.run.el.classList.add('sc-rod-on');
     if (BR.lowEnd) return;
     audio('crackle');
     const tr = $('fuseTrack'), bomb = $('bomb');
@@ -68,7 +61,6 @@
     const r = tr.getBoundingClientRect(), b = bomb.getBoundingClientRect(), y = r.top + r.height / 2;
     for (let i = 0; i < 3; i++) later(() => ctx.fx.bolt(b.left + b.width * 0.7 + i * 14, y + ctx.rnd(-6, 6), r.left + r.width * ((i + 1) / 3.2), y + ctx.rnd(-9, 9), '#9fd8ff'), i * 90);
   }
-  function rodEnd(d) { d.run.el.classList.remove('sc-rod-on'); }
   function rodPop(d, ctx) {
     const run = d.run && d.run.el;
     if (!run || !run.classList.contains('rushing') || BR.lowEnd) return;
@@ -80,7 +72,7 @@
   }
 
   /* ------------------------------------------------------------------ hatch: at a Rush start the egg bomb cracks, a little phoenix hatches
-     and flies off. The bomb's own look is hidden while the overlay (two egg halves, a bird with flapping wings) plays for ~1.9s. */
+     and flies off. The bomb is hidden while the overlay (two egg halves, a bird with flapping wings) plays for ~1.9s. */
   function hatch(d, ctx) {
     const fuse = $('fuse'), bomb = $('bomb'), app = $('app');
     if (!fuse || !bomb || !app) return;
@@ -92,7 +84,8 @@
     document.querySelectorAll('.sc-hatch').forEach((n) => n.remove());
     const host = document.createElement('div');
     host.className = 'sc-hatch';
-    host.style.cssText = `left:${hx.toFixed(1)}px;top:${hy.toFixed(1)}px;transform:scale(${k.toFixed(3)});--sc-fx:${((window.innerWidth - hx + 90) / k).toFixed(0)}px;--sc-fy:${((-hy - 100) / k).toFixed(0)}px`;
+    host.style.setProperty('--fz-egg', BR.FuseArt.bodyURI('phoenix', {}, null));          // the egg halves are the bomb's own body
+    host.style.cssText += `;left:${hx.toFixed(1)}px;top:${hy.toFixed(1)}px;transform:scale(${k.toFixed(3)});--sc-fx:${((window.innerWidth - hx + 90) / k).toFixed(0)}px;--sc-fy:${((-hy - 100) / k).toFixed(0)}px`;
     host.innerHTML = '<div class="sc-egg"><i class="sc-half b"></i><i class="sc-half t"></i><i class="sc-crack"></i></div><i class="sc-flash"></i><div class="sc-bird"><i class="pw l"></i><i class="pw r"></i><i class="pb"></i></div>';
     app.appendChild(host);
     fuse.classList.add('sc-hatching');
@@ -114,6 +107,5 @@
     if (type === 'line') { if (M.auroraSky) auroraSky(ctx); }
     else if (type === 'pop') { if (M.rod) rodPop(d, ctx); }
     else if (type === 'rushStart') { if (M.rod) rodStart(d, ctx); if (M.hatch) hatch(d, ctx); }
-    else if (type === 'rushEnd') { if (M.rod) rodEnd(d); }
   });
 })();

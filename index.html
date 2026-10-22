@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="css/skins.css">
 <link rel="stylesheet" href="css/s3-skins.css">
 <link rel="stylesheet" href="css/s3-scenes.css">
+<link rel="stylesheet" href="css/fuse.css">
 <link rel="stylesheet" href="css/badges.css">
 <link rel="stylesheet" href="css/coach.css">
 </head>
@@ -52,15 +53,51 @@
           <div class="score-box"><span class="lbl">Score</span><b id="score">0</b><div class="best-line" id="bestLine"><i id="bestFill"></i><span id="bestText">BEST 0</span></div></div>
         </header>
 
-        <div class="fuse" id="fuse" aria-label="Fuse" data-fuse-host>
-          <div class="bomb" id="bomb"></div>
-          <div class="fuse-track" id="fuseTrack">
-            <div class="fuse-rail"></div>
-            <div class="fuse-fill" id="fuseFill"><i class="fuse-glow"></i></div>
-            <b class="spark" id="spark"></b>
-            <div class="fuse-fx" id="fuseFx"></div>
+        <div class="fuse" id="fuse" aria-label="Fuse" data-fuse-host data-z="calm">
+          <!-- Fizz: the bomb. The body is drawn per fuse (js/fuse-art.js); the face is shared and changes with the urgency (css/fuse.css, js/fuse.js) -->
+          <div class="bomb" id="bomb" data-x="calm">
+            <i class="fz-ring" aria-hidden="true"><svg viewBox="0 0 68 68"><circle class="bg" cx="34" cy="34" r="31"/><circle class="fg" cx="34" cy="34" r="31"/></svg></i>
+            <div class="fz-pulse">
+              <i class="fz-body"></i><i class="fz-hotin"></i><i class="fz-cracks"></i>
+              <div class="fz-face" aria-hidden="true">
+                <i class="fz-blush l"></i><i class="fz-blush r"></i>
+                <i class="fz-eye l"><i class="fz-ball"><i class="fz-pupil"></i></i><i class="fz-lid"></i></i>
+                <i class="fz-eye r"><i class="fz-ball"><i class="fz-pupil"></i></i><i class="fz-lid"></i></i>
+                <i class="fz-brow l"></i><i class="fz-brow r"></i>
+                <svg class="fz-mouth" viewBox="0 0 24 14">
+                  <path class="m m-calm" d="M5 4Q12 11 19 4"/><path class="m m-watch" d="M7 6Q12 8.5 17 6"/><path class="m m-worried" d="M4.5 9.5Q8 4 12 8Q16 12 19.5 6.5"/>
+                  <ellipse class="m f m-panic" cx="12" cy="7.4" rx="5.6" ry="5.2"/><ellipse class="m tg1" cx="12" cy="10.8" rx="3.2" ry="1.7"/>
+                  <ellipse class="m f m-o" cx="12" cy="7" rx="3.4" ry="4.6"/>
+                  <path class="m f m-glad" d="M3.5 3Q12 16.5 20.5 3Z"/><ellipse class="m tg2" cx="12" cy="9.2" rx="3.6" ry="1.9"/>
+                </svg>
+                <i class="fz-sweat"></i>
+              </div>
+              <i class="fz-frostb"></i>
+            </div>
+            <i class="fz-wick"></i>
           </div>
-          <div class="fuse-time"><b id="fuseTime">30.0</b><span>sec</span></div>
+          <div class="fuse-track" id="fuseTrack">
+            <div class="fz-rail"><i class="fz-burnflash"></i></div>
+            <div class="fuse-fill" id="fuseFill"><div class="fz-in"><i class="fz-l fz-tex"></i><i class="fz-l fz-hot"></i><i class="fz-l fz-cr"></i><i class="fz-l fz-flow"></i><i class="fz-l fz-gold"></i><i class="fz-l fz-frost"></i><i class="fz-l fz-shim"></i><i class="fz-l fz-glint"></i></div></div>
+            <i class="fz-ticks"></i>
+            <b class="spark" id="spark"><i class="fz-heat"></i><i class="fz-ember"></i><i class="fz-ember hot"></i><i class="fz-ash"></i><i class="fz-redflash"></i><i class="fz-flare"><i class="fz-fl"><i class="fz-halo"></i><i class="fz-tongue"></i><i class="fz-core"></i><i class="fz-ringfx"></i></i></i></b>
+          </div>
+          <div class="fuse-time" id="fuseTimeBox">
+            <svg class="fz-rring" viewBox="0 0 56 56" aria-hidden="true"><circle class="bg" cx="28" cy="28" r="26"/><circle class="fg" cx="28" cy="28" r="26"/></svg>
+            <div class="fz-numbox"><b class="fz-num" id="fuseTime" data-m="w" role="timer" aria-label="30 seconds"><span class="fz-dg t"><i>3</i><i class="p"></i></span><span class="fz-dg o"><i>0</i><i class="p"></i></span><span class="fz-dp">.</span><span class="fz-dg x"><i>0</i><i class="p"></i></span></b></div>
+            <span class="fz-unit" aria-hidden="true">
+              <svg class="fz-ico ic-flame" viewBox="0 0 24 24"><path d="M12 2.5c1 3.5 4.5 5 4.5 9.5a4.5 4.5 0 0 1-9 0c0-2 1-3.2 2-4.2 0 2 1 2.7 2 2.7 0-3-.5-5 .5-8z"/></svg>
+              <svg class="fz-ico ic-glass" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 4 6 4 9s-4 4-4 9M16 3c0 5-4 6-4 9s4 4 4 9"/></svg>
+              <svg class="fz-ico ic-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.01"/></svg>
+              <svg class="fz-ico ic-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5"/></svg>
+              <svg class="fz-ico ic-bolt" viewBox="0 0 24 24"><path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/></svg>
+              <span>sec</span>
+            </span>
+            <span class="fz-p4" aria-hidden="true"><small>Pop</small><b>4+</b></span>
+          </div>
+          <canvas class="fz-cv" id="fuseFx" aria-hidden="true"></canvas>
+          <i class="fz-burst" aria-hidden="true"></i>
+          <div class="fz-chips" aria-hidden="true"><b class="fz-chip"></b><b class="fz-chip"></b><b class="fz-chip"></b><b class="fz-chip"></b><b class="fz-chip"></b></div>
         </div>
         <div class="chillbar" id="chillbar">
           <div class="chill-moves"><b id="movesNum">20</b><span>moves</span></div>
@@ -130,6 +167,8 @@
 <script src="js/s3-skins.js"></script>
 <script src="js/s3-pops.js"></script>
 <script src="js/s3-scenes.js"></script>
+<script src="js/fuse-art.js"></script>
+<script src="js/fuse.js"></script>
 <script src="js/badges.js"></script>
 <script src="js/coach.js"></script>
 <script src="js/view.js"></script>
