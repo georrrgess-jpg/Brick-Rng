@@ -93,11 +93,11 @@
 .msgband { position: relative; height: 44px; }
 .msgband > * { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; opacity: 0; transform: translateY(8px); transition: opacity 0.18s, transform 0.3s var(--ease-out); pointer-events: none; text-align: center; }
 .msgband[data-top="spark"] .last-spark, .msgband[data-top="aim"] .aim-banner, .msgband[data-top="hint"] .hint, .msgband[data-top="combo"] .combo, .msgband[data-top="goal"] .m-goal { opacity: 1; transform: none; }
-.m-goal { font: 700 14px var(--f-ui); color: #cfe9ff; } .m-goal b { color: #fff; }
+.m-goal { inset: 4px 0 !important; margin: 0 auto; width: max-content; max-width: 100%; padding: 0 12px; border-radius: 14px; background: rgba(10, 6, 24, 0.88); border: 1px solid var(--line-2); font: 700 14px var(--f-ui); color: #cfe9ff; } .m-goal b { color: #fff; }
 .m-goal .gl-ico { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(61, 225, 255, 0.2); } .m-goal .gl-ico svg { width: 14px; height: 14px; fill: none; stroke: #7ee8ff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 .m-goal .gl-rw { padding: 2px 9px; border-radius: 99px; background: rgba(255, 200, 61, 0.2); color: #ffe7a1; border: 1px solid rgba(255, 200, 61, 0.5); font: 800 13px var(--f-ui); }
 .m-goal.done .gl-ico { background: var(--green); } .m-goal.done .gl-ico svg { stroke: #06301f; }
-.hint { padding: 0 8px; font: 600 14px/1.25 var(--f-ui); color: #fff; } .hint span { display: block; } .hint b { color: #ffd66b; }
+.hint { padding: 0 8px; font: 600 14px/1.25 var(--f-ui); color: #fff; } .hint span { display: block; padding: 6px 14px; border-radius: 14px; background: rgba(10, 6, 24, 0.88); border: 1px solid var(--line-2); } .hint b { color: #ffd66b; }   /* message pills stay readable over illustrated boards */
 .combo { font-family: var(--f-display); line-height: 1; }
 .combo b { font-size: 24px; padding: 6px 14px; border-radius: 12px; background: linear-gradient(180deg, #ffe08a, #ff9c2e); color: #3a1f00; box-shadow: 0 6px 18px rgba(255, 150, 40, 0.4); }
 .combo span { font: 700 13px var(--f-ui); color: #ffd9a0; }
@@ -111,7 +111,7 @@
 /* ===================================================================
    Run screen layout
    =================================================================== */
-:root { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 340px), 540px); }
+:root { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 420px), 540px); }
 .run { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(8px, 1.5dvh, 16px); padding: calc(var(--sat) + 6px) calc(var(--sar) + 12px) calc(var(--sab) + 8px) calc(var(--sal) + 12px); }
 .run > * { width: var(--bw); flex: none; }
 .run-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -143,13 +143,13 @@
 
 /* ---------- Rush meter + power-ups ---------- */
 .run.chill .rushbar { display: none; }   /* Chill has no fuse, so no Rush */
-.rushbar { position: relative; height: 30px; border-radius: 99px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--line-2); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); }
+.rushbar { position: relative; height: 30px; border-radius: 99px; background: #120b22; border: 1px solid var(--line-2); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); }
 .rushbar i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, #8a4dff, #ff3d8b 60%, #ff9a3d); box-shadow: 0 0 16px rgba(255, 61, 139, 0.7); transition: width 0.25s linear; }
 .rushbar span { position: absolute; inset: 0; display: grid; place-items: center; font: 700 14px var(--f-display); letter-spacing: 0.22em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
 .rushbar.hot i { animation: rushFlare 0.3s ease-in-out infinite alternate; } @keyframes rushFlare { to { filter: brightness(1.5); } }
 .run.rushing .rushbar { border-color: #ff7ab0; box-shadow: 0 0 22px rgba(255, 61, 139, 0.7); } .run.rushing .rushbar i { transition: width 0.1s linear; background: linear-gradient(90deg, #ff9a3d, #ff3d8b, #ffe58a); }
 .slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.bslot { --bc: #ffb347; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 66px; padding: 6px 6px 7px; min-width: 0; border-radius: 16px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)); border: 2px solid color-mix(in srgb, var(--bc) 50%, transparent); transition: transform 0.2s var(--ease-spring), opacity 0.2s, box-shadow 0.2s; }
+.bslot { --bc: #ffb347; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 66px; padding: 6px 6px 7px; min-width: 0; border-radius: 16px; background: linear-gradient(180deg, #2b2147, #1a1331); border: 2px solid color-mix(in srgb, var(--bc) 50%, transparent); transition: transform 0.2s var(--ease-spring), opacity 0.2s, box-shadow 0.2s; }
 .bslot[data-b="beam"] { --bc: #7ae8ff; } .bslot[data-b="prism"] { --bc: #d27aff; }
 .bslot svg { flex: none; width: 28px; height: 28px; fill: none; stroke: var(--bc); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--bc) 60%, transparent)); }
 .bslot .bname { font: 700 13px var(--f-display); letter-spacing: 0.02em; } .bslot .bcount { position: absolute; top: -9px; right: -6px; min-width: 24px; text-align: center; font: 700 14px/22px var(--f-display); font-style: normal; padding: 0 6px; border-radius: 99px; background: #1b1233; border: 2px solid color-mix(in srgb, var(--bc) 70%, transparent); color: #fff; }

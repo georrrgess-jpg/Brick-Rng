@@ -369,3 +369,4 @@ button.trophy { width: 100%; text-align: left; color: inherit; cursor: pointer; 
 .code-info { min-height: 36px; font-size: 13px !important; color: #cfc3ec; } .code-info.bad { color: #ff9aa8; }
 .data-btns { display: flex; gap: 8px; margin: 8px 0; } .data-btns .btn { flex: 1; }
 .perf { flex-direction: column; align-items: stretch; } .perf .seg.mini { width: 100%; }
+@media (max-width: 380px) { .filters { gap: 4px; } .chip-btn { padding: 0 6px; font-size: 12px; } }
