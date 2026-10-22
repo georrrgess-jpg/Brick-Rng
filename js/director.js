@@ -184,6 +184,16 @@
         if ((floor || !floorMet) && s > bestScore) { bestScore = s; best = g; }
       }
       this.lastAssist = a; this.lastTarget = tgt;
+      // a colour that joins the board (stage 3 or 5) arrives with the refill that pop deals: three of it (the fullest column first), so the player sees it
+      // when the stage band passes and can pop it at once (left to chance it came in on about one refill in three)
+      const fresh = this.colors && nColors > this.colors;
+      this.colors = nColors;
+      if (fresh) {
+        const byCol = new Map();
+        for (const h of order) { if (!byCol.has(h.c)) byCol.set(h.c, []); byCol.get(h.c).push(h); }
+        const seeds = [].concat(...Array.from(byCol.values()).sort((p, q) => q.length - p.length));   // the fullest column first, then the next
+        seeds.slice(0, 3).forEach((h) => { best[h.r][h.c] = nColors - 1; });
+      }
       return order.map((h) => ({ r: h.r, c: h.c, color: best[h.r][h.c] }));
     }
 

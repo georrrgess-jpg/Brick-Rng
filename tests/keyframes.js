@@ -18,7 +18,7 @@ let problems = 0;
 for (const [name, where] of seen) if (where.length > 1) { problems++; console.log('PROBLEM duplicate @keyframes', name, 'defined in', where.join(', ')); }
 // every animation name used in a stylesheet should exist (a typo or a rename that missed one reference plays nothing)
 const defined = new Set(seen.keys());
-const KNOWN_UNDEFINED = new Set(['tagSlam']);   // css/run.css:130 plays an animation nobody defined (the stage tag never slams); remove this entry when run.css defines it
+const KNOWN_UNDEFINED = new Set();   // animations that are played but not defined (none: add a name here only with a reason)
 const builtin = new Set(['none', 'infinite', 'alternate', 'alternate-reverse', 'reverse', 'normal', 'forwards', 'backwards', 'both', 'linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out', 'running', 'paused', 'initial', 'inherit', 'unset', 'steps']);
 for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.css')).sort()) {
   const css = fs.readFileSync(path.join(dir, f), 'utf8');

@@ -130,6 +130,18 @@ if (has) {
   ok(BR.Director.rate(0.5, { stage: 9, mode: 'daily' }) === 0.5 && BR.Director.rate(0.5, { stage: 9, mode: 'chill' }) === 0.5, 'Daily and Chill should not move the rating');
   // the first board of a run is readable: a real group to start with, never a flood
   for (let seed = 1; seed <= 200; seed++) { const e = new BR.Engine({ seed, mode: 'rush', skill: 0.5 }); const o = offer(e); ok(o.best >= 4 && o.best <= 9 && o.n3 >= 3, 'first board', seed, JSON.stringify(o)); if (problems > 5) break; }
+  // a colour that joins the board at a stage-up comes in with that refill: at least three of it, in one column, every time
+  for (let seed = 1; seed <= 120; seed++) {
+    const e = new BR.Engine({ seed, mode: 'rush', skill: 0.5 });
+    const t = (x) => { for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = x.plan(r, c); if (p) return p; } };
+    e.commit(t(e));                       // the first refill sets the colour count the director has seen
+    e.board.colorCount = 6;               // the next stage brings the sixth colour (the run deals the refill with it, see Run.runTurn)
+    const before = e.board.grid.flat().filter((b) => b && b.color === 5).length;
+    const p = t(e); if (!p) continue;
+    e.commit(p);
+    const after = e.board.grid.flat().filter((b) => b && b.color === 5).length;
+    ok(after - before >= Math.min(3, p.cells.length), 'a new colour arrives with the refill', seed, after - before, p.cells.length);
+  }
   console.log(problems ? problems + ' PROBLEMS' : 'director ok');
   process.exit(problems ? 1 : 0);
 }

@@ -136,6 +136,7 @@
 .ss-row { display: flex; align-items: baseline; gap: 10px; height: 20px; }
 .ss-stage { flex: none; font: 700 16px/1 var(--f-display); letter-spacing: 0.02em; color: #fff; } .ss-stage span { background: var(--grad-hot); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 20px; }
 .ss-stage.slam { animation: tagSlam 0.7s var(--ease-spring); }
+@keyframes tagSlam { 0% { transform: scale(2.1); opacity: 0.2; } 55% { transform: scale(0.9); opacity: 1; } 100% { transform: none; opacity: 1; } }   /* the stage tag slams in when the stage changes */
 .ss-goal { flex: 1; font: 700 13px/1 var(--f-ui); color: var(--muted); font-variant-numeric: tabular-nums; }
 .ss-track { position: relative; height: 10px; border-radius: 6px; background: rgba(0, 0, 0, 0.5); overflow: hidden; } .ss-track i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, #8a4dff, #3de1ff); transition: width 0.5s var(--ease-out); box-shadow: 0 0 10px rgba(61, 225, 255, 0.6); }
 .mult { flex: none; align-self: center; padding: 3px 10px; border-radius: 99px; font: 700 13px/1 var(--f-display); font-style: normal; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--line-2); color: #fff; } .mult.slam { animation: tagSlam 0.7s var(--ease-spring); } .run.rushing .mult { background: var(--grad-hot); border-color: #fff; color: #fff; box-shadow: 0 0 16px rgba(255, 61, 139, 0.8); }
