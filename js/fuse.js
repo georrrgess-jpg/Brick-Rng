@@ -571,9 +571,9 @@
       el.textContent = '+' + (rec.sec >= 10 ? Math.round(rec.sec) : rec.sec.toFixed(1)) + 's';
       el.className = 'fz-chip' + (rec.big ? ' big' : rec.sec >= 1.5 ? ' mid' : '');
       el.style.setProperty('--c', C.c); el.style.setProperty('--cg', C.g);
-      el.getAnimations().forEach((a) => a.cancel());
+      if (el._a) el._a.cancel();   // (getAnimations() would force a style flush in the middle of a pop)
       const tx = this.rx, ty = this.ry - 2;
-      if (BR.reducedMotion) { el.animate([{ opacity: 0, transform: `translate3d(${tx}px,${ty - 18}px,0) translate(-50%,-50%)` }, { opacity: 1, offset: 0.2, transform: `translate3d(${tx}px,${ty - 18}px,0) translate(-50%,-50%)` }, { opacity: 0, transform: `translate3d(${tx}px,${ty - 18}px,0) translate(-50%,-50%)` }], { duration: 700, delay: Math.max(0, rec.t0 - now()), fill: 'both' }); return; }
+      if (BR.reducedMotion) { el._a = el.animate([{ opacity: 0, transform: `translate3d(${tx}px,${ty - 18}px,0) translate(-50%,-50%)` }, { opacity: 1, offset: 0.2, transform: `translate3d(${tx}px,${ty - 18}px,0) translate(-50%,-50%)` }, { opacity: 0, transform: `translate3d(${tx}px,${ty - 18}px,0) translate(-50%,-50%)` }], { duration: 700, delay: Math.max(0, rec.t0 - now()), fill: 'both' }); return; }
       const f = rec.from, sx = f ? f.x - hr.left : this.rx, sy = f ? f.y - hr.top : this.ry + 120;
       // an arc: the control point sits above the straight line, toward the side the chip comes from
       const cx = sx + (tx - sx) * 0.35 + (sx < tx ? -30 : 30), cy = Math.min(sy, ty) - 80;
@@ -584,7 +584,7 @@
         const sc = (0.62 + 0.62 * Math.sin(Math.min(1, u * 1.6) * 1.5708)) * (1 - 0.45 * Math.pow(u, 4)) * (rec.big ? 1.14 : 1);
         frames.push({ transform: `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%) scale(${sc.toFixed(3)})`, opacity: u < 0.08 ? u / 0.08 : u > 0.88 ? 1 - (u - 0.88) / 0.12 : 1 });
       }
-      el.animate(frames, { duration: rec.dur, delay: Math.max(0, rec.t0 - now()), easing: 'linear', fill: 'both' });
+      el._a = el.animate(frames, { duration: rec.dur, delay: Math.max(0, rec.t0 - now()), easing: 'linear', fill: 'both' });
     },
     /** chips that have arrived: let the gain through, grow the rope with a little overshoot, glint, flare, ring */
     land(tnow) {
@@ -638,9 +638,9 @@
       const el = this.chipEls[this.chipI++ % this.chipEls.length], x = this.rx, y = this.ry;
       el.textContent = '-' + (sec >= 10 ? Math.round(sec) : +sec.toFixed(1)) + 's';
       el.className = 'fz-chip big'; el.style.setProperty('--c', '#ff4d6d'); el.style.setProperty('--cg', 'rgba(255,60,90,0.7)');
-      el.getAnimations().forEach((a) => a.cancel());
-      if (BR.reducedMotion) { el.animate([{ opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 1, offset: 0.2, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }], { duration: 800, fill: 'both' }); return; }
-      el.animate([
+      if (el._a) el._a.cancel();
+      if (BR.reducedMotion) { el._a = el.animate([{ opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 1, offset: 0.2, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }], { duration: 800, fill: 'both' }); return; }
+      el._a = el.animate([
         { opacity: 0, transform: `translate3d(${x}px,${y + 14}px,0) translate(-50%,-50%) scale(0.6)` },
         { opacity: 1, offset: 0.14, transform: `translate3d(${x + 4}px,${y + 26}px,0) translate(-50%,-50%) scale(1.15)` },
         { opacity: 1, offset: 0.5, transform: `translate3d(${x + 10}px,${y + 48}px,0) translate(-50%,-50%) scale(1) rotate(5deg)` },

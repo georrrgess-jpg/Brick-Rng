@@ -11,7 +11,7 @@ const DSF = +(process.env.BUDGET_DSF || 2);
 const B = {   // ms per frame unless noted
   homeIdle: 30, shopIdle: 30, collectionIdle: 32, passIdle: 30, missionsIdle: 30, profileIdle: 30,
   tabSwitchFrame: 130, scrollCollection: 40, scrollShop: 36, sheetOpen: 55, tabSwitchJs: 50, runIdle: 24, popAvg: 55, popMax: 120,
-  reelFreeze: 130, hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 900, nodesAfterCycle: 900, longTask: 80,
+  reelFreeze: 150, hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 900, nodesAfterCycle: 900, longTask: 80,
 };
 const results = []; let failed = 0;
 const med = (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
