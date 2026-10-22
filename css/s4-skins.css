@@ -111,7 +111,7 @@ html.shapes .skin-glowcap .brick[data-c="5"]:not(.fusebrick) .stud { width: 31%;
 /* a gold tooled line just inside the cover */
 .skin-spellbook .brick:not(.fusebrick) .deco::before { content: ''; position: absolute; inset: 9% 7% 8% 19%; border-radius: 9%; border: 0.016em solid rgba(255, 224, 140, 0.7); }
 /* the ribbon bookmark hanging out of the bottom */
-.skin-spellbook .brick:not(.fusebrick) .deco::after { content: ''; position: absolute; left: 62%; bottom: -0.17em; width: 0.085em; height: 0.2em; background: linear-gradient(90deg, #f6d97c, #e6b244 55%, #b27b1c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
+.skin-spellbook .brick:not(.fusebrick) .deco::after { content: ''; position: absolute; left: 62%; bottom: -0.085em; width: 0.08em; height: 0.17em; background: linear-gradient(90deg, #f6d97c, #e6b244 55%, #b27b1c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
 :root:not(.shapes) .skin-spellbook .brick:not(.fusebrick) .stud { left: 56%; width: 46%; height: 46%; top: 48%; border-radius: 0; background: none; box-shadow: none; }
 html.shapes .skin-spellbook .brick:not(.fusebrick) .stud { left: 56%; }
 

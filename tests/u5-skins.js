@@ -21,7 +21,7 @@ const MIN_DE = 12.5;
   let problems = 0;
   const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } };
   const { browser, page, errors } = await launch({ width: 393, height: 852, dsf: 1 });
-  await page.evaluate(() => { BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 3; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); });
+  await page.evaluate(() => { Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; BR.Storage.data.seen.whatsnew4 = true; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 3; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); });
 
   // ---- 1. nothing baked at boot
   const bakedAtBoot = await page.evaluate(() => document.querySelectorAll('style[id^="s4-art-"]').length);
