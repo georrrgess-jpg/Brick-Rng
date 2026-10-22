@@ -443,7 +443,7 @@
     hatMoves() { /* the settle after the hat goes on */ this.hatSway(true); },
     /** the tiny sway of a calm Fizz: two swings, then still (never an idle loop) */
     hatSway(force) {
-      if (!this.hat || (!force && this.ls.sway && this.ls.sway.playState === 'running')) return;
+      if (!this.hat || (!force && ((this.ls.sway && this.ls.sway.playState === 'running') || (this.ls.bow && this.ls.bow.playState === 'running')))) return;   // (a bow in progress is not interrupted by a sway)
       this.hatMove('sway', [{ rotate: '0deg' }, { rotate: '3.2deg', offset: 0.22 }, { rotate: '-2.4deg', offset: 0.5 }, { rotate: '1.2deg', offset: 0.76 }, { rotate: '0deg' }], { duration: 1100, easing: 'ease-in-out' });
     },
     /** read the geometry once: where the track, the bomb and the readout are, and how big the particle canvas is */

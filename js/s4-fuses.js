@@ -52,7 +52,7 @@
       const { bs, u } = bomb();
       F().bake(F().cls, ['nt']);                                                                           // (the uncorked flask is the body without its topper)
       cls('drank', true);                                                                                   // the liquid in the flask drops (css transition on transform)
-      cls('glow', true); later(() => cls('glow', false), 900);
+      cls('glow', true); later(() => cls('glow', false), 450);
       sprite('cork', 0, -bs / 2 + 4 * u, [                                                                  // the cork pops off
         { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
         { transform: `translate(${(10 * u).toFixed(0)}px,${(-30 * u).toFixed(0)}px) rotate(300deg)`, opacity: 1, offset: 0.4 },
@@ -66,7 +66,7 @@
       cls('drank', false);                                                                                  // the flask fills up again
       if (!live()) return;
       const { bs, u } = bomb();
-      sprite('bub', 0, -bs / 2 + 6 * u, [{ transform: 'translate(0,0) scale(0.6)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate(${(4 * u).toFixed(0)}px,${(-24 * u).toFixed(0)}px) scale(1.3)`, opacity: 0 }], { duration: 520 });   // a hiccup: one bubble
+      sprite('bub', 0, -bs / 2 + 6 * u, [{ transform: 'translate(0,0) scale(0.6)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate(${(4 * u).toFixed(0)}px,${(-24 * u).toFixed(0)}px) scale(1.3)`, opacity: 0 }], { duration: 440 });   // a hiccup: one bubble
       F().pop(F().pulse, 1.08, 280);
     },
     stageUp() {

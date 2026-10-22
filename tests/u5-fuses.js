@@ -100,7 +100,7 @@ const ALLOWED = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale',
         const cls = (el.className.toString() + (el.dataset && el.dataset.part ? '[' + el.dataset.part + ']' : '')).slice(0, 36);
         if (a.playState === 'running' && t.iterations === Infinity) out.infinite.push(cls);
         const kf = a.effect && a.effect.getKeyframes ? a.effect.getKeyframes() : [];
-        for (const f of kf) for (const k of Object.keys(f)) if (!allowed.has(k)) out.badProps.push(cls + ':' + k);
+        for (const f of kf) for (const k of Object.keys(f)) if (!allowed.has(k) && !(k === 'color' && /fz-num/.test(cls))) out.badProps.push(cls + ':' + k);   // (the readout's own colour fade belongs to the engine, not to a cosmetic)
         if (a.transitionProperty && !allowed.has(a.transitionProperty) && !/^(--|color)/.test(a.transitionProperty)) out.badProps.push(cls + ' transition:' + a.transitionProperty);
       }
       // declared transitions on the hat and on the new layers: only transform and opacity

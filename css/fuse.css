@@ -251,7 +251,7 @@ html.reduced .vignette-warn.on { opacity: 0.55; }
 
 /* ---- Elixir: the liquid is a layer behind the glass; its level moves with transform */
 .fx-bulb { position: absolute; left: calc(9.4 * var(--b)); top: calc(16.9 * var(--b)); width: calc(45.2 * var(--b)); height: calc(45.2 * var(--b)); border-radius: 50%; overflow: hidden; }
-.fx-lq { position: absolute; inset: 0; transform: translateY(40%); transition: transform 0.7s var(--ease-spring), opacity 0.55s;
+.fx-lq { position: absolute; inset: 0; transform: translateY(40%); transition: transform 0.5s var(--ease-spring), opacity 0.5s;
   background: linear-gradient(180deg, #eafff2 0 2.6%, #9dffc8 2.6% 7%, #34e08a 26%, #12a060 70%, #0a7a46); }
 .fx-lq.hot { opacity: 0; background: linear-gradient(180deg, #fff6d8 0 2.6%, #ffd062 2.6% 7%, #f0a020 30%, #c07010 75%, #8a4a06); }
 .fx-lq.cr { opacity: 0; background: linear-gradient(180deg, #ffe0d8 0 2.6%, #ff7060 2.6% 7%, #e03020 30%, #b01808 75%, #700a04); }
@@ -291,7 +291,7 @@ html.reduced .vignette-warn.on { opacity: 0.55; }
    half (low: under 10 s), thin crescent (critical: under 5 s), a dark moon in the Last Spark. (The spec says half under 25% and a crescent under 10 s, but a 30 s fuse is
    under 25% only below 7.5 s, which is already under 10 s: the half moon would never show. One phase per state keeps all five visible.) */
 .fx-halo, .fx-corona { position: absolute; left: calc(-14 * var(--b)); top: calc(-10 * var(--b)); width: calc(92 * var(--b)); height: calc(92 * var(--b)); border-radius: 50%; pointer-events: none; transition: opacity 0.6s; }
-.fx-halo { background: radial-gradient(circle, rgba(222, 234, 255, 0.55) 0, rgba(190, 210, 255, 0.24) 42%, transparent 68%); opacity: 0.5; }
+.fx-halo { background: radial-gradient(circle, rgba(226, 238, 255, 0.78) 0, rgba(190, 212, 255, 0.4) 42%, transparent 70%); opacity: 0.45; }
 .fx-corona { background: radial-gradient(circle, transparent 0 51%, rgba(255, 205, 110, 0.95) 57%, rgba(255, 130, 50, 0.5) 64%, transparent 76%); opacity: 0; }
 .fuse[data-z="frozen"] .fx-halo { opacity: 1; } .fuse[data-z="spark"] .fx-halo { opacity: 0.1; } .fuse[data-z="spark"] .fx-corona { opacity: 1; animation: fxCorona 0.5s ease-in-out infinite alternate; }
 @keyframes fxCorona { to { transform: scale(1.07); } }
