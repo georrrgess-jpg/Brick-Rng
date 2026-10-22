@@ -36,12 +36,13 @@ const check = (name, value, budget, unit = 'ms') => { const ok = value <= budget
     own.forEach((id, i) => { if (!P.owns(id)) P.keep({ itemId: id, shine: ['plain', 'glossy', 'holo', 'prism', 'plain'][i % 5], seed: (i * 733) % 10000 }); });
     BR.App.applySettings(); BR.Skins.apply();
   });
-  const go = (id) => page.evaluate((id) => { if (id === 'pass') { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); BR.Router.rerender(); } else { BR.Router.screens.missions.tab = 'daily'; BR.Router.go(id); } }, id);
+  const go = (id) => page.evaluate((id) => { window.dispatchEvent(new Event('pointerdown'));   // a touch: menus hold still after 20 s without one, which would flatter every number
+     if (id === 'pass') { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); BR.Router.rerender(); } else { BR.Router.screens.missions.tab = 'daily'; BR.Router.go(id); } }, id);
   const sleep = (ms) => page.waitForTimeout(ms);
   const frames = (ms, stopExpr) => page.evaluate(([ms, stopExpr]) => new Promise((res) => { const ts = []; let last = performance.now(); const end = last + ms; const stop = stopExpr ? new Function('return (' + stopExpr + ')') : null; const f = (n) => { ts.push(n - last); last = n; if (n < end && !(stop && stop())) requestAnimationFrame(f); else { ts.shift(); const s = ts.slice().sort((a, b) => a - b); res({ avg: ts.reduce((a, b) => a + b, 0) / Math.max(1, ts.length), p95: s[Math.floor(s.length * 0.95)] || 0, max: s[s.length - 1] || 0 }); } }; requestAnimationFrame(f); }), [ms, stopExpr || null]);
   const rep = async (fn) => { const r = []; for (let i = 0; i < RUNS; i++) r.push(await fn()); return r; };
 
-  await page.touchscreen.tap(20, 400);   // the first tap of a session unlocks audio; a player has done that long before a run
+  await page.touchscreen.tap(196, 3);   // the first tap of a session unlocks audio; a player has done that long before a run
   // visit every tab once like a player would, so left-behind screens hold their real content
   for (const s of ['shop', 'collection', 'pass', 'missions', 'profile', 'home']) { await go(s); await sleep(500); }
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
@@ -50,7 +51,8 @@ const check = (name, value, budget, unit = 'ms') => { const ok = value <= budget
   for (const [id, key] of [['home', 'homeIdle'], ['shop', 'shopIdle'], ['collection', 'collectionIdle'], ['pass', 'passIdle'], ['missions', 'missionsIdle'], ['profile', 'profileIdle']]) {
     await go(id); await sleep(1200);
     check(key, med((await rep(() => frames(1500))).map((r) => r.avg)), B[key]);
-    const an = await page.evaluate(() => { const all = document.getAnimations(); const hid = all.filter((a) => { const t = a.effect && a.effect.target; const sc = t && t.closest && t.closest('.screen'); return sc && !sc.classList.contains('on') && a.playState === 'running'; }).length; return { all: all.filter((a) => a.playState === 'running').length, hidden: hid }; });
+    const an = await page.evaluate(() => { const all = document.getAnimations(); const hid = all.filter((a) => { const t = a.effect && a.effect.target; const sc = t && t.closest && t.closest('.screen'); return sc && !sc.classList.contains('on') && a.playState === 'running'; }).length; return { all: all.filter((a) => a.playState === 'running').length, hidden: hid, idle: document.documentElement.classList.contains('idle'), under: document.documentElement.classList.contains('under-overlay'), sheets: document.getElementById('layer-sheets').children.length, ov: document.getElementById('layer-overlays').children.length, sheetTitle: (document.querySelector('#layer-sheets .sheet') || {}).className + ':' + ((document.querySelector('#layer-sheets .sheet h2') || {}).textContent || '') + ((document.querySelector('#layer-sheets .coach-title') || {}).textContent || ''), op: document.getElementById('layer-opening').children.length }; });
+    if (process.env.DEBUG_PERF) console.log('   debug', id, JSON.stringify(an));
     check(key.replace('Idle', ' running animations'), an.all, B.animsPerScreen, '');
     if (id === 'home') check('animations on hidden screens', an.hidden, B.hiddenAnims, '');
   }
