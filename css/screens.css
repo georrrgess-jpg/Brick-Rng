@@ -412,7 +412,8 @@ button.trophy { width: 100%; text-align: left; color: inherit; cursor: pointer; 
   .logo-pop { font-size: calc(32px * var(--ts)); gap: 6px; } .logo-rush { margin: 0; } .logo-rush span { font-size: calc(42px * var(--ts)); } .fuse-line { display: none; }
   .hero { grid-template-columns: minmax(0, 1fr) 84px; padding: 12px 14px 12px; gap: 4px 6px; }
   .hero-sub { display: none; } .hero-title { font-size: calc(40px * var(--ts)); } .hero-art { margin-top: 0; } .bomb-art { width: 84px; height: 84px; }
-  .hero-cta { flex-direction: row; align-items: center; margin-top: 6px; } .hero-play { flex: 1 1 0; min-height: 56px; font-size: calc(22px * var(--ts)); } .hero-cta .chip-boost { flex: 1 1 0; padding: 0 10px; } .hero-cta .cb-ico { display: none; }
+  .hero-cta { margin-top: 6px; gap: 6px; } .hero-play { min-height: 56px; font-size: calc(22px * var(--ts)); }
+  .col-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* the two modes become slim rows: icon, name and sentence, and the tag at the end */
   .row2 { grid-template-columns: 1fr; gap: 10px; }
   .mode-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; grid-template-areas: "ico title tag" "ico sub tag"; column-gap: 12px; row-gap: 0; align-items: center; min-height: 0; padding: 10px 14px; }

@@ -30,6 +30,8 @@ async function player(page, o = {}) {
   }, o);
   await wait(page, 700);
 }
+/** Escape, then wait until the sheet has really left (its element is removed half a second later): a slow machine must not move the test on early. */
+const esc = async (page) => { await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.sheet'), null, { timeout: 8000 }).catch(() => {}); await page.waitForTimeout(150); };
 const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width, h: b.height }; }, sel);
 
 (async () => {
@@ -120,7 +122,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     const seg0 = await page.evaluate(() => { const s = document.getElementById('perfSeg'); window.__seg = s; return s.style.getPropertyValue('--si'); });
     await page.click('[data-perf="high"]'); await wait(page, 100);
     ok(await page.evaluate((s0) => window.__seg.isConnected && window.__seg.style.getPropertyValue('--si') === '2' && s0 === '0', seg0), 'the Graphics control was rebuilt instead of sliding', seg0);
-    await page.keyboard.press('Escape'); await wait(page, 700);
+    await esc(page);
 
     // focus: into the sheet, trapped there, the page behind inert, back to the opener on Escape
     await page.evaluate(() => BR.Router.go('home')); await wait(page, 600);
@@ -132,16 +134,16 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     for (let i = 0; i < 9; i++) { await page.keyboard.press('Tab'); walk.push(await page.evaluate(() => !!document.activeElement.closest('.sheet'))); }
     for (let i = 0; i < 4; i++) { await page.keyboard.press('Shift+Tab'); walk.push(await page.evaluate(() => !!document.activeElement.closest('.sheet'))); }
     ok(walk.every(Boolean), 'Tab left the open sheet', JSON.stringify(walk));
-    await page.keyboard.press('Escape'); await wait(page, 700);
+    await esc(page);
     ok(await page.evaluate(() => document.activeElement && document.activeElement.id === 'tbCoins'), 'focus did not return to the control that opened the sheet', await page.evaluate(() => document.activeElement.id || document.activeElement.className));
     ok(await page.evaluate(() => !document.getElementById('screens').hasAttribute('inert')), 'the page stayed inert after the sheet closed');
     // nested sheets: closing the top one hands focus and inertness to the one below
     await page.evaluate(() => { BR.settingsSheet(); }); await wait(page, 600);
     await page.evaluate(() => { BR.coinSheet(); }); await wait(page, 600);
     ok(await page.evaluate(() => document.querySelectorAll('.sheet[inert]').length === 1 && !!document.activeElement.closest('.sheet:not([inert])')), 'a sheet over a sheet leaves the lower one reachable');
-    await page.keyboard.press('Escape'); await wait(page, 700);
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => document.querySelectorAll('.sheet').length === 1, null, { timeout: 8000 }).catch(() => {}); await wait(page, 100);
     ok(await page.evaluate(() => document.querySelectorAll('.sheet[inert]').length === 0 || [...document.querySelectorAll('.sheet')].filter((s) => s.classList.contains('on') && s.hasAttribute('inert')).length === 0), 'the sheet below stayed inert');
-    await page.keyboard.press('Escape'); await wait(page, 700);
+    await esc(page);
 
     // every card, tile and badge can be reached with the keyboard
     const reach = {};
@@ -154,7 +156,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     await page.evaluate(() => BR.Router.go('collection')); await wait(page, 1500);
     await page.evaluate(() => document.querySelector('.icard[data-uid]:not([data-uid="default"]) .ic-hit').focus()); await page.keyboard.press('Enter'); await wait(page, 700);
     ok(await page.evaluate(() => !!document.querySelector('.sheet.detail-sheet.on')), 'Enter on a Collection card did not open it');
-    await page.keyboard.press('Escape'); await wait(page, 700);
+    await esc(page);
     ok(await page.evaluate(() => !!document.activeElement && document.activeElement.classList.contains('ic-hit')), 'focus did not return to the card that was opened', await page.evaluate(() => document.activeElement.className));
 
     // wearing an item is one tap from its card: Collection, then the circle
@@ -176,7 +178,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     // the item sheet: demo sparks stay inside the preview well, and Try it returns to the sheet
     await page.evaluate(() => { const v = BR.Storage.data.profile.vault.find((x) => BR.itemById[x.itemId].type === 'skin'); BR.itemSheet(v.uid, 'skin'); }); await wait(page, 1200);
     ok(await page.evaluate(() => /inset/.test(document.getElementById('fx').style.clipPath)), 'the demo canvas is not clipped to the preview well');
-    await page.keyboard.press('Escape'); await wait(page, 1400);
+    await esc(page);
     ok(await page.evaluate(() => !document.getElementById('fx').style.clipPath), 'the demo canvas stayed clipped after the sheet closed');
 
     // Shop: pity line says the real count, a chest you cannot afford says how much is missing, one earn list
@@ -187,7 +189,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     // the Coins sheet on the Shop has no button that does nothing
     await page.evaluate(() => BR.coinSheet()); await wait(page, 700);
     ok(await page.evaluate(() => ![...document.querySelectorAll('.sheet.on .btn')].some((b) => /Go to the Shop/.test(b.textContent))), 'the Coins sheet offers "Go to the Shop" on the Shop');
-    await page.keyboard.press('Escape'); await wait(page, 600);
+    await esc(page);
     // "Show me the chest" from a locked item scrolls to the chest and pulses it
     await page.evaluate(() => { BR.Router.go('collection'); }); await wait(page, 1200);
     await page.evaluate(() => { const it = BR.ITEMS.find((i) => i.type === 'fuse' && !BR.Progress.owns(i.id) && !i.pass); BR.lockedSheet(it.id); }); await wait(page, 800);
@@ -225,7 +227,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     // the Pass: a claimed Coins tier says when it was paid
     await page.evaluate(() => { BR.rewardSheet(1); }); await wait(page, 700);
     ok(await page.evaluate(() => /Paid when you reached level/.test(document.querySelector('.sheet.on .detail-desc').textContent) && !/right away/.test(document.querySelector('.sheet.on').textContent)), 'a claimed Coins tier says the Coins come right away');
-    await page.keyboard.press('Escape'); await wait(page, 600);
+    await esc(page);
 
     // Home: a finished week stops promising the shield, and the weeks are shown; a new player sees no placeholder stats
     await page.evaluate(() => { const k = BR.dayKey(); BR.Storage.data.profile.streak = { ring: 7, weeks: 2, last: k, shield: 1, best: 14 }; BR.Router.go('home'); BR.Router.rerender(); }); await wait(page, 800);
@@ -341,7 +343,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     const s = await rect(page, '.sheet.on'); ok(s.w <= 560.5 && Math.abs((s.l + s.r) / 2 - 640) <= 2, 'a desktop sheet is wider than 560px or off centre', JSON.stringify(s));
     const b = await page.evaluate(() => Math.max(...[...document.querySelectorAll('.sheet.on .sheet-actions .btn')].map((x) => x.getBoundingClientRect().width)));
     ok(b <= 560, 'a desktop sheet button is as wide as the page', b);
-    await page.keyboard.press('Escape'); await wait(page, 700);
+    await esc(page);
     await page.evaluate(() => { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); }); await wait(page, 1800);
     const x0 = await page.evaluate(() => document.getElementById('passTrack').scrollLeft);
     const tr = await rect(page, '#passTrack');

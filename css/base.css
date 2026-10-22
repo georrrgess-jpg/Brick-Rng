@@ -230,7 +230,7 @@ h1, h2, h3, h4, p { margin: 0; }
 #toasts { position: absolute; inset: 0; z-index: 90; pointer-events: none; }
 .toast-slot { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 16px; }
 .toast-slot.top { top: calc(var(--sat) + 8px); }
-.toast-slot.bottom { bottom: calc(var(--tabbar-h) + var(--sab) + 14px); }
+.toast-slot.bottom { bottom: calc(var(--tabbar-h) + var(--sab) + 36px); }   /* above the Home disc, which stands 26px over the bar */
 .toast { max-width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 99px; font: 700 calc(14px * var(--ts)) var(--f-ui); white-space: nowrap; background: rgba(24, 17, 44, 0.96); border: 1px solid var(--line-2); box-shadow: var(--sh-2); animation: toastIn 0.45s var(--ease-spring) both; }
 .toast .t-msg { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .toast.out { animation: toastOut 0.3s ease-in forwards; } .toast.good { border-color: rgba(61, 220, 151, 0.6); } .toast.bad { border-color: rgba(255, 77, 109, 0.6); }
@@ -261,7 +261,7 @@ html.reduced .blob, html.reduced .bg-bricks { display: none; }
 html.reduced .stg { opacity: 1 !important; transform: none !important; animation: none !important; }   /* nothing waits its turn: the content is there at once */
 html.reduced .screen.on, html.reduced .screen.leaving { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .blob, .bg-bricks { display: none; } }
-@media (min-width: 700px) { #screens .scroll, .topbar { width: min(100%, 560px); margin-inline: auto; } .tabbar { --tb-l: max(var(--sal), calc((100vw - 560px) / 2)); --tb-r: max(var(--sal), calc((100vw - 560px) / 2)); grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 700px) { #screens .scroll, .topbar { width: min(100%, var(--col-w, 560px)); margin-inline: auto; } .tabbar { --tb-l: max(var(--sal), calc((100vw - 560px) / 2)); --tb-r: max(var(--sal), calc((100vw - 560px) / 2)); grid-template-columns: repeat(5, 1fr); } }
 
 /* centered sheets: title in the middle, close button tucked in the corner */
 .sheet.center .sheet-head { justify-content: center; padding-top: 18px; }
@@ -280,7 +280,7 @@ html.under-overlay .bg, html.under-overlay .bg *, html.under-overlay .bg *::befo
 
 /* ---------- landscape phones: the tab bar becomes a slim rail on the left, so the content keeps its height ---------- */
 @media (orientation: landscape) and (max-height: 560px) {
-  :root { --rail: calc(74px + var(--sal)); --tabbar-h: 0px; }
+  :root { --rail: calc(74px + var(--sal)); --tabbar-h: 0px; --col-w: 700px; }   /* a landscape phone is wide enough for a wider column (and Home's two columns) */
   .tabbar { top: 0; right: auto; bottom: 0; width: var(--rail); height: auto; padding: var(--sat) 0 var(--sab) var(--sal); grid-template-columns: 1fr; grid-template-rows: repeat(5, 1fr); align-items: stretch; border-top: 0; border-right: 1px solid var(--line-2); background: linear-gradient(90deg, rgba(20, 14, 38, 0.97), rgba(10, 7, 20, 0.99)); }
   .tabbar.hidden { transform: translateX(-110%); }
   .tab { height: auto; min-height: 44px; gap: 1px; }

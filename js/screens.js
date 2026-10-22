@@ -227,7 +227,8 @@
       // the chip under Play: what the last start chose. Boosts spend Coins, so a chip that starts a run says its price.
       const last = BR.lastBoosts(), canBoost = st.runs >= BR.CFG.boostsFromRun;
       let chip = '';
-      if (canBoost && last && last.ids.length && last.cost <= P.coins) chip = `<button class="chip-boost spend" data-act="play-last" type="button" aria-label="Start again with ${last.names.join(' and ')} for ${last.cost} Coins"><span class="cb-ico">${BR.icon('bolt')}</span><span class="cb-txt">${last.names.join(' + ')}</span><span class="cb-price">${BR.coin()}${last.cost}</span></button>`;
+      const chipText = last && last.names.join(' + ').length <= 22 ? last.names.join(' + ') : last ? `${last.ids.length} Boosts` : '';
+      if (canBoost && last && last.ids.length && last.cost <= P.coins) chip = `<button class="chip-boost spend" data-act="play-last" type="button" aria-label="Start again with ${last.names.join(' and ')} for ${last.cost} Coins" title="${last.names.join(' + ')}"><span class="cb-ico">${BR.icon('bolt')}</span><span class="cb-txt">${chipText}</span><span class="cb-price">${BR.coin()}${last.cost}</span></button>`;
       else if (canBoost && last && !last.ids.length) chip = `<button class="chip-boost" data-act="open-boosts" type="button" aria-label="Choose Boosts for this run"><span class="cb-ico">${BR.icon('plus')}</span><span class="cb-txt">Add Boosts</span></button>`;
       this.el.innerHTML = `<div class="scroll home"><div class="hcol a">
         <div class="logo stg" data-i="0" aria-label="Pop Rush">
