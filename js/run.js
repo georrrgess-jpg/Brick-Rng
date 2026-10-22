@@ -422,12 +422,13 @@
       const el = BR.el(`<div class="callout">${m.text}</div>`);
       el.style.setProperty('--cc', m.color); el.style.fontSize = size.toFixed(1) + 'px';
       layer.appendChild(el);
+      // (the easing belongs to each step: one easing on the whole animation bends the key times, and the text started fading after a third of its life)
       const a = el.animate([
-        { transform: 'translate(-50%,-50%) scale(0.3) rotate(-6deg)', opacity: 0 },
-        { transform: 'translate(-50%,-50%) scale(1.2) rotate(2deg)', opacity: 1, offset: 0.2 },
-        { transform: 'translate(-50%,-54%) scale(1) rotate(0)', opacity: 1, offset: 0.66 },
+        { transform: 'translate(-50%,-50%) scale(0.3) rotate(-6deg)', opacity: 0, easing: 'cubic-bezier(0.2,0.8,0.3,1)' },
+        { transform: 'translate(-50%,-50%) scale(1.2) rotate(2deg)', opacity: 1, offset: 0.2, easing: 'cubic-bezier(0.2,0.8,0.3,1)' },
+        { transform: 'translate(-50%,-54%) scale(1) rotate(0)', opacity: 1, offset: 0.66, easing: 'ease-in' },
         { transform: 'translate(-50%,-78%) scale(0.92)', opacity: 0 },
-      ], { duration: m.dur, easing: 'cubic-bezier(0.2,0.8,0.3,1)', fill: 'both' });
+      ], { duration: m.dur, easing: 'linear', fill: 'both' });
       m.el = el; m.anim = a; m.t0 = performance.now(); L.cur = m;
       a.onfinish = () => { el.remove(); if (L.cur === m) { L.cur = null; this.pumpLane(); } };
     },
@@ -795,7 +796,7 @@
     rushEnd() {
       this.el.classList.remove('rushing'); this.setMult(true);
       BR.audio.rushEnd(); BR.haptic('tick'); BR.Fuse.rushEnd();
-      this.callout('Rush over', '#e1d8ff');
+      this.callout('Rush over', '#b99cff');   // (a stronger lilac than before: the pale one disappeared on bright boards, R-12)
       if (BR.Music) BR.Music.setRush(false);
       if (BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });
     },
