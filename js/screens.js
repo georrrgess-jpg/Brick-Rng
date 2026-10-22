@@ -52,7 +52,11 @@
     },
     setTitle(id) {
       const h = $('tbTitle'), t = this.titles[id] || '';
-      if (h.textContent !== t) { h.textContent = t; if (t) BR.replay(h, 'swap'); }
+      if (h.textContent !== t) {
+        h.textContent = t;
+        // the title slides in (WAAPI: restarting a CSS animation with BR.replay would read the animations and flush the page's styles in the middle of the tab switch)
+        if (t && !BR.reducedMotion && h.animate) h.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+      }
       h.setAttribute('aria-label', t || 'Home');   // (Home shows no title, but the page still has a heading)
     },
     /** The Coin pill shows the balance. A change that happens while the bar is on screen counts up (js/ui.js refreshCoins); one made behind
@@ -353,6 +357,7 @@
     return pool.length ? pool[Math.floor(Date.now() / 864e5) % pool.length] : null;
   };
   const Shop = {
+    heavy: true,   // (chest art: not painted a second time under the tab fade, see Router.go)
     render() {
       const spot = spotlightItem();
       const spotHTML = spot ? `<button class="spotlight stg" data-spot="${spot.id}" style="--rc:${R(spot.rarity).color}" type="button" aria-label="New in Moonwick: ${esc(spot.name)}, ${R(spot.rarity).name} ${BR.ITEM_TYPES[spot.type].name}. See it">
@@ -413,7 +418,7 @@
   const colLabel = (t) => (t === 'hat' ? 'Hats' : BR.ITEM_TYPES[t].plural);
   const TOWER_ICO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21V10M16 21V10M8 10l4-6 4 6M6 21h12M10.5 21v-4.5a1.5 1.5 0 013 0V21M12 4V2M10.5 13h3"/></svg>`;
   const Collection = {
-    type: 'skin', filter: null, view: 'items',
+    type: 'skin', filter: null, view: 'items', heavy: true,
     render(arrive) {
       if (this.view === 'tower' && BR.Tower) return this.renderTower();
       const type = this.type;
@@ -515,7 +520,17 @@
     hydrateGrid() {
       const rest = this._rest, locked = this._lockedTiles;
       if (rest && rest.length > FIRST_CARDS) hydrate(this.el, '.icard.ph', (el) => { el.insertAdjacentHTML('afterend', rest[+el.dataset.k].replace('class="icard ', 'class="icard late ')); el.remove(); });
-      if (locked && locked.length > FIRST_LOCKED) hydrate(this.el, '.lk.ph', (el) => { el.insertAdjacentHTML('afterend', locked[+el.dataset.k]); el.remove(); });
+      if (this._io) { this._io.disconnect(); this._io = null; }
+      const phs = locked ? this.el.querySelectorAll('.lk.ph') : [];
+      if (!phs.length) return;
+      const fill = (el) => { if (el.isConnected) { el.insertAdjacentHTML('afterend', locked[+el.dataset.k]); el.remove(); } };
+      const sc = this.el.querySelector('.scroll');
+      // the silhouettes of what is not found yet (there can be 60 of them, each a whole badge) are built when they come within a screen or two of
+      // the viewport, not all at once: the Collection's DOM stays small until the player scrolls down to them
+      if ('IntersectionObserver' in window && sc) {
+        const io = this._io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { io.unobserve(en.target); fill(en.target); } }), { root: sc, rootMargin: '900px 0px' });
+        phs.forEach((p) => io.observe(p));
+      } else hydrate(this.el, '.lk.ph', fill);
     },
     /** Wear an item straight from its card: Collection, then one tap. */
     equip(uid, type) {

@@ -365,7 +365,7 @@
         const psc = el.querySelector('.scroll'); el._scrolled = !!(psc && psc.scrollTop > 0);   // (layout is clean here, so this read is free)
         el.classList.remove('on', 'from-left', 'from-right');
         clearTimeout(el._leave);
-        if (quick || !prev.render) hideScreen(el);
+        if (quick || !prev.render || prev.heavy) hideScreen(el);   // (a heavy screen, the Collection with its hundreds of badge parts, is not painted a second time under the fade: it just goes)
         else leaveScreen(el);   // pointer-events are off and the screen is inert while it fades
         // a tab that is not showing keeps no content (every visit renders it again), so its nodes and memory are freed
         if (prev.render) { clearTimeout(el._purge); el._purge = setTimeout(() => { if (!el.classList.contains('on') && !el.classList.contains('leaving')) el.textContent = ''; }, 800); }
