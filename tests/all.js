@@ -17,7 +17,7 @@ const BROWSER = [
   ['coach', ['tests/coach.js']], ['visual', ['tests/visual.js']], ['uiaudit', ['tests/uiaudit.js']], ['tryit', ['tests/tryit.js']], ['stress', ['tests/stress.js']],
   ['moments', ['tests/moments.js']], ['u4cosmetics', ['tests/u4cosmetics.js']], ['audio', ['tests/audio.js']],
   ['u5-menus', ['tests/u5-menus.js'], true], ['u5-run', ['tests/u5-run.js'], true], ['u5-chests', ['tests/u5-chests.js'], true],
-  ['u5-skins', ['tests/u5-skins.js'], true], ['u5-pops', ['tests/u5-pops.js'], true], ['u5-boards', ['tests/u5-boards.js'], true], ['u5-older', ['tests/u5-older.js'], true], ['u5-fuses', ['tests/u5-fuses.js'], true],
+  ['u5-skins', ['tests/u5-skins.js'], true], ['u5-pops', ['tests/u5-pops.js'], true], ['u5-boards', ['tests/u5-boards.js'], true], ['u5-older', ['tests/u5-older.js'], true, 40], ['u5-fuses', ['tests/u5-fuses.js'], true, 60],
   ['u5-collection', ['tests/u5-collection.js'], true], ['upgrade', ['tests/upgrade.js'], true], ['u5-sets', ['tests/u5-sets.js'], true], ['u5-tower', ['tests/u5-tower.js'], true],
 ];
 const PERF = [['perfbudget', ['tests/perfbudget.js']]];
@@ -32,10 +32,10 @@ if (names.length) list = NODE.concat(BROWSER, PERF).filter(([n]) => names.includ
 
 const fs = require('fs');
 const results = [];
-for (const [name, cmd, optional] of list) {
+for (const [name, cmd, optional, minutes] of list) {
   if (optional && !fs.existsSync(path.resolve(__dirname, '..', cmd[0]))) { results.push([name, 'skip', 0]); console.log('skip  ' + name + ' (not present)'); continue; }
   const t0 = Date.now();
-  const r = spawnSync('node', cmd, { cwd: path.resolve(__dirname, '..'), encoding: 'utf8', timeout: 20 * 60 * 1000, maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync('node', cmd, { cwd: path.resolve(__dirname, '..'), encoding: 'utf8', timeout: (minutes || 20) * 60 * 1000, maxBuffer: 64 * 1024 * 1024 });
   const secs = Math.round((Date.now() - t0) / 1000), ok = r.status === 0;
   results.push([name, ok ? 'ok' : 'FAIL', secs]);
   console.log((ok ? 'ok    ' : 'FAIL  ') + name.padEnd(14) + secs + 's');

@@ -58,7 +58,11 @@
     }
     _place(rec) {
       rec.el.style.transform = `translate3d(${rec.c * this.cell}px,${rec.r * this.cell}px,0)`;
-      // the brick's row and column as custom properties, for skins that draw one picture across the whole board (Moonglass)
+      this._rowcol(rec);
+    }
+    /** The brick's row and column as custom properties, for skins that draw one picture across the whole board (Moonglass). Called wherever
+        rec.r or rec.c changes, because the brick's transform is animated and _place is not. */
+    _rowcol(rec) {
       if (rec._pr !== rec.r) { rec._pr = rec.r; rec.el.style.setProperty('--r', rec.r); }
       if (rec._pc !== rec.c) { rec._pc = rec.c; rec.el.style.setProperty('--c', rec.c); }
     }
@@ -99,7 +103,7 @@
       this._place(rec);
       this.field.appendChild(el);
       this.bricks.set(b.id, rec);
-      rec.r = r;
+      rec.r = r; this._rowcol(rec);
       return rec;
     }
 
@@ -320,7 +324,7 @@
         const rec = this.bricks.get(m.id);
         if (!rec) continue;
         const t = this._fall(rec, rec.r, m.toR, colDelay(m.c), res.dir, 172, calm);
-        rec.r = m.toR;
+        rec.r = m.toR; this._rowcol(rec);
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
       for (const s of res.spawns) {

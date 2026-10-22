@@ -7,7 +7,7 @@
 //      measure of docs/update-5/audit-scripts/run/de.py; and the prototype measure, CIE76 of each brick's middle, which sees the sigils)
 //   5. moments (Potion, Gemcut, Hourglass, Sigil, Moonglass): pop moments end within 600 ms, Rush start, Rush end and stage-up within 900 ms, at most
 //      40 particles and 3 DOM sprites each, nothing is left behind (sprites, the turn class, the rune frame, the cork class)
-//   6. the Fuse brick keeps its countdown (nothing of the skin reaches it) and with Shape hints on every hint shows white where the skin carries a sigil
+//   6. the Fuse brick keeps its countdown (visible, nothing covers it; the brick keeps its colour and skin) and with Shape hints on every hint shows white where the skin carries a sigil
 //   7. badges draw at 36, 56, 72 and 120 px, still and animated, and the item sheet and reveal demo plays without leaving a sprite
 //   8. the Moonglass slices follow the bricks while the Rush moon is up
 // Usage: node tests/u5-skins.js [--quick]   (exit code 1 on a problem)
@@ -149,7 +149,7 @@ const MIN_DE = 12.5;
     return page.evaluate((b) => window.__probe(b), buf.toString('base64'));
   };
   const startRush = async () => {
-    await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = true; e.rush.left = 8; e.rush.meter = 100; BR.Run.rushStart(); });
+    await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = true; e.rush.left = 8; e.rush.meter = 100; BR.Run.rushStart(); BR.Run.rushShow(); });
     await page.waitForTimeout(1300);
   };
   const dist = {};
@@ -235,7 +235,7 @@ const MIN_DE = 12.5;
     }
     // the Rush frame of the Sigil skin counts the Rush down and goes with it
     if (id === 'f_sigil') {
-      await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = true; e.rush.left = 5.5; e.rush.meter = 100; BR.Run.rushStart(); });
+      await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = true; e.rush.left = 5.5; e.rush.meter = 100; BR.Run.rushStart(); BR.Run.rushShow(); });
       await page.waitForTimeout(500);
       const on = await page.evaluate(() => ({ frame: document.querySelectorAll('.s4-runes').length, lit: document.querySelectorAll('.s4-runes .rn.on').length, all: document.querySelectorAll('.s4-runes .rn').length }));
       ok(on.frame === 1 && on.all === 8, `Sigil: the Rush rune frame has ${on.all} runes in ${on.frame} frames`);
@@ -265,7 +265,7 @@ const MIN_DE = 12.5;
     const vis = (n) => getComputedStyle(n).display !== 'none' && getComputedStyle(n).visibility !== 'hidden' && getComputedStyle(n).opacity !== '0';
     return {
       sig: [cs.backgroundImage, cs.boxShadow, cs.borderRadius, getComputedStyle(face, '::after').content, getComputedStyle(face, '::after').backgroundColor].join('|'),
-      count: r.width > 4 && r.height > 4 && vis(f), covered: !(top === f || f.contains(top) || (top && el.contains(top) && top.classList.contains('face'))), hidden: ['.stud', '.deco', '.sheen'].filter((q) => vis(el.querySelector(q))),
+      ring: !!el.querySelector('.fring') && vis(el.querySelector('.fring')), count: r.width > 4 && r.height > 4 && vis(f), covered: !(top === f || f.contains(top) || (top && el.contains(top) && top.classList.contains('face'))), hidden: ['.stud', '.deco', '.sheen'].filter((q) => vis(el.querySelector(q))),
     };
   }, rushing);
   await run([]); await page.evaluate(() => { const B = BR.Run.engine.board, b = B.grid[4][4]; b.color = 1; b.fb = 3; B.version++; BR.Run.view.syncTo(B); BR.Run.clearHover(); });
@@ -278,8 +278,7 @@ const MIN_DE = 12.5;
       const f = await fuseLook();
       ok(f && f.count, `${id}${rush ? ' in Rush' : ''}: the Fuse brick countdown is not visible`);
       ok(f && !f.covered, `${id}${rush ? ' in Rush' : ''}: something covers the Fuse brick countdown`);
-      ok(f && f.hidden.length === 0, `${id}: the Fuse brick shows its ${f && f.hidden.join(', ')} layer`);
-      ok(f && classic && f.sig === classic.sig, `${id}${rush ? ' in Rush' : ''}: the Fuse brick face is styled by the skin (${f && f.sig.slice(0, 60)})`);
+      ok(f && f.ring, `${id}${rush ? ' in Rush' : ''}: the Fuse brick has no ring`);   // (a Fuse brick keeps its colour and its skin, Update 5: the ring, stub and countdown sit on top)
     }
   }
   // Shape hints: the white hint shows on every brick, at its own place, over whatever the skin draws
@@ -361,7 +360,7 @@ const MIN_DE = 12.5;
 
   // ---- 8. Moonglass: the Rush moon's slices follow the bricks
   await run(['f_moonglass']);
-  await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = true; e.rush.left = 8; e.rush.meter = 100; BR.Run.rushStart(); });
+  await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = true; e.rush.left = 8; e.rush.meter = 100; BR.Run.rushStart(); BR.Run.rushShow(); });
   await page.waitForTimeout(300);
   const tap = async () => {
     const p = await page.evaluate(() => { const e = BR.Run.engine; let best = null; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const q = e.plan(r, c); if (q && (!best || q.cells.length > best.n)) best = { r, c, n: q.cells.length }; } return best && BR.Run.view.pagePoint(best.r, best.c); });

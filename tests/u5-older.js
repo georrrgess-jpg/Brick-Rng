@@ -165,7 +165,7 @@ const VT = `(() => {
       await startRun([id]);
       await sevenBoard();
       const rest = await probe(QUICK ? 1 : 3);
-      await page.evaluate(() => { BR.Run.engine.rush.active = true; BR.Run.engine.rush.left = 60; BR.Run.rushStart(); });
+      await page.evaluate(() => { BR.Run.engine.rush.active = true; BR.Run.engine.rush.left = 60; BR.Run.rushStart(); BR.Run.rushShow(); });
       await page.waitForTimeout(1700);
       const rush = await probe(QUICK ? 1 : 3);
       for (const [mode, r] of [['at rest', rest], ['in Rush', rush]]) for (const f of [0.7, 0.4]) ok(r[f].min >= MIN_DE, `${id} ${mode}: two brick colours are only ${r[f].min.toFixed(1)} apart (${r[f].pair}, ${f * 100}% of the brick; needs ${MIN_DE})`);

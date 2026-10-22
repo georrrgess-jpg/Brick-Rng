@@ -170,10 +170,14 @@ const info = (...a) => console.log(...a);
   };
   const inject = async (page) => {
     const before = await page.evaluate(() => ({ h: BR.Skins.handlers.length, a: BR.Skins.applyHooks.length, art: !!document.getElementById('setsArt'), crest: !!document.getElementById('setCrest') }));
-    await page.addStyleTag({ path: path.join(ROOT, 'css/sets.css') });
-    await page.addScriptTag({ path: path.join(ROOT, 'js/sets.js') });
+    // (index.html loads the set files now; a copy is injected only into a page that does not have them, so the files are never loaded twice)
+    const loaded = await page.evaluate(() => !!BR.Sets);
+    if (!loaded) {
+      await page.addStyleTag({ path: path.join(ROOT, 'css/sets.css') });
+      await page.addScriptTag({ path: path.join(ROOT, 'js/sets.js') });
+    }
     const after = await page.evaluate(() => ({ h: BR.Skins.handlers.length, a: BR.Skins.applyHooks.length, art: !!document.getElementById('setsArt'), crest: !!document.getElementById('setCrest'), api: ['flourish', 'onEvent', 'refresh', 'rest', 'worn'].every((k) => typeof BR.Sets[k] === 'function') }));
-    ok(after.h === before.h + 1 && after.a === before.a + 1, 'the set files must add exactly one handler and one apply hook', before, after);
+    ok(loaded ? after.h === before.h && after.a === before.a : after.h === before.h + 1 && after.a === before.a + 1, 'the set files must add exactly one handler and one apply hook', before, after);
     ok(!after.art && !after.crest, 'nothing is baked or drawn at load (the crest and the art come on first use)');
     ok(after.api, 'the browser API is not complete');
   };
@@ -270,7 +274,7 @@ const info = (...a) => console.log(...a);
       if (!c) continue;
       ok(c.n === 1 && c.set === id && c.worn === id, `${id}: crests ${c.n}, set ${c.set}`);
       ok(c.kids === 0, `${id}: the crest has ${c.kids} children (it is one element)`);
-      ok(c.parent === 'ss-row' && c.prev === 'stageTag' && c.next === 'stageGoal', `${id}: the crest is not between the stage label and the goal`, c.parent, c.prev, c.next);
+      ok(c.parent === 'ss-row' && c.prev === 'stageTag' && (c.next === 'stageGoal' || c.next === 'modeTag'), `${id}: the crest is not between the stage label and the goal`, c.parent, c.prev, c.next);
       ok(c.w === '22px' && c.h === '22px' && c.display !== 'none' && c.bg.startsWith('url("data:image/svg'), `${id}: crest box or picture`, c.w, c.h, c.bg);
       ok(c.label === NAMES[id] + ' set' && c.role === 'img' && c.pe === 'none', `${id}: crest label, role or pointer events`, c.label);
       ok(r.crest && Math.abs(r.crest.w - 22) < 0.5 && Math.abs(r.crest.h - 22) < 0.5, `${id}: crest rect`, r.crest);
@@ -420,8 +424,8 @@ const info = (...a) => console.log(...a);
       const fx = BR.fx, run = BR.Run, orig = BR.Sets.onEvent, mine = [];
       BR.Sets.onEvent = function (t, d, c) { const before = new Set(fx.parts); const out = orig.call(this, t, d, c); fx.parts.forEach((p) => { if (!before.has(p) && p.kind === 'img') mine.push(p); }); return out; };
       BR.Sets.rest();
-      if (type === 'stageUp') run.stageUp({ from: 1, to: 2, mult: 1.5 });
-      else if (type === 'rushStart') { run.el.classList.add('rushing'); run.rushStart(); }
+      if (type === 'stageUp') run.stageBeat({ from: 1, to: 2, mult: 1.5 }, run.token);
+      else if (type === 'rushStart') { run.rushStart(); run.rushShow(); }
       else if (type === 'sparkEnd') run.sparkEnd(true);
       else if (type === 'line') { run.callout('GREAT!', '#ffd66b'); BR.Skins.onEvent('line', __D('line')); }
       const hs = document.createElement('style'); hs.textContent = 'html.hit *{pointer-events:auto!important}'; document.head.appendChild(hs);

@@ -129,8 +129,10 @@ async function run(width, height, o) {
   const { browser, page, errors } = await launch({ width, height, dsf: 2 });
   await page.waitForFunction(() => window.__app, null, { timeout: 180000 });
   await page.evaluate(() => { BR.Coach.markAllSeen(); BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); BR.Router.go('collection', { instant: true }); });
-  await page.addStyleTag({ path: path.join(ROOT, 'css', 'tower.css') });
-  await page.addScriptTag({ path: path.join(ROOT, 'js', 'tower.js') });
+  if (!(await page.evaluate(() => !!BR.Tower))) {   // (index.html loads the Tower now; inject a copy only into a page that does not have it)
+    await page.addStyleTag({ path: path.join(ROOT, 'css', 'tower.css') });
+    await page.addScriptTag({ path: path.join(ROOT, 'js', 'tower.js') });
+  }
   await page.waitForTimeout(500);
 
   // mount the view in the Collection screen the way js/screens.js will: a .scroll with the HTML in it, then afterRender
@@ -340,6 +342,7 @@ async function run(width, height, o) {
   ok((await running()).length === 0, tag, 'Reduce Motion with nothing complete: still');
 
   /* ---- 8: crests ---- */
+  await page.evaluate(() => { const r = BR.Sets; delete BR.Sets; window.__realSets = r; });   // (js/sets.js is loaded by index.html now: take it away for the fallback check)
   await mount(SCEN.many, { forget: true, celebrated: ['library', 'glade'] });
   let cr = await page.evaluate(() => ({ fallback: document.querySelectorAll('.tw-crest[class*="c-"]').length, custom: document.querySelectorAll('.tw-crest svg').length }));
   ok(cr.fallback === 7 && cr.custom === 0, tag, 'without BR.Sets a fallback emblem is drawn on every floor', JSON.stringify(cr));
@@ -350,7 +353,7 @@ async function run(width, height, o) {
   await page.evaluate(() => { BR.Sets = { crest: () => { throw new Error('broken'); } }; });
   await mount(SCEN.few, { forget: true });
   ok(await page.evaluate(() => document.querySelectorAll('.tw-crest[class*="c-"]').length === 7), tag, 'a crest function that throws falls back to the emblem');
-  await page.evaluate(() => { delete BR.Sets; });
+  await page.evaluate(() => { if (window.__realSets) BR.Sets = window.__realSets; else delete BR.Sets; });   // (the real js/sets.js comes back for the rest)
 
   /* ---- 7: the first frame at a 4x CPU slowdown ---- */
   if (o.perf && !SKIP.includes('perf')) {

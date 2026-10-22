@@ -63,11 +63,15 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(moves.every((m) => m.slice(2).every((d) => Math.abs(d) < 0.5)), 'the status bar moved during a tab switch', JSON.stringify(moves.filter((m) => m.slice(2).some((d) => Math.abs(d) >= 0.5)).slice(0, 3)));
 
     // a tab switch leaves no frame where neither screen shows: while the old screen fades the new one is already there
-    await page.evaluate(() => BR.Router.go('shop')); await wait(page, 600);
-    await page.evaluate(() => { window.__seen = []; BR.Router.go('collection'); const on = [...document.querySelectorAll('.screen')].filter((s) => s.classList.contains('on') || s.classList.contains('leaving')).map((s) => s.id); window.__seen.push(on.join(',')); });
-    ok(await page.evaluate(() => /s-shop/.test(window.__seen[0]) && /s-collection/.test(window.__seen[0])), 'the old screen is not kept while the new one fades in', await page.evaluate(() => window.__seen[0]));
+    // (the Shop and the Collection are heavy screens: they go at once, so they are not painted a second time under the fade; Missions to Profile shows the cross-fade)
+    await page.evaluate(() => BR.Router.go('missions')); await wait(page, 600);
+    await page.evaluate(() => { window.__seen = []; BR.Router.go('profile'); const on = [...document.querySelectorAll('.screen')].filter((s) => s.classList.contains('on') || s.classList.contains('leaving')).map((s) => s.id); window.__seen.push(on.join(',')); });
+    ok(await page.evaluate(() => /s-missions/.test(window.__seen[0]) && /s-profile/.test(window.__seen[0])), 'the old screen is not kept while the new one fades in', await page.evaluate(() => window.__seen[0]));
     await wait(page, 900);
-    ok(await page.evaluate(() => !document.querySelector('.screen.leaving') && getComputedStyle(document.getElementById('s-shop')).display === 'none'), 'the old screen stayed (or its content was kept) after the fade');
+    ok(await page.evaluate(() => !document.querySelector('.screen.leaving') && getComputedStyle(document.getElementById('s-missions')).display === 'none'), 'the old screen stayed (or its content was kept) after the fade');
+    await page.evaluate(() => BR.Router.go('shop')); await wait(page, 600);
+    await page.evaluate(() => BR.Router.go('collection')); await wait(page, 30);
+    ok(await page.evaluate(() => !document.querySelector('#s-shop.leaving') && getComputedStyle(document.getElementById('s-shop')).display === 'none'), 'a heavy screen (the Shop) goes at once instead of being painted under the fade');
     await page.evaluate(() => BR.Router.go('home')); await wait(page, 700);
 
     // tab badges: waiting chests on the Shop tab, new missions on the Missions tab
