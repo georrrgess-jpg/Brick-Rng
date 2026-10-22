@@ -82,14 +82,14 @@ const hudProbe = async ([b64, C]) => {
   };
   const cr = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05), q = (s) => document.querySelector(s), out = {};
   out.goal = cr(C.msg, p90(q('#msgBand'), 0.12)); out.lbl = cr(C.lbl, p90(q('.score-box .lbl'))); out.score = cr(C.num, p90(q('.score-box b')));
-  out.stage = cr(C.stage, p90(q('.ss-stage'))); out.goaltxt = cr(C.goal, p90(q('.ss-goal'))); out.fuse = cr(C.fnum, p90(q('.fz-num'))); out.unit = cr(C.funit, p90(q('.fz-unit')));
+  out.stage = cr(C.stage, p90(q('.ss-stage'))); out.snum = cr(C.snum, p90(q('.ss-stage span'))); out.goaltxt = cr(C.goal, p90(q('.ss-goal'))); out.fuse = cr(C.fnum, p90(q('.fz-num'))); out.unit = cr(C.funit, p90(q('.fz-unit')));
   return out;
 };
 const textColours = () => {
   const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
   const lum = (r, gg, b) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(b);
   const col = (el) => { const m = getComputedStyle(el).color.match(/[\d.]+/g).map(Number); return lum(m[0], m[1], m[2]); }, q = (s) => document.querySelector(s);
-  return { msg: col(q('.m-goal')), lbl: col(q('.score-box .lbl')), num: col(q('.score-box b')), stage: col(q('.ss-stage')), goal: col(q('.ss-goal')), fnum: col(q('.fz-num')), funit: col(q('.fz-unit span') || q('.fz-unit')) };
+  return { msg: col(q('.m-goal')), lbl: col(q('.score-box .lbl')), num: col(q('.score-box b')), stage: col(q('.ss-stage')), snum: (() => { const m = (getComputedStyle(q('.ss-stage span')).backgroundImage.match(/rgb\((\d+), (\d+), (\d+)\)/g) || [])[1]; const n = m ? m.match(/\d+/g).map(Number) : [255, 61, 139]; return lum(n[0], n[1], n[2]); })(), goal: col(q('.ss-goal')), fnum: col(q('.fz-num')), funit: col(q('.fz-unit span') || q('.fz-unit')) };
 };
 /** Freeze every scene animation at a given phase of its first iteration (so a pulsing sun-beam is caught at its brightest and its dimmest). */
 const phase = (ph) => { document.getAnimations().forEach((a) => { const t = a.effect && a.effect.target; if (!t || !t.closest || !t.closest('#bg, #board')) return; const d = a.effect.getComputedTiming().duration; if (typeof d === 'number' && isFinite(d)) { a.pause(); a.currentTime = ph * d; } }); };
@@ -201,7 +201,7 @@ const VT = `(() => {
 
   // ================================================================ 3 + 4. HUD text over the scenes, and the fuse readout colour
   if (want('hud') || want('readout')) {
-    const THR = { goal: 6, lbl: 3.8, score: 4.5, stage: 4.5, goaltxt: 3.8, fuse: 3.0, unit: 3.0 };
+    const THR = { goal: 6, lbl: 3.8, score: 4.5, stage: 4.5, snum: 3.0, goaltxt: 3.8, fuse: 3.0, unit: 3.0 };   // snum: the big stage number (a pink gradient digit, 20px bold, so the 3:1 of large text)
     const HOLD = { calm: 'e.fuse = 24', low: 'e.fuse = 6.8', crit: 'e.fuse = 3.1' };
     const hold = (st) => page.evaluate((h) => { window.__hold && clearInterval(window.__hold); window.__hold = setInterval(() => { const e = BR.Run.engine; eval(h); }, 25); }, HOLD[st]);
     const sizes = QUICK ? [[393, 852]] : [[393, 852], [360, 640]];
@@ -226,7 +226,7 @@ const VT = `(() => {
             if (!m) m = q; else for (const k of Object.keys(q)) m[k] = Math.min(m[k], q[k]);
           }
           await page.evaluate(() => { const s = document.querySelectorAll('style'); s[s.length - 1].remove(); });
-          for (const k of Object.keys(THR)) { if (k === 'fuse' || k === 'unit' || st === 'calm' || k === 'goal') ok(m[k] >= THR[k], `${id} at ${w}x${h}, ${st} fuse: ${k} contrast ${m[k].toFixed(1)} is under ${THR[k]}`); }
+          for (const k of Object.keys(THR)) { if (k === 'fuse' || k === 'unit' || st === 'calm' || k === 'goal' || k === 'snum') ok(m[k] >= THR[k], `${id} at ${w}x${h}, ${st} fuse: ${k} contrast ${m[k].toFixed(1)} is under ${THR[k]}`); }
         }
         await page.evaluate(() => { window.__hold && clearInterval(window.__hold); });
       }

@@ -202,6 +202,8 @@
 .board-volcano .run-active .bg::after { animation: none; }
 .board-volcano .run-active .bg .scene-fx.b { animation: scFall 17s linear infinite; }
 .board-volcano .board::before { animation: none; opacity: 0.8; }
+/* the second ribbon is the ::after layer, which is painted above the vignette and so above the scrim behind the HUD; behind the vignette it takes the scrim like the first */
+.board-aurora .run-active .bg::after { z-index: -1; }
 .board-aurora .run-active .bg .scene-fx { animation: none; opacity: 0.85; }
 .board-aurora .run-active .bg .scene-fx.b { display: none; }
 

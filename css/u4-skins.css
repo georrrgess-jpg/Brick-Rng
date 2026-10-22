@@ -46,7 +46,7 @@
    a swirl on top, and the wrapper twisted into a fan at each end (the two pseudo-elements of .deco, drawn inside the cell). */
 .skin-candy .face {
   --u4-ra: 0.8; --u4-sa: 0.28; --u4-pa: 0.8; --u4-ca: 0.34;
-  inset: 15% 17%;
+  inset: 10% 17%;
   border-radius: 40% / 46%;
   background:
     radial-gradient(ellipse 0.2em 0.085em at 30% 20%, #fff 0, rgba(255, 255, 255, 0.82) 45%, rgba(255, 255, 255, 0) 100%),
@@ -71,7 +71,7 @@
    grainy face (a baked noise image), veins of the brick's own colour breaking out of two corners (js/s3-skins.js bakes one per palette
    colour; the pale vein below is the fallback), chisel chips along the edges, and the bright ring inlaid in the middle. Static: it does not move. */
 .skin-slate {
-  --u5-stone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cfilter id='a' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05 .09' numOctaves='3' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 0 0 -2.2'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.2' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -5 0 0 0 1.7'/%3E%3C/filter%3E%3Cfilter id='c' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.24' numOctaves='2' seed='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 -3.1'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23a)' opacity='.34'/%3E%3Crect width='100' height='100' filter='url(%23b)' opacity='.3'/%3E%3Crect width='100' height='100' filter='url(%23c)' opacity='.3'/%3E%3C/svg%3E");
+  --u5-stone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cfilter id='a' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05 .09' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 0 0 -2.2'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.2' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -5 0 0 0 1.7'/%3E%3C/filter%3E%3Cfilter id='c' x='0' y='0' width='1' height='1' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.24' numOctaves='2' seed='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 -3.1'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23a)' opacity='.34'/%3E%3Crect width='100' height='100' filter='url(%23b)' opacity='.3'/%3E%3Crect width='100' height='100' filter='url(%23c)' opacity='.3'/%3E%3C/svg%3E");
   --u5-vein: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M60 -2L66 12L80 18L84 32L102 40M-2 62L14 70L20 84L34 90L40 102' stroke='%23fff' stroke-opacity='.22' stroke-width='5'/%3E%3Cpath d='M60 -2L66 12L80 18L84 32L102 40M-2 62L14 70L20 84L34 90L40 102' stroke='%23fff' stroke-opacity='.8' stroke-width='1.7'/%3E%3C/g%3E%3C/svg%3E");
 }
 .skin-slate .face {
