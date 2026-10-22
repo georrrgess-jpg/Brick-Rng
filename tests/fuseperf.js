@@ -7,12 +7,13 @@
 //   node tests/fuseperf.js --root=/path     another checkout of the game, for comparison (for the old HUD: the commit before Update 4)
 //   node tests/fuseperf.js --fast           fewer cosmetics (what the check run uses)
 //   --only=default,u_rope  just these cosmetics     --scen=calm,crit  just these situations
+//   a cosmetic can wear a hat: --only=u_moonrise+h_wizard (the Series 4 fuses and the Fizz hats are in the default lists below; the hat adds one element)
 const path = require('path');
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
 const flag = (n) => (process.argv.find((a) => a.startsWith('--' + n + '=')) || '').split('=')[1];
 const ROOT = path.resolve(flag('root') || path.join(__dirname, '..'));
 const RATE = +(flag('rate') || 4), FAST = process.argv.includes('--fast'), SECS = +(flag('secs') || 3), BUDGET = 1.5 * RATE;
-const FUSES = flag('only') ? flag('only').split(',') : FAST ? ['default', 'u_dragon'] : ['default', 'u_rope', 'u_candy', 'u_vine', 'u_phoenix', 'u_dragon'];
+const FUSES = flag('only') ? flag('only').split(',') : FAST ? ['default', 'u_dragon', 'u_elixir+h_wizard', 'u_sandglass', 'u_moonrise'] : ['default', 'u_rope', 'u_candy', 'u_vine', 'u_phoenix', 'u_dragon', 'u_candle', 'u_wand', 'u_elixir', 'u_sandglass', 'u_runechain+h_propeller', 'u_moonrise+h_halo'];
 
 // engine states to hold while measuring
 const SCEN = [
@@ -35,13 +36,15 @@ const SCEN = [
   const cdp = await ctx.newCDPSession(page);
   const isNew = await page.evaluate(() => !!BR.Fuse);
 
-  const equip = (id) => page.evaluate((id) => {
+  const equip = (spec) => page.evaluate((spec) => {
+    const [id, hat] = spec.split('+');
     const P = BR.Progress;
     if (id === 'default') P.equip('default', 'fuse'); else { const inst = BR.Storage.data.profile.vault.find((v) => v.itemId === id) || P.keep({ itemId: id, shine: 'plain', seed: 5, counter: null }); P.equip(inst.uid, 'fuse'); }
     BR.Skins.apply();
     if (BR.Router.current === 'run') { BR.Run.over = true; BR.Run.token++; BR.Router.go('home', { instant: true }); }
     __app.startRun({ mode: 'rush', boosts: {} });
-  }, id);
+    if (BR.Fuse && BR.Fuse.setHat) setTimeout(() => BR.Fuse.setHat(hat || null), 0);
+  }, spec);
   // the fuse's per-frame entry point is BR.Run.hudFuse in both versions; wrap it for its own JS time
   await page.evaluate(() => {
     const R = BR.Run;
