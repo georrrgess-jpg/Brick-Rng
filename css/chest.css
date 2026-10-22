@@ -330,9 +330,9 @@ html.low-end .rv-look { display: none; }
 .rc-sig { opacity: 0; } .rv.circle-on .rc-sig { opacity: 1; transition: opacity 0.4s 0.3s; }
 .rc-sig .sg-bg { fill: #0b1030; stroke: #f3dfa0; stroke-width: 1.4; } .rc-sig .sg { fill: #f3dfa0; filter: drop-shadow(0 0 3px rgba(255, 226, 150, 0.9)); }
 /* the item's badge waits in the dark from the first frame, before the card flips in */
-.rv-seed { position: absolute; z-index: 10; left: var(--cx, 50%); top: var(--cy, 36%); transform: translate(-50%, -50%) scale(0.8); opacity: 0; pointer-events: none; filter: brightness(0.55) saturate(0.85); transition: opacity 0.5s, transform 1.1s var(--ease-out); }
+.rv-seed { position: absolute; z-index: 10; left: var(--cx, 50%); top: var(--cy, 36%); transform: translate(-50%, -50%) scale(0.8); opacity: 0; pointer-events: none; filter: brightness(0.55) saturate(0.85); transition: opacity 0.16s, transform 1.1s var(--ease-out); }
 .rv.seed-on .rv-seed { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
-.rv.seed-off .rv-seed { opacity: 0; transition: opacity 0.25s; }
+.rv.seed-off .rv-seed { opacity: 0; transition: opacity 0.7s; }
 /* a tap on the reveal jumps to the finished card: every moving part is parked where it ends */
 .rv.skipped .rv-card { animation: none !important; opacity: 1; transform: none; filter: none; }
 .rv.skipped .rv-black, .rv.skipped .rv-black::before, .rv.skipped .rv-flare, .rv.skipped .rv-ring, .rv.skipped .rv-seed { animation: none !important; opacity: 0 !important; }

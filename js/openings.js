@@ -340,6 +340,7 @@
       this.rv.classList.remove('on');
       this.rv.querySelectorAll('.rv-info, .rv-actions').forEach((x) => x.classList.remove('on'));
       if (this._tl) { this._tl.cancel(); this._tl = null; }
+      this._rid = (this._rid || 0) + 1;
       this.rv.className = 'rv'; this.rv.querySelector('.rv-look').innerHTML = '';   // (the night, the dim and the look of the last reveal)
       this.skipEl.classList.remove('on');
       // fresh chest art every time
@@ -548,14 +549,16 @@
         flashes). A tap jumps to the end: every `state` runs at once and the `fx` are left out. Resolves when the last step has run. */
     timeline(steps) {
       const timers = [], ran = new Set(); let resolve; const done = new Promise((r) => { resolve = r; });
-      const run = (i, quick) => { if (ran.has(i)) return; ran.add(i); const s = steps[i]; try { if (s.state) s.state(); if (s.fx && !quick) s.fx(); } catch (e) { console.error(e); } if (ran.size === steps.length) resolve(); };
+      const run = (i, quick) => { if (ran.has(i)) return; ran.add(i); const s = steps[i]; try { if (s.state) s.state(); if (s.fx && !quick) s.fx(); } catch (e) { console.error(e); } if (ran.size === steps.length) resolve(true); };
       steps.forEach((s, i) => timers.push(setTimeout(() => { if (!this.closed) run(i, false); }, s.t)));
-      this._tl = { skip: () => { this.rv.classList.add('skipped'); timers.forEach(clearTimeout); steps.forEach((s, i) => run(i, true)); }, cancel: () => { timers.forEach(clearTimeout); resolve(); } };
+      // resolves true when the last step has run, false when the reveal was cancelled (closed, or another one began)
+      this._tl = { skip: () => { this.rv.classList.add('skipped'); timers.forEach(clearTimeout); steps.forEach((s, i) => run(i, true)); }, cancel: () => { timers.forEach(clearTimeout); resolve(false); } };
       return done;
     }
 
     async reveal(drop) {
       this.state = 'reveal';
+      if (this._tl) this._tl.cancel();   // (a reveal that is still playing never runs on under the next one)
       const item = BR.itemById[drop.itemId], R = BR.rarityById[drop.rarity];
       const level = BR.RARITIES.findIndex((r) => r.id === drop.rarity);
       const inst = drop.inst || { shine: drop.shine, seed: drop.seed, counter: drop.counter, uid: null };
@@ -584,11 +587,12 @@
       const cr = card.getBoundingClientRect(), bs = Math.round(Math.max(96, Math.min(196, cr.width - 70, cr.height - 150)));
       art.querySelector('.rv-badge-big').innerHTML = BR.Badge.html(item, inst, { size: bs, still: still });
       rv.style.setProperty('--cx', (cr.left + cr.width / 2).toFixed(1) + 'px'); rv.style.setProperty('--cy', (cr.top + cr.height / 2).toFixed(1) + 'px');
-      rv.querySelector('.rv-look').innerHTML = BR.lowEnd ? '' : lookHTML(item, inst);
-      if (night) {
-        seed.innerHTML = BR.Badge.html(item, inst, { size: 112, still: true });
-        rv.querySelector('.rc-sig .sg').innerHTML = sigilOf(item);
-      }
+      // (the board behind is built a moment later, so the first frames of the reveal never wait for 64 bricks)
+      const look = rv.querySelector('.rv-look'), rid = this._rid = (this._rid || 0) + 1;
+      look.innerHTML = '';
+      if (!BR.lowEnd) setTimeout(() => { if (!this.closed && this._rid === rid) look.innerHTML = lookHTML(item, inst); }, 140);
+      seed.innerHTML = night ? BR.Badge.html(item, inst, { size: 112, still: true }) : '';
+      if (night) rv.querySelector('.rc-sig .sg').innerHTML = sigilOf(item);
       const cardCenter = () => { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       const lvl = level + 1;
       void rv.offsetWidth;
@@ -662,11 +666,10 @@
         at(1900, startDemo);
         at(2500);
       }
-      await this.timeline(steps);
-      if (this.closed) return;
+      if (!(await this.timeline(steps)) || this.closed) return;
       rv.querySelector('.rv-info').classList.add('on');
       await sleep(still || rv.classList.contains('skipped') ? 80 : 320);
-      if (this.closed) return;
+      if (this.closed || this._rid !== rid) return;
       rv.querySelector('.rv-actions').classList.add('on');
       this.state = 'done'; this._tl = null;
     }
