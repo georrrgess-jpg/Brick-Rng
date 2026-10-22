@@ -61,7 +61,7 @@ const { launch } = require('./lib');
   await browser.close();
 
   // nothing in the run is cut off or overlapping at the phone sizes that matter (iPhone 15 Pro standalone and in Safari, small Androids, iPhone SE)
-  for (const [name, w, h] of [['iphone', 393, 852], ['safari', 393, 659], ['small', 360, 640], ['se', 375, 667]]) {
+  for (const [name, w, h] of [['iphone', 393, 852], ['promax', 430, 932], ['mid', 390, 740], ['safari', 393, 659], ['small', 360, 640], ['se', 375, 667], ['desktop', 1280, 800], ['laptop', 1366, 700]]) {
     const L = await launch({ width: w, height: h, dsf: 1 });
     await L.page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.runs = 12; __app.startRun({ mode: 'rush', boosts: {} }); });
     await L.page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 8000 });

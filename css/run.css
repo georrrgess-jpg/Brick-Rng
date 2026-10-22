@@ -111,7 +111,7 @@
 /* ===================================================================
    Run screen layout
    =================================================================== */
-:root { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 340px), 540px); }
+:root { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 420px), 540px); }
 .run { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(8px, 1.5dvh, 16px); padding: calc(var(--sat) + 6px) calc(var(--sar) + 12px) calc(var(--sab) + 8px) calc(var(--sal) + 12px); }
 .run > * { width: var(--bw); flex: none; }
 .run-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
