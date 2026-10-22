@@ -21,7 +21,7 @@
 /* ---- poses: the bomb's urgency state (data-z on the fuse) */
 .fuse[data-z="watch"] .fz-hat { transform: rotate(5deg) translate(calc(0.8 * var(--b)), 0); }                                           /* tilts toward the flame */
 .fuse[data-z="low"] .fz-hat { transform: rotate(-13deg) translate(calc(-2.4 * var(--b)), calc(1.4 * var(--b))); }                      /* slides askew */
-.fuse[data-z="crit"] .fz-hat { transform: rotate(-17deg) translate(calc(-3 * var(--b)), calc(1.2 * var(--b))); }                       /* askew, and the heartbeat bounces it (js/fuse.js beat) */
+.fuse[data-z="crit"] .fz-hat { transform: rotate(-14deg) translate(calc(-3 * var(--b)), calc(-0.8 * var(--b))); }                      /* askew, and the heartbeat bounces it (js/fuse.js beat); Fizz's panic eyes are wide, so the brim stays clear of them */
 .fuse[data-hk="hourglass"][data-z="crit"] .fz-hat { transform: rotate(-10deg) translate(calc(-2 * var(--b)), calc(-0.4 * var(--b))); }       /* (the hourglass's eyes sit right under its top: a smaller slide keeps the brim off them) */
 .fuse[data-z="spark"] .fz-hat { transform: translate(calc(-12 * var(--b)), calc(-15 * var(--b))) rotate(-26deg); }                      /* pops up and hovers above the head (to one side: the wick's flame is right above it) */
 
