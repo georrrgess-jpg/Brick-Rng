@@ -486,6 +486,46 @@
     },
   };
 
+  /** Copy text to the clipboard; falls back to selecting it so the player can copy by hand. */
+  const copyText = async (text, box) => {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+    try { box.focus(); box.select(); return document.execCommand('copy'); } catch (e) { return false; }
+  };
+  /** Profile > Data: the save as one line of text, to keep or to move to another device. */
+  BR.saveCodeSheet = function () {
+    const code = BR.Storage.exportCode();
+    BR.Sheet.open({
+      title: 'Save code',
+      body: `<p class="ready-sub">Your progress is saved on this device only. Copy this code and keep it somewhere safe, like a note to yourself. If the browser ever clears its data, paste it into Restore to get everything back.</p><textarea class="code-box" readonly rows="5" aria-label="Save code">${code}</textarea>`,
+      actions: [{ label: 'Copy code', close: false, onClick: async (api) => { const ok = await copyText(code, api.el.querySelector('textarea')); BR.toast(ok ? 'Code copied' : 'Select the code and copy it', ok ? 'good' : ''); } }],
+    });
+  };
+  /** Profile > Data: put a save code back. Asks twice, and changes nothing unless the code is whole and valid. */
+  BR.restoreSheet = function () {
+    let armed = null;
+    BR.Sheet.open({
+      title: 'Restore from a code',
+      body: `<p class="ready-sub">Paste a save code. It replaces the progress on this device, so use it on a new device or after your data was cleared.</p><textarea class="code-box" rows="5" placeholder="POPRUSH4...." aria-label="Paste your save code" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea><p class="code-info tiny"></p>`,
+      actions: [{
+        label: 'Check the code', close: false,
+        onClick: (api, btn) => {
+          const box = api.el.querySelector('textarea'), info = api.el.querySelector('.code-info');
+          if (armed) {
+            BR.Storage.restore(armed); armed = null;
+            BR.App.applySettings(); BR.Skins.apply(); BR.Router.go('home'); BR.Router.rerender();
+            BR.toast('Progress restored', 'good'); api.close(); return;
+          }
+          const parsed = BR.Storage.parseCode(box.value);
+          if (!parsed) { info.textContent = 'That is not a whole, valid save code. Check that you copied all of it.'; info.classList.add('bad'); BR.haptic('err'); return; }
+          armed = parsed; info.classList.remove('bad');
+          info.textContent = `This save: level ${parsed.profile.level}, ${BR.fmt(parsed.profile.coins)} Coins, ${parsed.profile.vault.length} items. Tap again to replace this device's progress.`;
+          btn.textContent = 'Replace my progress'; btn.classList.add('pay');
+          box.addEventListener('input', () => { armed = null; btn.textContent = 'Check the code'; btn.classList.remove('pay'); info.textContent = ''; }, { once: true });
+        },
+      }],
+    });
+  };
+
   /** Records: the numbers worth beating, and the last 20 Rush runs so progress shows even when no run beat the best. */
   function recordsCard() {
     const r = BR.Records.list();
@@ -513,11 +553,11 @@
         <article class="card card-pad stg"><div class="sec-title">Trophies <small>${earned.length}/${BR.TROPHIES.length}</small></div><div class="badges">${earned.length ? earned.slice(-6).map((t) => `<span class="badge-ico" title="${t.name}">${BR.icon('trophy')}</span>`).join('') : '<small class="muted">Finish runs to earn trophies.</small>'}</div></article>
         ${installRow}
         <article class="card card-pad stg"><div class="sec-title">Settings</div>
-          ${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
-          <div class="perf"><div><b>Performance</b><small>Auto lowers effects if your phone struggles</small></div><div class="seg mini" id="perfSeg" style="--n:3;--i:${['auto', 'high', 'low'].indexOf(set.perf)}">${['auto', 'high', 'low'].map((p) => `<button data-perf="${p}" class="${set.perf === p ? 'on' : ''}">${p[0].toUpperCase() + p.slice(1)}</button>`).join('')}<i class="thumb"></i></div></div>
+          ${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
+          <div class="perf"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--i:${['auto', 'low', 'high'].indexOf(set.perf)}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}">${l}</button>`).join('')}<i class="thumb"></i></div></div>
         </article>
         <article class="card card-pad stg help-card"><div class="sec-title">Help</div><p class="tiny">New to something? Every part of the game shows a short tip the first time. Show them all again:</p><button class="btn btn-dark btn-sm" data-act="tips">Show the tips again</button></article>
-        <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device.</p><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
+        <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device. A save code lets you keep a copy or move to a new device.</p><div class="data-btns"><button class="btn btn-dark btn-sm" data-act="save-code">Save code</button><button class="btn btn-dark btn-sm" data-act="restore-code">Restore</button></div><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
         <p class="tiny center version">Pop Rush 3.0 · Carnival</p>
       </div>`;
     },
@@ -590,6 +630,8 @@
       if (t.dataset.perf) { S().settings.perf = t.dataset.perf; BR.Storage.save(); BR.App.applySettings(); BR.Router.rerender(); return; }
       const a = t.dataset.act;
       if (a === 'install') BR.App.install();
+      if (a === 'save-code') BR.saveCodeSheet();
+      if (a === 'restore-code') BR.restoreSheet();
       if (a === 'tips') { BR.Coach.reset(); BR.audio.ui(); BR.toast('Tips will show again as you visit each screen', 'good'); }
       if (a === 'reset') {
         if (t.dataset.armed !== '1') { t.dataset.armed = '1'; t.textContent = 'Tap again to erase everything'; setTimeout(() => { t.dataset.armed = ''; t.textContent = 'Reset all progress'; }, 3500); return; }

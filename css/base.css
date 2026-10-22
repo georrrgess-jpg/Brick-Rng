@@ -253,3 +253,17 @@ html.under-overlay .bg, html.under-overlay .bg *, html.under-overlay .bg *::befo
   .tab-ind::after { left: 0; top: 50%; width: 4px; height: 36px; margin: -18px 0 0; border-radius: 6px 0 0 6px; box-shadow: -4px 0 16px rgba(255, 61, 139, 0.9); }
   #screens .screen:not(#s-run) { left: var(--rail); --sal: 0px; }
 }
+
+/* Larger text (Profile): menus and sheets scale up; the run keeps its fixed layout */
+html.large-text .scroll, html.large-text .sheet-body { zoom: 1.14; }
+.shapes-offer p { margin: 2px 0 8px; }
+
+/* ---------- splash: the logo is on screen in the very first frame and leaves once the fonts and the first screen are ready ---------- */
+#splash { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; background: radial-gradient(ellipse 80% 50% at 50% 38%, #4a1d6e, transparent 70%), linear-gradient(180deg, #170c2e, #07040f 78%); transition: opacity 0.4s ease, visibility 0.4s; }
+#splash .sp-logo { display: flex; flex-direction: column; align-items: center; line-height: 0.92; font-family: 'Fredoka', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; font-weight: 700; }
+#splash .sp-logo span { font-size: 52px; letter-spacing: 0.3em; padding-left: 0.3em; color: #fff; text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); }
+#splash .sp-logo b { font-size: 84px; letter-spacing: 0.06em; font-style: italic; padding: 0 0.14em 0.06em 0.04em; background: linear-gradient(180deg, #fff6c8, #ffb23d 40%, #ff3d8b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.35)); }
+#splash .sp-bar { display: block; width: 120px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; opacity: 0; animation: spShow 0.2s 0.3s forwards; }   /* only if loading takes longer than 300 ms */
+#splash .sp-bar u { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--grad-hot, #ff3d8b); animation: spSlide 1s ease-in-out infinite; }
+@keyframes spShow { to { opacity: 1; } } @keyframes spSlide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+body.ready #splash { opacity: 0; visibility: hidden; pointer-events: none; }

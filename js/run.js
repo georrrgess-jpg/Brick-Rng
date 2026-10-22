@@ -75,10 +75,20 @@
       el.addEventListener('pointerleave', (e) => { if (!this.pressed && e.pointerType === 'mouse') this.clearHover(); });
       el.addEventListener('contextmenu', (e) => { e.preventDefault(); if (this.armed) this.disarm(); });
       window.addEventListener('keydown', (e) => {
+        if (this.resultsEl && (e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) { const b = this.resultsEl.querySelector('[data-r="again"]'); if (b) { e.preventDefault(); b.click(); } return; }
         if (!this.active || this.over || this.modal) return;
         if (e.key === 'p' || e.key === 'P') { if (!this.paused) this.pause(); }
         else if (e.key === 'Escape' && this.armed) this.disarm();
         else if (this.canAct && ['1', '2', '3'].includes(e.key)) this.onSlot(BR.BOOSTER_ORDER[+e.key - 1]);
+        // play with the keyboard: arrows move a cursor over the board (the group under it is previewed), Enter or Space pops it
+        else if (this.canAct && !this.busy && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+          e.preventDefault();
+          const k = this.kbCell || { r: 3, c: 3 }, d = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[e.key];
+          this.kbCell = { r: Math.max(0, Math.min(BR.CFG.rows - 1, k.r + d[0])), c: Math.max(0, Math.min(BR.CFG.cols - 1, k.c + d[1])) };
+          this.hoverCell = this.kbCell; this.hoverVer = this.engine.board.version; this.hoverArmed = this.armed;
+          if (this.armed) { const cells = this.engine.boosterCells(this.armed, this.kbCell.r, this.kbCell.c); this.hoverPlan = null; this.view.setCellHighlight(cells, cells.length ? `${cells.length} bricks` : ''); }
+          else { this.hoverPlan = this.engine.plan(this.kbCell.r, this.kbCell.c); this.view.setHighlight(this.hoverPlan); }
+        } else if (this.canAct && !this.busy && this.kbCell && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); this.tap(this.kbCell.r, this.kbCell.c); }
       });
     },
 
@@ -161,9 +171,9 @@
       const dt = Math.min(0.1, Math.max(0, (now - this.last) / 1000)); this.last = now;
       if (!this.engine) return;
       // performance probe: lower effects automatically if the phone is struggling
-      if (this.clock && !this.paused && BR.Storage.data.settings.perf === 'auto' && !BR.autoLow) {
+      if (this.clock && !this.paused && !this.modal && BR.Storage.data.settings.perf === 'auto') {
         this.perfSum += dt; this.perfN++;
-        if (this.perfN >= 180) { if (this.perfSum / this.perfN > 0.026) { BR.autoLow = true; BR.App.applySettings(); } this.perfN = 0; this.perfSum = 0; }
+        if (this.perfN >= 180) { const avg = this.perfSum / this.perfN; this.perfN = 0; this.perfSum = 0; BR.Gfx.sample(avg); }
       }
       const e = this.engine;
       if (this.clock && !this.paused && !this.modal && !this.over) {
@@ -173,7 +183,7 @@
           else if (ev.type === 'spark') this.sparkStart();
           else if (ev.type === 'fuseOut') this.endRun('fuse');
         }
-        if (e.spark > 0) this.sparkTick();
+        if (e.spark > 0) this.sparkTick(dt);
       }
       if (!e.chill) this.hudFuse(dt);
     },
@@ -188,10 +198,10 @@
       if (BR.Music && BR.Music.duck) BR.Music.duck(true);
       this.hideHint(); this.view.showHint(e.bestGroup());
     },
-    sparkTick() {
+    sparkTick(dt) {
       const e = this.engine;
       $('lsFill').style.transform = `scaleX(${Math.max(0, e.spark / BR.CFG.fuse.spark).toFixed(3)})`;
-      this.hb -= 0.016;
+      this.hb -= dt;
       if (this.hb <= 0) { BR.audio.heartbeat(1); BR.haptic('tick'); this.hb = 0.3; }
     },
     sparkEnd(saved) {
@@ -789,6 +799,8 @@
       const banners = r.xp.ups.map((u) => `<div class="res-banner lvl rev"><span>${BR.icon('star')}</span><b>Level ${u.level}!</b><small>${u.paid ? '+' + u.paid + ' Coins' : BR.rewardLabel(u.reward)}</small></div>`).join('')
         + r.trophies.map((t) => `<div class="res-banner trophy rev"><span>${BR.icon('trophy')}</span><b>Trophy: ${BR.esc(t.name)}</b><small>+${t.coins} Coins</small></div>`).join('')
         + (r.streak ? `<div class="res-banner streak rev"><span>${BR.icon('sun')}</span><b>${r.streak.ring >= 7 ? 'Streak: week complete!' : `Streak: day ${r.streak.ring}`}</b><small>${[r.streak.coins ? '+' + r.streak.coins + ' Coins' : '', r.streak.chest ? 'a Golden Chest' : '', r.streak.shielded ? 'a missed day was forgiven' : '', r.streak.broken ? 'a new week starts' : ''].filter(Boolean).join(' and ') || 'Come back tomorrow'}</small></div>` : '');
+      // after the very first run: players who cannot tell the colors apart can get a symbol on every brick
+      const shapesOffer = !S().settings.shapes && !S().seen.shapesTip && S().runs <= 2 ? `<div class="res-card rev shapes-offer"><h3>Hard to tell the colors apart?</h3><p class="tiny">Shape hints put a small symbol on every brick.</p><button class="btn btn-dark btn-sm" data-r="shapes">Turn on shape hints</button></div>` : '';
       const goalLine = r.goal ? `<div class="res-goal rev ${r.goal.done ? 'done' : ''}"><span>${BR.icon(r.goal.done ? 'check' : 'flag')}</span><b>${r.goal.done ? 'Goal reached' : 'Goal missed'}: ${BR.esc(r.goal.text)}</b>${r.goal.done ? `<em>+${r.goal.reward} Coins</em>` : ''}</div>` : '';
       const nextLine = BR.nextGoal({ stage: sum.stage });
       let chase = '';
@@ -813,6 +825,7 @@
             ${r.rows.map((x) => `<div class="res-row"><span>${BR.esc(x.label)}</span><b>+${fmt(x.xp)}</b></div>`).join('')}
             <div class="xp-line"><div class="bar tall cyan"><i id="resXp" style="width:${(r.xp.from.xp / r.xp.from.need) * 100}%"></i></div><small class="num" id="resXpText">Level ${r.xp.from.level} · ${fmt(r.xp.from.xp)} / ${fmt(r.xp.from.need)}</small></div></div>
           ${ups}${trophies}
+          ${shapesOffer}
         </div>
         <div class="res-actions rev">
           ${mode === 'daily' ? `<button class="btn btn-xl" data-r="share">${BR.icon('share')} Share result</button>` : `<button class="btn btn-xl" data-r="again">${BR.icon('play')} ${beatIt ? 'Beat it' : 'Play again'}</button>`}
@@ -841,6 +854,7 @@
         const k = b.dataset.r;
         if (k === 'again') { this.closeResults(); this.start({ mode, boosts: {} }); }
         else if (k === 'share') this.share(sum);
+        else if (k === 'shapes') { S().settings.shapes = true; S().seen.shapesTip = true; BR.Storage.save(); BR.App.applySettings(); BR.toast('Shape hints are on. Change it any time in Profile.', 'good'); b.closest('.shapes-offer').remove(); }
         else if (k === 'shop') {
           this.closeResults(); BR.Router.go('shop');
           const own = ['golden'].concat(BR.CHEST_ORDER).find((id) => BR.Progress.chestCount(id) > 0 && !BR.Progress.chestStatus(id).complete);

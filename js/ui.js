@@ -64,11 +64,29 @@
 
   /* ---------- haptics ---------- */
   const PAT = { tick: 6, tap: 10, pop: 14, big: [18, 24, 30], rush: [24, 30, 24, 30, 60], stage: [20, 40, 20], open: [10, 20, 14, 20, 18, 20, 24], boom: [40, 30, 90], win: [20, 30, 20, 30, 60], err: [30, 50, 30] };
+  // iPhone Safari has no navigator.vibrate. Safari 17.4 and later plays a light haptic tick when a switch checkbox is toggled, so a
+  // hidden switch stands in: one toggle per tick. (It only fires from a touch handler, which is where taps and pops call it.)
+  const IOS = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  const TICKS = { tick: 1, tap: 1, pop: 1, big: 2, rush: 3, stage: 2, open: 3, boom: 2, win: 3, err: 2 };
+  let swEl = null;
+  const switchTick = (n) => {
+    if (!swEl) {
+      swEl = document.createElement('label');
+      swEl.setAttribute('aria-hidden', 'true');
+      swEl.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0.01;pointer-events:none';
+      const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1;
+      swEl.appendChild(i); document.body.appendChild(swEl);
+    }
+    swEl.click();
+    for (let k = 1; k < n; k++) setTimeout(() => swEl.click(), 55 * k);
+  };
   BR.haptic = function (kind) {
     const s = BR.Storage && BR.Storage.data.settings;
-    if (!s || !s.haptics || !navigator.vibrate) return;
+    if (!s || !s.haptics) return;
+    if (!navigator.vibrate) { if (IOS) { try { switchTick(typeof kind === 'string' ? TICKS[kind] || 1 : 1); } catch (e) { /* ignore */ } } return; }
     try { navigator.vibrate(PAT[kind] != null ? PAT[kind] : kind); } catch (e) { /* ignore */ }
   };
+  BR.hapticsAvailable = () => !!navigator.vibrate || IOS;
 
   /* ---------- number count-up ---------- */
   const anims = new WeakMap();

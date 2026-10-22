@@ -246,4 +246,15 @@ delete require.cache[require.resolve('../js/storage.js')]; require('../js/storag
   for (let i = 0; i < 30; i++) BR.Records.update({ score: i, lineBlasts: 0, rushes: 0 }, 'rush'); assert.strictEqual(BR.Records.list().history.length, 20);
   assert(typeof BR.nextGoal({ stage: 5 }) === 'string');
 }
+// ---- Update 4: a save code round-trips, and damaged codes are refused without touching anything
+{
+  const before = JSON.stringify(BR.Storage.data);
+  const code = BR.Storage.exportCode();
+  assert(/^POPRUSH4\.[0-9a-z]+\.[A-Za-z0-9+/=]+$/.test(code));
+  const back = BR.Storage.parseCode(code); assert(back && back.profile.level === BR.Storage.data.profile.level && JSON.stringify(back.profile.vault) === JSON.stringify(BR.Storage.data.profile.vault));
+  assert.strictEqual(BR.Storage.parseCode(code.slice(0, -4)), null, 'a cut code is refused');
+  assert.strictEqual(BR.Storage.parseCode(code.replace(/\.[0-9a-z]+\./, '.zzzz.')), null, 'a wrong checksum is refused');
+  assert.strictEqual(BR.Storage.parseCode('hello'), null); assert.strictEqual(BR.Storage.parseCode(''), null); assert.strictEqual(BR.Storage.parseCode(null), null);
+  assert.strictEqual(JSON.stringify(BR.Storage.data), before, 'reading codes changes nothing');
+}
 console.log('logic tests passed');
