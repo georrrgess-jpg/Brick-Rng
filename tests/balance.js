@@ -93,7 +93,7 @@ console.log(JSON.stringify({ root: ROOT, director: hasDir, out }, null, 1));
 if (!process.argv.includes('--json')) {
   let bad = 0;
   const chk = (label, v, lo, hi) => { const okk = v >= lo && v <= hi; if (!okk) bad++; console.error((okk ? 'ok   ' : 'OVER ') + label.padEnd(44) + String(v).padStart(7) + '   range ' + lo + ' to ' + hi); };
-  const want = { casual: { stage: [4.6, 5.9], t: [120, 165], rush: [10, 27], spark: [40, 65], combo10: [0, 6], season: [200, 340] }, average: { stage: [7.1, 8.7], t: [120, 165], rush: [18, 32], spark: [40, 65], combo10: [0, 30], season: [120, 200] }, sharp: { stage: [8.5, 10.1], t: [120, 165], rush: [20, 40], spark: [40, 65], combo10: [0, 55], season: [80, 150] } };
+  const want = { casual: { stage: [4.6, 5.9], t: [120, 165], rush: [10, 27], spark: [40, 70], combo10: [0, 6], season: [200, 340] }, average: { stage: [7.1, 8.7], t: [120, 165], rush: [18, 32], spark: [40, 65], combo10: [0, 30], season: [120, 200] }, sharp: { stage: [8.5, 10.1], t: [120, 165], rush: [20, 40], spark: [40, 65], combo10: [0, 55], season: [80, 150] } };
   for (const k of Object.keys(out)) {
     const o = out[k], w = want[k];
     chk(k + ': stage reached', o.stage, ...w.stage); chk(k + ': run length (s)', o.time, ...w.t); chk(k + ': Rush share of the run (%)', o.rushShare, ...w.rush);

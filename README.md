@@ -13,9 +13,10 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   and the combo), release to pop, slide away to cancel. On a keyboard the arrow keys move a cursor and Enter pops; P pauses,
   1 to 3 use power-ups, R plays again from the results.
 - **The fuse** burns down all the time. Every pop adds seconds: bigger pops add more, a Line Blast adds 5. When the fuse
-  reaches the bomb the run ends. The fuse burns 20% faster each stage for the first eight stages and then stops speeding up, and from
+  reaches the bomb the run ends. The fuse burns 15% faster each stage for the first eight stages and then stops speeding up, and from
   stage 6 a pop of 3+ always pays at least 1.4 seconds, so a long run is never lost to the clock alone.
-- **Last Spark**: once per run, when the fuse hits zero you get 2.5 seconds to land a pop of 4+. Do it and the fuse comes back.
+- **Last Spark**: once per run, when the fuse hits zero you get 2.5 seconds to land a pop of 4+ (5+ from stage 3). Do it and the
+  fuse comes back. It is a save you earn: about half of them work.
 - **Score to beat**: your best score sits under the score all run, with a gap that closes as you play. Results tell you
   how close you came, and **Beat it** starts the next run.
 - **The board deals fairly.** New bricks are chosen by a tile director (`js/director.js`): they tend to join the big blocks
@@ -23,15 +24,20 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   sets up a big one. How much it helps follows the player: more when the fuse is low or a run has gone dry, less when they
   are cruising, and less past the stage they usually reach, so a new best is still earned. Daily gives everyone the same
   refills for the same taps.
-- **Stages** have a score goal. Clear it and the fuse refills, the score multiplier goes up and a new color joins.
-- **Rush Mode**: pops of 4+ fill the Rush bar. When it is full the fuse freezes for 8 seconds and every pop scores x3.
+- **Stages** have a score goal. Clear it and the fuse refills, the score multiplier goes up and a new color joins (it arrives
+  with that refill, so you see it at once).
+- **Rush Mode**: pops of 4+ fill the Rush bar. When it is full the fuse freezes for 8 seconds (pops extend it a little, up to 12)
+  and every pop scores x3. Each Rush in a run asks for 35% more than the one before, so Rush stays a moment and not a state.
+- **Combos** need a bigger pop as the chain grows (4, then up to 8), and a pop of 4+ that is too small holds the combo instead
+  of growing it.
 - **Fuse bricks** (from stage 4) count down. Pop them in a group to defuse them for +3 seconds, or they burst and cost 5.
-- **Power-ups** are earned by big pops of 4+: the next empty slot fills as you play and shows its charge. **Hammer** (3x3),
+- **Power-ups** are earned by big pops of 4+: the next empty slot fills as you play and shows its charge. **Hammer** (a diamond of 13),
   **Beam** (a row and a column) and **Prism** (every brick of one color).
 - **The run screen** is labelled: *Stage 3 · score of goal · x4.5 points* (the real multiplier, Rush included), the fuse with
   its bomb Fizz, the Rush bar, the three power-up slots, and a message band under them for hints, the combo, the run goal and
   Last Spark, so nothing covers the board.
-- **Run goal**: every Rush run shows one small goal ("Make a Line Blast"). Reaching it pays 10 to 20 Coins.
+- **Run goal**: every Rush run shows one small goal ("Make a Line Blast"). Reaching it pays 10 to 20 Coins. Goals and missions
+  follow your skill (they get harder as you do), and a goal about a big pop tells the tile director, so big blocks line up for it.
 - **Daily streak**: finish a run each day to light the 7-day ring on Home. Day 3 pays 120 Coins; day 7 pays 200 Coins and a
   Golden Chest. One missed day a week is forgiven, and a broken week only restarts the ring (finished weeks stay).
 - **Records** (Profile) keep your best score, stage, biggest pop and the last 20 Rush runs. **Try it** (item sheet) puts any
@@ -39,8 +45,12 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
 - Modes: **Rush** (the main run), **Daily Rush** (one seeded board a day) and **Chill** (the relaxed 20-move rounds).
 
 ## Coins, chests and Skins
-- Runs pay **Coins** and **XP**. Missions, trophies and the free 30-tier **Pop Pass** (a horizontal track with a spotlight
-  on your next reward) pay more.
+- Runs pay **Coins** and **XP**. Every level pays Coins. Missions, trophies and the free **Pop Pass** pay more.
+- **The Pop Pass is a season** (Season 4, Moonwick): 30 tiers filled by season XP that starts at zero each season, while your
+  level stays as it is, so every player sees every reward. Tiers pay Coins, chests, items and **Fizz Hats**.
+- **Fizz Hats** (12, a fifth loadout slot in the Collection's Hats tab): earned, never in chests. The Party Hat is free; the
+  rest come from the Pass, streak weeks and trophies. A hat only changes looks: it sways, tilts toward the flame, bounces when
+  critical, hovers in the Last Spark and flies off when the fuse runs out.
 - Spend Coins in the Shop on one of four chests. Each chest holds one kind of item, and the odds are shown on the chest.
 - **A chest never gives you an item you already own.** The odds are renormalised over what you have not found, every 8th
   chest of a type without an Epic or better guarantees one, and a finished set says Complete.
@@ -58,7 +68,11 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   rarity color, so the reel is easy to read at speed.
 - Rarity: Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1% (Golden Chests: Epic 70%, Legendary 25%, Mythic 5%).
   Each drop also rolls a **Shine** (Plain, Glossy, Holo, Prism).
-- There are 58 items. Series 3 "Carnival" adds 10 skins, 10 pops, 4 boards and 4 fuses.
+- There are 88 items. Series 3 "Carnival" added 28. Series 4 "Moonwick" adds 30: 8 skins, 8 pops, 6 boards and 6 fuses in
+  chests, and two Pop Pass exclusives (Wisps and Moonglass). Twenty of them make five **sets** (Library, Glade, Alchemy,
+  Time Vault, Spire; one item of each type). Wear a full set and a crest sits by the stage label and the set plays its own
+  flourish (Bookstorm, Fairy Ring, Great Work, Time Turn, Moonwick Ascendant); the Moonwick Tower in the Collection lights a window
+  for every item you find. Mythic items open with the Midnight reveal. Sets change looks only.
 - Cosmetics never change scoring. Run Boosts (Long Fuse 25, Head Start 15, Rush Start 20 Coins) are a purchase: the
   sheet before a run shows each price, the total and what you will have left, and nothing is charged until you press Start.
 - Help is short: two cards (Welcome, whose button starts the first run, and the Pop Pass), a hint line on the first chest opening
@@ -84,6 +98,8 @@ css/run.css         the run screen: fuse, board, Rush, results
 css/chest.css       chest stage, chest parts and idle life, hold ring, reel, reveals
 css/skins.css       Skins, Boards, previews (Series 1 and 2)
 css/s3-skins.css css/s3-scenes.css    Series 3 skins and boards
+css/s4-skins.css css/s4-scenes.css    Series 4 "Moonwick" skins and boards (the boards are generated by tools/s4-boards-gen)
+css/hats.css css/sets.css css/tower.css    Fizz Hat poses, set crests and flourishes, the Moonwick Tower
 css/fuse.css        the fuse: Fizz, rope, flame, readout, chips, the urgency states (every fuse cosmetic is drawn from tokens)
 css/badges.css      item badges (rarity frame and art, the still version used in the reel)
 css/coach.css       the first-time tip cards
@@ -95,7 +111,9 @@ js/music.js         adaptive soundtrack: menu and run arrangements that crossfad
 js/fx.js            canvas particles, fireworks
 js/skins.js         applies the loadout, previews, signature moments (Series 3 plugs in via handlers)
 js/s3-skins.js s3-pops.js s3-scenes.js   Series 3 moments and pop recipes
-js/s4-pops.js       Series 4 "Moonwick" pops (9): recipes, moments, sounds and badge art
+js/s4-skins.js s4-pops.js s4-scenes.js s4-fuses.js   Series 4 "Moonwick": 8 skins, 9 pops, 6 boards, 6 fuses (moments, recipes, sounds, badge art)
+js/hats.js          the 12 Fizz Hats as data (art, anchors per fuse body) and their API; js/sets.js the five set crests and flourishes;
+                    js/tower.js the Moonwick Tower view
 js/fuse-art.js      the 11 fuse cosmetics as data (rope textures, flame, ember, particles, bomb body, face style, frost tint)
 js/fuse.js          the shared fuse engine, BR.Fuse: rope, burning end, readout, time chips, urgency ramp, one small particle canvas
 js/badges.js        the item badge (used in the reel, Collection, Pass, reveals)
@@ -140,6 +158,13 @@ node tests/tryit.js     # Try it leaves the loadout, a saved run and the run cou
 node tests/u5-pops.js     # the 9 Moonwick pops: particles per brick, moment durations, leaks, sounds, badges (about 12 minutes)
 node tests/u4cosmetics.js   # the older boards, skins and pops after the Update 4 touch-up
 node tests/keyframes.js # no @keyframes name is defined twice (the later file would silently replace the first)
+node tests/upgrade.js   # a real Update 4.1 save (level 34, 48 items, a run in progress) opens: nothing lost, Season 4 starts at zero, the old run resumes
+node tests/cssclash.js  # no bare class selector is defined in two CSS files (a component's rules must not bleed into another)
+node tests/u5-run.js    # run screen messages never overlap, Fuse brick colours, results Coins total and breakdown, empty runs pay nothing, practice never pays (about 4 minutes)
+node tests/u5-chests.js # chest openings: re-press, badge on every reveal card, the Midnight reveal, complete chests, results links
+node tests/u5-skins.js u5-boards.js u5-fuses.js u5-older.js   # the Moonwick skins, boards and fuses (and hats), and the repainted older cosmetics: budgets, colour distances, contrast, bounds
+node tests/u5-collection.js   # the Hats tab, Try it and Try the set, the Shop's new chips and spotlight, the Tower, the what's-new card
+node tests/u5-sets.js u5-tower.js   # set crests and flourishes (particle and time caps, Reduce Motion), the Tower's counting, tap targets and bell
 node tests/u5-menus.js  # menus: focus in sheets, tab badges, the fixed status bar, keyboard reach, hero overflow, landscape Play, sheet widths, Larger text, Reduce Motion, toasts, swaps, Boosts memory, the Pass track
 ```
 UI tests use Playwright's Chromium (paths in `tests/lib.js`). Progress is stored in `localStorage` under
