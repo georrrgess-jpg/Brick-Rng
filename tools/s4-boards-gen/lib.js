@@ -74,24 +74,25 @@ const bgTile = (src, band, h, pos = '50%') => `${src} repeat-x ${pos} ${band ===
    ring stays on top), four corner pieces on .board-wrap::after, and tooled lines inside the brick field's margin (.board::after).
    Nothing of it is drawn over the brick field. rw is the ring width (the gutter beside the board on a phone is 12px). */
 const RW = 9, CAP = 44, BR = 24;
-/** four mirrored corner pictures from one top-left drawing in a 44 x 44 box. draw() returns { defs, body }. The ring band at the corner is
-    the quarter annulus between radius 24 and 24 + rw around (33, 33). */
-function cornerCaps(registry, name, draw) {
-  const d = draw();
-  const flips = { tl: '', tr: ` transform='translate(${CAP} 0) scale(-1 1)'`, bl: ` transform='translate(0 ${CAP}) scale(1 -1)'`, br: ` transform='translate(${CAP} ${CAP}) scale(-1 -1)'` };
+const capSize = (rw) => BR + rw + 11;
+/** four mirrored corner pictures from one top-left drawing in a size x size box (size = 24 + rw + 11 = 44 for the usual 9px ring). draw(rw, size)
+    returns { defs, body }. The ring band at the corner is the quarter annulus between radius 24 and 24 + rw around (24 + rw, 24 + rw). */
+function cornerCaps(registry, name, draw, rw = RW) {
+  const size = capSize(rw), d = draw(rw, size);
+  const flips = { tl: '', tr: ` transform='translate(${size} 0) scale(-1 1)'`, bl: ` transform='translate(0 ${size}) scale(1 -1)'`, br: ` transform='translate(${size} ${size}) scale(-1 -1)'` };
   const out = {};
-  Object.entries(flips).forEach(([k, t]) => { out[k] = registry.add('cap' + k, svgx(CAP, CAP, `<g${t}>${d.body}</g>`, d.defs || '')); });
+  Object.entries(flips).forEach(([k, t]) => { out[k] = registry.add('cap' + k, svgx(size, size, `<g${t}>${d.body}</g>`, d.defs || '')); });
   return out;
 }
 /** css for a board's frame: ring = [[spread px, colour], ...] inner to outer, drop = the soft shadow under the ring, tooled = inset box-shadow
-    inside the board, caps = { tl, tr, bl, br } references, glow = the board's own outer glow colour */
-function frameCSS(cls, { ring, drop = '0 8px 22px rgba(0, 0, 0, 0.55)', tooled, caps, glow = 'var(--a-glow)', rw = RW }) {
-  const shadows = ring.map(([s, c]) => `0 0 0 ${s}px ${c}`).concat([drop]).join(', ');
+    inside the board, caps = { tl, tr, bl, br } references, glow = the board's own outer glow colour, strips = more background layers for the ring */
+function frameCSS(cls, { ring, drop = '0 8px 22px rgba(0, 0, 0, 0.55)', tooled, caps, glow = 'var(--a-glow)', rw = RW, strips = [], boardBg = '' }) {
+  const shadows = ring.map(([s, c]) => `0 0 0 ${s}px ${c}`).concat([drop]).join(', '), size = capSize(rw);
   let c = `.${cls} .board-wrap::before { content: ''; position: absolute; inset: 0; border-radius: ${BR}px; pointer-events: none; box-shadow: ${shadows}; }\n`;
-  if (caps) c += `.${cls} .board-wrap::after { content: ''; position: absolute; inset: -${rw}px; border-radius: ${BR + rw}px; pointer-events: none; background: ${caps.tl} no-repeat left top / ${CAP}px ${CAP}px, ${caps.tr} no-repeat right top / ${CAP}px ${CAP}px, ${caps.bl} no-repeat left bottom / ${CAP}px ${CAP}px, ${caps.br} no-repeat right bottom / ${CAP}px ${CAP}px; }\n`;
+  if (caps) c += `.${cls} .board-wrap::after { content: ''; position: absolute; inset: -${rw}px; border-radius: ${BR + rw}px; pointer-events: none; background: ${[caps.tl + ` no-repeat left top / ${size}px ${size}px`, caps.tr + ` no-repeat right top / ${size}px ${size}px`, caps.bl + ` no-repeat left bottom / ${size}px ${size}px`, caps.br + ` no-repeat right bottom / ${size}px ${size}px`].concat(strips).join(', ')}; }\n`;
   c += `.${cls} .board { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 36px ${glow}, inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 0 40px rgba(0, 0, 0, 0.45); }\n`;
-  if (tooled) c += `.${cls} .board::after { box-shadow: ${tooled}; }\n`;
+  if (tooled || boardBg) c += `.${cls} .board::after { ${tooled ? `box-shadow: ${tooled}; ` : ''}${boardBg ? `background: ${boardBg}; ` : ''}}\n`;
   return c;
 }
 
-module.exports = Object.assign({}, base, { cornerCaps, frameCSS, RW, CAP, BR, svgc, S, mix, lighten, darken, hex2, toHex, rngOf, XL, svgx, use, op, sop, glowDef, glowDisc, glowEll, rough, blob, starPath, rrect, bgPiece, registry, boxCSS, bgTile, calcMul, wrap, smooth, smoothClosed, ribbon, n, url, enc, mulberry32 });
+module.exports = Object.assign({}, base, { cornerCaps, frameCSS, capSize, RW, CAP, BR, svgc, S, mix, lighten, darken, hex2, toHex, rngOf, XL, svgx, use, op, sop, glowDef, glowDisc, glowEll, rough, blob, starPath, rrect, bgPiece, registry, boxCSS, bgTile, calcMul, wrap, smooth, smoothClosed, ribbon, n, url, enc, mulberry32 });

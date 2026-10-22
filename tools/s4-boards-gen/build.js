@@ -30,6 +30,9 @@ ${ISALL} .run-active .bg .vignette { opacity: 0.5; }
 ${ISALL} .run-active .bg::before, ${ISALL} .run-active .bg::after { content: ''; position: absolute; inset: auto; background: none; pointer-events: none; display: none; }
 ${ISALL} .run-active .bg .scene-fx { display: none; }
 ${PREV}:is(${ALL.join(', ')}) .scene-fx { display: none; }
+/* the layers a board's moments use (js/s4-scenes.js makes them while the board is equipped): only in a run */
+.bg .s4x { position: absolute; display: none; pointer-events: none; }
+${ISALL} .run-active .bg .s4x { display: block; }
 
 /* band sizes in a run: the art takes the free room above the pause row and below the message band (the run column is centred, so the
    two are about equal: --s4-free) plus a little overlap, and grows on tall phones. The bottom band never reaches up behind the
@@ -41,7 +44,7 @@ ${ISALL} {
   --s4-cx: 50%; --s4-cw: var(--bw);
 }
 /* in badges, previews and the reveal the bands grow so the scene still reads around the little board, and the art spreads over the box */
-${PREV}:is(${ALL.join(', ')}) { --s4-th: 28%; --s4-bh: 36%; --s4-cx: 50%; --s4-cw: 100%; }
+${PREV}:is(${ALL.join(', ')}) { --s4-th: 28%; --s4-bh: 36%; --s4-free: 20%; --s4-cx: 50%; --s4-cw: 100%; }
 .mini-board:is(${ALL.join(', ')}) { --s4-th: 32%; --s4-bh: 40%; }
 
 /* a soft dark plate behind the score (top right of the run column) and behind the message band: part of the run background so low-end
@@ -56,6 +59,12 @@ ${ISALL} .run-active .score-box b { text-shadow: 0 1px 3px var(--s4-ink), 0 0 8p
 @keyframes s4Rise { to { transform: translate3d(0, -520px, 0); } }
 @keyframes s4Bob { from { transform: translate3d(0, 3px, 0) rotate(-3deg); } to { transform: translate3d(0, -4px, 0) rotate(2.5deg); } }
 @keyframes s4Glow { from { opacity: 0.35; } to { opacity: 1; } }
+@keyframes s4Stars { to { transform: translate3d(-260px, 0, 0); } }
+@keyframes s4Orbit { from { transform: scaleY(0.5) rotate(0deg); } to { transform: scaleY(0.5) rotate(360deg); } }
+@keyframes s4Sea { to { transform: translate3d(calc(var(--s4-sea) * -8.667), 0, 0); } }
+@keyframes s4Bob2 { from { transform: translate3d(0, 3px, 0); } to { transform: translate3d(0, -5px, 0); } }
+@keyframes s4Clouds { to { transform: translate3d(-520px, 0, 0); } }
+@keyframes s4Flicker { 0%, 100% { opacity: 1; } 35% { opacity: 0.45; } 60% { opacity: 0.85; } 80% { opacity: 0.35; } }
 @keyframes s4Drift { to { transform: translate3d(-520px, 0, 0); } }
 @keyframes s4Twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 @keyframes s4Wander { 0% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(34px, -260px, 0); } 100% { transform: translate3d(0, -520px, 0); } }
@@ -91,5 +100,6 @@ for (const m of mods) {
   css += `/* ================================================================ ${m} */\n.${cls} {\n  --s4-plate: rgba(${pr}, ${pg}, ${pb}, ${pa}); --s4-ink: rgba(${pr}, ${pg}, ${pb}, 0.92);${r.vars}\n}\n${r.run || ''}${r.frame || ''}\n`;
 }
 css += tail;
+css += require('./badges').css(mods);
 fs.writeFileSync(OUT, css);
 console.log('wrote', OUT, css.length, 'bytes', mods.join(','));
