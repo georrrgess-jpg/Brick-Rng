@@ -1,0 +1,22 @@
+/* ===================================================================
+   Moonwick set crests and flourishes (js/sets.js, spec: docs/update-5/series-4-moonwick.md 5.2).
+   The crest is ONE element beside the stage label (its picture is a data URI set by the script as --sc-img); nothing here animates at rest.
+   A flourish's DOM layers live in a stage that exists only while it plays: a box exactly the size of the board that clips them, holding at most a
+   handful of layers that move on transform and opacity only (the script animates them with WAAPI, so there is not one @keyframes in this file).
+   Both are hidden in Reduce Motion and on low-end phones, where the script plays no flourish anyway.
+   =================================================================== */
+
+.set-crest { flex: none; align-self: center; width: 22px; height: 22px; margin: -1px 0; background: var(--sc-img) center / contain no-repeat; pointer-events: none; }
+
+.sf-stage { position: absolute; z-index: 6; pointer-events: none; overflow: hidden; contain: layout paint style; }
+.sf { position: absolute; display: block; opacity: 0; transform-origin: 50% 50%; background: none no-repeat center / 100% 100%; will-change: transform, opacity; pointer-events: none; }
+
+/* Glade: the thread of light the fireflies run on (a dashed ring with a soft green glow) */
+.sf-thread { border-radius: 50%; border: 3px dashed rgba(214, 255, 238, 0.95); box-shadow: 0 0 0 1px rgba(6, 40, 34, 0.55), 0 0 20px 5px rgba(110, 255, 205, 0.62), inset 0 0 20px 4px rgba(110, 255, 205, 0.42); }
+
+/* Alchemy: the gold the board turns to, and the ripple (a ring band that grows from nothing past the board's edge, the stage clips it) */
+.sf-wash { background: radial-gradient(ellipse 80% 72% at 50% 50%, rgba(255, 222, 110, 0.56), rgba(255, 186, 52, 0.46) 62%, rgba(220, 130, 10, 0.42)); }
+.sf-ripple { border-radius: 50%; background: radial-gradient(circle closest-side, rgba(255, 214, 110, 0) 56%, rgba(255, 214, 110, 0.18) 66%, rgba(255, 232, 150, 0.85) 80%, rgba(255, 248, 214, 0.95) 85%, rgba(255, 214, 110, 0) 96%); }
+.sf-ripple.b { background: radial-gradient(circle closest-side, rgba(255, 214, 110, 0) 60%, rgba(255, 214, 110, 0.12) 70%, rgba(255, 224, 140, 0.6) 82%, rgba(255, 244, 200, 0.7) 86%, rgba(255, 214, 110, 0) 96%); }
+
+html.reduced .sf-stage, html.low-end .sf-stage { display: none; }
