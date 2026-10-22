@@ -18,8 +18,8 @@ const { launch } = require('./lib');
 
   // Pass rewards are numbered by the level that unlocks them, and the level-up row agrees
   await page.evaluate(() => { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); BR.Router.rerender(); }); await page.waitForTimeout(900);
-  const next = await page.evaluate(() => ({ node: document.querySelector('.pt.next .pt-n b').textContent, hero: document.querySelector('.phn-txt small').textContent, level: BR.Progress.level }));
-  ok(+next.node === next.level + 1 && /Pass level 7/.test(next.hero), 'pass numbering off by one', next);
+  const next = await page.evaluate(() => ({ node: document.querySelector('.pt.next .pt-n b').textContent, hero: document.querySelector('.phn-txt small').textContent, tier: BR.Progress.seasonStatus().tier }));
+  ok(+next.node === next.tier + 1 && new RegExp('tier ' + (next.tier + 1) + '$').test(next.hero), 'pass numbering off by one (the track numbers the season tiers, the hero says the same tier)', next);
   const gained = await page.evaluate(() => { const P = BR.Progress; const before = P.level; const r = P.addXp(BR.xpForLevel(before) - P.xp); return { level: r.level, up: r.ups[0] && r.ups[0].level, tier: r.ups[0] && r.ups[0].tier }; });
   ok(gained.up === gained.level && gained.tier === gained.level - 1, 'level-up row mismatch', gained);
 
