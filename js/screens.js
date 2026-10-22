@@ -548,7 +548,7 @@
         ${BR.Coach.banner('profile')}
         <article class="card prof-hero stg"><div class="ph-ring">${ringSVG(P.xp / P.need, 96, 8)}<b class="display">${P.level}</b></div>
           <div class="ph-info"><label class="ph-name"><span class="sr-only">Your name</span><input class="display" type="text" maxlength="14" value="${esc(pr.name || 'Player')}" data-name autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Your name"></label><small>Level ${P.level}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.need - P.xp)} XP to level ${P.level + 1}</small></div></article>
-        <div class="stats-grid stg">${stat('Best Rush', fmt(st.best.rush))}${stat('Best stage', st.bestStage.rush || '-')}${stat('Best Daily', fmt(st.best.daily))}${stat('Runs played', fmt(st.runs))}${stat('Bricks popped', fmt(pr.stats.bricks))}${stat('Biggest pop', pr.stats.maxGroup || '-')}</div>
+        <div class="stats-grid stg">${stat('Runs played', fmt(st.runs))}${stat('Bricks popped', fmt(pr.stats.bricks))}${stat('Best Daily', fmt(st.best.daily))}</div>
         ${recordsCard()}
         <article class="card card-pad stg"><div class="sec-title">Trophies <small>${earned.length}/${BR.TROPHIES.length}</small></div><div class="badges">${earned.length ? earned.slice(-6).map((t) => `<span class="badge-ico" title="${t.name}">${BR.icon('trophy')}</span>`).join('') : '<small class="muted">Finish runs to earn trophies.</small>'}</div></article>
         ${installRow}
@@ -558,7 +558,7 @@
         </article>
         <article class="card card-pad stg help-card"><div class="sec-title">Help</div><p class="tiny">New to something? Every part of the game shows a short tip the first time. Show them all again:</p><button class="btn btn-dark btn-sm" data-act="tips">Show the tips again</button></article>
         <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device. A save code lets you keep a copy or move to a new device.</p><div class="data-btns"><button class="btn btn-dark btn-sm" data-act="save-code">Save code</button><button class="btn btn-dark btn-sm" data-act="restore-code">Restore</button></div><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
-        <p class="tiny center version">Pop Rush 3.0 · Carnival</p>
+        <p class="tiny center version">Pop Rush 4.0 · Ignite</p>
       </div>`;
     },
     onShow() { },
