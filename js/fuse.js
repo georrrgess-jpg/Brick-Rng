@@ -413,13 +413,13 @@
       if (!this.ok) return;
       const H = BR.Hats, h = id && H && H.byId(id);
       if (this.hat) { this.hat.getAnimations().forEach((a) => a.cancel()); this.hat.remove(); this.hat = null; }
-      this.host.classList.remove('hatted'); delete this.host.dataset.hat;
+      this.host.classList.remove('hatted');
       if (!h) return;
       const tmp = document.createElement('div');
       tmp.innerHTML = H.html(h.id, this.tok ? this.tok.bomb.kind : 'classic');
       const el = tmp.firstElementChild;
-      this.face.after(el);
-      this.hat = el; this.host.dataset.hat = h.id;
+      this.pulse.appendChild(el);   // last in .fz-pulse: after the face and above the bomb's own frost
+      this.hat = el;
       this.anchorHat();
       this.hatMoves(true);
     },
@@ -877,6 +877,7 @@
     /** for tests and the fuse sheet */
     debug() { return { z: this.z, x: this.bomb && this.bomb.dataset.x, d: this.d, pend: this.pend, particles: this.parts ? this.parts.live : 0, cls: this.cls, mood: this.mood, hat: this.hatId, kind: this.xKind }; },
   };
+  Fuse.bake = bake;
   BR.Fuse = Fuse;
   if (BR.Skins && BR.Skins.applyHooks) BR.Skins.applyHooks.push(() => Fuse.sync());
 })();

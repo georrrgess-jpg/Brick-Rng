@@ -6,7 +6,7 @@
    Some hats have a part that moves on its own (the Propeller Cap's blades, the Wizard Hat's tip): `parts`, each a second picture in its own box.
 
    API (browser and Node):
-     BR.HATS                      the 12 entries { id, name, rarity, desc, earn, noTop, lip, parts? }
+     BR.HATS                      the 12 entries { id, name, rarity, desc, earn, noTop, lip, bbox, parts? }  (lip = [x0, x1, y]: the lowest edge over the head; bbox = the art's bounds; bomb units)
      BR.Hats.byId(id)             one entry (undefined for an unknown id), BR.Hats.list the same array
      BR.Hats.svg(id, o)           the hat as a standalone SVG string (o.live: without its moving parts; o.part: the n-th part alone)
      BR.Hats.anchor(id, kind)     { x, y, s } for a body kind ('classic', 'dragon', 'wax', ...) or a hat class ('ball', 'egg', ...)
@@ -103,7 +103,7 @@
       [[-118, 1], [-104, -1], [-94, 1], [-84, -1], [-74, 1], [-62, -1]].forEach(([a, sd], i) => { const [x, y] = at(a, 27.4); s += `<path d='M0 0C-1.6 -3.4 1.4 -6 4.6 -5.2C4.8 -2.2 2.8 0.4 0 0Z' fill='#5fd86a' stroke='#1f5a2a' stroke-width='.7' transform='translate(${f1(x)} ${f1(y)}) rotate(${f1(a + 90 + (sd > 0 ? 40 : -40))}) scale(${sd > 0 ? 1 : -1} 1)'/>`; });
       const daisy = (x, y, r) => { let p = ''; for (let i = 0; i < 8; i++) { p += `<ellipse cx='0' cy='${f1(-r * 0.62)}' rx='${f1(r * 0.3)}' ry='${f1(r * 0.52)}' fill='#fff' stroke='#c8d0e8' stroke-width='.5' transform='rotate(${i * 45})'/>`; } return `<g transform='translate(${f1(x)} ${f1(y)})'>${p}<circle r='${f1(r * 0.34)}' fill='#ffcf3f' stroke='#c8901a' stroke-width='.6'/></g>`; };
       const blossom = (x, y, r, c1, c2) => { let p = ''; for (let i = 0; i < 5; i++) { p += `<circle cx='0' cy='${f1(-r * 0.58)}' r='${f1(r * 0.46)}' fill='${c1}' stroke='${c2}' stroke-width='.6' transform='rotate(${i * 72})'/>`; } return `<g transform='translate(${f1(x)} ${f1(y)})'>${p}<circle r='${f1(r * 0.3)}' fill='#fff3b0' stroke='#e0a030' stroke-width='.5'/></g>`; };
-      [[-120, 3.1, 'b', '#ff9ad0', '#c8387a'], [-108, 4.2, 'd'], [-96, 3.3, 'b', '#8fb8ff', '#3a64c8'], [-86, 4.6, 'b', '#ff7ab8', '#c02a78'], [-75, 3.6, 'd'], [-64, 3.2, 'b', '#ffd26a', '#c8841a'], [-55, 2.6, 'b', '#ff9ad0', '#c8387a']].forEach(([a, r, t, c1, c2]) => { const [x, y] = at(a, 26.4); s += t === 'd' ? daisy(x, y, r) : blossom(x, y, r, c1, c2); });
+      [[-120, 3.8, 'b', '#ff9ad0', '#c8387a'], [-108, 5, 'd'], [-96, 4, 'b', '#8fb8ff', '#3a64c8'], [-86, 5.6, 'b', '#ff7ab8', '#c02a78'], [-75, 4.4, 'd'], [-64, 3.9, 'b', '#ffd26a', '#c8841a'], [-55, 3.2, 'b', '#ff9ad0', '#c8387a']].forEach(([a, r, t, c1, c2]) => { const [x, y] = at(a, 26.8); s += t === 'd' ? daisy(x, y, r) : blossom(x, y, r, c1, c2); });
       return { inner: s, defs: '' };
     },
 
@@ -177,7 +177,7 @@
         `<path d='M4.4 5.2L32 -5.8L59.6 5.2L32 16.2Z' fill='#0a0a16' fill-opacity='.4' transform='translate(0 2.4)'/><path d='M4.4 5.2L32 16.2L59.6 5.2L59.6 8L32 19L4.4 8Z' fill='#12122a' ${ol(1)}/>` +
         `<path d='M4.4 5.2L32 -5.8L59.6 5.2L32 16.2Z' fill='url(#bd)' ${ol(1.2)}/><path d='M9 5.2L32 -3.6L55 5.2' fill='none' stroke='#fff' stroke-opacity='.25' stroke-width='1.2' stroke-linecap='round'/>` +
         `<circle cx='32' cy='5.2' r='1.9' fill='#ffd24a' ${ol(0.8)}/><path d='M32 5.2C42 5.4 52 6.4 56.6 8.6' fill='none' stroke='#ffd24a' stroke-width='1.5' stroke-linecap='round'/><path d='M32 5.2C42 5.4 52 6.4 56.6 8.6' fill='none' stroke='#8a5a08' stroke-opacity='.5' stroke-width='.5'/>` +
-        `<path d='M56.6 8.6V22' stroke='#ffd24a' stroke-width='1.5' stroke-linecap='round'/><path d='M54.4 21.4H58.8L59.6 29.4H53.6Z' fill='url(#ts)' ${ol(0.9)}/><path d='M55.4 22.4V28.6M57.6 22.4V28.6' stroke='#8a5a08' stroke-opacity='.5' stroke-width='.6'/><circle cx='56.6' cy='21.2' r='1.6' fill='#ffd24a' ${ol(0.7)}/>`,
+        `<path d='M56.6 8.6V20.4' stroke='#ffd24a' stroke-width='1.5' stroke-linecap='round'/><path d='M54.4 19.6H58.8L59.6 26.4H53.6Z' fill='url(#ts)' ${ol(0.9)}/><path d='M55.4 20.8V25.6M57.6 20.8V25.6' stroke='#8a5a08' stroke-opacity='.5' stroke-width='.6'/><circle cx='56.6' cy='19.4' r='1.6' fill='#ffd24a' ${ol(0.7)}/>`,
       defs: lg('bd', [[0, '#3a3a58'], [1, '#14142a']], 0, 0, 1, 1) + lg('cp', [[0, '#3a3a58'], [1, '#1a1a30']]) + lg('ts', [[0, '#fff0a0'], [1, '#d89a14']]),
     }),
 
@@ -213,18 +213,18 @@
   /* ------------------------------------------------------------------ the data */
   const H = (id, name, rarity, desc, earn, extra) => Object.assign({ id, name, rarity, desc, earn, noTop: true, type: 'hat' }, extra);
   BR.HATS = [
-    H('h_party', 'Party Hat', 'common', 'A striped paper cone with a confetti pom-pom.', 'Free with Update 5', { lip: [18.4, 45.6, 18.9] }),
-    H('h_top', 'Top Hat', 'rare', 'Black silk, a red band and a golden buckle.', 'Season 4 Pass, tier 3', { lip: [8.6, 55.4, 19.4] }),
-    H('h_pom', 'Pom Beanie', 'common', 'A knitted cap with a big, fluffy pom-pom.', 'Season 4 Pass, tier 8', { lip: [15.4, 48.6, 19.4] }),
-    H('h_propeller', 'Propeller Cap', 'rare', 'Four bright panels and a propeller that spins in Rush Mode.', 'Season 4 Pass, tier 13', { lip: [15.6, 48.4, 19.8] }),
-    H('h_flower', 'Flower Crown', 'rare', 'Daisies and blossoms woven round the head.', 'Season 4 Pass, tier 18', { lip: [17, 47, 19] }),
-    H('h_toque', "Chef's Toque", 'common', 'A tall, pleated chef\'s hat. Fizz is cooking.', 'Season 4 Pass, tier 23', { lip: [21, 43, 18.8] }),
-    H('h_wizard', 'Wizard Hat', 'epic', 'The season hat: a tall midnight cone with gold stars. The tip flops when Fizz panics.', 'Season 4 Pass, tier 27', { lip: [8, 56, 20.2] }),
-    H('h_nightcap', 'Night Cap', 'common', 'A soft cap with a pom-pom for sleepy bombs.', 'The first full 7-day streak week', { lip: [16.6, 48, 18.8] }),
-    H('h_tricorn', 'Tricorn', 'rare', 'A pirate captain\'s three-cornered hat.', 'The second full 7-day streak week', { lip: [5, 59, 19.6] }),
-    H('h_halo', 'Halo', 'epic', 'A golden ring that floats above the head.', 'Save 25 runs with Last Spark', { noTop: false, lip: [15, 49, -0.2] }),
-    H('h_mortar', 'Mortarboard', 'epic', 'A graduate\'s cap with a golden tassel.', 'Complete any Moonwick set', { lip: [20.6, 43.4, 18.4] }),
-    H('h_crown', 'Crown', 'legendary', 'A golden crown with pearls and three jewels.', 'Own 75 items', { lip: [17.4, 46.6, 18.6] }),
+    H('h_party', 'Party Hat', 'common', 'A striped paper cone with a confetti pom-pom.', 'Free with Update 5', { lip: [23.1, 40.8, 21.3], bbox: [17.6, -21.4, 49.1, 21.3] }),
+    H('h_top', 'Top Hat', 'rare', 'Black silk, a red band and a golden buckle.', 'Season 4 Pass, tier 3', { lip: [15.1, 48.8, 19.9], bbox: [8, -11.4, 55.9, 19.9] }),
+    H('h_pom', 'Pom Beanie', 'common', 'A knitted cap with a big, fluffy pom-pom.', 'Season 4 Pass, tier 8', { lip: [16.9, 47, 19.9], bbox: [14.9, -14.3, 49, 19.9] }),
+    H('h_propeller', 'Propeller Cap', 'rare', 'Four bright panels and a propeller that spins in Rush Mode.', 'Season 4 Pass, tier 13', { lip: [22, 41.9, 20.3], bbox: [9.5, -10.6, 54.4, 20.3] }),
+    H('h_flower', 'Flower Crown', 'rare', 'Daisies and blossoms woven round the head.', 'Season 4 Pass, tier 18', { lip: [15.4, 49.6, 17.4], bbox: [14.5, 3.1, 50.9, 17.4] }),
+    H('h_toque', "Chef's Toque", 'common', 'A tall, pleated chef\'s hat. Fizz is cooking.', 'Season 4 Pass, tier 23', { lip: [22.5, 41.4, 18.8], bbox: [12.6, -11.9, 51.3, 18.8] }),
+    H('h_wizard', 'Wizard Hat', 'epic', 'The season hat: a tall midnight cone with gold stars. The tip flops when Fizz panics.', 'Season 4 Pass, tier 27', { lip: [14.3, 49.6, 21.1], bbox: [4.4, -23.9, 59.5, 21.1] }),
+    H('h_nightcap', 'Night Cap', 'common', 'A soft cap with a pom-pom for sleepy bombs.', 'The first full 7-day streak week', { lip: [18, 46, 20.3], bbox: [13.5, -7.6, 62.8, 26.5] }),
+    H('h_tricorn', 'Tricorn', 'rare', 'A pirate captain\'s three-cornered hat.', 'The second full 7-day streak week', { lip: [12.5, 51.4, 20.3], bbox: [3, -10.9, 62.4, 20.3] }),
+    H('h_halo', 'Halo', 'epic', 'A golden ring that floats above the head.', 'Save 25 runs with Last Spark', { noTop: false, lip: [22.3, 41.6, 1.8], bbox: [15, -14.5, 53.3, 1.8] }),
+    H('h_mortar', 'Mortarboard', 'epic', 'A graduate\'s cap with a golden tassel.', 'Complete any Moonwick set', { lip: [20.6, 43.4, 19.2], bbox: [3.8, -6.4, 60.1, 26.8] }),
+    H('h_crown', 'Crown', 'legendary', 'A golden crown with pearls and three jewels.', 'Own 75 items', { lip: [20.1, 43.8, 18.3], bbox: [12.1, -12.5, 51.8, 18.3] }),
   ];
   BR.HATS.forEach((h) => { if (PARTS[h.id]) h.parts = PARTS[h.id]; });
 

@@ -41,7 +41,7 @@
   function clearAll() {
     timers.forEach(clearTimeout); timers.clear();
     const h = F().host;
-    if (h) h.querySelectorAll('.mx-sprite').forEach((n) => n.remove());
+    if (h) { h.querySelectorAll('.mx-sprite').forEach((n) => n.remove()); ['glow', 'pourback', 'wax'].forEach((c) => h.classList.remove('mx-' + c)); }   // (the classes a timer was going to remove)
     sprites = 0;
   }
 
@@ -50,6 +50,7 @@
     rushStart() {
       if (!live()) return;
       const { bs, u } = bomb();
+      F().bake(F().cls, ['nt']);                                                                           // (the uncorked flask is the body without its topper)
       cls('drank', true);                                                                                   // the liquid in the flask drops (css transition on transform)
       cls('glow', true); later(() => cls('glow', false), 900);
       sprite('cork', 0, -bs / 2 + 4 * u, [                                                                  // the cork pops off

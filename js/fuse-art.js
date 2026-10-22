@@ -235,21 +235,21 @@
 
     /* Sandglass: two glass bulbs in a brass frame. Sand in the lower bulb; the live bomb adds the falling stream and flips the body in Rush. */
     hourglass: (P, o = {}) => {
-      const GLASS = 'M17 8C9.5 14 10.5 27 22.5 32.6C28 35.2 29.6 36.6 29.6 38.4C29.6 40.2 28 41.6 22.5 44.2C10.5 49.8 9.5 53 17 56H47C54.5 53 53.5 49.8 41.5 44.2C36 41.6 34.4 40.2 34.4 38.4C34.4 36.6 36 35.2 41.5 32.6C53.5 27 54.5 14 47 8Z';
+      // symmetric about y = 32 (the body turns over about its middle in Rush); the socket is a layer of its own on the live bomb so it never turns
+      const GLASS = 'M17 6.2C10.2 10 9.6 20.6 20 26.8C26.4 30.4 29.4 31 29.6 32C29.4 33 26.4 33.6 20 37.2C9.6 43.4 10.2 54 17 57.8H47C53.8 54 54.4 43.4 44 37.2C37.6 33.6 34.6 33 34.4 32C34.6 31 37.6 30.4 44 26.8C54.4 20.6 53.8 10 47 6.2Z';
       const sand = `<clipPath id='hc'><path d='${GLASS}'/></clipPath><g clip-path='url(#hc)'>` +
-        `<path d='M8 62V53.4C16 51.6 24 48 32 43.4C40 48 48 51.6 56 53.4V62Z' fill='url(#sd)'/><path d='M12 52.6C19 51 25.6 47.6 32 43.6' fill='none' stroke='#fff3b8' stroke-width='1' opacity='.7'/>` +
-        `<path d='M22 32.4L29.6 38.2H34.4L42 32.4C38.4 34.2 25.6 34.2 22 32.4Z' fill='url(#sd)'/>` +
-        (o.mini ? `<path d='M32 38.6V43.4' stroke='#ffe08a' stroke-width='1.2'/>` : '') +
-        [[22, 53, 0.6], [28, 56, 0.6], [38, 55, 0.6], [44, 53.6, 0.6], [33, 48, 0.5], [26, 50, 0.5], [40, 50, 0.5]].map(([x, y, r]) => dot(x, y, r, '#a8661a', 0.55)).join('') + `</g>`;
+        `<path d='M8 62V55C16 53.6 25 50 32 45C39 50 48 53.6 56 55V62Z' fill='url(#sd)'/><path d='M12 54C19 52.4 26 49.4 32 45.4' fill='none' stroke='#fff3b8' stroke-width='1' opacity='.7'/>` +
+        `<path d='M21 26.4C25 29.2 28.6 29.4 29.6 32H34.4C35.4 29.4 39 29.2 43 26.4C38 27.8 26 27.8 21 26.4Z' fill='url(#sd)'/>` +
+        (o.mini ? `<path d='M32 32.4V45' stroke='#ffe08a' stroke-width='1.2'/>` : '') +
+        [[22, 55, 0.6], [28, 57, 0.6], [38, 56, 0.6], [44, 55, 0.6], [33, 50, 0.5], [26, 52, 0.5], [40, 52, 0.5]].map(([x, y, r]) => dot(x, y, r, '#a8661a', 0.55)).join('') + `</g>`;
       return svg(
-        shadow +
         `<path d='${GLASS}' fill='url(#gt)'/>` + sand +
-        `<path d='M14.6 14C13.4 20 16 26 21.5 29' fill='none' stroke='#fff' stroke-width='2' stroke-linecap='round' opacity='.65'/><path d='M49.4 50.4C50 47.6 47.6 45.6 44.6 44.4' fill='none' stroke='#fff' stroke-width='1.4' stroke-linecap='round' opacity='.4'/>` +
+        `<path d='M14.6 11C13.2 17 15.6 21.6 20.5 24.6' fill='none' stroke='#fff' stroke-width='2' stroke-linecap='round' opacity='.65'/><path d='M49.4 53C50 49.6 47.6 46.8 44.6 45.2' fill='none' stroke='#fff' stroke-width='1.4' stroke-linecap='round' opacity='.4'/>` +
         `<path d='${GLASS}' fill='none' stroke='#d8f0ff' stroke-width='1.6' stroke-linejoin='round'/>` +
         `<rect x='8.4' y='5' width='3.8' height='54' rx='1.6' fill='url(#bv)' stroke='#6a420a' stroke-width='1'/><rect x='51.8' y='5' width='3.8' height='54' rx='1.6' fill='url(#bv)' stroke='#6a420a' stroke-width='1'/>` +
         `<rect x='6' y='1.4' width='52' height='6.8' rx='2.8' fill='url(#br)' stroke='#6a420a' stroke-width='1.3'/><path d='M9.5 3.6h45' stroke='#fff6c0' stroke-width='1.1' stroke-linecap='round' opacity='.7'/>` +
-        `<rect x='6' y='56' width='52' height='6.8' rx='2.8' fill='url(#br)' stroke='#6a420a' stroke-width='1.3'/><path d='M9.5 58.2h45' stroke='#fff6c0' stroke-width='1.1' stroke-linecap='round' opacity='.6'/>` +
-        socket('url(#br)', '#6a420a'),
+        `<rect x='6' y='55.8' width='52' height='6.8' rx='2.8' fill='url(#br)' stroke='#6a420a' stroke-width='1.3'/><path d='M9.5 58h45' stroke='#fff6c0' stroke-width='1.1' stroke-linecap='round' opacity='.6'/>` +
+        (o.mini ? socket('url(#br)', '#6a420a') : ''),
         GL + BRASS + lg('bv', [[0, '#e8b038'], [0.5, '#fff0b0'], [1, '#9a6212']], 0, 0, 1, 0) +
         lg('gt', [[0, '#5a78c8', 0.5], [0.5, '#2a3c78', 0.55], [1, '#1c2a5a', 0.55]]) + lg('sd', [[0, '#ffe9a0'], [0.5, '#f1c04a'], [1, '#c48a22']]));
     },
@@ -556,7 +556,6 @@
 
   /* ------------------------------------------------------------------ Series 4 "Moonwick": six more fuse cosmetics, same engine */
   const WOOD = ['#a56c3c', '#6b4423', '#3f2712', '#241508'];
-  const ICEC = (t) => t;   // the frozen flame colours are the engine's own (see ICE in js/fuse.js); the field is kept for fuses that tint it
   Object.assign(TOKENS, {
     'fuse-candle': {
       name: 'Candlewick', h: 16, railH: 20, rail: { bg: 'rgba(44,26,6,0.55)', line: 'rgba(255,225,160,0.16)' }, glow: '#ffcf6b', gs: ['rgba(255,205,110,0.34)', 'rgba(255,160,50,0.62)', 'rgba(255,70,50,0.85)'],
@@ -591,7 +590,7 @@
       flame: { shape: 'star', core: ['#ffffff', '#fff8dc'], tongue: ['#ffcf4a', '#ffe9a0', '#fff8e0'], halo: ['rgba(255,215,110,0.65)'], ice: ['#ffffff', '#fff6dc', '#ffe0a0'] },
       ember: ['#ffd24a', '#fff3c0'], ash: '#6a5428', heat: 'rgba(255,215,110,0.55)', smoke: 'rgba(235,215,170,0.4)', frost: '#fff2cc',
       part: { spark: ['#fff3b0', '#ffd24a', '#ffffff'], ember: ['#ffd24a', '#ffa02a'], smoke: 'rgba(235,215,170,0.4)', special: { shape: 'grain', colors: ['#ffe9a0', '#f1c04a', '#fff6d8'], rate: 5.2 } },
-      bomb: { kind: 'hourglass', pal: {}, face: face({ pupil: '#2a1a08', line: '#3a2410', mouth: '#fff0c0', blush: 'rgba(255,170,110,0.45)', ey: 23, sc: 0.66 }) },
+      bomb: { kind: 'hourglass', pal: {}, face: face({ pupil: '#2a1a08', line: '#3a2410', mouth: '#fff0c0', blush: 'rgba(255,170,110,0.45)', ey: 13.4, sc: 0.66 }) },
       cracks: '#fff0b0', hot: 'rgba(255,170,60,0.5)',
     },
     'fuse-runechain': {
@@ -618,7 +617,10 @@
      back: behind the glass/body (inside .fz-xb); body: inside .fz-body, so it turns with the body. Strings only; the engine puts them in once per body. */
   const XTRA = {
     flask: { back: () => '<i class="fx-bulb"><i class="fx-lq"></i><i class="fx-lq hot"></i><i class="fx-lq cr"></i></i>' },
-    hourglass: { body: () => '<i class="fx-stream"></i><i class="fx-hang"></i>' },
+    hourglass: {
+      body: () => '<i class="fx-stream"></i><i class="fx-hang"></i>',
+      back: () => '<i class="fx-sock"></i>',
+      css: (sel) => `${sel} .fx-sock{background-image:${uri(svg(socket('url(#br)', '#6a420a'), BRASS, '52.8 27.8 11.4 16.4'))}}\n` },
     golem: {
       body: () => Array.from({ length: 8 }, (_, i) => `<i class="rn rn${i + 1}"></i>`).join(''),
       css: (sel) => {

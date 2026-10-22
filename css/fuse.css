@@ -264,15 +264,17 @@ html.reduced .vignette-warn.on { opacity: 0.55; }
 .fx-bulb::after { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s; background: repeating-linear-gradient(60deg, rgba(255, 255, 255, 0.5) 0 1.5px, transparent 1.5px 7px), repeating-linear-gradient(-60deg, rgba(255, 255, 255, 0.38) 0 1px, transparent 1px 9px), linear-gradient(180deg, rgba(200, 255, 225, 0.5), rgba(120, 240, 180, 0.3)); }
 .fuse[data-z="frozen"] .fx-bulb::after { opacity: 1; }
 .fuse.mx-drank .fx-lq { transform: translateY(72%); }
+.fuse-elixir.mx-drank .fz-body { background-image: var(--fz-body-nt, var(--fz-body)); }   /* the cork is off (the flask without its topper) */
 
 /* ---- Sandglass: the falling stream (a column of dashes that slides inside a clipped box), hanging grains in Rush, and the flip */
-.fx-stream, .fx-hang { position: absolute; left: calc(31.1 * var(--b)); top: calc(38.4 * var(--b)); width: calc(1.8 * var(--b)); height: calc(5.4 * var(--b)); overflow: hidden; }
+.fx-stream, .fx-hang { position: absolute; left: calc(31.1 * var(--b)); top: calc(32.4 * var(--b)); width: calc(1.8 * var(--b)); height: calc(12.4 * var(--b)); overflow: hidden; }
+.fx-sock { position: absolute; left: calc(52.8 * var(--b)); top: calc(27.8 * var(--b)); width: calc(11.4 * var(--b)); height: calc(16.4 * var(--b)); background: center / 100% 100% no-repeat; }   /* the rope's socket: a layer of its own, so it stays put when the body turns over */
 .fx-stream::before { content: ''; position: absolute; left: 0; right: 0; top: calc(-2.6 * var(--b)); bottom: 0; background: repeating-linear-gradient(180deg, #ffe9a0 0 calc(1.3 * var(--b)), transparent calc(1.3 * var(--b)) calc(2.6 * var(--b))); animation: fxSand 0.42s linear infinite; }
 @keyframes fxSand { to { translate: 0 calc(2.6 * var(--b)); } }
-.fx-hang { opacity: 0; transition: opacity 0.4s; background: radial-gradient(circle at 50% 14%, #ffe9a0 0 38%, transparent 42%), radial-gradient(circle at 50% 46%, #ffe9a0 0 38%, transparent 42%), radial-gradient(circle at 50% 78%, #ffe9a0 0 38%, transparent 42%); }
+.fx-hang { opacity: 0; transition: opacity 0.4s; background: radial-gradient(circle at 50% 9%, #ffe9a0 0 30%, transparent 34%), radial-gradient(circle at 50% 30%, #ffe9a0 0 30%, transparent 34%), radial-gradient(circle at 50% 52%, #ffe9a0 0 30%, transparent 34%), radial-gradient(circle at 50% 74%, #ffe9a0 0 30%, transparent 34%), radial-gradient(circle at 50% 94%, #ffe9a0 0 30%, transparent 34%); }
 .fuse[data-z="frozen"] .fx-stream, .fuse[data-z="hold"] .fx-stream { opacity: 0; } .fuse[data-z="frozen"] .fx-hang { opacity: 1; }
 .fuse[data-z="crit"] .fx-stream::before { animation-duration: 0.22s; } .fuse.mx-slow .fx-stream::before { animation-duration: 2.2s; }
-.fuse-sandglass .fz-body { transition: opacity 0.35s, transform 0.62s cubic-bezier(0.3, 1.55, 0.45, 1); }
+.fuse-sandglass .fz-body { transform-origin: 50% 50%; transition: opacity 0.35s, transform 0.62s cubic-bezier(0.3, 1.55, 0.45, 1); }
 .fuse-sandglass.mx-flip .fz-body { transform: rotate(180deg); }
 .fuse-sandglass[data-z="crit"] .fz-flow { clip-path: inset(36% 0 36% 0); }
 .fuse-sandglass.mx-pourback .fz-flow { animation-direction: normal; animation-duration: 0.28s; }

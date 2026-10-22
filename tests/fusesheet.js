@@ -3,7 +3,7 @@
 // Phone: iPhone 15 Pro (393x852 at 3x). Writes PNGs and prints their paths.
 //   node tests/fusesheet.js [outdir]                 states sheets (rows = fuses, columns = states) + frame strips
 //   node tests/fusesheet.js outdir --only=u_dragon   one fuse (or a few: --only=default,u_vine)
-//   --nosheet skips the states sheets; --strips=gain,relit picks frame strips (gain lineblast spark relit rushstart rushend stageup burst); --slow=0.04 sets the slow-motion factor
+//   --nosheet skips the states sheets; --strips=gain,relit picks frame strips (gain lineblast spark relit rushstart rushend stageup burst fuseout); --slow=0.04 sets the slow-motion factor
 //   node tests/fusesheet.js outdir --quick           states only, no strips (what the check run uses)
 //   node tests/fusesheet.js outdir --size=360x640    another phone (also 844x390 for landscape)
 //   node tests/fusesheet.js outdir --hat=h_wizard    every fuse wearing a Fizz hat (the cells are named cell-<fuse>-<hat>-<state>; a hat on a body in every state)
@@ -184,6 +184,8 @@ const SLOWMO = () => {
         await page.evaluate(() => { const e = BR.Run.engine, B = e.board; e.stage = 5; let best = null; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = e.plan(r, c); if (p && (!best || p.cells.length > best.cells.length)) best = p; } const inG = new Set(best.cells.map((q) => q.r * 8 + q.c)); outer: for (let r = 7; r >= 0; r--) for (let c = 7; c >= 0; c--) if (B.grid[r][c] && !inG.has(r * 8 + c)) { B.grid[r][c].fb = 1; break outer; } B.version++; BR.Run.view.syncTo(B); });
         await page.waitForTimeout(400); await rate(SLOW); await popNow(); return [fr, 10, 70, 2];
       }],
+      // the fuse runs out (a hat flies off): last, because it ends the run
+      ['fuseout', async () => { await release(); await page.evaluate(() => { const e = BR.Run.engine; e.rush.active = false; e.freeze = 0; e.spark = 0; e.sparkUsed = true; e.fuse = 0.15; }); await rate(SLOW); return [{ x: 0, y: Math.max(0, fr.y - 40), width: fr.width, height: fr.height + 50 }, 10, 90, 2]; }],
     ];
     for (const id of (ONLY || ['default', 'u_candy', 'u_dragon'].concat(S4 ? ['u_elixir', 'u_sandglass', 'u_runechain', 'u_moonrise'] : []))) {
       await equip(id); await ready(); await release();

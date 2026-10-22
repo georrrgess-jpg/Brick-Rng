@@ -216,6 +216,20 @@ const ALLOWED = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale',
       const a = await audit();
       ok(a.mx.length === 0 && a.sprites === 0, id, 'moment classes or sprites survived a new run', a.mx, a.sprites);
     }
+    // the hourglass turns over in Rush: the body rotates 180 degrees, the rope's socket and the face stay where they are, and it turns back
+    await equip('u_sandglass'); await ready(); await release(); await hold('e.fuse = 20');
+    await page.waitForTimeout(400);
+    const rects = () => page.evaluate(() => { const r = (q) => { const b = document.querySelector(q).getBoundingClientRect(); return [b.left, b.top, b.width, b.height].map((n) => +n.toFixed(1)); }; return { sock: r('#fuse .fx-sock'), face: r('#fuse .fz-face'), tf: getComputedStyle(document.querySelector('#fuse .fz-body')).transform }; });
+    const r0 = await rects();
+    await page.evaluate(() => BR.Skins.onEvent('rushStart', { run: BR.Run, view: BR.Run.view }));
+    await page.waitForTimeout(900);
+    const r1 = await rects();
+    ok(r1.tf.indexOf('matrix(-1') === 0 || /matrix\(-0?\.9\d*|matrix\(-1/.test(r1.tf), 'the hourglass body is turned over in Rush', r1.tf);
+    ok(JSON.stringify(r0.sock) === JSON.stringify(r1.sock) && JSON.stringify(r0.face) === JSON.stringify(r1.face), 'the socket and the face stay put when the hourglass turns', r0.sock, r1.sock);
+    await page.evaluate(() => BR.Skins.onEvent('rushEnd', { run: BR.Run }));
+    await page.waitForTimeout(900);
+    const r2 = await rects();
+    ok(r2.tf === 'none' || /matrix\(1, 0, 0, 1/.test(r2.tf), 'the hourglass turns back when Rush ends', r2.tf);
     // the golem carves a rune per stage and the count survives a reset
     await equip('u_runechain'); await ready();
     const rn = await page.evaluate(() => { const h = document.getElementById('fuse'); const a = h.dataset.rn; BR.Skins.onEvent('stageUp', { run: BR.Run, info: { to: 5 } }); return [a, h.dataset.rn, document.querySelectorAll('#fuse .rn').length]; });
@@ -291,6 +305,31 @@ const ALLOWED = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale',
     }, Object.keys(HATS));
     ok(hb.length === 48 && hb.every((r) => !r.none && r.hat), 'hat badges have art', hb.filter((r) => r.none || !r.hat).slice(0, 3));
     ok(hb.every((r) => r.over <= 0.6), 'hat badges: Fizz inside the plate', hb.filter((r) => r.over > 0.6).slice(0, 3));
+  }
+
+  /* ================================================================== hat art: the declared bounds match what is drawn, and every part's picture exists */
+  if (part('hats') || part('art')) {
+    const art = await page.evaluate(async () => {
+      const out = [];
+      for (const h of BR.HATS) {
+        const draw = async (svg, w, hh) => { const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); await img.decode(); const c = document.createElement('canvas'); c.width = w; c.height = hh; const g = c.getContext('2d'); g.drawImage(img, 0, 0, w, hh); return g.getImageData(0, 0, w, hh).data; };
+        const S = 8, B = BR.Hats.box, d = await draw(BR.Hats.svg(h.id), B.w * S, B.h * S);
+        let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1, n = 0;
+        for (let y = 0; y < B.h * S; y++) for (let x = 0; x < B.w * S; x++) if (d[(y * B.w * S + x) * 4 + 3] > 60) { n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        const parts = [];
+        for (let i = 0; i < (h.parts || []).length; i++) { const p = h.parts[i], dd = await draw(BR.Hats.svg(h.id, { part: i }), p.box[2] * 4, p.box[3] * 4); let k = 0; for (let j = 3; j < dd.length; j += 4) if (dd[j] > 60) k++; parts.push(k); }
+        const live = h.parts ? await draw(BR.Hats.svg(h.id, { live: true }), B.w * 2, B.h * 2) : null;
+        let liveN = 0; if (live) for (let j = 3; j < live.length; j += 4) if (live[j] > 60) liveN++;
+        out.push({ id: h.id, n, bbox: [x0 / S + B.x, y0 / S + B.y, x1 / S + B.x, y1 / S + B.y], declared: h.bbox, parts, liveN, full: n / (S * S) });
+      }
+      return out;
+    });
+    for (const a of art) {
+      ok(a.n > 500, a.id, 'draws nothing');
+      ok(a.declared && a.bbox.every((v, i) => Math.abs(v - a.declared[i]) <= 1), a.id, 'the declared bounds', a.declared, 'are not what is drawn', a.bbox.map((v) => +v.toFixed(1)));
+      ok(a.parts.every((k) => k > 80), a.id, 'a part draws nothing', a.parts);
+      ok(a.bbox[0] > -8 && a.bbox[2] < 72 && a.bbox[1] > -34 && a.bbox[3] < 34, a.id, 'the art leaves the 96x80 box', a.bbox);
+    }
   }
 
   /* ================================================================== hats: every hat on every body in every state */
