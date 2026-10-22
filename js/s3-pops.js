@@ -124,12 +124,18 @@
 
   /* ===================================================================== EPIC */
 
-  /** Neon: crisp rings pulse out in two colors, with neon rods and, on a small pop, a laser cross. */
+  /** Neon: crisp rings pulse out in two colors, with neon rods and, on a small pop, a laser cross.
+      Update 5: the rods are fatter and each one carries a soft glow of its own colour (a stepped additive disc that travels with it, so it reads as a lit
+      tube and not a pill); the first ring is bolder, a ring in the popped brick's own colour follows it even in a crowd (so you can see what popped), and the
+      core flares as a white four-point flash. */
   PR.neon = function ({ x, y, glow, n, power }) {
-    const fx = this, C = ['#3dffd0', '#ff3dc8'], k = clamp(Math.round(n * 0.7), 3, 7), a0 = rnd(0, TAU);
+    const fx = this, C = ['#3dffd0', '#ff3dc8'], GLOW = ['#093e36', '#44093a', '#2a3030'], k = clamp(Math.round(n * 0.7), 3, 7), a0 = rnd(0, TAU);
     for (let i = 0; i < k; i++) {
-      const a = a0 + (i / k) * TAU + rnd(-0.15, 0.15), sp = rnd(300, 520) * power, c = i % 3 === 2 ? '#ffffff' : C[i % 2];
-      this.emit({ kind: 'shard', shape: 'petal', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0, drag: 3.6, rot: a, vr: 0, sway: 0, size: 6, max: rnd(0.3, 0.42), color: c });
+      const a = a0 + (i / k) * TAU + rnd(-0.15, 0.15), sp = rnd(300, 520) * power, w = i % 3 === 2 ? 2 : i % 2, c = i % 3 === 2 ? '#ffffff' : C[i % 2], max = rnd(0.3, 0.42);
+      const vx = Math.cos(a) * sp, vy = Math.sin(a) * sp;
+      this.emit({ kind: 'shard', shape: 'petal', x, y, vx, vy, g: 0, drag: 3.6, rot: a, vr: 0, sway: 0, size: 8.5, max, color: c });
+      this.emit({ kind: 'spark', x, y, vx, vy, g: 0, drag: 3.6, size: 13, max, color: GLOW[w] });
+      if (n >= 7) this.emit({ kind: 'spark', x, y, vx, vy, g: 0, drag: 3.6, size: 8, max, color: w === 2 ? '#4a5656' : w ? '#7a1068' : '#0e7a68' });
     }
     if (n >= 7 || power >= 1.4) {
       /* two short bolts laid end to end read as one straight, buzzing laser tube */
@@ -140,32 +146,51 @@
       });
     }
     const R = (30 + n * 3) * (0.9 + 0.1 * power);
-    this.ring(x, y, C[0], R, 0.36, 4.5);
-    if (n > 7) { // a crowd of rings turns into a lattice, so a big pop keeps just the one
+    this.ring(x, y, C[0], R, 0.38, 6);
+    this.ring(x, y, glow, R * 0.6, 0.32, 3.5);
+    if (n > 7) { // a crowd of rings turns into a lattice, so a big pop keeps just the two
       later(() => fx.ring(x, y, C[1], R * 0.78, 0.3, 3.5), 70);
       later(() => fx.ring(x, y, '#ffffff', R * 0.5, 0.24, 2.2), 140);
     }
+    this.emit({ shape: 'star', x, y, vx: 0, vy: 0, g: 0, drag: 1, size: 12 + 4 * power, max: 0.12, rot: Math.PI / 4, vr: 0, color: '#ffffff' });
     glint(this, x, y, 10, 0.1, '#ffffff');
     if (n > 5) glint(this, x, y, 16, 0.16, glow);
   };
-
-  /** Snow: six-point flakes and soft dots float up from the pop, then settle slowly. */
+  /** Snow: six-armed crystals and soft dots float up from the pop, then settle slowly.
+      Update 5 (Glass and Snow looked alike: pale triangles on a pale blue): the flakes are now baked six-armed crystals with side twigs (white with a cold
+      glow) that turn slowly and sway, the rest is soft round dots and a pool of frost under the pop. Nothing sharp, nothing fast, nothing in the brick's
+      colour; Glass (js/u4-cosmetics.js) is the sharp, quick, tinted one. The crystals are steered by the shared loop in normal mode only. */
+  const flakeImg = (v) => BR.FX.bake('u5flake' + v, 30, 30, (g, w, h) => {
+    g.translate(w / 2, h / 2); g.lineCap = 'round'; g.strokeStyle = '#ffffff'; g.shadowColor = 'rgba(150,215,255,0.9)'; g.shadowBlur = 3;
+    for (let a = 0; a < 6; a++) {
+      g.save(); g.rotate((a * Math.PI) / 3);
+      g.lineWidth = 1.9; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -13); g.stroke();
+      g.lineWidth = 1.4; g.beginPath();
+      if (v === 1) { g.moveTo(0, -5); g.lineTo(-4, -9); g.moveTo(0, -5); g.lineTo(4, -9); g.moveTo(0, -9); g.lineTo(-3, -12); g.moveTo(0, -9); g.lineTo(3, -12); }
+      else { g.moveTo(-3.2, -9); g.lineTo(0, -13); g.lineTo(3.2, -9); g.moveTo(-2.4, -5.5); g.lineTo(2.4, -5.5); }
+      g.stroke(); g.restore();
+    }
+    g.beginPath(); g.arc(0, 0, 2.4, 0, TAU); g.fillStyle = '#ffffff'; g.fill();
+  });
+  function flakeStep(p, dt, e) {
+    p.sx = 0.72 + 0.28 * Math.cos(p.life * 2.3 + e.ph);
+    p.vx += Math.sin(p.life * 3 + e.ph) * 46 * dt;
+  }
   PR.snow = function ({ x, y, hi, n, power }) {
-    const cols = ['#ffffff', '#d6efff', '#bfe8ff'];
-    const flakes = clamp(Math.round(n * 0.4), 1, 4);
+    const cols = ['#ffffff', '#d6efff', '#bfe8ff'], fx = this, U4 = BR.U4;
+    const flakes = clamp(Math.round(n * 0.4), 1, 4), steered = !!U4 && !BR.lowEnd && !BR.reducedMotion;
     for (let i = 0; i < flakes; i++) {
-      const base = { kind: 'shard', shape: 'tri', x: x + rnd(-8, 8), y: y + rnd(-6, 4), vx: rnd(-110, 110), vy: rnd(-190, -50), g: 50, drag: 2.5, vr: rnd(-1.6, 1.6), size: rnd(9, 13), max: rnd(1.5, 2.1), color: cols[i % 3] };
-      const r = rnd(0, TAU);
-      this.emit(Object.assign({}, base, { rot: r }));
-      this.emit(Object.assign({}, base, { rot: r + Math.PI }));
+      const k = fx.parts.length;
+      if (fx.sprite) fx.sprite({ img: flakeImg(1 + (i % 2)), x: x + rnd(-8, 8), y: y + rnd(-6, 4), vx: rnd(-110, 110), vy: rnd(-190, -50), g: 50, drag: 2.5, size: rnd(13, 19), rot: rnd(0, TAU), vr: rnd(-1.4, 1.4), max: rnd(1.5, 2.1), a: 1 });
+      if (steered && fx.parts.length > k) U4.steer(fx.parts[k], flakeStep, { ph: rnd(0, TAU) });
     }
     for (let i = 0; i < Math.ceil(n * 0.6); i++) {
       const a = rnd(0, TAU), sp = rnd(30, 190);
       this.emit({ kind: 'spark', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 40, drag: 2.2, size: rnd(2.6, 4), max: rnd(1.1, 1.7), color: cols[i % 3] });
     }
-    if (n > 5) { glint(this, x, y, 18, 0.2, '#2a4a70'); glint(this, x, y, 10, 0.3, '#8ec8ff'); }
+    if (n > 5) { glint(this, x, y, 28, 0.3, '#05101a'); glint(this, x, y, 20, 0.32, '#0a1e30'); glint(this, x, y, 12, 0.34, '#12344c'); }
     glint(this, x, y, 5, 0.3, '#ffffff');
-    for (let i = 0; i < (n > 5 ? 2 : 0); i++) { const a = rnd(0, TAU), sp = rnd(60, 160); this.emit({ shape: 'star', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, g: 0, drag: 1.8, size: rnd(5, 8), max: rnd(0.45, 0.7), rot: rnd(0, 1), vr: 3, color: '#ffffff' }); }
+    for (let i = 0; i < (n > 5 ? 2 : 0); i++) { const a = rnd(0, TAU), sp = rnd(60, 160); this.emit({ shape: 'star', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, g: 0, drag: 1.8, size: rnd(4, 6), max: rnd(0.45, 0.7), rot: rnd(0, 1), vr: 3, color: '#dff3ff' }); }
     if (n > 5) glint(this, x, y, 4, 0.1, hi);
     if (n > 7) this.ring(x, y, '#bfe8ff', 38, 0.5, 2.4);
   };
