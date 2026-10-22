@@ -1,13 +1,14 @@
-/* Update 4 cosmetics touch-up: one more motion idea for each of the six older pops, inside the same particle budget.
-     Embers   rise white-hot and cool to red as they climb, wobbling in the heat
+/* Update 4 cosmetics touch-up: one more motion idea for each of the six older pops, inside the same particle budget (Update 5 lifts four of them).
+     Embers   rise white-hot and cool to red as they climb, wobbling in the heat (Update 5: denser and longer, with a soft glow, a trail and a rising heat plume)
      Petals   curl outward in a swirl and turn to face the way they fly
-     Glass    shards catch the light once each: a white glint as they tumble
-     Pixels   hop on a grid as they scatter and fall, like a sprite explosion
+     Glass    Update 4: shards catch the light once each. Update 5: brick-coloured baked shards that tumble, flip and glint, so it no longer looks like Snow
+     Pixels   hop on a grid as they scatter and fall, like a sprite explosion (Update 5: a white flash block, more and chunkier pixels, afterimage trails)
      Lightning  sparks crackle in zigzags, and a pop's bricks are joined by short arcs
      Fireworks  the burst starts white and turns to its colour, then glitters as it falls
-   js/fx.js keeps the original recipes as a fallback and hands these six over: each recipe below emits exactly the particles the original did,
-   then steers them (colour, size, velocity) from one shared frame loop that runs only while a steered particle is alive. No DOM per particle;
-   nothing here touches the canvas drawing code, and reduced motion / low-end phones get the original recipes untouched. */
+   js/fx.js keeps the original recipes as a fallback and hands these six over. Update 4 emitted exactly the particles the original did; Update 5's four
+   repainted ones (Embers, Glass, Pixels) emit more, inside the per-brick budget tests/u5-older.js enforces (3n + 8 particles per brick and 420 live on screen).
+   Each recipe steers its particles (colour, size, position or velocity) from one shared frame loop that runs only while a steered particle is alive. No DOM
+   per particle; nothing here touches the canvas drawing code, and reduced motion / low-end phones get the original recipes untouched. */
 (function () {
   const BR = (window.BR = window.BR || {});
   const PR = (BR.PopRecipes = BR.PopRecipes || {});

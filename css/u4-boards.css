@@ -20,28 +20,28 @@
 /* band sizes in a run: the art takes the free room above the pause row and below the message band (the run column is centred, so
    the two are about equal: --u4-free) plus a little overlap, and grows on tall phones. The art that does reach behind the message
    band sits behind a soft plate (below) so the Goal and combo text always reads. */
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) {
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) {
   --u4-free: calc((100dvh - min(100vw - 24px, 100dvh - 340px, 540px) - 372px) / 2);
   --u4-th: clamp(56px, calc(var(--u4-free) + 30px), 100px);
   --u4-bh: clamp(84px, calc(var(--u4-free) + 58px), 128px);
 }
 .board-holo { --u4-bh: clamp(72px, calc(var(--u4-free) + 44px), 104px); }
 /* a soft dark plate behind the score (top right of the run column), part of the run background so low-end phones get it too */
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + var(--bw) / 2 - 56px) calc(var(--u4-free) + 24px), var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg { background: var(--u4-hud), var(--a-bg-run); }
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--u4-plate) 0, var(--u4-plate) 60%, transparent 100%); }
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .msgband:is([data-top="spark"], [data-top="aim"], [data-top="hint"], [data-top="combo"], [data-top="goal"])::before { opacity: 1; }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + var(--bw) / 2 - 56px) calc(var(--u4-free) + 24px), var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .bg { background: var(--u4-hud), var(--a-bg-run); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--u4-plate) 0, var(--u4-plate) 60%, transparent 100%); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .msgband:is([data-top="spark"], [data-top="aim"], [data-top="hint"], [data-top="combo"], [data-top="goal"])::before { opacity: 1; }
 .board-classic { --u4-plate: rgba(20, 10, 46, 0.66); --u4-ink: rgba(20, 10, 46, 0.9); }
 .board-deepsea { --u4-plate: rgba(3, 38, 68, 0.62); --u4-ink: rgba(3, 38, 68, 0.9); }
 .board-foundry { --u4-plate: rgba(22, 10, 5, 0.7); --u4-ink: rgba(22, 10, 5, 0.9); }
-.board-market { --u4-plate: rgba(38, 10, 54, 0.68); --u4-ink: rgba(38, 10, 54, 0.9); }
+.board-market { --u4-plate: rgba(38, 10, 54, 0.8); --u4-ink: rgba(38, 10, 54, 0.9); }
 .board-orbit { --u4-plate: rgba(6, 9, 34, 0.66); --u4-ink: rgba(6, 9, 34, 0.9); }
 .board-greenhouse { --u4-plate: rgba(7, 42, 24, 0.64); --u4-ink: rgba(7, 42, 24, 0.9); }
 .board-storm { --u4-plate: rgba(8, 12, 34, 0.66); --u4-ink: rgba(8, 12, 34, 0.9); }
 .board-holo { --u4-plate: rgba(2, 24, 28, 0.7); --u4-ink: rgba(2, 24, 28, 0.9); }
 /* the score sits under the top band: a lighter label and a soft shadow keep it readable over a bright sky or a glowing sign */
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .score-box .lbl { color: #e8eeff; text-shadow: 0 1px 2px var(--u4-ink), 0 0 6px var(--u4-ink); }
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .score-box b { text-shadow: 0 1px 3px var(--u4-ink), 0 0 8px var(--u4-ink); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .score-box .lbl { color: #e8eeff; text-shadow: 0 1px 2px var(--u4-ink), 0 0 6px var(--u4-ink); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .score-box b { text-shadow: 0 1px 3px var(--u4-ink), 0 0 8px var(--u4-ink); }
 
 /* in badges, previews and the reveal the bands grow so the scene still reads around the little board */
 :is(.bdg-scene, .hero-board, .mini-board):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) { --u4-th: 28%; --u4-bh: 36%; }
@@ -219,8 +219,8 @@
 .board-greenhouse .run-active .bg .scene-fx { display: block; height: calc(100% + 520px); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='520' viewBox='0 0 260 520' preserveAspectRatio='none'%3E%3Cdefs%3E%3CradialGradient id='pl' cx='0.5' cy='0.5' r='0.5'%3E%3Cstop offset='0' stop-color='%23fffbc0' stop-opacity='0.95'/%3E%3Cstop offset='0.4' stop-color='%23f6f080' stop-opacity='0.4'/%3E%3Cstop offset='1' stop-color='%23f6f080' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='142' cy='22' r='6.1' fill='url(%23pl)'/%3E%3Ccircle cx='12' cy='48' r='7.1' fill='url(%23pl)'/%3E%3Ccircle cx='73' cy='82' r='7' fill='url(%23pl)'/%3E%3Ccircle cx='243' cy='109' r='7' fill='url(%23pl)'/%3E%3Ccircle cx='63' cy='148' r='7.3' fill='url(%23pl)'/%3E%3Ccircle cx='161' cy='175' r='3.6' fill='url(%23pl)'/%3E%3Ccircle cx='28' cy='202' r='7.2' fill='url(%23pl)'/%3E%3Ccircle cx='64' cy='240' r='5.8' fill='url(%23pl)'/%3E%3Ccircle cx='144' cy='270' r='7.2' fill='url(%23pl)'/%3E%3Ccircle cx='172' cy='298' r='6.4' fill='url(%23pl)'/%3E%3Ccircle cx='222' cy='334' r='4.8' fill='url(%23pl)'/%3E%3Ccircle cx='227' cy='367' r='5.7' fill='url(%23pl)'/%3E%3Ccircle cx='147' cy='387' r='5' fill='url(%23pl)'/%3E%3Ccircle cx='65' cy='425' r='7.2' fill='url(%23pl)'/%3E%3Ccircle cx='46' cy='462' r='7.4' fill='url(%23pl)'/%3E%3Ccircle cx='230' cy='488' r='7.4' fill='url(%23pl)'/%3E%3C/svg%3E"); background-size: 260px 520px; animation: u4Rise 38s linear infinite; }
 .board-greenhouse .run-active .bg .scene-fx.b { display: none; }
 /* the roof is bright behind the HUD: lift the small labels and give the numbers a soft shadow so they stay readable */
-.board-greenhouse .run-active :is(.score-box .lbl, .fuse-time span, .stage-tag span) { color: #eaffea; text-shadow: 0 1px 2px rgba(0, 40, 20, 0.8); }
-.board-greenhouse .run-active :is(.score-box b, .fuse-time b) { text-shadow: 0 1px 3px rgba(0, 40, 20, 0.7); }
+.board-greenhouse .run-active :is(.score-box .lbl, .stage-tag span) { color: #eaffea; text-shadow: 0 1px 2px rgba(0, 40, 20, 0.8); }
+.board-greenhouse .run-active .score-box b { text-shadow: 0 1px 3px rgba(0, 40, 20, 0.7); }
 /* ivy in the corners of a pale steel frame */
 .board-greenhouse .board::after { background: radial-gradient(ellipse 18px 8px at 0 0, #58c77a 0 90%, transparent), radial-gradient(ellipse 8px 18px at 0 0, #3fa05e 0 90%, transparent), radial-gradient(ellipse 18px 8px at 100% 100%, #58c77a 0 90%, transparent), radial-gradient(ellipse 8px 18px at 100% 100%, #3fa05e 0 90%, transparent), radial-gradient(ellipse 14px 7px at 100% 0, #46b86a 0 90%, transparent), radial-gradient(ellipse 14px 7px at 0 100%, #46b86a 0 90%, transparent); box-shadow: inset 0 0 0 3px rgba(14, 56, 34, 0.8), inset 0 0 0 4.5px rgba(200, 255, 190, 0.24); }
 
@@ -278,25 +278,47 @@ html:is(.low-end, .reduced).board-holo .board { animation: none; }
 
 /* small phones: the run column is tighter (see css/run.css), so the free room is measured with its numbers */
 @media (max-height: 720px) and (orientation: portrait) {
-  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) { --u4-free: calc((100dvh - min(100vw - 24px, 100dvh - 352px, 540px) - 294px) / 2); }
+  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) { --u4-free: calc((100dvh - min(100vw - 24px, 100dvh - 352px, 540px) - 294px) / 2); }
 }
 /* tablets and desktop: the column stays in the middle and the art spreads along the whole width, so the bands follow the screen height */
 @media (min-width: 701px) and (min-height: 561px) {
-  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) { --u4-th: min(96px, 12dvh); --u4-bh: min(128px, 15dvh); }
+  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) { --u4-th: min(96px, 12dvh); --u4-bh: min(128px, 15dvh); }
   .board-holo { --u4-bh: min(104px, 12dvh); }
   html.board-deepsea { --u4-subx: 14%; } html.board-orbit { --u4-moonx: 12%; }
 }
 /* short landscape screens (a phone on its side): the board sits left, the HUD column right; the bands stay thin */
 @media (orientation: landscape) and (max-height: 560px) {
-  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) { --u4-th: min(56px, 14%); --u4-bh: min(92px, 23%); }
+  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) { --u4-th: min(56px, 14%); --u4-bh: min(92px, 23%); }
   .board-holo { --u4-bh: min(76px, 20%); }
   html.board-deepsea { --u4-subx: 70%; } html.board-orbit { --u4-moonx: 66%; }
-  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + (var(--bw) + 316px) / 2 - 56px) 28px, var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
+  :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + (var(--bw) + 316px) / 2 - 56px) 28px, var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
 }
 /* low-end phones and reduced motion: the whole scene holds still on the static --a-bg */
-html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg { background: var(--u4-hud), var(--a-bg); }
+html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .bg { background: var(--u4-hud), var(--a-bg); }
 html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg::before,
 html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg::after,
 html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg .scene-fx { display: none; }
 html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .board::before,
 html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .board::after { animation: none !important; }
+
+/* ================================================================ Update 5: plates and scrims behind the HUD, and a calm band behind the power-ups
+   The four Series 3 boards join the lists above (the score plate, the message-band plate, the small and tall screens), so Carnival Night, Beach, Volcano
+   and Aurora Sky keep the Goal and combo text, and the score, readable the way the older eight do. Any board may also lay one soft scrim behind the HUD
+   column (the pause row, the score, the fuse and the stage strip) by setting --u5-top: it is part of the .vignette, so it sits above the moving scene
+   layers and below the HUD, and costs nothing. A board never sets the colour of the fuse readout (the urgency colours always win), so a bright sky or a
+   glowing sign is handled here, with a scrim, and not by recolouring the number. */
+.board-carnival { --u4-plate: rgba(26, 18, 78, 0.88); --u4-ink: rgba(26, 18, 78, 0.9); }
+.board-beach { --u4-plate: rgba(4, 38, 78, 0.68); --u4-ink: rgba(4, 38, 78, 0.9); --u5-top: rgba(4, 34, 84, 0.74); }
+.board-volcano { --u4-plate: rgba(28, 8, 6, 0.7); --u4-ink: rgba(28, 8, 6, 0.9); }
+.board-aurora { --u4-plate: rgba(4, 16, 40, 0.66); --u4-ink: rgba(4, 16, 40, 0.9); --u5-top: rgba(3, 14, 36, 0.88); }
+.board-greenhouse { --u5-top: rgba(4, 34, 18, 0.82); }
+.board-deepsea { --u5-top: rgba(2, 28, 52, 0.45); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg .vignette { opacity: 1;
+  background: linear-gradient(180deg, transparent calc(var(--u4-free) - 14px), var(--u5-top, transparent) calc(var(--u4-free) + 14px), var(--u5-top, transparent) calc(var(--u4-free) + 205px), transparent calc(var(--u4-free) + 262px)), radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 3, 12, 0.35) 100%); }
+:is(.board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .bg .vignette {
+  background: linear-gradient(180deg, transparent calc(var(--u4-free) - 14px), var(--u5-top, transparent) calc(var(--u4-free) + 14px), var(--u5-top, transparent) calc(var(--u4-free) + 205px), transparent calc(var(--u4-free) + 262px)), radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 3, 12, 0.7) 100%); }
+/* the bottom band: the wheel, the skyline and the volcano used to climb up behind the power-up slots; they now live in the free room under the
+   message band, the same height as the older boards' bottom art (--u4-bh) */
+.board-carnival { --sc-c-wh: calc(var(--u4-bh) * 1.1); }
+.board-carnival .run-active .bg::after { height: min(var(--u4-bh), 15%); }
+.board-volcano { --sc-v-h: calc(var(--u4-bh) * 1.3); }
