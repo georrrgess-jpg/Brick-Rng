@@ -16,6 +16,7 @@
     bestStage: { rush: 0, daily: 0, chill: 0 },
     runs: 0,
     seenTutorial: false,
+    boostsLast: null,               // the Boosts chosen at the last Rush start (ids), for the Home chip and Play again
     lastDay: '',
     installNudged: false,
     settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, large: false, reduced: prefersReduced, perf: 'auto', musicVol: 0.7, sfxVol: 1 },
@@ -30,6 +31,7 @@
       pity: { skin: 0, pop: 0, board: 0, fuse: 0 }, // chests opened since the last Epic or better, per type
       loadout: { skin: 'default', pop: 'default', board: 'default', fuse: 'default', hat: 'none' },
       hats: ['h_party'],              // Fizz Hats owned (never in chests: Pass, streak and trophy rewards; the Party Hat is free)
+      pending: [],                    // season rewards paid but not yet shown (BR.claimSheet)
       hatWeeks: 0,                    // full 7-day streak weeks finished since hats arrived (the first two give a hat)
       season: { n: BR.CFG && BR.CFG.season ? BR.CFG.season.n : 4, xp: 0, tier: 0 },   // the Pop Pass season: its own XP, reset each season
       seq: 0, opened: 0, passTier: 0, passClaimed: 0,

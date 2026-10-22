@@ -110,6 +110,7 @@
   function rewardChip(r, big) {
     if (r.kind === 'coins') return `<span class="rw-ico coins">${BR.coin()}</span><span class="rw-txt"><b>${r.amount}</b> Coins</span>`;
     if (r.kind === 'chest') return `<span class="rw-ico chest">${BR.chestSVG(r.chest, LITE)}</span><span class="rw-txt"><b>${BR.CHESTS[r.chest].name}</b></span>`;
+    if (r.kind === 'hat') { const h = hatOf(r.hatId); return `<span class="rw-ico hat">${hatArt(r.hatId, 48)}</span><span class="rw-txt"><b>${esc(h.name)}</b> ${R(h.rarity).name} Fizz Hat</span>`; }
     const it = BR.itemById[r.itemId];
     return `<span class="rw-ico item" style="--rc:${R(it.rarity).color}">${BR.Badge.html(it, { shine: r.shine, seed: 7 }, { size: 48, still: true })}</span><span class="rw-txt"><b>${it.name}</b> ${R(it.rarity).name} ${BR.ITEM_TYPES[it.type].name}</span>`;
   }
@@ -117,8 +118,13 @@
   function rewardArt(r, size) {
     if (r.kind === 'coins') return `<span class="pt-coin" style="--sz:${size}px">${BR.coin()}</span>`;
     if (r.kind === 'chest') return `<span class="pt-chest" style="--sz:${size}px">${BR.chestSVG(r.chest, LITE)}</span>`;
+    if (r.kind === 'hat') return `<span class="pt-hat" style="--sz:${size}px">${hatArt(r.hatId, size)}</span>`;
     return BR.Badge.html(BR.itemById[r.itemId], { shine: r.shine, seed: 7 }, { size, still: true });
   }
+  /** A Fizz Hat's data and art (js/hats.js); a plain hat shape stands in until the art is there. */
+  function hatOf(id) { return (BR.Hats && BR.Hats.byId(id)) || { id, name: 'Fizz Hat', rarity: 'common', desc: 'A hat for Fizz.', earn: '' }; }
+  function hatArt(id, size) { return BR.Hats && BR.Hats.badge ? BR.Hats.badge(id, size) : `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M4 18h16l-3-9a5 5 0 0 0-10 0z" fill="#ffcf6b"/><path d="M3 18.5h18" stroke="#b8861f" stroke-width="2" stroke-linecap="round"/></svg>`; }
+  BR.hatArt = hatArt;
   BR.rewardChip = rewardChip;
 
   /* ------------------------------------------------------------------ odds panel (shared) */
@@ -201,7 +207,7 @@
       const par = (rec) => (rec && rec.length ? Math.round(rec.reduce((a, b) => a + b, 0) / rec.length) : 0);
       const dailyDone = st.daily.day === today;
       const chillOpen = P.level >= BR.CFG.chill.unlockLevel;
-      const nextTier = P.level, reward = BR.passReward(nextTier);
+      const seas = P.seasonStatus(), reward = seas.done ? null : BR.seasonReward(seas.tier + 1);
       const m = BR.Missions.ensure();
       const resume = BR.Storage.loadRun();
       const owned = P.openableChests();
@@ -266,8 +272,8 @@
         </div>
         ${streakCard}
         <button class="card pass-card stg" data-i="6" data-act="go-pass" type="button">
-          <div class="pc-head"><span class="pc-title display">Pop Pass</span><span class="tag">Lv ${P.level}</span></div>
-          <div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next: Pass level ${P.level + 1}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small>${fmt(P.need - P.xp)} XP to go</small></div></div>
+          <div class="pc-head"><span class="pc-title display">Pop Pass</span><span class="tag">${seas.done ? 'Season done' : `Tier ${seas.tier} of ${seas.tiers}`}</span></div>
+          ${seas.done ? `<div class="pc-body"><div class="pc-next"><small>You finished ${BR.PASS_SEASON.label}. A new season is coming.</small></div></div>` : `<div class="pc-body"><div class="pc-reward">${rewardChip(reward)}</div><div class="pc-next"><small>Next: tier ${seas.tier + 1}</small><div class="bar cyan"><i style="width:${(seas.into / seas.need) * 100}%"></i></div><small>${fmt(seas.need - seas.into)} XP to go</small></div></div>`}
         </button>
         <button class="card mission-card stg" data-i="7" data-act="go-missions" type="button">
           <div class="pc-head"><span class="pc-title display">Today's missions</span><span class="tag">${m.list.filter((x) => x.done).length}/3 done</span></div>
@@ -547,16 +553,26 @@
     const got = !!S().profile.trophies[id];
     BR.Sheet.open({ title: esc(t.name), cls: 'detail-sheet', body: `<div class="detail"><div class="reward-big trophy-art ${got ? 'got' : ''}">${BR.icon(got ? (TROPHY_ICON[id] || 'trophy') : 'lock')}</div><div class="detail-tags"><span class="tag ${got ? 'gold' : ''}">${got ? 'Earned' : 'Not yet'}</span><span class="tag gold">${BR.coin()} ${t.coins}</span></div><p class="detail-desc">${esc(t.desc)}.</p><div class="detail-where"><small>${got ? 'Reward' : 'Pays'}</small><b>${got ? 'Paid when you earned it' : t.coins + ' Coins and some XP'}</b></div></div>` });
   };
-  /** What a Pop Pass tier gives: tap a tier on the track. */
+  /** What a season tier gives: tap a tier on the track. */
   BR.rewardSheet = function (tier) {
-    const r = BR.passReward(tier);
-    const away = tier + 1 - P.level;
-    const state = tier < P.level ? 'You have this reward.' : tier === P.level ? 'Your next reward. Finish this level to get it.' : `${away} levels to go.`;
+    const r = BR.seasonReward(tier), seas = P.seasonStatus();
+    const away = Math.max(0, tier * seas.need - seas.xp);
+    const state = tier <= seas.tier ? 'You have this reward.' : tier === seas.tier + 1 ? `Your next reward. ${fmt(away)} XP to go.` : `${fmt(away)} XP to go.`;
     let title = BR.rewardLabel(r), desc = '', tags = '';
-    if (r.kind === 'item') { const it = BR.itemById[r.itemId]; title = it.name; desc = it.desc; tags = `<span class="tag rar" style="--rc:${R(it.rarity).color}">${R(it.rarity).name}</span><span class="tag">${BR.ITEM_TYPES[it.type].name}</span>`; }
+    if (r.kind === 'item') { const it = BR.itemById[r.itemId]; title = it.name; desc = it.desc; tags = `<span class="tag rar" style="--rc:${R(it.rarity).color}">${R(it.rarity).name}</span><span class="tag">${BR.ITEM_TYPES[it.type].name}</span><span class="tag gold">Season exclusive</span>`; }
+    else if (r.kind === 'hat') { const h = hatOf(r.hatId); title = h.name; desc = `${h.desc || 'A hat for Fizz.'} Equip it from the Collection, in the Hats row.`; tags = `<span class="tag rar" style="--rc:${R(h.rarity).color}">${R(h.rarity).name}</span><span class="tag">Fizz Hat</span>`; }
     else if (r.kind === 'chest') desc = BR.CHESTS[r.chest].blurb;
-    else desc = tier < P.level ? `Paid when you reached level ${tier + 1}.` : 'Paid the moment you reach this level.';
-    BR.Sheet.open({ title: esc(title), cls: 'detail-sheet', body: `<div class="detail"><div class="reward-big">${rewardArt(r, r.kind === 'item' ? 168 : 120)}</div><div class="detail-tags"><span class="tag gold">Pass level ${tier + 1}</span>${tags}</div><p class="detail-desc">${esc(desc)}</p><div class="detail-where"><small>${tier < P.level ? 'Claimed' : tier === P.level ? 'Up next' : 'Locked'}</small><b>${state}</b></div></div>` });
+    else desc = tier <= seas.tier ? `Paid when you reached tier ${tier}.` : 'Paid the moment you reach this tier.';
+    BR.Sheet.open({ title: esc(title), cls: 'detail-sheet', body: `<div class="detail"><div class="reward-big">${rewardArt(r, r.kind === 'item' ? 168 : 120)}</div><div class="detail-tags"><span class="tag gold">Tier ${tier}</span>${tags}</div><p class="detail-desc">${esc(desc)}</p><p class="detail-state">${state}</p></div>`, actions: [{ label: 'Got it', cls: 'btn-dark' }] });
+  };
+  /** Season rewards are paid at once, so this is the moment they are shown: a short sheet of what the last runs unlocked. */
+  BR.claimSheet = function (list) {
+    if (!list || !list.length) return false;
+    const shown = list.slice(0, 5), more = list.length - shown.length;
+    const rows = shown.map((x) => `<div class="claim-row">${rewardChip(x.reward)}<span class="tag gold">Tier ${x.tier}</span>${x.paid ? `<small class="claim-note">You already had it: ${x.paid} Coins instead.</small>` : x.reward.kind === 'chest' ? '<small class="claim-note">Waiting in the Shop.</small>' : x.reward.kind === 'hat' ? '<small class="claim-note">Wear it from the Collection.</small>' : ''}</div>`).join('');
+    BR.audio && BR.audio.boosterGain && BR.audio.boosterGain();
+    BR.Sheet.open({ center: true, cls: 'claim', title: list.length > 1 ? 'Season rewards' : 'Season reward', body: `<div class="stack claim-list">${rows}${more > 0 ? `<p class="ready-sub center">and ${more} more</p>` : ''}</div>`, actions: [{ label: 'Nice', cls: 'btn-xl' }] });
+    return true;
   };
   /** Bigger preview for the detail sheet: a live mini board for skins/pops/boards, a burning fuse for fuses. */
   BR.detailPreview = function (item, inst) {
@@ -628,7 +644,7 @@
       BR.toast('Mission swapped', 'good', { ms: 6000, action: { label: 'Undo', onClick: () => {
         const mm = BR.Missions.ensure();
         if (mm.rerolls < 1 || BR.Router.current === 'run') return;
-        mm.list[i] = before; mm.rerolls = 0; S().profile.coins += BR.CFG.rerollCost; BR.Storage.save(); BR.refreshCoins();
+        if (!BR.Missions.undoReroll(i, before)) return;
         BR.audio.ui(); if (BR.Router.current === 'missions' && this.tab === 'daily') this.refreshDaily(i); else BR.Router.rerender();
       } } });
       return true;
@@ -642,30 +658,35 @@
       if (c && c.animate && !BR.reducedMotion) c.animate([{ transform: 'perspective(700px) rotateX(-85deg)', opacity: 0.35 }, { transform: 'perspective(700px) rotateX(0)', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
     },
     passHTML() {
-      const L = P.level, need = P.need, next = BR.passReward(L), S3 = BR.PASS_SEASON;
+      const seas = P.seasonStatus(), L = P.level, S3 = BR.PASS_SEASON, T = seas.tier;
+      const next = seas.done ? null : BR.seasonReward(T + 1);
       const big = (t) => t.kind !== 'coins';
+      const stateOf = (t) => (t.tier <= T ? 'claimed' : t.tier === T + 1 ? 'next' : 'locked');
       const card = (t) => {
-        const state = t.tier < L ? 'claimed' : t.tier === L ? 'next' : 'locked';
+        const state = stateOf(t);
         const mark = state === 'claimed' ? `<i class="pt-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="pt-lk">${BR.icon('lock')}</i>` : '<span class="pt-now">Next</span>';
         return `${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${BR.rewardLabel(t)}</span>${mark}`;
       };
       this._passCards = {};
-      const tiers = BR.PASS.map((t) => {
-        const state = t.tier < L ? 'claimed' : t.tier === L ? 'next' : 'locked';
-        const near = t.tier >= L - 2 && t.tier <= L + 3;     // the tiers in view when the track centres on the next reward
+      const tiers = BR.SEASON.map((t) => {
+        const state = stateOf(t);
+        const near = t.tier >= T - 1 && t.tier <= T + 4;     // the tiers in view when the track centres on the next reward
         if (!near) this._passCards[t.tier] = card(t);
-        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}" role="button" tabindex="0" aria-label="Pass level ${t.tier + 1}: ${BR.rewardLabel(t)}, ${state === 'claimed' ? 'claimed' : state === 'next' ? 'up next' : 'locked'}"><span class="pt-n"><b>${t.tier + 1}</b></span>
+        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}" role="button" tabindex="0" aria-label="Tier ${t.tier}: ${BR.rewardLabel(t)}, ${state === 'claimed' ? 'claimed' : state === 'next' ? 'up next' : 'locked'}"><span class="pt-n"><b>${t.tier}</b></span>
           <div class="pt-card${near ? '' : ' ph'}">${near ? card(t) : ''}</div></div>`;
       }).join('');
+      const head = seas.done
+        ? `<div class="ph-next"><div class="phn-txt"><small>${S3.label}</small><b class="display">Season complete</b><small>You have every reward. A new season is coming, and your level carries on.</small></div></div>`
+        : `<div class="ph-next"><div class="phn-art">${rewardArt(next, next.kind === 'coins' ? 64 : 92)}</div>
+            <div class="phn-txt"><small>Next reward · tier ${T + 1}</small><b class="display">${BR.rewardLabel(next)}</b>
+              <div class="bar tall cyan"><i style="width:${(seas.into / seas.need) * 100}%"></i></div><small class="num">${fmt(seas.need - seas.into)} XP to go</small></div></div>`;
       return `<article class="pass-hero stg">
-          <div class="ph-head"><div><span class="ph-season">${S3.label}</span><h2 class="display">Pop Pass</h2><small>Free. Every level pays the next reward.</small></div>
-            <div class="ph-lvl">${ringSVG(P.xp / need, 64, 6)}<b>${L}</b></div></div>
-          <div class="ph-next"><div class="phn-art">${rewardArt(next, next.kind === 'coins' ? 64 : 92)}</div>
-            <div class="phn-txt"><small>Next reward · Pass level ${L + 1}</small><b class="display">${BR.rewardLabel(next)}</b>
-              <div class="bar tall cyan"><i style="width:${(P.xp / need) * 100}%"></i></div><small class="num">${fmt(need - P.xp)} XP to go</small></div></div>
-          <p class="ph-how">XP comes from every run, mission and trophy.</p>
+          <div class="ph-head"><div><span class="ph-season">${S3.label}</span><h2 class="display">Pop Pass</h2><small>Free. Season XP comes from every run, mission and trophy.</small></div>
+            <div class="ph-lvl" role="img" aria-label="Tier ${T} of ${seas.tiers}">${ringSVG(seas.done ? 1 : seas.into / seas.need, 64, 6)}<b>${T}</b></div></div>
+          ${head}
+          <p class="ph-how">Your level is ${L}: every level pays Coins. This track is the season: ${seas.tiers} tiers of chests, Fizz Hats and two exclusive items.</p>
         </article>
-        <div class="track-wrap stg"><button class="track-arrow l" data-act="track-prev" type="button" aria-label="Earlier rewards">${BR.icon('back')}</button><button class="track-arrow r" data-act="track-next" type="button" aria-label="Later rewards">${BR.icon('arrow')}</button><div class="track" id="passTrack" role="group" aria-label="Pop Pass rewards">${tiers}<div class="pt more"><span class="pt-n"><b>+</b></span><div class="pt-card"><span class="pt-coin" style="--sz:52px">${BR.coin()}</span><span class="pt-label">Every level after ${BR.CFG.passTiers + 1}</span></div></div></div></div>`;
+        <div class="track-wrap stg"><button class="track-arrow l" data-act="track-prev" type="button" aria-label="Earlier rewards">${BR.icon('back')}</button><button class="track-arrow r" data-act="track-next" type="button" aria-label="Later rewards">${BR.icon('arrow')}</button><div class="track" id="passTrack" role="group" aria-label="Pop Pass rewards">${tiers}</div></div>`;
     },
     trophiesHTML() {
       const got = S().profile.trophies;
@@ -674,7 +695,7 @@
     },
     /** The far tiers of the track get their art after the first frames, nearest to the next reward first. */
     hydrateTrack() {
-      const cards = this._passCards, L = P.level;
+      const cards = this._passCards, L = P.seasonStatus().tier + 1;
       hydrate(this.el, '.pt-card.ph', (el) => { const html = cards[el.closest('.pt').dataset.tier]; el.classList.remove('ph'); if (html) el.innerHTML = html; },
         (els) => els.sort((a, b) => Math.abs(+a.closest('.pt').dataset.tier - L) - Math.abs(+b.closest('.pt').dataset.tier - L)));
     },
@@ -702,7 +723,7 @@
     onShow() {
       const m = BR.Missions.ensure(), seen = S().seen || (S().seen = {});
       if (seen.misDay !== m.day) { seen.misDay = m.day; BR.Storage.save(); }   // the dot on the tab means "new missions you have not looked at"
-      if (this.tab === 'pass') this.centerTrack(true);
+      if (this.tab === 'pass') { this.centerTrack(true); claimLater(); }
     },
   };
 
@@ -817,8 +838,19 @@
         <p class="tiny center version">Pop Rush 4.1 · Ignite</p>
       </div>`;
     },
-    onShow() { },
+    onShow() { claimLater(); },
   };
+
+  /** Season rewards are paid the moment they are earned; the next time the player is on Home or the Pass they are shown once. */
+  function claimLater() {
+    if (!P.pendingCount()) return;
+    setTimeout(() => {
+      const here = BR.Router.current === 'home' || (BR.Router.current === 'missions' && Missions.tab === 'pass');
+      const busy = document.querySelector('#layer-sheets .sheet') || document.querySelector('#layer-opening .opening') || (BR.Run && BR.Run.active && BR.Router.current === 'run');
+      if (here && !busy && P.pendingCount()) BR.claimSheet(P.takePending());
+    }, 1300);
+  }
+  BR.claimLater = claimLater;
 
   /* ------------------------------------------------------------------ events + registration */
   function bind(screen, handler) {

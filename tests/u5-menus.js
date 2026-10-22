@@ -228,8 +228,8 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => { const seg = document.getElementById('colSeg'), t = seg.querySelector('.thumb').getBoundingClientRect(), on = seg.querySelector('button.on').getBoundingClientRect(); return Math.abs((t.left + t.right) / 2 - (on.left + on.right) / 2) < 3; }), 'the Collection thumb is not under the active type on arrival');
     await page.evaluate(() => { BR.Router.screens.collection.type = 'skin'; });
     // the Pass: a claimed Coins tier says when it was paid
-    await page.evaluate(() => { BR.rewardSheet(1); }); await sheetUp(page);
-    ok(await page.evaluate(() => /Paid when you reached level/.test(document.querySelector('.sheet.on .detail-desc').textContent) && !/right away/.test(document.querySelector('.sheet.on').textContent)), 'a claimed Coins tier says the Coins come right away');
+    await page.evaluate(() => { const se = BR.Storage.data.profile.season; se.tier = 2; se.xp = 2 * BR.CFG.season.xpPerTier + 10; BR.rewardSheet(1); }); await sheetUp(page);
+    ok(await page.evaluate(() => /Paid when you reached tier/.test(document.querySelector('.sheet.on .detail-desc').textContent) && !/right away/.test(document.querySelector('.sheet.on').textContent)), 'a claimed Coins tier says the Coins come right away');
     await esc(page);
 
     // Home: a finished week stops promising the shield, and the weeks are shown; a new player sees no placeholder stats
@@ -237,7 +237,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => { const t = document.querySelector('.streak-card').textContent; return /Week complete/.test(t) && !/forgiven/.test(t) && /2 weeks finished/.test(t); }), 'the finished-week card still promises a forgiven day, or hides the weeks', await page.evaluate(() => document.querySelector('.streak-card').textContent));
     await page.evaluate(() => { const st = BR.Storage.data; st.best.rush = 0; st.bestStage.rush = 0; st.recent.rush = []; BR.Router.rerender(); }); await wait(page, 300);
     ok(await page.evaluate(() => { const t = document.querySelector('.hero-stats').textContent; return !/Stage\s*-/.test(t) && /first/i.test(t); }), 'a new player sees "BEST 0 · STAGE -"');
-    ok(await page.evaluate(() => /Pass level 7/.test(document.querySelector('.pass-card').textContent) && !/Next reward/.test(document.querySelector('.pass-card').textContent)), 'the Pass card does not say "Next: Pass level 7"');
+    ok(await page.evaluate(() => /Next: tier \d+/.test(document.querySelector('.pass-card').textContent) && !/Next reward/.test(document.querySelector('.pass-card').textContent)), 'the Pass card does not say "Next: tier N"');
 
     ok(errors.length === 0, 'console errors (portrait)', errors.slice(0, 3).join(' | '));
     await browser.close();

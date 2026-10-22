@@ -85,7 +85,9 @@
       while (s.tier < C.tiers && s.xp >= (s.tier + 1) * C.xpPerTier) {
         s.tier++;
         const reward = BR.seasonReward(s.tier);
-        ups.push({ tier: s.tier, reward, paid: this.grant(reward) || 0 });
+        const up = { tier: s.tier, reward, paid: this.grant(reward) || 0 };
+        ups.push(up);
+        (P().pending || (P().pending = [])).push(up);   // shown once on Home or the Pass (BR.claimSheet), so a reward is never paid in silence
       }
       const now = this.seasonStatus();
       return { from: { tier: before.tier, into: before.into }, tier: now.tier, into: now.into, need: now.need, done: now.done, ups };
@@ -106,6 +108,10 @@
       save();
       return paid;
     },
+
+    /** Season rewards paid since the player last looked: returns them and clears the list. */
+    takePending() { const p = P().pending || []; P().pending = []; if (p.length) save(); return p; },
+    pendingCount() { return (P().pending || []).length; },
 
     /* ---------- Fizz Hats: earned only (Pass, streak weeks, trophies), never in chests ---------- */
     ownsHat(id) { return id === 'h_party' || P().hats.includes(id); },

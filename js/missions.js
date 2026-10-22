@@ -93,6 +93,15 @@
       return true;
     },
 
+    /** Put a swapped mission back and refund the swap (the Undo after a swap). `prev` is the mission that was replaced. */
+    undoReroll(i, prev) {
+      const m = M();
+      if (!prev || !m.list[i] || m.rerolls < 1) return false;
+      m.list[i] = prev; m.rerolls--;
+      BR.Progress.earn(BR.CFG.rerollCost); BR.Storage.save();
+      return true;
+    },
+
     /**
      * Apply a finished run. Pays out every mission it completes.
      * Returns [{ mission, before, after, justDone, weekly }] for the results screen.

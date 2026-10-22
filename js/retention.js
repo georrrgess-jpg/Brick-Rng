@@ -144,10 +144,11 @@
       const need = chests[0].c.cost - P_.coins;
       if (need > 0) cand.push({ near: need / Math.max(40, chests[0].c.cost), text: `${fmt(need)} more Coins opens a ${chests[0].c.name}` });
     }
-    // Pop Pass: the next milestone (a chest or an item) and how many levels away it is
-    for (let t = P_.level; t < P_.level + 6; t++) {
-      const r = BR.passReward(t);
-      if (r.kind !== 'coins') { const away = t + 1 - P_.level; cand.push({ near: away / 6 + 0.05, text: `${away} level${away > 1 ? 's' : ''} to ${BR.rewardLabel(r)} on the Pop Pass` }); break; }
+    // Pop Pass: the next season reward that is more than Coins, and how many tiers away it is
+    const seas = P_.seasonStatus();
+    if (!seas.done) for (let t = seas.tier + 1; t <= Math.min(seas.tiers, seas.tier + 6); t++) {
+      const r = BR.seasonReward(t);
+      if (r.kind !== 'coins') { const away = t - seas.tier; cand.push({ near: away / 6 + 0.05, text: `${away} tier${away > 1 ? 's' : ''} to ${BR.rewardLabel(r)} on the Pop Pass` }); break; }
     }
     // the stage record
     const bs = BR.Storage.data.bestStage.rush || 0;
