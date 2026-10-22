@@ -15,7 +15,7 @@
     view: null, engine: null, token: 0, mode: 'rush', boosts: {},
     clock: false, busy: false, paused: false, modal: false, over: true, armed: null, leaving: false,
     pressed: false, hoverCell: null, hoverPlan: null, hoverVer: -1, hoverArmed: null, buffered: null, lastPointer: null,
-    idleTimer: 0, popsThisRun: 0, last: 0, hb: 0, warned: false, sparkT: 0, perfN: 0, perfSum: 0, shownFuse: '', trackW: 300,
+    idleTimer: 0, popsThisRun: 0, last: 0, hb: 0, warned: false, perfN: 0, perfSum: 0,
 
     /* ===================================================================== setup */
     init(app) {
@@ -28,6 +28,7 @@
         onHide: () => setTimeout(() => { if (BR.Router.current !== 'run') this.view.reset(); }, 700),
       });
       this.el = $('run');
+      BR.Fuse.init($('fuse'));
       this.buildSlots();
       this.bind();
       document.addEventListener('visibilitychange', () => { if (document.hidden && this.active && !this.over && !this.paused && !this.modal && this.clock) this.pause(true); });
@@ -38,12 +39,7 @@
     kick() { if (this._looping) return; this._looping = true; requestAnimationFrame((t) => { this.last = t; this.frame(t); }); },
     get active() { return BR.Router.current === 'run'; },
     get canAct() { return this.active && !this.over && !this.paused && !this.modal && this.clock; },
-    measure() { const t = $('fuseTrack'); if (t && t.clientWidth) this.trackW = t.clientWidth; this._sp = null; },
-    /** Where the fuse's burning tip is on the page, worked out from where it was last measured at rest: reading it every frame would force a restyle of the board. */
-    sparkPoint() {
-      if (!this._sp) { const r = $('spark').getBoundingClientRect(), run = this.el.getBoundingClientRect(); this._sp = { x: r.left + r.width / 2 - (this._sparkX || 0), y: r.top + r.height / 2, top: r.top, rl: run.left, rt: run.top }; }
-      return { x: this._sp.x + (this._sparkX || 0), y: this._sp.y };
-    },
+    measure() { BR.Fuse.layout(); },
 
     buildSlots() {
       $('slots').innerHTML = BR.BOOSTER_ORDER.map((id) => `<button class="bslot empty" data-b="${id}" aria-label="${BR.BOOSTERS[id].name}: ${BR.BOOSTERS[id].desc}"><i class="bfill"></i>${BR.powerIcon(id)}<span class="bname">${BR.BOOSTERS[id].name}</span><span class="bsub"></span><em class="bcount">0</em></button>`).join('');
@@ -120,6 +116,7 @@
       this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
       if (this._tipDone) this._tipDone();
       $('bomb').getAnimations().forEach((a) => a.cancel()); $('bomb').classList.remove('gone');   // the fuse-out explosion leaves the bomb gone; every run starts with it back
+      BR.Fuse.reset(this.fuseState());
       this.bestBase = S().best[this.mode] || 0; this.beatFired = false; this.chillStars = 0;
       $('warnVignette').classList.remove('on');
       const rush = !engine.chill;
@@ -193,7 +190,7 @@
       const e = this.engine;
       this.el.classList.add('sparking');
       $('lastSpark').classList.add('on'); this.band();
-      BR.audio.lastSpark && BR.audio.lastSpark(); BR.haptic('boom');
+      BR.audio.lastSpark && BR.audio.lastSpark(); BR.haptic('boom'); BR.Fuse.sparkStart();
       this.fx.flash('#ff4d6d', 0.3, 360); this.fx.shake($('app'), 10, 360);
       if (BR.Music && BR.Music.duck) BR.Music.duck(true);
       this.hideHint(); this.view.showHint(e.bestGroup());
@@ -209,39 +206,37 @@
       $('lastSpark').classList.remove('on'); this.band();
       this.view.hideHint();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
+      BR.Fuse.sparkEnd(saved);
       if (saved) {
         BR.audio.lastSparkSave && BR.audio.lastSparkSave(); BR.haptic('win');
         this.callout('RELIT!', '#ffd66b'); this.fx.flash('#ffd66b', 0.3, 400);
-        const r = this.sparkPoint(); this.fx.explosion(r.x, r.y, '#ffb02e', 1.2);
-        this.fuseFloat(`+${BR.CFG.fuse.sparkFuse}s`, '#ffe58a');
+        const bp = BR.Fuse.bombPoint(); this.fx.explosion(bp.x, bp.y - 26, '#ffb02e', 1.2);
       }
     },
 
+    /** What the fuse HUD needs from the engine (one object, reused: nothing is allocated per frame). */
+    fuseState() {
+      const e = this.engine, s = this.fz || (this.fz = {});
+      s.fuse = e.fuse; s.fuseMax = e.fuseMax; s.burn = e.burn; s.rush = e.rush; s.freeze = e.freeze; s.spark = e.spark; s.over = e.over;
+      s.paused = this.paused || !this.clock || this.modal || this.over;
+      return s;
+    },
     hudFuse(dt) {
-      const e = this.engine, fuse = $('fuse');
+      const e = this.engine;
+      BR.Fuse.update(this.fuseState(), dt);     // the rope, flame, readout, Fizz, chips, particles and the warning vignette (js/fuse.js)
       const f = Math.max(0, Math.min(1, e.fuse / e.fuseMax));
-      $('fuseFill').style.transform = `scaleX(${f.toFixed(4)})`;
-      const x = -6 + (this.trackW + 6) * f;
-      this._sparkX = x;
-      $('spark').style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
-      const txt = e.fuse.toFixed(1);
-      if (txt !== this.shownFuse) { this.shownFuse = txt; $('fuseTime').textContent = txt; }
       const frozen = e.rush.active || e.freeze > 0;
       const crit = e.fuse <= BR.CFG.fuse.critical && !frozen && !e.over;
-      fuse.classList.toggle('low', f <= BR.CFG.fuse.lowFrac && !frozen);
-      fuse.classList.toggle('crit', crit);
-      fuse.classList.toggle('frozen', frozen);
-      $('warnVignette').classList.toggle('on', crit && !this.paused);
-      // the music turns tense when the fuse is low, and the last ten seconds tick once a second
+      // the music turns tense when the fuse is low; a soft tick each second from 8s, a light haptic tick each second when critical
       if (BR.Music && BR.Music.setLow) BR.Music.setLow(f <= BR.CFG.fuse.lowFrac && !frozen && !e.over && this.clock && !this.paused);
-      if (this.clock && !this.paused && !frozen && !e.over && e.fuse > 0 && e.fuse < 10) {
+      if (this.clock && !this.paused && !frozen && !e.over && e.fuse > 0 && e.fuse < 8) {
         const sec = Math.ceil(e.fuse);
-        if (sec !== this.tickSec) { this.tickSec = sec; if (BR.audio.fuseTick) BR.audio.fuseTick(sec); }
+        if (sec !== this.tickSec) { this.tickSec = sec; if (BR.audio.fuseTick) BR.audio.fuseTick(sec); if (crit) BR.haptic('tick'); }
       } else this.tickSec = 0;
-      // heartbeat + one-time warning
+      // heartbeat (the bomb and the vignette beat with it) + one-time warning
       if (crit && this.clock && !this.paused) {
         this.hb -= dt;
-        if (this.hb <= 0) { BR.audio.heartbeat(1); BR.haptic('tick'); this.hb = 0.32 + 0.5 * (e.fuse / BR.CFG.fuse.critical); }
+        if (this.hb <= 0) { BR.audio.heartbeat(1); BR.Fuse.beat(); this.hb = 0.32 + 0.5 * (e.fuse / BR.CFG.fuse.critical); }
         if (!this.warned) { this.warned = true; this.callout('FUSE!', '#ff4d6d'); }
       } else if (e.fuse > BR.CFG.fuse.critical + 1) this.warned = false;
       // rush meter
@@ -249,11 +244,6 @@
       if (e.rush.active) { $('rushFill').style.width = Math.min(100, (e.rush.left / R.time) * 100).toFixed(1) + '%'; $('rushLabel').textContent = `RUSH x${R.mult}  ${e.rush.left.toFixed(1)}s`; }
       else { $('rushFill').style.width = e.rush.meter.toFixed(1) + '%'; if ($('rushLabel').textContent !== 'RUSH') $('rushLabel').textContent = 'RUSH'; }
       bar.classList.toggle('hot', e.rush.meter >= 70 && !e.rush.active);
-      // spark particles
-      if (this.clock && !this.paused && !BR.lowEnd && !frozen) {
-        this.sparkT -= dt;
-        if (this.sparkT <= 0) { this.sparkT = 0.05; const r = this.sparkPoint(); this.fx.emit({ kind: 'spark', x: r.x, y: r.y, vx: (Math.random() - 0.5) * 80, vy: -30 - Math.random() * 90, g: 160, drag: 1.5, size: 1.2 + Math.random() * 2, max: 0.35 + Math.random() * 0.3, color: Math.random() < 0.5 ? '#ffd24a' : '#ff8a3d' }); }
-      }
     },
 
     /* ===================================================================== HUD */
@@ -266,7 +256,6 @@
       this.hudStageBar(false);
       this.renderPower(null);
       $('rushFill').style.width = '0%';
-      this.shownFuse = '';
       if (e.chill) this.hudChill(false);
       else this.hudFuse(0);
       void animate;
@@ -355,16 +344,8 @@
       ], { duration: BR.reducedMotion ? 600 : o.dur || 950, delay: o.delay || 0, easing: 'cubic-bezier(0.2,0.7,0.3,1)', fill: 'both' });
       a.onfinish = () => el.remove();
     },
-    /** A floating "+1.8s" that rises from the fuse's burning tip. */
-    fuseFloat(text, color) {
-      const sp = this.sparkPoint(), top = this._sp.top;
-      const el = BR.el(`<div class="fuse-float" style="color:${color}">${text}</div>`);
-      el.style.left = (sp.x - this._sp.rl) + 'px'; el.style.top = (top - this._sp.rt) + 'px';
-      this.el.appendChild(el);
-      const a = el.animate([{ transform: 'translate(-50%,0) scale(0.6)', opacity: 0 }, { transform: 'translate(-50%,-14px) scale(1.15)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%,-38px) scale(1)', opacity: 0 }], { duration: 900, easing: 'ease-out', fill: 'forwards' });
-      a.onfinish = () => el.remove();
-      BR.replay($('fuse'), 'gain');
-    },
+    /** A "+1.8s" chip that flies from `from` (page coordinates) to the fuse readout (js/fuse.js). Kept as a thin shim for older callers. */
+    fuseFloat(text, color, from) { BR.Fuse.chip(text, color, from); },
     hint(html, ms = 4200) {
       const h = $('hint'); clearTimeout(this.hintT);
       h.innerHTML = `<span>${html}</span>`; h.classList.add('show'); this.band();
@@ -477,7 +458,7 @@
       if (res.type === 'hammer') this.fx.explosion(pt.x, pt.y, '#ffb347', 1.1);
       else if (res.type === 'beam') { this.beam('row', res.tap.r, '#7ae8ff'); this.beam('col', res.tap.c, '#7ae8ff'); }
       else { this.fx.ring(pt.x, pt.y, '#d27aff', 160, 0.7, 6); res.removed.slice(0, 14).forEach((q, i) => { const t = view.pagePoint(q.r, q.c); setTimeout(() => this.fx.bolt(pt.x, pt.y, t.x, t.y, BR.PALETTE[q.color].hi), i * 22); }); }
-      if (res.timeGain) { this.fuseFloat(`+${res.timeGain.toFixed(1)}s`, '#7ee8ff'); }
+      if (res.timeGain) BR.Fuse.gain(res.timeGain, { x: pt.x, y: pt.y }, 'power');
       this.checkGoal();
     },
 
@@ -549,14 +530,16 @@
 
       // the fuse
       if (!e.chill) {
-        if (res.timeGain > 0) { BR.audio.timeGain(Math.min(6, n)); this.fuseFloat(`+${res.timeGain.toFixed(1)}s`, '#ffe58a'); }
-        if (res.defused) { BR.audio.defuse(); BR.haptic('stage'); setTimeout(() => this.fuseFloat(`+${(res.defused * BR.CFG.fuse.defuse).toFixed(0)}s`, '#3ddc97'), 200); this.callout('DEFUSED!', '#3ddc97'); }
-        if (res.bursts && res.bursts.length) { BR.audio.burstFuse(); setTimeout(() => this.fuseFloat(`-${res.bursts.length * BR.CFG.fuse.burstPenalty}s`, '#ff4d6d'), 150); this.callout('FUSE BRICK!', '#ff4d6d'); }
+        // time changes fly to the readout as chips (js/fuse.js); the chime plays when each one arrives
+        const from = { x: pt.x, y: pt.y };
+        if (res.timeGain > 0) BR.Fuse.gain(res.timeGain, from, p.line ? 'line' : 'pop');
+        if (res.defused) { BR.audio.defuse(); BR.haptic('stage'); BR.Fuse.gain(res.defused * BR.CFG.fuse.defuse, from, 'defuse', 150); this.callout('DEFUSED!', '#3ddc97'); }
+        if (res.bursts && res.bursts.length) { BR.audio.burstFuse(); BR.Fuse.burst(res.bursts.length * BR.CFG.fuse.burstPenalty); this.callout('FUSE BRICK!', '#ff4d6d'); }
         if (res.rushStart) this.rushStart();
         if (res.stageUp) this.stageUp(res.stageUp);
         if (res.spark) this.sparkStart();
         else if (this.el.classList.contains('sparking') && e.spark <= 0) this.sparkEnd(!!res.sparkSave);
-        if (res.shuffleRefund) this.fuseFloat(`+${res.shuffleRefund}s`, '#c4b5ff');
+        if (res.shuffleRefund) { const bw = $('boardWrap').getBoundingClientRect(); BR.Fuse.gain(res.shuffleRefund, { x: bw.left + bw.width / 2, y: bw.top + bw.height / 2 }, 'shuffle', 700); }
       }
       this.checkGoal();
       if (BR.Skins.onEvent) BR.Skins.onEvent('pop', { res, view, run: this });
@@ -609,7 +592,7 @@
     /* ===================================================================== Rush Mode + stages */
     rushStart() {
       this.el.classList.add('rushing'); this.setMult(true);
-      BR.audio.rushStart(); BR.haptic('rush');
+      BR.audio.rushStart(); BR.haptic('rush'); BR.Fuse.rushStart();
       BR.replay($('rushBanner'), 'go');
       this.fx.flash('#ff3d8b', 0.4, 600); this.fx.shake($('app'), 14, 600);
       this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, 0);
@@ -619,14 +602,14 @@
     },
     rushEnd() {
       this.el.classList.remove('rushing'); this.setMult(true);
-      BR.audio.rushEnd(); BR.haptic('tick');
+      BR.audio.rushEnd(); BR.haptic('tick'); BR.Fuse.rushEnd();
       this.callout('Rush over', '#c4b5ff');
       if (BR.Music) BR.Music.setRush(false);
       if (BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });
     },
     stageUp(info) {
       const e = this.engine;
-      BR.audio.stageUp(); BR.haptic('stage');
+      BR.audio.stageUp(); BR.haptic('stage'); BR.Fuse.stageUp();
       $('swNum').textContent = info.to; $('swMult').textContent = 'x' + info.mult.toFixed(1);
       const w = $('stageWipe'); BR.replay(w, 'go');
       setTimeout(() => w.classList.remove('go'), 1300);
@@ -735,9 +718,9 @@
       if (reason === 'fuse') {
         // the bomb goes off
         BR.audio.fuseOut(); BR.haptic('boom');
-        const bomb = $('bomb').getBoundingClientRect();
+        const bomb = BR.Fuse.bombPoint(); BR.Fuse.fuseOut();
         this.fx.flash('#ffffff', 0.9, 700);
-        this.fx.explosion(bomb.left + bomb.width / 2, bomb.top + bomb.height / 2, '#ff7a4d', 1.8);
+        this.fx.explosion(bomb.x, bomb.y, '#ff7a4d', 1.8);
         this.fx.shake($('app'), 22, 900);
         $('bomb').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.8)', opacity: 0.9, offset: 0.25 }, { transform: 'scale(0.2)', opacity: 0 }], { duration: 650, easing: 'ease-out' }).onfinish = () => $('bomb').classList.add('gone');
         this.callout('FUSE OUT!', '#ff4d6d');

@@ -58,8 +58,9 @@ css/base.css        design tokens, buttons, sheets, tab bar
 css/screens.css     Home, Shop, Collection, Missions, Profile
 css/run.css         the run screen: fuse, board, Rush, results
 css/chest.css       chest stage, chest parts and idle life, hold ring, reel, reveals
-css/skins.css       Skins, Boards, Fuses, previews (Series 1 and 2)
-css/s3-skins.css css/s3-scenes.css    Series 3 skins, boards and fuses
+css/skins.css       Skins, Boards, previews (Series 1 and 2)
+css/s3-skins.css css/s3-scenes.css    Series 3 skins and boards
+css/fuse.css        the fuse: Fizz, rope, flame, readout, chips, the urgency states (every fuse cosmetic is drawn from tokens)
 css/badges.css      item badges (rarity frame and art, the still version used in the reel)
 css/coach.css       the first-time tip cards
 js/rng.js board.js config.js boosters.js items.js chests.js engine.js storage.js pass.js progress.js missions.js
@@ -70,6 +71,8 @@ js/music.js         adaptive soundtrack: menu and run arrangements that crossfad
 js/fx.js            canvas particles, fireworks
 js/skins.js         applies the loadout, previews, signature moments (Series 3 plugs in via handlers)
 js/s3-skins.js s3-pops.js s3-scenes.js   Series 3 moments and pop recipes
+js/fuse-art.js      the 11 fuse cosmetics as data (rope textures, flame, ember, particles, bomb body, face style, frost tint)
+js/fuse.js          the shared fuse engine, BR.Fuse: rope, burning end, readout, time chips, urgency ramp, one small particle canvas
 js/badges.js        the item badge (used in the reel, Collection, Pass, reveals)
 js/coach.js         first-time tip cards and the what's-new card
 js/view.js          board renderer and board animations (WAAPI)
@@ -98,6 +101,8 @@ node tests/spinperf.js  # frame time of the reel under a 4x CPU throttle
 node tests/audio.js [--quick]   # offline renders: peaks, loudness, pitch, timbre, music structure, never-late scheduler (~4 min)
 node tests/badgesheet.js <dir>   # every item as a badge, in every shine, for review
 node tests/moments.js   # every signature moment plays without errors
+node tests/fusesheet.js <dir> [--quick]   # every fuse in every state (sheets) and frame strips of the time-gain chip, Last Spark, Rush start and end, stage-up, a Fuse brick; fails on a wrong state or a filter on the fuse
+node tests/fuseperf.js [--fast] [--root=<old checkout>]   # main-thread cost of the fuse per frame under a 4x CPU throttle (budget 1.5 ms on a phone)
 node tests/gallery.js <dir> [type]   # screenshots every skin, board and fuse for review
 ```
 UI tests use Playwright's Chromium (paths in `tests/lib.js`). Progress is stored in `localStorage` under
