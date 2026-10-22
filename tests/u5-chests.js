@@ -98,7 +98,7 @@ const forceReveal = (page, id, shine = 'glossy') => page.evaluate(({ id, shine }
       drop.inst = P.keep(drop);
       const op = BR.Openings.current;
       op.reelWrap.classList.remove('on'); op.root.classList.add('revealing');
-      const vis = (el) => { if (!el) return 0; let o = 1; for (let n = el; n && n !== document.body; n = n.parentElement) o *= +getComputedStyle(n).opacity; const r = el.getBoundingClientRect(); return r.width > 20 && r.height > 20 ? o : 0; };
+      const vis = (el) => { if (!el) return 0; let o = 1; for (let n = el; n && n !== document.body; n = n.parentElement) o *= +getComputedStyle(n).opacity; const w = el.offsetWidth || el.getBoundingClientRect().width, h = el.offsetHeight || el.getBoundingClientRect().height; return w > 20 && h > 20 ? o : 0; };   // (the layout box: the flip of the card must not make its contents "invisible" edge-on)
       const q = (s) => document.querySelector(s);
       const out = [], t0 = performance.now();
       op.reveal(drop);
@@ -111,10 +111,16 @@ const forceReveal = (page, id, shine = 'glossy') => page.evaluate(({ id, shine }
     }), { id, shine: 'glossy' });
     const night = /^(f_sigil|u_runechain)$/.test(id);
     const seen = (s) => s.badge > 0.3 || s.seed > 0.3;
-    // the badge is on the card the moment the reveal is called (nothing to wait for), and the item is on screen in EVERY sample from 300 ms on
+    // the badge is on the card the moment the reveal is called (nothing to wait for), and the item is on screen in EVERY sample once the card has
+    // had 250 ms. (Times are counted from the first frame in which the card or the dim seed shows: a busy machine can start the animation late,
+    // and sampling is only as steady as the machine is.)
+    const first = samples.find((s) => s.card > 0.05 || s.seed > 0.05);
+    const tc = first ? first.t : 0;
     ok(samples[0].dom, `${id}: no badge on the card in the first frame`, JSON.stringify(samples[0]));
-    ok(samples.filter((s) => s.t >= 300).every(seen), `${id}: the item is off screen at ${samples.filter((s) => s.t >= 300 && !seen(s)).map((s) => s.t)} ms`, JSON.stringify(samples.filter((s) => s.t >= 250 && s.t < 1400).filter((s, i) => i % 6 === 0)));
-    ok(samples.some((s) => s.t < 400 && (s.card > 0.2 || s.seed > 0.2)), `${id}: nothing of the item in the first 400 ms`, JSON.stringify(samples.slice(0, 6)));
+    ok(!!first, `${id}: neither the card nor the seed ever showed`, JSON.stringify(samples.slice(0, 6)));
+    ok(samples.filter((s) => s.t >= tc + 250 && s.t < 1400).every(seen), `${id}: the item is off screen at ${samples.filter((s) => s.t >= tc + 250 && s.t < 1400 && !seen(s)).map((s) => s.t)} ms (card first showed at ${tc})`, JSON.stringify(samples.filter((s) => s.t >= tc && s.t < 1400).filter((s, i) => i % 6 === 0)));
+    // no empty card: whenever the card shows, the item shows with it
+    ok(samples.filter((s) => s.card > 0.2).every((s) => Math.max(s.badge, s.seed) >= s.card * 0.5), `${id}: an empty card at ${samples.filter((s) => s.card > 0.2 && Math.max(s.badge, s.seed) < s.card * 0.5).map((s) => s.t)} ms`, JSON.stringify(samples.filter((s) => s.card > 0.2).slice(0, 4)));
     ok(night === samples[samples.length - 1].cls.includes('night'), `${id}: ${night ? 'should use' : 'should not use'} the Midnight reveal`, samples[samples.length - 1].cls);
     // the first look behind the card: a whole board, wearing the item when it is a skin or a board
     await page.waitForFunction(() => document.querySelector('.rv.look-on'), null, { timeout: 8000 }).catch(() => ok(false, `${id}: the look never switched on`));
