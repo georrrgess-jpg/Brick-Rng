@@ -69,6 +69,30 @@
     return { stop() { alive = false; timers.forEach(clearTimeout); } };
   }
 
+  /* ===================================================================== the reveal's extras (Update 5) */
+  /** The "first look on the real board": a whole board of bricks, wearing the item (or the skin you wear, when the item is a board, pop
+      or fuse), drawn behind the reveal card. Static apart from the skin's own idle motion; the card and the rays stay in front. */
+  const LOOK = ['00134425', '01134525', '21144555', '22244355', '03244033', '03334013', '13304011', '11300441'];
+  function lookHTML(item, inst) {
+    const sk = P().equipped('skin'), bo = P().equipped('board');
+    const skin = item.type === 'skin' ? { item, inst } : sk, board = item.type === 'board' ? { item, inst } : bo;
+    const seed = skin.inst ? skin.inst.seed || 0 : 0, sh = skin.inst ? skin.inst.shine : 'plain', ash = board.inst ? board.inst.shine : 'plain';
+    const bricks = LOOK.join('').split('').map((c) => BR.Skins.brickHTML(+c)).join('');
+    const fuse = item.type === 'fuse' ? `<div class="lk-fuse"><div class="mini-fuse ${item.cls}" data-shine="${inst ? inst.shine : 'plain'}"><span class="mf-bomb"></span><span class="mf-track"><i class="mf-fill"></i><b class="mf-spark"></b></span></div></div>` : '';
+    return `<div class="lk ${board.item.cls}" data-ashine="${ash}"><div class="lk-scene"><b class="scene-fx"></b><b class="scene-fx b"></b></div>${fuse}<div class="lk-board"><div class="lk-field ${skin.item.cls}" data-shine="${sh}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">${bricks}</div></div></div>`;
+  }
+  /* the Seven Sigils (Series 4 rule 1): each colour's symbol is its Shape hint; the spell circle of the Midnight reveal carries the item's */
+  const SIGILS = [
+    '<circle r="8.5"/>', '<path d="M0-11L11 0 0 11-11 0Z"/>', '<path d="M0-11L11 9H-11Z"/>', '<rect x="-8.5" y="-8.5" width="17" height="17" rx="2"/>',
+    '<path d="M-5.5-10h11L11 0 5.5 10h-11L-11 0Z"/>', '<path d="M0-11l3.2 6.6 7.3 1-5.3 5.1 1.3 7.3L0 5.4l-6.5 3.6 1.3-7.3-5.3-5.1 7.3-1z"/>', '<path d="M-3.5-11h7v7.5h7.5v7h-7.5V11h-7V3.5H-11v-7h7.5z"/>',
+  ];
+  const sigilOf = (item) => { let h = 0; for (const ch of item.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return SIGILS[item.hero != null ? item.hero % 7 : h % 7]; };
+  const CIRCLE_SVG = `<svg class="rv-circle" viewBox="-110 -110 220 220" aria-hidden="true">
+    <g class="rc-o"><circle class="draw" pathLength="1" r="104"/><circle class="dash" r="96"/></g>
+    <g class="rc-m"><circle class="draw" pathLength="1" r="82"/><circle class="dot" r="75"/></g>
+    <g class="rc-i"><circle class="draw" pathLength="1" r="60"/><path class="draw" pathLength="1" d="M0-60L52 30H-52Z"/><path class="draw" pathLength="1" d="M0 60L52-30H-52Z"/></g>
+    <g class="rc-sig" transform="translate(0 -104)"><circle class="sg-bg" r="15"/><g class="sg"></g></g></svg>`;
+
   /* ===================================================================== rituals */
   /* Each ritual moves the chest's parts (see js/chestart.js): hold(ch, p, t, ctx) every frame while pressed, burst(ch, c) once.
      `ch` is the .chest element; parts are found by data-p. Everything is a CSS transform or opacity on a part div. */
@@ -245,7 +269,9 @@
         </footer>
         <div class="op-skip" data-skip>Tap to skip</div>
         <div class="rv" data-rv>
-          <div class="rv-bg"></div><i class="rv-rays"></i><i class="rv-spot"></i><i class="rv-flare"></i>
+          <div class="rv-bg"></div><div class="rv-look" aria-hidden="true"></div>
+          <i class="rv-stars"></i><i class="rv-moon"><b class="rv-corona"></b></i>${CIRCLE_SVG}<div class="rv-seed"></div>
+          <i class="rv-rays"></i><i class="rv-spot"></i><i class="rv-flare"></i>
           <i class="rv-ring"></i><i class="rv-ring"></i><i class="rv-ring"></i>
           <div class="rv-banner"></div>
           <div class="rv-stage"><div class="rv-card"></div></div>
@@ -262,11 +288,17 @@
       });
       // the few elements that read --hold; setting it on each of them (not on the root) keeps the rest of the scene out of every frame's restyle
       this.holdUsers = [q('.op-glow'), q('.op-rays'), q('.op-pedestal'), this.chestBox, this.holdEl].filter(Boolean);
-      document.body.classList.add('in-opening'); BR.under(1);
+      // toasts wait until the opening is over (js/ui.js holds them while `in-opening` is set) and none is left on screen to land on the header
+      this.clearToasts(); BR.under(1);
       document.getElementById('layer-opening').appendChild(root);
       document.getElementById('layer-opening').style.pointerEvents = 'auto';
       this.backEntry = BR.Back.push((fromBack) => this.requestClose(true));
       requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
+      // the game behind is hidden only once the opening has faded in (until then it stays visible: no black frame between the Shop and the opening)
+      let hid = false;
+      const hide = () => { if (hid || this.closed) return; hid = true; document.body.classList.add('in-opening'); this.clearToasts(); };
+      root.addEventListener('transitionend', (e) => { if (e.target === root && e.propertyName === 'opacity') hide(); });
+      this._hideT = setTimeout(hide, 520);
       this.bind();
     }
 
@@ -282,6 +314,8 @@
         const t = e.target.closest('[data-type]');
         if (t && this.state === 'ready') this.pickType(t.dataset.type);
         if (e.target.closest('.op-reel') && this.state === 'spin' && this.reel && this.reel.t > 1.5) { this.reel.skip(); this.skipEl.classList.remove('on'); }
+        // a tap on the reveal while it plays jumps to the finished card (buttons keep their own meaning)
+        if (this.state === 'reveal' && this._tl && !e.target.closest('button, .rv-actions')) this._tl.skip();
       });
       const start = (e) => { if (e.button != null && e.button > 0) return; this.press(true); try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } };
       const end = () => this.press(false);
@@ -294,6 +328,9 @@
       this.holdEl.tabIndex = 0;
     }
 
+    /** No toast is on screen to land on the opening's header (they wait until the opening is over). */
+    clearToasts() { const box = document.getElementById('toasts'); if (box) box.querySelectorAll('.toast').forEach((t) => t.remove()); }
+
     /* ---------- states ---------- */
     async arrive(first) {
       this.state = 'arrive';
@@ -302,6 +339,8 @@
       this.reelWrap.classList.remove('on');
       this.rv.classList.remove('on');
       this.rv.querySelectorAll('.rv-info, .rv-actions').forEach((x) => x.classList.remove('on'));
+      if (this._tl) { this._tl.cancel(); this._tl = null; }
+      this.rv.className = 'rv'; this.rv.querySelector('.rv-look').innerHTML = '';   // (the night, the dim and the look of the last reveal)
       this.skipEl.classList.remove('on');
       // fresh chest art every time
       this.chestBox.className = 'op-chest';
@@ -336,16 +375,20 @@
       if (goldOk && this.type && !goldOk.includes(this.type)) this.type = null;
       const owned = P().chestCount(this.id), cost = this.chest.cost;
       const coins = P().coins;
+      // a chest whose set is complete (nothing left to find) is never offered: no hold, no ring, just what it says
+      const complete = this.golden ? goldOk.length === 0 : P().chestStatus(this.id).complete;
       let sub = '', can = true;
-      if (this.golden && !this.type) { sub = 'Pick a type first'; can = false; }
+      if (complete) { sub = this.golden ? 'You own every Epic or better' : 'You own everything in this chest'; can = false; }
+      else if (this.golden && !this.type) { sub = 'Pick a type first'; can = false; }
       else if (owned > 0) sub = `You have <b>${owned}</b> to open`;
       else if (cost != null) {
         if (coins >= cost) sub = `${BR.coin()}<b>${BR.fmt(cost)}</b> Coins`;
         else { sub = `Need ${BR.coin()}<b>${BR.fmt(cost - coins)}</b> more Coins`; can = false; }
       }
+      this.complete = complete;
       this.sub.innerHTML = sub;
-      this.sub.classList.toggle('warn', !can && !(this.golden && !this.type));
-      this.label.textContent = can ? (reduced() ? 'Tap to open' : 'Hold to open') : (this.golden && !this.type ? 'Pick a type' : 'Not enough Coins');
+      this.sub.classList.toggle('warn', !can && !complete && !(this.golden && !this.type));
+      this.label.textContent = complete ? 'Set complete' : can ? (reduced() ? 'Tap to open' : 'Hold to open') : (this.golden && !this.type ? 'Pick a type' : 'Not enough Coins');
       this.holdEl.classList.toggle('off', !can || this.state !== 'ready');
       this.canOpen = can;
       if (this.golden) this.root.querySelectorAll('.op-picker button').forEach((b) => { const on = b.dataset.type === this.type, can_ = goldOk.includes(b.dataset.type); b.classList.toggle('on', on); b.classList.toggle('done', !can_); b.disabled = !can_; b.setAttribute('aria-checked', on); });
@@ -359,7 +402,9 @@
 
     press(down) {
       if (down) {
-        if (this.state !== 'ready' || !this.canOpen) { if (this.state === 'ready' && !this.canOpen) { BR.audio.deny(); BR.haptic('err'); this.holdEl.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], { duration: 220 }); } return; }
+        // pressing again while the ring is still draining picks the hold up where it is (no need to lift and wait for the ring to empty)
+        if (this.state === 'holding' && !this.pressed) { this.pressed = true; this.holdEl.classList.add('down'); BR.audio.unlock(); return; }
+        if (this.state !== 'ready' || !this.canOpen) { if (this.state === 'ready' && !this.canOpen && !this.complete) { BR.audio.deny(); BR.haptic('err'); this.holdEl.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], { duration: 220 }); } return; }
         BR.audio.unlock();
         this.pressed = true; this.state = 'holding'; this.holdEl.classList.add('down'); this.chestBox.classList.remove('idle');
         this.lastT = performance.now(); this.pulse = 0; this._hctx = this.ctx();   // measured once: reading it every frame of the hold forces a layout each time
@@ -486,8 +531,12 @@
       this.skipEl.classList.remove('on');
       this.reelHost.classList.add('landed');
       BR.audio.thud(1.2); BR.haptic('big');
-      const r = this.reelHost.getBoundingClientRect();
-      fx().ring(r.left + r.width / 2, r.top + r.height / 2, BR.rarityById[drop.rarity].color, 160, 0.6, 5);
+      // the landing ring is drawn INSIDE the reel, behind the cards: the winner's name is never under it (a ring on the effects canvas was drawn over the name)
+      if (!reduced()) {
+        const ring = document.createElement('i'); ring.className = 'reel-ring'; ring.style.setProperty('--rc', BR.rarityById[drop.rarity].color);
+        this.reelHost.insertBefore(ring, this.reelHost.firstChild);
+        ring.animate([{ transform: 'translate(-50%,-50%) scale(0.5)', opacity: 0.95 }, { transform: 'translate(-50%,-50%) scale(2.8)', opacity: 0 }], { duration: 800, easing: 'cubic-bezier(0.2,0.7,0.3,1)' }).onfinish = () => ring.remove();
+      }
       await sleep(reduced() ? 250 : 800);
       if (this._spinDone) this._spinDone();
       if (this.closed) return;
@@ -495,78 +544,131 @@
     }
 
     /* ---------- the reveal ---------- */
-    async reveal(drop, o = {}) {
+    /** A reveal is a list of timed steps (`t` ms, in order): `state` is what the card looks like from then on, `fx` is the show (sounds, bursts,
+        flashes). A tap jumps to the end: every `state` runs at once and the `fx` are left out. Resolves when the last step has run. */
+    timeline(steps) {
+      const timers = [], ran = new Set(); let resolve; const done = new Promise((r) => { resolve = r; });
+      const run = (i, quick) => { if (ran.has(i)) return; ran.add(i); const s = steps[i]; try { if (s.state) s.state(); if (s.fx && !quick) s.fx(); } catch (e) { console.error(e); } if (ran.size === steps.length) resolve(); };
+      steps.forEach((s, i) => timers.push(setTimeout(() => { if (!this.closed) run(i, false); }, s.t)));
+      this._tl = { skip: () => { this.rv.classList.add('skipped'); timers.forEach(clearTimeout); steps.forEach((s, i) => run(i, true)); }, cancel: () => { timers.forEach(clearTimeout); resolve(); } };
+      return done;
+    }
+
+    async reveal(drop) {
       this.state = 'reveal';
       const item = BR.itemById[drop.itemId], R = BR.rarityById[drop.rarity];
       const level = BR.RARITIES.findIndex((r) => r.id === drop.rarity);
       const inst = drop.inst || { shine: drop.shine, seed: drop.seed, counter: drop.counter, uid: null };
-      const rv = this.rv;
+      const rv = this.rv, still = reduced();
+      // Series 4's Legendary and Mythic items get the "Midnight" reveal (the Mythic in full, the Legendary as moon and corona)
+      const night = item.series === 4 && level >= 3, fullNight = night && level >= 4;
       rv.style.setProperty('--rc', R.color);
-      rv.className = 'rv' + (level >= 3 ? ' has-banner' : '');   // the banner already names a Legendary or Mythic, so the card does not repeat it
+      rv.className = 'rv' + (level >= 3 ? ' has-banner' : '') + (night ? ' night' : '');   // the banner already names a Legendary or Mythic, so the card does not repeat it
       this.root.classList.remove('spinning'); this.root.classList.add('revealing');
       if (this.demo) this.demo.stop();
       const shineTag = inst.shine && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
-      rv.querySelector('.rv-card').innerHTML = `<div class="rv-face"><div class="rv-rar">${R.name}</div><div class="rv-art"></div><div class="rv-name">${item.name}</div><div class="rv-type">${BR.ITEM_TYPES[item.type].name}</div></div>`;
+      const card = rv.querySelector('.rv-card');
+      card.innerHTML = `<div class="rv-face"><div class="rv-rar">${R.name}</div><div class="rv-art" data-type="${item.type}"><div class="rv-badge-big"></div></div><div class="rv-name">${item.name}</div><div class="rv-type">${BR.ITEM_TYPES[item.type].name}</div></div>`;
       rv.querySelector('.rv-info').innerHTML = `<div class="rv-tags"><span class="rv-badge">New</span>${shineTag}</div><p class="rv-desc">${item.desc}</p>`;
       this.renderActions(drop, item, inst);
-      rv.querySelector('.rv-card').className = 'rv-card';
+      card.className = 'rv-card';
       rv.querySelector('.rv-info').classList.remove('on');
       rv.querySelector('.rv-actions').classList.remove('on');
       const banner = rv.querySelector('.rv-banner'); banner.className = 'rv-banner'; banner.textContent = level >= 3 ? R.name : '';
-      rv.querySelectorAll('.rv-ring').forEach((x) => x.classList.remove('go'));
-      rv.querySelector('.rv-flare').classList.remove('go');
-      rv.querySelector('.rv-black').classList.remove('go');
-      const card = rv.querySelector('.rv-card');
-      const art = rv.querySelector('.rv-art'); art.dataset.type = item.type;
-      const cardCenter = () => { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       const rings = () => rv.querySelectorAll('.rv-ring');
+      rings().forEach((x) => x.classList.remove('go'));
+      const flare = rv.querySelector('.rv-flare'), black = rv.querySelector('.rv-black'), seed = rv.querySelector('.rv-seed');
+      flare.classList.remove('go'); black.classList.remove('go');
+      const art = card.querySelector('.rv-art');
+      // the item's badge is on the card from the very first frame (the demo takes over from it); the real-board look sits behind
+      const cr = card.getBoundingClientRect(), bs = Math.round(Math.max(96, Math.min(196, cr.width - 70, cr.height - 150)));
+      art.querySelector('.rv-badge-big').innerHTML = BR.Badge.html(item, inst, { size: bs, still: still });
+      rv.style.setProperty('--cx', (cr.left + cr.width / 2).toFixed(1) + 'px'); rv.style.setProperty('--cy', (cr.top + cr.height / 2).toFixed(1) + 'px');
+      rv.querySelector('.rv-look').innerHTML = BR.lowEnd ? '' : lookHTML(item, inst);
+      if (night) {
+        seed.innerHTML = BR.Badge.html(item, inst, { size: 112, still: true });
+        rv.querySelector('.rc-sig .sg').innerHTML = sigilOf(item);
+      }
+      const cardCenter = () => { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       const lvl = level + 1;
       void rv.offsetWidth;
       rv.classList.add('on');
       this.reelWrap.classList.remove('on');
-      const R_ = reduced();
-      const startDemo = () => { this.demo = heroDemo(art, item, inst, { power: level >= 3 ? 1.5 : 1 }); };
+      const startDemo = () => {
+        const host = document.createElement('div'); host.className = 'rv-demo'; art.appendChild(host);
+        this.demo = heroDemo(host, item, inst, { power: level >= 3 ? 1.5 : 1 });
+        const bd = art.querySelector('.rv-badge-big');
+        rv.classList.add('look-on', 'look-' + item.type);
+        if (still) { if (bd) bd.remove(); return; }
+        host.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, fill: 'both' });
+        if (bd) bd.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.9)' }], { duration: 380, fill: 'forwards' }).onfinish = () => bd.remove();
+      };
+      const steps = [];
+      const at = (t, state, fx) => steps.push({ t, state, fx });
+      const ringGo = (i) => () => { const r = rings()[i]; if (r) r.classList.add('go'); };
+      const burst = (x, y, c, k) => { if (this.closed) return; fx().explosion(x, y, c, k); BR.audio.launch(); BR.haptic('big'); };
 
-      if (R_) {
-        card.classList.add('in'); BR.audio.reveal(lvl); await sleep(300); startDemo();
+      if (still) {
+        // Reduce Motion: the finished card, and for Midnight the moon beside it, still; nothing flies
+        at(0, () => { card.classList.add('in'); if (night) rv.classList.add('moon-up', 'seed-off', fullNight ? 'circle-on' : 'eclipse'); if (level >= 3) banner.classList.add('go'); }, () => BR.audio.reveal(lvl));
+        at(300, startDemo);
       } else if (level === 0) {
-        card.classList.add('in'); BR.audio.reveal(1); await sleep(520); startDemo();
+        at(0, () => card.classList.add('in'), () => BR.audio.reveal(1));
+        at(520, startDemo);
       } else if (level === 1) {
-        card.classList.add('in'); BR.audio.reveal(2); fx().flash('#43a0ff', 0.35, 420);
-        await sleep(420); rings()[0].classList.add('go'); const c = cardCenter(); fx().ring(c.x, c.y, R.color, 180, 0.7, 5); startDemo();
+        at(0, () => card.classList.add('in'), () => { BR.audio.reveal(2); fx().flash('#43a0ff', 0.35, 420); });
+        at(420, ringGo(0), () => { const c = cardCenter(); fx().ring(c.x, c.y, R.color, 180, 0.7, 5); });
+        at(420, startDemo);
       } else if (level === 2) {
-        rv.classList.add('fx-rays'); card.classList.add('in-pop'); BR.audio.reveal(3); fx().flash('#b565ff', 0.45, 480); BR.haptic('big');
-        await sleep(380); const c = cardCenter(); fx().explosion(c.x, c.y, R.color, 1.2); rings()[0].classList.add('go'); rings()[1].classList.add('go');
-        fx().confetti([R.color, '#ffffff', '#e0c8ff'], 70, -20); fx().shake(this.root, 9, 380); startDemo();
-      } else if (level === 3) {
-        BR.audio.sting(); BR.haptic('boom');
-        rv.querySelector('.rv-black').classList.add('go');
-        await sleep(900);
-        if (this.closed) return;
-        rv.classList.add('fx-rays', 'fx-rays-hot'); rv.querySelector('.rv-flare').classList.add('go'); card.classList.add('in-slow'); banner.classList.add('go');
-        BR.audio.reveal(4); fx().flash('#ffb02e', 0.36, 520); fx().shake(this.root, 14, 700);
-        rings().forEach((x, i) => setTimeout(() => x.classList.add('go'), i * 260));
-        startDemo();
-        await sleep(900); const c = cardCenter(); fx().explosion(c.x, c.y, '#ffb02e', 1.6); fx().confetti(['#ffb02e', '#ff4d6d', '#ffe58a', '#ffffff'], 110, -20);
-        await sleep(700);
+        at(0, () => { rv.classList.add('fx-rays'); card.classList.add('in-pop'); }, () => { BR.audio.reveal(3); fx().flash('#b565ff', 0.45, 480); BR.haptic('big'); });
+        at(380, () => { ringGo(0)(); ringGo(1)(); }, () => { const c = cardCenter(); fx().explosion(c.x, c.y, R.color, 1.2); fx().confetti([R.color, '#ffffff', '#e0c8ff'], 70, -20); fx().shake(this.root, 9, 380); });
+        at(380, startDemo);
+      } else if (!night && level === 3) {
+        // Legendary: the card rises in the dark with its badge already on it (no empty black), then the burst lights it
+        at(0, () => { rv.classList.add('dim'); black.classList.add('go'); card.classList.add('in-emerge'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(900, () => { rv.classList.add('fx-rays', 'fx-rays-hot'); flare.classList.add('go'); banner.classList.add('go'); card.classList.add('lit'); }, () => { BR.audio.reveal(4); fx().flash('#ffb02e', 0.36, 520); fx().shake(this.root, 14, 700); });
+        [0, 1, 2].forEach((i) => at(900 + i * 260, ringGo(i)));
+        at(900, startDemo);
+        at(1800, null, () => { const c = cardCenter(); fx().explosion(c.x, c.y, '#ffb02e', 1.6); fx().confetti(['#ffb02e', '#ff4d6d', '#ffe58a', '#ffffff'], 110, -20); });
+        at(2500);
+      } else if (!night) {
+        // Mythic
+        at(0, () => { rv.classList.add('dim'); black.classList.add('go'); card.classList.add('in-emerge'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(780, () => { rv.classList.add('fx-rays', 'fx-rays-hot', 'fx-spot'); flare.classList.add('go'); banner.classList.add('go'); card.classList.add('lit'); }, () => { BR.audio.reveal(5); fx().flash(R.color, 0.32, 600); fx().shake(this.root, 18, 900); });
+        [0, 1, 2].forEach((i) => at(780 + i * 220, ringGo(i)));
+        const cols = ['#ff4d6d', '#ffe58a', '#43e0ff', '#c08bff'];
+        [0, 380, 760, 1140].forEach((d, i) => at(780 + d, null, () => { const c = cardCenter(); burst(c.x + rnd(-90, 90), c.y + rnd(-110, 80), cols[i], 1.4); }));
+        [0, 700, 1500].forEach((d) => at(780 + d, null, () => fx().confetti(['#ff4d6d', '#ffe58a', '#ffffff', '#43e0ff', '#c08bff'], 80, -20)));
+        at(780 + 1500, startDemo);
+        at(780 + 1700);
+      } else if (!fullNight) {
+        // Midnight, short: night falls with a bell, the moon rises, the card eclipses it (a corona), the item's own moment follows
+        at(0, () => { rv.classList.add('seed-on'); black.classList.add('go'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(250, () => rv.classList.add('moon-up'));
+        at(1000, () => { rv.classList.add('seed-off', 'eclipse', 'fx-rays'); card.classList.add('in-slow'); banner.classList.add('go'); flare.classList.add('go'); }, () => { BR.audio.reveal(4); fx().flash('#dfe8ff', 0.34, 520); fx().shake(this.root, 12, 600); });
+        [0, 1].forEach((i) => at(1000 + i * 260, ringGo(i)));
+        at(1500, null, () => { const c = cardCenter(); fx().explosion(c.x, c.y, '#e8eeff', 1.3); fx().confetti(['#e8eeff', '#ffe58a', '#ffffff'], 70, -20); });
+        at(1700, startDemo);
+        at(2200);
       } else {
-        BR.audio.sting(); BR.haptic('boom');
-        rv.querySelector('.rv-black').classList.add('go');
-        await sleep(780);
-        if (this.closed) return;
-        rv.classList.add('fx-rays', 'fx-rays-hot', 'fx-spot'); rv.querySelector('.rv-flare').classList.add('go'); card.classList.add('in-slow'); banner.classList.add('go');
-        BR.audio.reveal(5); fx().flash(R.color, 0.32, 600); fx().shake(this.root, 18, 900);
-        rings().forEach((x, i) => setTimeout(() => x.classList.add('go'), i * 220));
-        const c = cardCenter();
-        [0, 380, 760, 1140].forEach((d, i) => setTimeout(() => { if (this.closed) return; fx().explosion(c.x + rnd(-90, 90), c.y + rnd(-110, 80), ['#ff4d6d', '#ffe58a', '#43e0ff', '#c08bff'][i], 1.4); BR.audio.launch(); BR.haptic('big'); }, d));
-        [0, 700, 1500].forEach((d) => setTimeout(() => { if (!this.closed) fx().confetti(['#ff4d6d', '#ffe58a', '#ffffff', '#43e0ff', '#c08bff'], 80, -20); }, d));
-        await sleep(1500); startDemo();
+        // Midnight (Mythic): the spec's timeline: night + bell (0), the moon rises (300), the spell circle draws (700), the eclipse and the card flip in (1100),
+        // two silver-and-gold bursts and stardust (1400), the item's own moment (1900)
+        at(0, () => { rv.classList.add('seed-on'); black.classList.add('go'); }, () => { BR.audio.sting(); BR.haptic('boom'); });
+        at(300, () => rv.classList.add('moon-up'));
+        at(700, () => rv.classList.add('circle-on'), () => BR.haptic('tick'));
+        at(1100, () => { rv.classList.add('seed-off', 'eclipse', 'fx-rays', 'fx-rays-hot'); card.classList.add('in-slow'); banner.classList.add('go'); flare.classList.add('go'); }, () => { BR.audio.reveal(5); fx().flash('#dfe8ff', 0.34, 600); fx().shake(this.root, 16, 800); });
+        [0, 1, 2].forEach((i) => at(1100 + i * 220, ringGo(i)));
+        at(1400, null, () => { const c = cardCenter(); burst(c.x - 70, c.y - 40, '#e8eeff', 1.3); setTimeout(() => burst(c.x + 70, c.y + 30, '#ffd66b', 1.3), 260); fx().confetti(['#e8eeff', '#ffd66b', '#ffffff', '#9fb4ff'], 90, -20); });
+        at(1900, startDemo);
+        at(2500);
       }
+      await this.timeline(steps);
       if (this.closed) return;
       rv.querySelector('.rv-info').classList.add('on');
-      await sleep(R_ ? 80 : 320);
+      await sleep(still || rv.classList.contains('skipped') ? 80 : 320);
+      if (this.closed) return;
       rv.querySelector('.rv-actions').classList.add('on');
-      this.state = 'done';
+      this.state = 'done'; this._tl = null;
     }
 
     renderActions(drop, item, inst) {
@@ -611,13 +713,15 @@
     close(fromBack) {
       if (this.closed) return;
       this.closed = true;
-      cancelAnimationFrame(this.raf);
+      cancelAnimationFrame(this.raf); clearTimeout(this._hideT);
+      if (this._tl) this._tl.cancel();
       if (this.reel) this.reel.stop();
       if (this.demo) this.demo.stop();
       if (!fromBack && this.backEntry) BR.Back.release(this.backEntry);
       this.root.classList.remove('on');
       document.body.classList.remove('in-opening'); BR.under(-1);
-      setTimeout(() => { (BR._heldToasts || []).splice(0).forEach(([m, k]) => BR.toast(m, k)); }, 700);
+      // toasts held during the opening are released only BETWEEN openings: if another one has begun by then, they wait for its end
+      setTimeout(() => { const cur = BR.Openings.current; if ((cur && !cur.closed) || document.body.classList.contains('in-opening')) return; (BR._heldToasts || []).splice(0).forEach(([m, k]) => BR.toast(m, k)); }, 700);
       setTimeout(() => { this.root.remove(); const l = document.getElementById('layer-opening'); if (!l.children.length) l.style.pointerEvents = 'none'; }, 450);
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
       BR.Router.rerender();

@@ -998,6 +998,8 @@
       const streak = BR.Streak.advance();
       BR.Records.update(sum, mode);
       const trophies = P.checkTrophies();
+      // a Pass reward that finished a set (an item, not a chest opening) leaves chests of that set with nothing to find: they turn into Coins now
+      const spare = P.cashStranded();
       BR.Storage.save();
       // ---- every Coin the run paid, in one total that is exactly the change in the balance
       const bal1 = P.coins, earned = bal1 - bal0;
@@ -1007,6 +1009,7 @@
         ['Missions', missions.reduce((a, m) => a + (m.justDone ? m.mission.reward + (m.mission.chestCoins || 0) : 0), 0)],
         ['Trophies', trophies.reduce((a, t) => a + t.coins, 0)],
         ['Streak', streak ? (streak.coins || 0) + (streak.chestPaid || 0) : 0],
+        ['Spare chests turned into Coins', spare],
       ];
       // what is left is the Pass: the Coins the level-ups paid (the only other source)
       const rest = earned - items.reduce((a, it) => a + it[1], 0);
