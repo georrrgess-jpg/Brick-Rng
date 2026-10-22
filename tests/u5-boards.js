@@ -22,7 +22,9 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
   const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } };
   const { browser, page, errors } = await launch({ width: 393, height: 852, dsf: 1 });
   // launch() gives up waiting for the app after 8 s; on a busy machine the boot can take longer, and a boot that finishes after the flags are set would reset them (the Welcome card then covers the board)
-  const setup = async () => { await page.waitForFunction(() => window.__app, null, { timeout: 180000 }); return page.evaluate(() => { BR.Coach.markAllSeen(); BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 12; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); }); };
+  const setup = async () => { await page.waitForFunction(() => window.__app, null, { timeout: 180000 }); await page.evaluate(() => { BR.Coach.markAllSeen(); clearTimeout(BR.Coach._t); const b = document.querySelector('.coach .btn-xl'); if (b) b.click(); });   // a Welcome card that opened before the flag was set is closed
+    await page.waitForTimeout(700);
+    return page.evaluate(() => { BR.Coach.markAllSeen(); BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 12; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); }); };
   await setup();
   const run = async (ids) => {
     await page.evaluate((ids) => {
