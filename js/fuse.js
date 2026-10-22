@@ -626,12 +626,12 @@
     /* ------------------------------------------------------------------ the readout */
     readout(v, z, running, still) {
       let m, n;
-      if (z === 'spark') { this.num.dataset.m = 'w'; this.host.dataset.m = 'w'; return; }
+      if (z === 'spark') { this.num.dataset.m = 'w'; return; }
       if (v >= 10) { m = 'w'; n = Math.floor(v + 1e-6); } else { m = 't'; n = Math.floor(v * 10 + 1e-6); }
       const key = n + (m === 't' ? 1000 : 0) + 1;                      // a number, so nothing is allocated per frame; 0 means "nothing shown yet"
       if (key === this.key) return;
       const old = this.key; this.key = key;
-      if (this.num.dataset.m !== m) { this.num.dataset.m = m; this.host.dataset.m = m; }   // (the moon's crescent below 10 seconds reads data-m)
+      if (this.num.dataset.m !== m) this.num.dataset.m = m;
       const dir = old && (old > 1000) === (m === 't') ? (old < key ? 1 : -1) : (m === 'w' ? 1 : -1);
       const roll = running && !still && !!old;
       let wholeChanged;

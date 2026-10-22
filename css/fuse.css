@@ -285,7 +285,9 @@ html.reduced .vignette-warn.on { opacity: 0.55; }
 .fuse-runechain.mx-awake .fz-pulse::before { opacity: 1; }
 .fuse-runechain.mx-sleep .fz-ball { opacity: 0; } .fuse-runechain.mx-sleep .fz-lid { opacity: 1; } .fuse-runechain.mx-sleep .fz-eye { transform: scale(1, 0.85); }
 
-/* ---- Moonrise: the phase is a shadow layer inside a circle that clips to the moon; one layer shows per state and they cross-fade */
+/* ---- Moonrise: the phase is a shadow layer inside a circle that clips to the moon; one layer shows per urgency state and they cross-fade: full (calm), gibbous (watch),
+   half (low: under 10 s), thin crescent (critical: under 5 s), a dark moon in the Last Spark. (The spec says half under 25% and a crescent under 10 s, but a 30 s fuse is
+   under 25% only below 7.5 s, which is already under 10 s: the half moon would never show. One phase per state keeps all five visible.) */
 .fx-halo, .fx-corona { position: absolute; left: calc(-14 * var(--b)); top: calc(-10 * var(--b)); width: calc(92 * var(--b)); height: calc(92 * var(--b)); border-radius: 50%; pointer-events: none; transition: opacity 0.6s; }
 .fx-halo { background: radial-gradient(circle, rgba(222, 234, 255, 0.55) 0, rgba(190, 210, 255, 0.24) 42%, transparent 68%); opacity: 0.5; }
 .fx-corona { background: radial-gradient(circle, transparent 0 51%, rgba(255, 205, 110, 0.95) 57%, rgba(255, 130, 50, 0.5) 64%, transparent 76%); opacity: 0; }
@@ -294,7 +296,6 @@ html.reduced .vignette-warn.on { opacity: 0.55; }
 .fx-phs { position: absolute; inset: 0; clip-path: circle(calc(26 * var(--b)) at calc(32 * var(--b)) calc(36 * var(--b))); }
 .fx-ph { position: absolute; inset: 0; background: center / 100% 100% no-repeat; opacity: 0; transition: opacity 0.55s ease; }
 .fuse[data-z="watch"] .fx-ph.p1, .fuse[data-z="low"] .fx-ph.p2, .fuse[data-z="crit"] .fx-ph.p3, .fuse[data-z="spark"] .fx-ph.p4 { opacity: 1; }
-.fuse[data-z="low"][data-m="t"] .fx-ph.p2 { opacity: 0; } .fuse[data-z="low"][data-m="t"] .fx-ph.p3 { opacity: 1; }
 .fuse-moonrise.mx-wax .fx-ph { transition: none; }
 .fuse-moonrise[data-z="low"], .fuse-moonrise[data-z="crit"], .fuse-moonrise[data-z="spark"] { --fz-mouth: #7885d8; }
 .fuse-moonrise .fz-ring .fg { stroke: #ffcf7a; } .fuse-moonrise .fz-ring .bg { stroke: rgba(255, 170, 80, 0.3); }

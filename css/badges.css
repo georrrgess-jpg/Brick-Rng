@@ -65,9 +65,9 @@
    badge's grid, and a percentage of a content-sized track resolves to the content, so the box became as wide as the mini fuse (118px after css/fuse.css's
    `zoom: 0.62`) whatever the badge's size, and place-items centred the art inside THAT box. The fuse now has a box of its own: the badge's square, with the
    mini fuse placed in it from the badge's own scale (--k), no zoom, and a rope shorter than the Collection's so the bomb is the picture. ---- */
-.bdg-fuse { position: absolute; inset: 0; --fs: calc(var(--k) * 0.9); }
+.bdg-fuse { position: absolute; inset: 0; --fs: calc(var(--k) * 0.98); }
 .fz-glow { position: absolute; left: 50%; top: 50%; width: 8em; height: 8em; margin: -4em 0 0 -4em; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--g) 85%, #fff 10%), transparent 66%); animation: paPulse 1.8s ease-in-out infinite; }
-.bdg-fuse .mini-fuse { position: absolute; left: 50%; top: 50%; zoom: 1; width: 126px; height: 64px; margin: -32px 0 0 -63px; --mf-w: 56px; transform: translate(calc(-7px * var(--fs)), 0) rotate(-14deg) scale(var(--fs)); transform-origin: 50% 50%; }
+.bdg-fuse .mini-fuse { position: absolute; left: 50%; top: 50%; zoom: 1; width: 112px; height: 64px; margin: -32px 0 0 -56px; --mf-w: 42px; transform: translate(calc(-6px * var(--fs)), 0) rotate(-14deg) scale(var(--fs)); transform-origin: 50% 50%; }
 /* ---- locked ---- */
 .bdg.locked .bdg-art { filter: brightness(0) opacity(0.4); animation: none; }
 .bdg.locked .bdg-bg { filter: saturate(0.35) brightness(0.55); }

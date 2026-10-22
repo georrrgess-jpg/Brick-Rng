@@ -14,7 +14,7 @@
   const live = () => !!(F().ok && F().host && !BR.reducedMotion && !BR.lowEnd);
   const on = (key) => !!(S.moments && S.moments[key]);
   const audio = (name, a) => { try { if (BR.audio && BR.audio[name]) BR.audio[name](a); } catch (e) { /* sound is optional */ } };
-  const cls = (c, v) => { const h = F().host; if (h) h.classList.toggle('mx-' + c, !!v); };
+  const cls = (c, v) => { const h = F().host; if (!h || (v && !live())) return; h.classList.toggle('mx-' + c, !!v); };   // a moment's class is only ever set where moments run
   const timers = new Set();
   const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); fn(); }, ms); timers.add(t); return t; };
   const stamp = {};
@@ -112,7 +112,7 @@
     rushEnd() {
       cls('awake', false);
       if (!live()) return;
-      F().setMood('yawn', 0.9, '', 0);                                                                       // the golem yawns and settles
+      F().setMood('yawn', 0.3, '', 0);                                                                       // the golem yawns and settles
       F().pop(F().pulse, 0.94, 520);
     },
     stageUp(d) {

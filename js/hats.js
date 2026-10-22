@@ -124,11 +124,11 @@
     h_wizard: (live) => ({
       inner:
         `<path d='M5 15.8C8 9.4 56 9.4 59 15.8C54 22.2 10 22.2 5 15.8Z' fill='url(#br)' ${ol(1.2)}/><path d='M8.4 16.6C16 21 48 21 55.6 16.6' fill='none' stroke='#8f9bff' stroke-opacity='.5' stroke-width='1' stroke-linecap='round'/>` +
-        `<path d='M19.6 14C21.4 6 25.4 0 28.8 -5.4L37.6 -5.4C40.6 0 43.8 7 45.2 14C37 17.4 28 17.4 19.6 14Z' fill='url(#cn)' ${ol(1.2)}/>` +
+        `<path d='M19.4 14C21 6 24.6 -1.4 28 -8L37.8 -8C41 -1.4 43.8 6 45.4 14C37 17.6 28 17.6 19.4 14Z' fill='url(#cn)' ${ol(1.2)}/>` +
         `<path d='M18.8 11.2C27 14.4 38 14.4 46 11.2V15.2C38 18.8 27 18.8 18.8 15.2Z' fill='url(#gd)' ${ol(1)}/>` +
         `<rect x='28.6' y='12.2' width='6.8' height='5.4' rx='1.3' fill='none' stroke='#fff3b0' stroke-width='1.4'/><rect x='29.4' y='13' width='5.2' height='3.8' rx='.6' fill='#7a4a08' fill-opacity='.5'/>` +
-        `<path d='${star(29.5, 6.4, 3.2, 1.3)}' fill='#ffe08a' ${ol(0.5)}/><path d='${star(37, 1.4, 2.3, 0.95)}' fill='#ffe08a' ${ol(0.5)}/><path d='${star(35.4, 9.2, 1.7, 0.7)}' fill='#fff3b0'/><path d='${moon(24.8, 9.6, 2.5)}' fill='#ffd24a'/>${dot(31, -1.6, 0.6, '#fff', 0.9)}${dot(40, 6.4, 0.6, '#fff', 0.9)}` +
-        `<path d='M22.6 6.4C24.6 2.2 26.8 -1 28.6 -3.8' fill='none' stroke='#fff' stroke-opacity='.3' stroke-width='1.6' stroke-linecap='round'/>` +
+        `<path d='${star(29.5, 6.4, 3.2, 1.3)}' fill='#ffe08a' ${ol(0.5)}/><path d='${star(36.6, -0.8, 2.4, 1)}' fill='#ffe08a' ${ol(0.5)}/><path d='${star(35.4, 8.8, 1.7, 0.7)}' fill='#fff3b0'/><path d='${moon(24.6, 9.2, 2.5)}' fill='#ffd24a'/>${dot(31, -4.2, 0.6, '#fff', 0.9)}${dot(40.4, 5.6, 0.6, '#fff', 0.9)}${dot(28, 0.4, 0.5, '#fff', 0.9)}` +
+        `<path d='M22.4 6.4C24.2 1.6 26.4 -2.8 28.6 -6.4' fill='none' stroke='#fff' stroke-opacity='.3' stroke-width='1.6' stroke-linecap='round'/>` +
         (live ? '' : TIP.inner),
       defs: lg('br', [[0, '#3a40b0'], [1, '#161870']]) + lg('cn', [[0, '#4a52d0'], [0.5, '#262c9a'], [1, '#12156a']], 0, 0, 1, 0) + lg('gd', [[0, '#fff0a0'], [0.5, '#f0b030'], [1, '#a8680a']]) + (live ? '' : TIP.defs),
     }),
@@ -202,8 +202,8 @@
     defs: '',
   };
   var TIP = {
-    box: [26, -22, 26, 18], origin: [7.5, 17],
-    inner: `<path d='M28.8 -5.4L37.6 -5.4C40 -9 42.6 -13.6 48.6 -18.6C41.6 -19.2 32.4 -12.6 28.8 -5.4Z' fill='url(#cn)' ${ol(1.2)}/><path d='${star(40.6, -11.6, 1.9, 0.8)}' fill='#fff3b0'/><path d='M31.4 -6.2C34 -10.2 37.8 -13.6 42 -15.4' fill='none' stroke='#fff' stroke-opacity='.3' stroke-width='1.2' stroke-linecap='round'/>`,
+    box: [26, -27, 26, 20], origin: [7, 19],
+    inner: `<path d='M28 -8L37.8 -8C40 -12.4 43 -17.6 49.8 -23.2C41.8 -23.2 32.4 -17 28 -8Z' fill='url(#cn)' ${ol(1.2)}/><path d='${star(40.4, -15, 1.9, 0.8)}' fill='#fff3b0'/><path d='M30.6 -9C33.4 -13.6 37.6 -17.4 42.4 -19.4' fill='none' stroke='#fff' stroke-opacity='.3' stroke-width='1.2' stroke-linecap='round'/>`,
     defs: '',
   };
   // the wizard's tip needs the cone gradient too
