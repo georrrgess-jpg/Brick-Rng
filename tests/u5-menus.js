@@ -32,6 +32,8 @@ async function player(page, o = {}) {
 }
 /** Escape, then wait until the sheet has really left (its element is removed half a second later): a slow machine must not move the test on early. */
 const esc = async (page) => { await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.sheet'), null, { timeout: 8000 }).catch(() => {}); await page.waitForTimeout(150); };
+/** A sheet is open and has finished sliding in (two frames to appear, then its 0.5s slide); waits for the state, not for a fixed time. */
+const sheetUp = async (page) => { await page.waitForSelector('.sheet.on', { timeout: 8000 }).catch(() => {}); await page.waitForTimeout(550); };
 const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width, h: b.height }; }, sel);
 
 (async () => {
@@ -138,8 +140,8 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => document.activeElement && document.activeElement.id === 'tbCoins'), 'focus did not return to the control that opened the sheet', await page.evaluate(() => document.activeElement.id || document.activeElement.className));
     ok(await page.evaluate(() => !document.getElementById('screens').hasAttribute('inert')), 'the page stayed inert after the sheet closed');
     // nested sheets: closing the top one hands focus and inertness to the one below
-    await page.evaluate(() => { BR.settingsSheet(); }); await wait(page, 600);
-    await page.evaluate(() => { BR.coinSheet(); }); await wait(page, 600);
+    await page.evaluate(() => { BR.settingsSheet(); }); await sheetUp(page);
+    await page.evaluate(() => { BR.coinSheet(); }); await sheetUp(page);
     ok(await page.evaluate(() => document.querySelectorAll('.sheet[inert]').length === 1 && !!document.activeElement.closest('.sheet:not([inert])')), 'a sheet over a sheet leaves the lower one reachable');
     await page.keyboard.press('Escape'); await page.waitForFunction(() => document.querySelectorAll('.sheet').length === 1, null, { timeout: 8000 }).catch(() => {}); await wait(page, 100);
     ok(await page.evaluate(() => document.querySelectorAll('.sheet[inert]').length === 0 || [...document.querySelectorAll('.sheet')].filter((s) => s.classList.contains('on') && s.hasAttribute('inert')).length === 0), 'the sheet below stayed inert');
@@ -176,9 +178,10 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => { const q = document.querySelector('.lk .bdg-q'); return !q || getComputedStyle(q).display === 'none'; }), 'locked tiles still show a ? box');
 
     // the item sheet: demo sparks stay inside the preview well, and Try it returns to the sheet
-    await page.evaluate(() => { const v = BR.Storage.data.profile.vault.find((x) => BR.itemById[x.itemId].type === 'skin'); BR.itemSheet(v.uid, 'skin'); }); await wait(page, 1200);
+    await page.evaluate(() => { const v = BR.Storage.data.profile.vault.find((x) => BR.itemById[x.itemId].type === 'skin'); BR.itemSheet(v.uid, 'skin'); }); await sheetUp(page);
     ok(await page.evaluate(() => /inset/.test(document.getElementById('fx').style.clipPath)), 'the demo canvas is not clipped to the preview well');
     await esc(page);
+    await wait(page, 900);
     ok(await page.evaluate(() => !document.getElementById('fx').style.clipPath), 'the demo canvas stayed clipped after the sheet closed');
 
     // Shop: pity line says the real count, a chest you cannot afford says how much is missing, one earn list
@@ -187,12 +190,12 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => /Need\s*250\s*more/.test(document.querySelector('.cc-brick .cc-act .btn').textContent)), 'a chest you cannot afford does not say how many Coins are missing', await page.evaluate(() => document.querySelector('.cc-brick .cc-act .btn').textContent));
     ok(await page.evaluate(() => !document.querySelector('.cc-badge')), 'the count bubble is still on the chest art');
     // the Coins sheet on the Shop has no button that does nothing
-    await page.evaluate(() => BR.coinSheet()); await wait(page, 700);
+    await page.evaluate(() => BR.coinSheet()); await sheetUp(page);
     ok(await page.evaluate(() => ![...document.querySelectorAll('.sheet.on .btn')].some((b) => /Go to the Shop/.test(b.textContent))), 'the Coins sheet offers "Go to the Shop" on the Shop');
     await esc(page);
     // "Show me the chest" from a locked item scrolls to the chest and pulses it
     await page.evaluate(() => { BR.Router.go('collection'); }); await wait(page, 1200);
-    await page.evaluate(() => { const it = BR.ITEMS.find((i) => i.type === 'fuse' && !BR.Progress.owns(i.id) && !i.pass); BR.lockedSheet(it.id); }); await wait(page, 800);
+    await page.evaluate(() => { const it = BR.ITEMS.find((i) => i.type === 'fuse' && !BR.Progress.owns(i.id) && !i.pass); BR.lockedSheet(it.id); }); await sheetUp(page);
     await page.evaluate(() => { [...document.querySelectorAll('.sheet.on .btn')].find((b) => /Fuse Chest/.test(b.textContent)).click(); }); await wait(page, 1600);
     ok(await page.evaluate(() => { const c = document.querySelector('[data-chestcard="fuse"]'), sc = document.querySelector('#s-shop .scroll'); if (!c) return false; const a = c.getBoundingClientRect(), b = sc.getBoundingClientRect(); return BR.Router.current === 'shop' && a.top >= b.top - 2 && a.bottom <= b.bottom + 2 && c.classList.contains('pulse'); }), '"Show me the chest" did not land on the chest and pulse it');
     await page.evaluate(() => { BR.Storage.data.profile.coins = 900; });
@@ -225,7 +228,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => { const seg = document.getElementById('colSeg'), t = seg.querySelector('.thumb').getBoundingClientRect(), on = seg.querySelector('button.on').getBoundingClientRect(); return Math.abs((t.left + t.right) / 2 - (on.left + on.right) / 2) < 3; }), 'the Collection thumb is not under the active type on arrival');
     await page.evaluate(() => { BR.Router.screens.collection.type = 'skin'; });
     // the Pass: a claimed Coins tier says when it was paid
-    await page.evaluate(() => { BR.rewardSheet(1); }); await wait(page, 700);
+    await page.evaluate(() => { BR.rewardSheet(1); }); await sheetUp(page);
     ok(await page.evaluate(() => /Paid when you reached level/.test(document.querySelector('.sheet.on .detail-desc').textContent) && !/right away/.test(document.querySelector('.sheet.on').textContent)), 'a claimed Coins tier says the Coins come right away');
     await esc(page);
 
@@ -261,7 +264,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
       const { browser, page } = await launch({ width: 393, height: 852, dsf: 1, mobile: true });
       await player(page, { large });
       await page.evaluate(() => { BR.Router.go('collection'); }); await wait(page, 900);
-      await page.evaluate(() => BR.coinSheet()); await wait(page, 800);
+      await page.evaluate(() => BR.coinSheet()); await sheetUp(page);
       await page.evaluate(() => BR.toast('Marble equipped', 'good')); await wait(page, 600);
       sizes[large] = await page.evaluate(() => { const fs = (s) => parseFloat(getComputedStyle(document.querySelector(s)).fontSize); return { tab: fs('#tabbar .tab span'), title: fs('#tbTitle'), sheetTitle: fs('.sheet.on h2'), sheetBody: fs('.sheet.on .cs-next p'), toast: fs('.toast'), seg: fs('#colSeg button'), zoomScroll: getComputedStyle(document.querySelector('.screen.on .scroll')).zoom, zoomSheet: getComputedStyle(document.querySelector('.sheet.on .sheet-body')).zoom, chips: fs('.chip-btn') }; });
       await browser.close();
@@ -319,7 +322,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     await player(page, {});
     const sheets = [['coins', () => BR.coinSheet()], ['ready', () => BR.readySheet('rush')], ['settings', () => BR.settingsSheet()], ['odds', () => BR.showOdds('brick')], ['item', () => { const v = BR.Storage.data.profile.vault.find((x) => BR.itemById[x.itemId].type === 'skin'); BR.itemSheet(v.uid, 'skin'); }]];
     for (const [name, fn] of sheets) {
-      await page.evaluate(fn); await wait(page, 1100);
+      await page.evaluate(fn); await sheetUp(page); await wait(page, 300);
       const s = await page.evaluate(() => { const e = document.querySelector('.sheet.on'), b = e.getBoundingClientRect(), body = e.querySelector('.sheet-body'), t = document.querySelector('#toastsTop').getBoundingClientRect(); return { w: b.width, cx: (b.left + b.right) / 2, vw: innerWidth, top: b.top, bottom: b.bottom, vh: innerHeight, bodyH: body.clientHeight, scrolls: body.scrollHeight > body.clientHeight + 2, fade: body.dataset.fade || '', toastBottom: t.top + 44 }; });
       ok(s.w <= 560.5 && Math.abs(s.cx - s.vw / 2) <= 2, `the ${name} sheet is not a centred dialog of at most 560px in landscape`, JSON.stringify(s));
       ok(s.top >= 50 && s.bottom <= s.vh - 8, `the ${name} sheet runs into the toast strip or the edge in landscape`, JSON.stringify(s));
@@ -328,7 +331,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
       await page.evaluate(() => { while (BR.Back.depth) BR.Back.closeTop(); }); await wait(page, 650);
     }
     // the pause sheet is two columns in landscape
-    await page.evaluate(() => { BR.Sheet.open({ center: true, title: 'Paused', body: '<div class="stack pause-list"><button class="btn btn-xl" data-p="resume">Resume</button><button class="btn btn-dark">Restart</button><button class="btn btn-dark">Sound</button><button class="btn btn-dark">End run</button><button class="btn btn-text">Save and leave</button></div>' }); }); await wait(page, 800);
+    await page.evaluate(() => { BR.Sheet.open({ center: true, title: 'Paused', body: '<div class="stack pause-list"><button class="btn btn-xl" data-p="resume">Resume</button><button class="btn btn-dark">Restart</button><button class="btn btn-dark">Sound</button><button class="btn btn-dark">End run</button><button class="btn btn-text">Save and leave</button></div>' }); }); await sheetUp(page);
     ok(await page.evaluate(() => { const b = [...document.querySelectorAll('.sheet.on .pause-list .btn')].map((x) => x.getBoundingClientRect()); return b[1].top === b[2].top && b[1].left < b[2].left && document.querySelector('.sheet.on').getBoundingClientRect().height <= innerHeight - 8; }), 'the pause sheet is not two columns in landscape');
     ok(errors.length === 0, 'console errors (landscape)', errors.slice(0, 3).join(' | '));
     await browser.close();
@@ -339,7 +342,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     const { browser, page, errors } = await launch({ width: 1280, height: 800, dsf: 1, mobile: false });
     await player(page, {});
     const w0 = await rect(page, '#topbar'); ok(w0.w <= 560.5, 'the status bar spans the desktop', w0.w);
-    await page.evaluate(() => BR.coinSheet()); await wait(page, 900);
+    await page.evaluate(() => BR.coinSheet()); await sheetUp(page);
     const s = await rect(page, '.sheet.on'); ok(s.w <= 560.5 && Math.abs((s.l + s.r) / 2 - 640) <= 2, 'a desktop sheet is wider than 560px or off centre', JSON.stringify(s));
     const b = await page.evaluate(() => Math.max(...[...document.querySelectorAll('.sheet.on .sheet-actions .btn')].map((x) => x.getBoundingClientRect().width)));
     ok(b <= 560, 'a desktop sheet button is as wide as the page', b);
@@ -351,7 +354,8 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     const x1 = await page.evaluate(() => document.getElementById('passTrack').scrollLeft);
     ok(Math.abs(x1 - x0) > 100, 'the mouse wheel does not scroll the Pass track', [x0, x1]);
     ok(await page.evaluate(() => { const a = document.querySelector('.track-arrow.r'); return a && getComputedStyle(a).display !== 'none' && a.getBoundingClientRect().width >= 44; }), 'no arrows on the Pass track on desktop');
-    await page.click('.track-arrow.l'); await wait(page, 700);
+    { const left = await page.evaluate(() => [...document.querySelectorAll('.sheet')].map((e) => e.className + ' | ' + ((e.querySelector('h2') || {}).textContent || '') + ' | back ' + document.querySelectorAll('.sheet-back').length)); ok(left.length === 0, 'a sheet is open over the Pass on desktop', JSON.stringify(left)); }
+    await page.click('.track-arrow.l', { timeout: 5000 }).catch(() => {}); await wait(page, 700);
     const x2 = await page.evaluate(() => document.getElementById('passTrack').scrollLeft);
     ok(x2 < x1 - 100, 'the left arrow does not page the Pass track', [x1, x2]);
     // keyboard: arrows walk tile to tile
