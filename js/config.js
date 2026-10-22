@@ -53,7 +53,10 @@
     rerollCost: 30,
     pityEvery: 8,          // every 8th chest of a type without an Epic or better guarantees one
     goldenFallback: 600,   // a Golden Chest pays this when nothing Epic or better is left to find
-    passTiers: 30,
+    passTiers: 30,         // the level track's old Pass length (levels keep paying Coins)
+    // The Pop Pass is a season: 30 tiers filled by season XP, which starts at zero each season while the player's level stays.
+    // xpPerTier is set in Update 5 Phase 4 against the bots (a season takes about 300 casual runs, 150 average).
+    season: { n: 4, name: 'Moonwick', tiers: 30, xpPerTier: 1500 },
   };
 
   /** Pass levels: gentle, so the 30 tiers take a few weeks of casual play. */

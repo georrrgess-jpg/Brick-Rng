@@ -51,7 +51,13 @@
       else { out.broken = s.ring > 0; out.lost = s.ring; s.ring = 1; s.shield = 1; }
       s.last = today;
       if (s.ring === 3) out.coins = C.day3;
-      if (s.ring === this.LEN) { out.coins = C.day7Coins; out.chest = C.day7Chest; }
+      if (s.ring === this.LEN) {
+        out.coins = C.day7Coins; out.chest = C.day7Chest;
+        // the first two full weeks after hats arrived each give Fizz a hat
+        const pr = P(); pr.hatWeeks = (pr.hatWeeks || 0) + 1;
+        const hat = ['h_nightcap', 'h_tricorn'][pr.hatWeeks - 1];
+        if (hat && BR.Progress.grantHat(hat)) out.hat = hat;
+      }
       s.best = Math.max(s.best, s.weeks * this.LEN + s.ring);
       if (out.coins) BR.Progress.earn(out.coins);
       if (out.chest) out.chestPaid = BR.Progress.addChest(out.chest, 1);

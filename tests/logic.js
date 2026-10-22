@@ -86,10 +86,14 @@ res = P.addXp(1); assert.strictEqual(res.ups.length, 1); assert.strictEqual(P.le
 assert.strictEqual(res.ups[0].tier, 1); assert.strictEqual(res.ups[0].reward.kind, 'coins');
 const coinsBefore = P.coins;
 P.addXp(1e6);
-assert(P.level > 30, 'climbed past the pass'); assert.strictEqual(BR.Storage.data.profile.passTier, P.level - 1);
+assert(P.level > 30, 'climbed past the level track'); assert.strictEqual(BR.Storage.data.profile.passTier, P.level - 1);
 assert(BR.PASS.length === 30);
-assert(P.owns('f_chrome') && P.owns('f_heart'), 'pass exclusives granted');
-assert(P.chestCount('golden') >= 1 && P.chestCount('fuse') >= 1, 'pass chests granted');
+// Update 5: the level track pays Coins; the chests and exclusives come from the season track (the same XP fills it), and the old
+// exclusives Chrome and Prism Heart are level trophies
+assert(BR.PASS.every((r) => r.kind === 'coins'), 'the level track pays Coins only');
+P.checkTrophies(); assert(P.owns('f_chrome') && P.owns('f_heart'), 'the level 25 and 30 trophies give Chrome and Prism Heart');
+assert(P.owns('b_wisps') && P.owns('f_moonglass'), 'the season track gave its exclusives');
+assert(P.chestCount('golden') >= 1 && P.chestCount('fuse') >= 1, 'season chests granted');
 assert(P.coins > coinsBefore);
 
 // ---- opening through Progress: inventory first, then Coins; drops are always new; pity; completion

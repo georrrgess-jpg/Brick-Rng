@@ -28,7 +28,10 @@
       chests: { brick: 1, pop: 0, board: 0, fuse: 0, golden: 0 }, // one welcome chest so the opening is easy to find
       vault: [], // { uid, itemId, shine, seed }  (one entry per item: chests never give duplicates)
       pity: { skin: 0, pop: 0, board: 0, fuse: 0 }, // chests opened since the last Epic or better, per type
-      loadout: { skin: 'default', pop: 'default', board: 'default', fuse: 'default' },
+      loadout: { skin: 'default', pop: 'default', board: 'default', fuse: 'default', hat: 'none' },
+      hats: ['h_party'],              // Fizz Hats owned (never in chests: Pass, streak and trophy rewards; the Party Hat is free)
+      hatWeeks: 0,                    // full 7-day streak weeks finished since hats arrived (the first two give a hat)
+      season: { n: BR.CFG && BR.CFG.season ? BR.CFG.season.n : 4, xp: 0, tier: 0 },   // the Pop Pass season: its own XP, reset each season
       seq: 0, opened: 0, passTier: 0, passClaimed: 0,
       missions: { day: '', list: [], rerolls: 0, week: '', weekly: null },
       trophies: {},
@@ -36,7 +39,7 @@
       goalHist: [],                                                // the last run goals, so they do not repeat
       skill: 0.4,                                                  // the tile director's rating: a slow average of how far Rush runs go (0..1)
       records: { maxLines: 0, maxRushes: 0, history: [] },         // extra personal records and the last 20 Rush scores
-      stats: { runs: 0, bricks: 0, rushes: 0, bigPops: 0, powerups: 0, lineBlasts: 0, stages: 0, coinsEarned: 0, chests: 0, dailyRuns: 0, bestCombo: 0, maxGroup: 0, defused: 0 },
+      stats: { runs: 0, bricks: 0, rushes: 0, bigPops: 0, powerups: 0, lineBlasts: 0, stages: 0, coinsEarned: 0, chests: 0, dailyRuns: 0, bestCombo: 0, maxGroup: 0, defused: 0, moonwickPops: 0, sparkRuns: 0 },
     },
   });
 
@@ -118,14 +121,23 @@
     return d;
   }
 
+  /** A new season starts everyone's season track at zero (the level stays). */
+  function seedSeason(d) {
+    const want = BR.CFG && BR.CFG.season ? BR.CFG.season.n : 4, pr = d.profile;
+    if (!pr.season || pr.season.n !== want) pr.season = { n: want, xp: 0, tier: 0 };
+    if (!Array.isArray(pr.hats)) pr.hats = ['h_party'];
+    if (!pr.loadout.hat) pr.loadout.hat = 'none';
+    return d;
+  }
+
   function load() {
     const d = defaults();
     const cur = read(KEY);
-    if (cur) return seedSkill(deepMerge(d, cur), cur);
+    if (cur) return seedSeason(seedSkill(deepMerge(d, cur), cur));
     // a v4 save that exists but cannot be parsed is kept aside before anything older is tried
     try { const raw = G.localStorage && G.localStorage.getItem(KEY); if (raw) G.localStorage.setItem(KEY + '.corrupt', raw); } catch (e) { /* ignore */ }
     const v3 = read(V3_KEY);
-    if (v3 && BR.itemById) return seedSkill(normalize(deepMerge(d, v3), 0).data, v3);
+    if (v3 && BR.itemById) return seedSeason(seedSkill(normalize(deepMerge(d, v3), 0).data, v3));
     const v2 = read(V2_KEY);
     if (v2 && BR.itemById) return migrateV2(v2);
     return d;
@@ -157,7 +169,7 @@
         if (h.toString(36) !== m[1]) return null;
         const o = JSON.parse(json);
         if (!o || typeof o !== 'object' || !o.profile || typeof o.profile.level !== 'number') return null;
-        return deepMerge(defaults(), o);
+        return seedSeason(seedSkill(deepMerge(defaults(), o), o));
       } catch (e) { return null; }
     },
     /** Replace the save with a parsed code. */

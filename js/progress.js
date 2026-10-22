@@ -49,23 +49,46 @@
       return rows;
     },
 
-    /** Add XP. Every level-up finishes a Pass tier and pays its reward. */
+    /** Add XP. Every level-up pays Coins; the same XP also fills the season track, whose tiers pay chests, items and hats. */
     addXp(amount) {
       const p = P();
+      amount = Math.max(0, Math.round(amount));
       const from = { level: p.level, xp: p.xp, need: BR.xpForLevel(p.level) };
       const ups = [];
-      p.xp += Math.max(0, Math.round(amount));
+      p.xp += amount;
       while (p.xp >= BR.xpForLevel(p.level)) {
         p.xp -= BR.xpForLevel(p.level);
         const tier = p.level;
         p.level++;
-        const reward = BR.passReward(tier);
+        const reward = BR.levelReward(tier);
         let paid = 0;
         if (tier > p.passTier) { p.passTier = tier; paid = this.grant(reward) || 0; }
         ups.push({ level: p.level, tier, reward, paid });
       }
+      const season = this.addSeasonXp(amount);
       save();
-      return { gained: amount, from, level: p.level, xp: p.xp, need: BR.xpForLevel(p.level), ups };
+      return { gained: amount, from, level: p.level, xp: p.xp, need: BR.xpForLevel(p.level), ups, season };
+    },
+
+    /* ---------- the season track ---------- */
+    /** Where the player is on this season's track: { n, tier, xp, into (XP into the next tier), need (for the next tier), done }. */
+    seasonStatus() {
+      const s = P().season, C = BR.CFG.season, done = s.tier >= C.tiers;
+      const base = s.tier * C.xpPerTier;
+      return { n: s.n, tier: s.tier, xp: s.xp, done, into: done ? C.xpPerTier : Math.max(0, s.xp - base), need: C.xpPerTier, tiers: C.tiers };
+    },
+    /** Add season XP and pay every tier it finishes. Returns { from: { tier, into }, tier, into, ups: [{ tier, reward, paid }] }. */
+    addSeasonXp(amount) {
+      const s = P().season, C = BR.CFG.season;
+      const before = this.seasonStatus(), ups = [];
+      s.xp += Math.max(0, Math.round(amount));
+      while (s.tier < C.tiers && s.xp >= (s.tier + 1) * C.xpPerTier) {
+        s.tier++;
+        const reward = BR.seasonReward(s.tier);
+        ups.push({ tier: s.tier, reward, paid: this.grant(reward) || 0 });
+      }
+      const now = this.seasonStatus();
+      return { from: { tier: before.tier, into: before.into }, tier: now.tier, into: now.into, need: now.need, done: now.done, ups };
     },
 
     /** Pay out a reward object (coins / chest / item). Items you already own, and chests with nothing left to find, pay Coins
@@ -77,9 +100,23 @@
       else if (r.kind === 'item') {
         if (this.owns(r.itemId)) { paid = BR.CFG.goldenFallback / 2; this.earn(paid); }
         else this.keep({ itemId: r.itemId, shine: r.shine || 'plain', seed: 7 });
+      } else if (r.kind === 'hat') {
+        if (!this.grantHat(r.hatId)) { paid = 60; this.earn(paid); }   // a hat you already have pays a little instead
       }
       save();
       return paid;
+    },
+
+    /* ---------- Fizz Hats: earned only (Pass, streak weeks, trophies), never in chests ---------- */
+    ownsHat(id) { return id === 'h_party' || P().hats.includes(id); },
+    ownedHats() { return Array.from(new Set(['h_party'].concat(P().hats))); },
+    /** Give a hat. Returns true when it is new. */
+    grantHat(id) { if (!id || this.ownsHat(id)) return false; P().hats.push(id); save(); return true; },
+    /** The hat Fizz wears: a hat id, or null for none. */
+    equippedHat() { const h = P().loadout.hat; return h && h !== 'none' && this.ownsHat(h) ? h : null; },
+    equipHat(id) {
+      if (id && id !== 'none' && !this.ownsHat(id)) return false;
+      P().loadout.hat = id || 'none'; save(); return true;
     },
 
     /* ---------- Chests ---------- */
@@ -180,6 +217,9 @@
       st.lineBlasts += sum.lineBlasts; st.stages += sum.stagesCleared; st.defused += sum.defused || 0;
       st.bestCombo = Math.max(st.bestCombo, sum.maxCombo); st.maxGroup = Math.max(st.maxGroup, sum.biggest);
       if (mode === 'daily') st.dailyRuns++;
+      // Moonwick counters for trophies: pops made wearing a Moonwick skin, and runs the Last Spark saved
+      if (this.equipped('skin').item.series === 4) st.moonwickPops = (st.moonwickPops || 0) + (sum.pops || 0);
+      if ((sum.sparkSaves || 0) > 0) st.sparkRuns = (st.sparkRuns || 0) + 1;
       save();
     },
 
@@ -189,7 +229,13 @@
       const ctx = { profile: p, stats: p.stats, owned: new Set(p.vault.map((i) => i.itemId)), bestScore: Math.max(S().best.rush, S().best.daily), bestStage: Math.max(S().bestStage.rush, S().bestStage.daily, S().bestStage.chill) };
       for (const t of BR.TROPHIES) {
         if (p.trophies[t.id]) continue;
-        if (t.test(ctx)) { p.trophies[t.id] = Date.now(); this.earn(t.coins); got.push(t); }
+        if (t.test(ctx)) {
+          p.trophies[t.id] = Date.now(); this.earn(t.coins); got.push(t);
+          // some trophies also give an item or a hat (the Pass exclusives that left the level track, and the Fizz Hats)
+          if (t.item) this.grant({ kind: 'item', itemId: t.item.itemId, shine: t.item.shine });
+          if (t.hat) this.grantHat(t.hat);
+          ctx.owned = new Set(p.vault.map((i) => i.itemId));   // a trophy's item can finish another trophy in the same pass
+        }
       }
       if (got.length) save();
       return got;
