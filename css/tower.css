@@ -1,0 +1,184 @@
+/* ===================================================================
+   The Moonwick Tower in the Collection (js/tower.js): Series 4 as a tower of lit windows. Silver and gold on midnight blue, the
+   same palette as the Moonwick Tower board (css/s4-scenes.css). A found item lights its window in its rarity colour; a missing one is
+   dark glass. The whole tower is boxes and gradients (the roof, the bell and the fallback crests are images, so none of them is a pile
+   of SVG nodes). Nothing here moves at rest except eight stars that twinkle very slowly (opacity only; off in Reduce Motion and on
+   low-end phones). The bell, its rings and the flash of the windows are one-shot transform / opacity animations that the script starts.
+   =================================================================== */
+.tw { --tw-w: 312px; --tw-gold: #ffcf6b; --tw-gold-hi: #fff2c0; --tw-gold-lo: #b8731a; --tw-silver: #e8f0ff; --tw-steel: #9fb4e0; --tw-iron: #5a6a9a;
+  display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 480px; margin: 0 auto; }
+
+/* ---------- the summary card: the count, the floors lit, and the floor to finish next ---------- */
+.tw-sum { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px 14px; align-items: center; padding: 14px; border-radius: var(--r-l); background: linear-gradient(180deg, #18265a, #0d1636); box-shadow: inset 0 0 0 1px rgba(159, 180, 224, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--sh-1); }
+.tw-ring { position: relative; width: 64px; height: 64px; }
+.tw-ringsvg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.tw-ringsvg .bg { fill: none; stroke: rgba(232, 240, 255, 0.14); }
+.tw-ringsvg .fg { fill: none; stroke: var(--tw-gold); stroke-linecap: round; }
+.tw-ring b { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 700 calc(19px * var(--ts))/1 var(--f-display); color: var(--tw-silver); }
+.tw-ring b small { font: 700 calc(12px * var(--ts))/1.1 var(--f-ui); color: var(--muted); }
+.tw-st-txt { min-width: 0; }
+.tw-st-txt h3 { font: 700 calc(21px * var(--ts))/1.1 var(--f-display); letter-spacing: 0.01em; color: #f4f7ff; text-shadow: 0 0 14px rgba(160, 190, 255, 0.35); }
+.tw-st-txt p { margin-top: 4px; font: 700 calc(14px * var(--ts))/1.3 var(--f-ui); color: var(--muted); }
+.tw-next { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; border-radius: 14px; text-align: left; font: 700 calc(14px * var(--ts))/1.25 var(--f-ui); color: #ffe9a8; background: linear-gradient(90deg, rgba(255, 207, 107, 0.2), rgba(255, 207, 107, 0.05)); box-shadow: inset 0 0 0 1px rgba(255, 207, 107, 0.4); transition: transform var(--d-fast) var(--ease-out); }
+.tw-next:active { transform: scale(0.98); }
+.tw-next span { flex: 1; min-width: 0; }
+.tw-next.all { min-height: 44px; }
+.tw-spark { flex: none; width: 16px; height: 16px; background: linear-gradient(180deg, var(--tw-gold-hi), var(--tw-gold)); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+button.tw-next::after { content: ''; flex: none; width: 9px; height: 9px; margin-right: 3px; border: solid var(--tw-gold); border-width: 2.5px 2.5px 0 0; border-radius: 1px; transform: rotate(45deg); }
+
+/* ---------- the sky ---------- */
+.tw-sky { --tw-stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='360' viewBox='0 0 240 360'%3E%3Cdefs%3E%3CradialGradient id='s' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23dce8ff' stop-opacity='.8'/%3E%3Cstop offset='.4' stop-color='%23dce8ff' stop-opacity='.22'/%3E%3Cstop offset='1' stop-color='%23dce8ff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='94.1' cy='46' r='1.1' fill='%23fff' opacity='0.8'/%3E%3Ccircle cx='94.1' cy='46' r='4.4' fill='url(%23s)' opacity='0.8'/%3E%3Ccircle cx='60.4' cy='155.4' r='0.6' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='127.5' cy='337.3' r='0.7' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='132.7' cy='132.8' r='1.1' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='121.6' cy='235.4' r='0.6' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='170.7' cy='170.1' r='1.1' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='34.3' cy='51.1' r='1.1' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='182.4' cy='339.7' r='0.6' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='89.4' cy='71.9' r='1.1' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='30.9' cy='266.9' r='0.8' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='30.9' cy='266.9' r='3.2' fill='url(%23s)' opacity='0.7'/%3E%3Ccircle cx='81' cy='244.2' r='0.6' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='181.9' cy='251.3' r='0.9' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='205.7' cy='96.8' r='0.7' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='23.9' cy='102.8' r='1.1' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='177.9' cy='10.5' r='0.6' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='197.5' cy='326.1' r='0.9' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='78.1' cy='340.3' r='0.5' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='194.1' cy='253.8' r='1.1' fill='%23fff' opacity='0.8'/%3E%3Ccircle cx='169.3' cy='325.8' r='1' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='169.3' cy='325.8' r='4' fill='url(%23s)' opacity='0.3'/%3E%3Ccircle cx='102.4' cy='50.1' r='1.1' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='30.6' cy='166.7' r='0.5' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='94.4' cy='149.5' r='0.6' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='13.3' cy='168.2' r='0.6' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='109.4' cy='22.1' r='1' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='94.7' cy='219.6' r='1' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='210.9' cy='209.8' r='0.8' fill='%23fff' opacity='0.8'/%3E%3Ccircle cx='188.2' cy='244.2' r='1' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='6.3' cy='147.8' r='0.8' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='6.3' cy='147.8' r='3.2' fill='url(%23s)' opacity='0.5'/%3E%3Ccircle cx='197.9' cy='304' r='0.8' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='236.4' cy='36.7' r='0.6' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='229.3' cy='92.7' r='1' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='30.8' cy='160.1' r='1' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='203.6' cy='296.3' r='0.9' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='227.7' cy='48.6' r='0.7' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='131.9' cy='299.1' r='0.6' fill='%23fff' opacity='0.8'/%3E%3Ccircle cx='23.8' cy='158.4' r='1' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='41.3' cy='320.4' r='0.5' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='41.3' cy='320.4' r='2' fill='url(%23s)' opacity='0.7'/%3E%3Ccircle cx='236.2' cy='146.8' r='0.5' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='90.6' cy='195.7' r='0.6' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='132.8' cy='212.9' r='0.5' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='90.5' cy='203.3' r='0.7' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='197.9' cy='18.9' r='0.7' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='168.7' cy='327.9' r='0.7' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='70.6' cy='75.1' r='0.7' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='29.3' cy='141.1' r='0.9' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='169.9' cy='149.5' r='0.8' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='169.9' cy='149.5' r='3.2' fill='url(%23s)' opacity='0.6'/%3E%3C/svg%3E");
+  position: relative; overflow: hidden; isolation: isolate; margin: 4px; padding-top: 22px; border-radius: 24px;
+  background: linear-gradient(0deg, rgba(120, 150, 220, 0.14), transparent 12%), linear-gradient(200deg, rgba(190, 212, 255, 0.09), transparent 34%), radial-gradient(ellipse 60% 12% at 20% 5%, rgba(170, 200, 255, 0.3), rgba(110, 150, 230, 0.1) 55%, transparent 80%), var(--tw-stars) repeat 0 0 / 240px 360px, linear-gradient(180deg, #0a1636 0%, #0b1a42 22%, #0a1534 56%, #08102a 80%, #070c20 100%);
+  box-shadow: 0 0 0 1.2px #0a1226, 0 0 0 3px var(--tw-iron), 0 0 0 4px var(--tw-silver), 0 0 14px 4px rgba(160, 190, 255, 0.28), 0 10px 26px rgba(0, 0, 0, 0.55); }
+.tw-moon { position: absolute; z-index: 0; left: 9%; top: 14px; width: 74px; height: 74px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 62% 66%, rgba(120, 140, 185, 0.4) 0 5px, transparent 6px), radial-gradient(circle at 34% 58%, rgba(120, 140, 185, 0.32) 0 7px, transparent 8px), radial-gradient(circle at 52% 24%, rgba(120, 140, 185, 0.3) 0 4px, transparent 5px), radial-gradient(circle at 38% 34%, #fbfcff, #dde6f6 55%, #a9b8d8 88%, #8494b8);
+  box-shadow: 0 0 36px 10px rgba(190, 212, 255, 0.32), 0 0 90px 30px rgba(120, 160, 255, 0.14); }
+.tw-cloud { position: absolute; z-index: 0; pointer-events: none; height: 64px; background:
+    radial-gradient(ellipse 24% 62% at 22% 64%, rgba(170, 192, 236, 0.3), transparent 72%), radial-gradient(ellipse 30% 90% at 46% 46%, rgba(190, 208, 246, 0.34), transparent 72%),
+    radial-gradient(ellipse 26% 70% at 72% 60%, rgba(170, 192, 236, 0.28), transparent 72%), radial-gradient(ellipse 52% 26% at 50% 86%, rgba(120, 150, 212, 0.26), transparent 80%); }
+.tw-cloud.c1 { left: -14%; top: 25%; width: 64%; } .tw-cloud.c2 { right: -18%; top: 49%; width: 72%; height: 72px; } .tw-cloud.c3 { left: -20%; top: 73%; width: 70%; } .tw-cloud.c4 { right: -12%; top: 14%; width: 46%; height: 50px; }
+.tw-stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.tw-stars i { position: absolute; width: 8px; height: 8px; background: #fff; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); opacity: 0.35; animation: twTwinkle 7s ease-in-out infinite; }
+.tw-stars i:nth-child(1) { left: 8%; top: 5%; width: 9px; height: 9px; animation-duration: 6.5s; }
+.tw-stars i:nth-child(2) { left: 88%; top: 9%; width: 7px; height: 7px; animation-duration: 7.5s; animation-delay: -2.1s; }
+.tw-stars i:nth-child(3) { left: 20%; top: 20%; width: 7px; height: 7px; animation-duration: 8s; animation-delay: -4s; }
+.tw-stars i:nth-child(4) { left: 78%; top: 31%; width: 9px; height: 9px; animation-delay: -1.2s; }
+.tw-stars i:nth-child(5) { left: 10%; top: 44%; animation-duration: 6s; animation-delay: -5.5s; }
+.tw-stars i:nth-child(6) { left: 90%; top: 55%; width: 7px; height: 7px; animation-duration: 8.5s; animation-delay: -3.3s; }
+.tw-stars i:nth-child(7) { left: 14%; top: 68%; width: 9px; height: 9px; animation-duration: 7.2s; animation-delay: -0.6s; }
+.tw-stars i:nth-child(8) { left: 84%; top: 80%; animation-duration: 6.8s; animation-delay: -4.6s; }
+@keyframes twTwinkle { 50% { opacity: 1; transform: scale(1.25); } }
+
+/* ---------- the tower: roof, belfry, six floors ---------- */
+.tw-tower { position: relative; z-index: 1; width: min(var(--tw-w), calc(100% - 46px)); margin: 0 auto; }
+.tw-roof { position: relative; z-index: 2; width: calc(76% + 34px); aspect-ratio: 260 / 164; margin: 0 auto -9px; }
+.tw-body { position: relative; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 34px rgba(130, 170, 255, 0.22); }
+/* two side turrets with a lit slit each, behind the wall, so the tower has a silhouette and not a stack of boxes */
+.tw-body::before, .tw-body::after { content: ''; position: absolute; z-index: -1; width: 40px; pointer-events: none; clip-path: polygon(50% 0, 98% 27%, 88% 27%, 88% 100%, 12% 100%, 12% 27%, 2% 27%); }
+.tw-body::before { left: -24px; top: 84px; height: 250px; background: radial-gradient(circle 9px at 50% 44%, rgba(255, 207, 107, 0.6), transparent), linear-gradient(#ffcf6b, #ffcf6b) 50% 41% / 4px 16px no-repeat, linear-gradient(#ffcf6b, #ffcf6b) 50% 61% / 4px 16px no-repeat, linear-gradient(#ffcf6b, #ffcf6b) 50% 81% / 4px 16px no-repeat, linear-gradient(90deg, #8a9ad0, #4a5c98 35%, #1a2658 100%); }
+.tw-body::after { right: -24px; top: 330px; height: 250px; background: radial-gradient(circle 9px at 50% 44%, rgba(255, 207, 107, 0.6), transparent), linear-gradient(#ffcf6b, #ffcf6b) 50% 41% / 4px 16px no-repeat, linear-gradient(#ffcf6b, #ffcf6b) 50% 61% / 4px 16px no-repeat, linear-gradient(#ffcf6b, #ffcf6b) 50% 81% / 4px 16px no-repeat, linear-gradient(90deg, #2a3a74, #4a5c98 65%, #8a9ad0); }
+/* the stone: round-tower shading, a column of quoin blocks up each corner, courses of bricks, and the room's own light from above */
+.tw-floor { --wash: rgba(232, 240, 255, 0.1); position: relative; background:
+    radial-gradient(ellipse 75% 70% at 50% 18%, var(--wash), transparent 72%),
+    linear-gradient(90deg, #7b8dc4, #4a5c98) 0 0 / 9px 100% no-repeat,
+    linear-gradient(90deg, #3c4c84, #6a7cb4) 100% 0 / 9px 100% no-repeat,
+    repeating-linear-gradient(0deg, rgba(4, 8, 26, 0.55) 0 1px, transparent 1px 14px) 0 0 / 9px 100% no-repeat,
+    repeating-linear-gradient(0deg, rgba(4, 8, 26, 0.55) 0 1px, transparent 1px 14px) 100% 0 / 9px 100% no-repeat,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent 12%, transparent 88%, rgba(0, 0, 0, 0.3)),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.24) 0 1px, transparent 1px 15px),
+    linear-gradient(90deg, #17234f, #26376e 22%, #324683 50%, #26376e 78%, #17234f); }
+.tw-floor.f-library { --wash: rgba(232, 184, 106, 0.2); } .tw-floor.f-glade { --wash: rgba(107, 232, 200, 0.18); } .tw-floor.f-alchemy { --wash: rgba(122, 255, 176, 0.17); } .tw-floor.f-vault { --wash: rgba(255, 217, 138, 0.18); } .tw-floor.f-spire { --wash: rgba(232, 240, 255, 0.22); }
+/* a floor that is far off screen is not laid out or painted at all (content-visibility), which is what keeps the first frame cheap; the height it
+   is given until then is the real one, so the scroll bar does not jump. Painting is clipped to the floor, so the ledge under it is a box of its own. */
+.tw-floor { content-visibility: auto; contain-intrinsic-height: auto 158px; }
+.tw-ledge { display: block; position: relative; z-index: 1; height: 9px; margin: 0 -6px; border-radius: 2px 2px 3px 3px; background: linear-gradient(180deg, var(--tw-silver) 0, var(--tw-steel) 1.5px, #4a5a8c 3px, #1a2655 100%); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.55); }
+.tw-belfry + .tw-ledge { width: calc(76% + 12px); margin: 0 auto; }
+.tw-band { position: relative; z-index: 1; display: flex; align-items: center; gap: 7px; height: 50px; padding: 0 10px; background: linear-gradient(180deg, rgba(4, 8, 26, 0.7), rgba(4, 8, 26, 0.32)); box-shadow: inset 0 -1px 0 rgba(159, 180, 224, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+.tw-crest { flex: none; display: block; width: 28px; height: 28px; background: no-repeat 50% 50% / contain; opacity: 0.6; filter: saturate(0.5); }
+.tw-crest > svg { display: block; width: 100%; height: 100%; }
+.tw-ft { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tw-ft b { font: 700 calc(15px * (1 + (var(--ts) - 1) * 0.5))/1.15 var(--f-display); color: #eef3ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tw-ft small { font: 700 calc(12px * var(--ts))/1.25 var(--f-ui); color: #9fb0d6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tw-chip { flex: none; padding: 4px 9px; border-radius: 99px; font: 700 calc(15px * var(--ts))/1 var(--f-display); color: var(--tw-silver); background: rgba(4, 8, 26, 0.6); box-shadow: inset 0 0 0 1px rgba(159, 180, 224, 0.4); }
+.tw-chip i { font-style: normal; opacity: 0.55; margin: 0 1px; }
+.tw-floor.next .tw-chip { color: var(--tw-gold-hi); box-shadow: inset 0 0 0 1.5px var(--tw-gold), 0 0 10px rgba(255, 207, 107, 0.35); }
+.tw-floor.next .tw-ft small { color: var(--tw-gold); }
+
+.tw-wins { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 16px 12px; }
+
+/* ---------- a window: stone frame, glass, the badge, and a sill that says what kind of item it is ---------- */
+.tw-win { position: relative; display: flex; flex-direction: column; min-width: 0; height: 84px; transition: transform var(--d-fast) var(--ease-out); }
+.tw-win:active { transform: scale(0.95); }
+.tw-glass { position: relative; display: block; flex: 1 1 auto; min-height: 0; overflow: hidden; border: 4px solid transparent; border-radius: 50% 50% 4px 4px / 46% 46% 4px 4px; }
+/* leaded panes and a streak of moonlight, behind the badge */
+.tw-glass::before { content: ''; position: absolute; inset: 0; background: linear-gradient(118deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 26%, transparent 38%), linear-gradient(90deg, transparent calc(50% - 1px), rgba(6, 10, 30, 0.5) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)), linear-gradient(0deg, transparent 36%, rgba(6, 10, 30, 0.5) 36% calc(36% + 2px), transparent calc(36% + 2px)); }
+.tw-glass > .bdg { position: absolute; z-index: 1; left: 50%; bottom: 3px; margin-left: calc(var(--bs) / -2); animation: twIn 0.3s var(--ease-out) both; }
+@keyframes twIn { from { opacity: 0; transform: scale(0.8); } }
+.tw-sill { flex: none; height: 18px; margin: 0 -2px; border-radius: 2px 2px 4px 4px; text-align: center; font: 800 calc(12px * var(--ts))/18px var(--f-ui); letter-spacing: 0.08em; text-transform: uppercase; background: linear-gradient(180deg, #8397cc 0, #3e4e82 2px, #1a2552 100%); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5); }
+.tw-win.on .tw-sill { color: var(--sill); }
+.tw-win.off .tw-sill { color: var(--sill-off); }
+.tw-win.on .tw-glass { background: radial-gradient(ellipse 85% 75% at 50% 66%, var(--hi) 0, var(--rc) 48%, var(--lo) 100%) padding-box, linear-gradient(180deg, #e8f0ff 0%, #9fb4e0 34%, #4a5a8c 100%) border-box; box-shadow: 0 0 14px var(--glow); }
+.tw-win.on.r4 .tw-glass { box-shadow: 0 0 16px var(--glow), 0 0 30px rgba(255, 176, 46, 0.25); }
+.tw-win.on.r5 .tw-glass { box-shadow: 0 0 16px var(--glow), 0 0 32px rgba(165, 107, 255, 0.4); }
+.tw-win.off .tw-glass { background: linear-gradient(180deg, #0c1640 0%, #060b24 100%) padding-box, linear-gradient(180deg, #e8f0ff 0%, #9fb4e0 34%, #4a5a8c 100%) border-box; }
+.tw-win.off .bdg { opacity: 0.7; }
+.tw-floor.next .tw-win.off .tw-glass { box-shadow: inset 0 -16px 16px -10px rgba(255, 207, 107, 0.4); }
+.tw-win.round .tw-glass { flex: none; aspect-ratio: 1; border-radius: 50%; }
+.tw-win.round { height: auto; }
+/* rarity colours (the same five as BR.RARITIES in js/config.js): the lit glass, its glow and the text on the sill, written out so a window costs no colour maths */
+.tw-win.r1 { --rc: #9fb0d6; --hi: #dbe1ef; --lo: #4f5a78; --glow: rgba(159, 176, 214, 0.5); --sill: #c0cde8; --sill-off: #9fb0d6; }
+.tw-win.r2 { --rc: #43a0ff; --hi: #b8dbff; --lo: #23538c; --glow: rgba(67, 160, 255, 0.5); --sill: #8dc4ff; --sill-off: #7aaae6; }
+.tw-win.r3 { --rc: #b565ff; --hi: #e3c4ff; --lo: #5a368c; --glow: rgba(181, 101, 255, 0.5); --sill: #cca4ff; --sill-off: #a892e6; }
+.tw-win.r4 { --rc: #ffb02e; --hi: #ffe1b0; --lo: #7e5a28; --glow: rgba(255, 176, 46, 0.5); --sill: #f5cd8c; --sill-off: #c5b093; }
+.tw-win.r5 { --rc: #ff4d6d; --hi: #ffbbc8; --lo: #7e2b46; --glow: rgba(255, 77, 109, 0.5); --sill: #f596af; --sill-off: #c588ac; }
+/* the fallback crests (a shield with the set's mark) for when BR.Sets.crest from js/sets.js is not there: images, so a crest is one box and not four SVG nodes */
+.tw-crest.c-library { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Cpath d='M8.5 11.5Q12.5 9.5 16 12Q19.5 9.5 23.5 11.5V21.5Q19.5 19.5 16 22Q12.5 19.5 8.5 21.5Z' fill='%23ffcf6b'/%3E%3Cpath d='M16 12V22' stroke='%2317234f' stroke-width='1.2'/%3E%3C/svg%3E"); }
+.tw-crest.c-glade { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Cpath d='M9 16.5Q9 8.5 16 8.5Q23 8.5 23 16.5Z' fill='%23ffcf6b'/%3E%3Cpath d='M13.5 16.5H18.5V21Q18.5 23 16 23Q13.5 23 13.5 21Z' fill='%23ffe9a8'/%3E%3Ccircle cx='13' cy='13' r='1.3' fill='%2317234f'/%3E%3Ccircle cx='18' cy='12' r='1.5' fill='%2317234f'/%3E%3C/svg%3E"); }
+.tw-crest.c-alchemy { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Cpath d='M13.5 8.5H18.5V14L23 22Q23.8 24 21.8 24H10.2Q8.2 24 9 22L13.5 14Z' fill='%23ffcf6b'/%3E%3Cpath d='M11.4 19.5H20.6L22 22Q22.4 23 21.2 23H10.8Q9.6 23 10 22Z' fill='%237affb0'/%3E%3C/svg%3E"); }
+.tw-crest.c-vault { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Cpath d='M10.5 8H21.5M10.5 24H21.5' stroke='%23ffcf6b' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M11.5 8.5Q11.5 14.5 16 16Q20.5 14.5 20.5 8.5ZM11.5 23.5Q11.5 17.5 16 16Q20.5 17.5 20.5 23.5Z' fill='%23ffcf6b'/%3E%3C/svg%3E"); }
+.tw-crest.c-spire { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Cpath d='M20.5 8.5A8.5 8.5 0 1 0 20.5 23.5A6.8 6.8 0 1 1 20.5 8.5Z' fill='%23ffcf6b'/%3E%3Cpath d='M22 11L22.8 13L25 13.2L23.3 14.6L23.8 16.8L22 15.6L20.2 16.8L20.7 14.6L19 13.2L21.2 13Z' fill='%23fff'/%3E%3C/svg%3E"); }
+.tw-crest.c-pass { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Cpath d='M16 6.5L18.6 12.6L25.2 13.1L20.2 17.4L21.8 23.8L16 20.4L10.2 23.8L11.8 17.4L6.8 13.1L13.4 12.6Z' fill='%23ffcf6b'/%3E%3C/svg%3E"); }
+.tw-crest.c-cellar { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5L27.5 6.5V15.5C27.5 22.5 22.5 27.5 16 29.8C9.5 27.5 4.5 22.5 4.5 15.5V6.5Z' fill='%2317234f' stroke='%23c8d4ee' stroke-width='1.6'/%3E%3Ccircle cx='12.5' cy='16' r='4.2' fill='none' stroke='%23ffcf6b' stroke-width='2.2'/%3E%3Cpath d='M16.7 16H25.5M22 16V19.5M25 16V18.5' fill='none' stroke='%23ffcf6b' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"); }
+/* the bell */
+.tw-bell { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 1V8' fill='none' stroke='%237a4a1e' stroke-width='2.2' stroke-linecap='round'/%3E%3Crect x='16' y='6' width='8' height='4' rx='1.5' fill='%23e6a94f' stroke='%237a4a1e'/%3E%3Cpath d='M20 8C13 8 11 15 11 22C11 29 8 31 6 35H34C32 31 29 29 29 22C29 15 27 8 20 8Z' fill='%23e6a94f' stroke='%237a4a1e'/%3E%3Crect x='4' y='34' width='32' height='5' rx='2.5' fill='%23c98230' stroke='%237a4a1e'/%3E%3Cpath d='M15.5 13C13.5 17 13.5 23 13.5 28' fill='none' stroke='%23fff6d8' stroke-width='1.6' stroke-linecap='round' opacity='.6'/%3E%3Ccircle cx='20' cy='43.5' r='3.2' fill='%23e6a94f' stroke='%237a4a1e'/%3E%3C/svg%3E") no-repeat 50% 50% / contain; }
+/* the roof: a slate cone with scaled tiles, a lit dormer and a gold weathervane */
+.tw-roof { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -36 260 164'%3E%3Cdefs%3E%3ClinearGradient id='R' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%237a8fd0'/%3E%3Cstop offset='.3' stop-color='%234a5fa6'/%3E%3Cstop offset='.6' stop-color='%2326356e'/%3E%3Cstop offset='1' stop-color='%230b1130'/%3E%3C/linearGradient%3E%3ClinearGradient id='G' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff2c0'/%3E%3Cstop offset='.5' stop-color='%23ffcf6b'/%3E%3Cstop offset='1' stop-color='%23c8801e'/%3E%3C/linearGradient%3E%3CradialGradient id='W' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23ffcf6b' stop-opacity='.9'/%3E%3Cstop offset='.4' stop-color='%23ffcf6b' stop-opacity='.3'/%3E%3Cstop offset='1' stop-color='%23ffcf6b' stop-opacity='0'/%3E%3C/radialGradient%3E%3Cpattern id='S' width='16' height='12' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 0A8 8 0 0 0 16 0M-8 6A8 8 0 0 0 8 6M8 6A8 8 0 0 0 24 6' fill='none' stroke='%2302050f' stroke-opacity='.4' stroke-width='1'/%3E%3Cpath d='M0 1.2A8 8 0 0 0 16 1.2M-8 7.2A8 8 0 0 0 8 7.2M8 7.2A8 8 0 0 0 24 7.2' fill='none' stroke='%23c8d4ff' stroke-opacity='.16' stroke-width='.8'/%3E%3C/pattern%3E%3CclipPath id='C'%3E%3Cpath d='M4 124C80 120 112 84 120 46C124 28 127 14 130 4C133 14 136 28 140 46C148 84 180 120 256 124Z'/%3E%3C/clipPath%3E%3Cmask id='M'%3E%3Crect x='100' y='-50' width='60' height='50' fill='%23000'/%3E%3Ccircle cx='130' cy='-24' r='11' fill='%23fff'/%3E%3Ccircle cx='135.5' cy='-27.5' r='9' fill='%23000'/%3E%3C/mask%3E%3C/defs%3E%3Ccircle cx='130' cy='-22' r='22' fill='url(%23W)'/%3E%3Cpath d='M130 4V-12' stroke='url(%23G)' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='130' cy='-24' r='11' fill='url(%23G)' mask='url(%23M)'/%3E%3Cpath d='M139 -28L140.2 -25.2L143 -25L140.8 -23.2L141.5 -20.4L139 -22L136.5 -20.4L137.2 -23.2L135 -25L137.8 -25.2Z' fill='%23fff2c0'/%3E%3Ccircle cx='130' cy='4' r='4.4' fill='url(%23G)'/%3E%3Cpath d='M4 124C80 120 112 84 120 46C124 28 127 14 130 4C133 14 136 28 140 46C148 84 180 120 256 124Z' fill='url(%23R)'/%3E%3Crect x='0' y='0' width='260' height='128' fill='url(%23S)' clip-path='url(%23C)'/%3E%3Cpath d='M4 124C80 120 112 84 120 46C124 28 127 14 130 4' fill='none' stroke='%23e8f0ff' stroke-width='1.4' opacity='.8'/%3E%3Cpath d='M130 4C133 14 136 28 140 46C148 84 180 120 256 124' fill='none' stroke='%2302050f' stroke-width='1.4' opacity='.5'/%3E%3Cpath d='M0 121Q130 112 260 121V130Q130 121 0 130Z' fill='%239fb4e0'/%3E%3Cpath d='M0 121Q130 112 260 121' fill='none' stroke='%23e8f0ff' stroke-width='1.3'/%3E%3Cpath d='M0 130Q130 121 260 130' fill='none' stroke='%231a2655' stroke-width='1.6'/%3E%3Cg fill='url(%23G)'%3E%3Ccircle cx='34' cy='124' r='2'/%3E%3Ccircle cx='82' cy='121.5' r='2'/%3E%3Ccircle cx='130' cy='120.5' r='2'/%3E%3Ccircle cx='178' cy='121.5' r='2'/%3E%3Ccircle cx='226' cy='124' r='2'/%3E%3C/g%3E%3Ccircle cx='130' cy='78' r='18' fill='url(%23W)'/%3E%3Cpath d='M123 91V77A7 7 0 0 1 137 77V91Z' fill='url(%23G)'/%3E%3Cpath d='M130 70V91M123 80.5H137' stroke='%233a2208' stroke-width='1' opacity='.5'/%3E%3Cpath d='M120 92H140' stroke='%23e8f0ff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%; }
+/* the ground */
+.tw-ground { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 78'%3E%3Cdefs%3E%3ClinearGradient id='F' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231d2b68'/%3E%3Cstop offset='1' stop-color='%230c1438'/%3E%3C/linearGradient%3E%3ClinearGradient id='N' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23101a48'/%3E%3Cstop offset='1' stop-color='%23070c22'/%3E%3C/linearGradient%3E%3CradialGradient id='W' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23ffcf6b' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%23ffcf6b' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M0 44C40 28 92 26 140 36C190 46 244 28 300 30C330 31 350 38 360 44V78H0Z' fill='url(%23F)' stroke='%234a5c9c' stroke-width='1.2'/%3E%3Cg transform='translate(104 40) scale(0.8)'%3E%3Ccircle cx='0' cy='-5' r='9' fill='url(%23W)'/%3E%3Crect x='-8' y='-9' width='16' height='9' fill='%2317235a'/%3E%3Cpath d='M-10 -9L0 -17L10 -9Z' fill='%230a1030'/%3E%3Crect x='-2' y='-7' width='4' height='5' fill='%23ffcf6b'/%3E%3C/g%3E%3Cg transform='translate(258 38) scale(0.9)'%3E%3Ccircle cx='0' cy='-5' r='9' fill='url(%23W)'/%3E%3Crect x='-8' y='-9' width='16' height='9' fill='%2317235a'/%3E%3Cpath d='M-10 -9L0 -17L10 -9Z' fill='%230a1030'/%3E%3Crect x='-2' y='-7' width='4' height='5' fill='%23ffcf6b'/%3E%3C/g%3E%3Cpath d='M0 58C50 46 104 50 160 58C220 66 290 46 360 58V78H0Z' fill='url(%23N)' stroke='%2334447f' stroke-width='1'/%3E%3Cg fill='%230a1130'%3E%3Cpath d='M41 56L48 39.760000000000005L55 56Z'/%3E%3Cpath d='M42.5 44.8L48 28L53.5 44.8Z'/%3E%3Crect x='47' y='56' width='2' height='3'/%3E%3Cpath d='M55 53L62 41.4L69 53Z'/%3E%3Cpath d='M56.5 45L62 33L67.5 45Z'/%3E%3Crect x='61' y='53' width='2' height='3'/%3E%3Cpath d='M293 52L300 34.6L307 52Z'/%3E%3Cpath d='M294.5 40L300 22L305.5 40Z'/%3E%3Crect x='299' y='52' width='2' height='3'/%3E%3Cpath d='M307 55L314 42.24L321 55Z'/%3E%3Cpath d='M308.5 46.2L314 33L319.5 46.2Z'/%3E%3Crect x='313' y='55' width='2' height='3'/%3E%3Cpath d='M323 56L330 40.92L337 56Z'/%3E%3Cpath d='M324.5 45.6L330 30L335.5 45.6Z'/%3E%3Crect x='329' y='56' width='2' height='3'/%3E%3Cpath d='M15 58L22 47.56L29 58Z'/%3E%3Cpath d='M16.5 50.8L22 40L27.5 50.8Z'/%3E%3Crect x='21' y='58' width='2' height='3'/%3E%3C/g%3E%3Cg transform='translate(78 54) scale(1)'%3E%3Ccircle cx='0' cy='-5' r='9' fill='url(%23W)'/%3E%3Crect x='-8' y='-9' width='16' height='9' fill='%2317235a'/%3E%3Cpath d='M-10 -9L0 -17L10 -9Z' fill='%230a1030'/%3E%3Crect x='-2' y='-7' width='4' height='5' fill='%23ffcf6b'/%3E%3C/g%3E%3Cg transform='translate(286 52) scale(0.85)'%3E%3Ccircle cx='0' cy='-5' r='9' fill='url(%23W)'/%3E%3Crect x='-8' y='-9' width='16' height='9' fill='%2317235a'/%3E%3Cpath d='M-10 -9L0 -17L10 -9Z' fill='%230a1030'/%3E%3Crect x='-2' y='-7' width='4' height='5' fill='%23ffcf6b'/%3E%3C/g%3E%3C/svg%3E") repeat-x 50% 100% / auto 78px, linear-gradient(180deg, transparent, rgba(7, 12, 32, 0.95) 75%); }
+
+/* ---------- a complete floor: gold frames, a warm glow, a bell ---------- */
+.tw-floor.done { --wash: rgba(255, 196, 96, 0.34); box-shadow: 0 0 26px rgba(255, 207, 107, 0.3); }
+.tw-floor.done + .tw-ledge { background: linear-gradient(180deg, var(--tw-gold-hi) 0, var(--tw-gold) 1.5px, #b8731a 3px, #4a2a0a 100%); }
+.tw-floor.done .tw-band { background: linear-gradient(180deg, rgba(255, 214, 120, 0.36), rgba(86, 50, 10, 0.5)); box-shadow: inset 0 -1px 0 rgba(255, 207, 107, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+.tw-floor.done .tw-crest { opacity: 1; filter: drop-shadow(0 0 5px rgba(255, 207, 107, 0.7)); }
+.tw-floor.done .tw-ft b { color: var(--tw-gold-hi); }
+.tw-floor.done .tw-ft small { color: var(--tw-gold); }
+.tw-floor.done .tw-chip { color: #3a2208; background: linear-gradient(180deg, var(--tw-gold-hi), var(--tw-gold)); box-shadow: 0 0 10px rgba(255, 207, 107, 0.5); }
+.tw-floor.done .tw-win.on .tw-glass { background: radial-gradient(ellipse 85% 75% at 50% 66%, var(--hi) 0, var(--rc) 48%, var(--lo) 100%) padding-box, linear-gradient(180deg, #fff2c0 0%, #ffcf6b 40%, #b8731a 100%) border-box; }
+.tw-floor.done .tw-win.off .tw-glass { background: linear-gradient(180deg, #0c1640 0%, #060b24 100%) padding-box, linear-gradient(180deg, #fff2c0 0%, #ffcf6b 40%, #b8731a 100%) border-box; }
+.tw-floor.done .tw-sill { color: var(--tw-gold-hi); background: linear-gradient(180deg, #ffe9a8 0, #b8731a 2px, #5a360f 100%); }
+.tw-floor.spot { box-shadow: 0 0 0 2px var(--tw-gold), 0 0 22px rgba(255, 207, 107, 0.55); }
+/* the bell: one image that swings from its top; the script starts the animations (and adds the flash of the windows) when a floor is newly complete */
+.tw-bell { position: relative; flex: none; width: 23px; height: 27px; transform-origin: 50% 4%; }
+.tw-bell::before, .tw-bell::after { content: ''; display: none; position: absolute; left: 50%; top: 62%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; border: 2px solid rgba(255, 226, 160, 0.85); pointer-events: none; }
+@keyframes twSwing { 0% { transform: rotate(0); } 12% { transform: rotate(26deg); } 28% { transform: rotate(-22deg); } 44% { transform: rotate(16deg); } 60% { transform: rotate(-10deg); } 76% { transform: rotate(5deg); } 100% { transform: rotate(0); } }
+@keyframes twRip { 0% { opacity: 0.85; transform: scale(0.4); } 100% { opacity: 0; transform: scale(2.8); } }
+@keyframes twFlash { 0%, 100% { opacity: 0; } 30% { opacity: 0.85; } }
+.tw-flash { position: absolute; z-index: 3; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 62%, rgba(255, 244, 200, 0.95), rgba(255, 207, 107, 0.55) 52%, transparent 76%); opacity: 0; animation: twFlash 1.5s ease-out both; }
+.tw-floor.ringing .tw-bell { animation: twSwing 1.9s ease-out both; }
+.tw-floor.ringing .tw-bell::before, .tw-floor.ringing .tw-bell::after, .tw-arch.ring .tw-bell::before, .tw-arch.ring .tw-bell::after { display: block; animation: twRip 1.3s ease-out both; }
+.tw-floor.ringing .tw-bell::after, .tw-arch.ring .tw-bell::after { animation-delay: 0.35s; }
+
+/* ---------- the belfry (the Pop Pass exclusives) ---------- */
+.tw-belfry { width: 76%; margin: 0 auto; contain-intrinsic-height: auto 154px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 30px rgba(130, 170, 255, 0.22); }
+.tw-belfry.done { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 26px rgba(255, 207, 107, 0.3); }
+.tw-belfry .tw-wins { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); align-items: start; }
+.tw-belfry .tw-band { padding: 0 10px; }
+.tw-belfry .tw-sill { margin: 0; }
+.tw-arch { position: relative; align-self: stretch; margin: 4px 0 18px; display: grid; place-items: end center; border-radius: 50% 50% 3px 3px / 40% 40% 3px 3px; background: radial-gradient(ellipse at 50% 100%, #1b2858, #060b24 72%); box-shadow: inset 0 0 0 3px #4a5a8c, inset 0 0 0 4px rgba(232, 240, 255, 0.5); }
+.tw-arch .tw-bell { width: 34px; height: 41px; margin-bottom: 5px; }
+.tw-arch .tw-bell::before, .tw-arch .tw-bell::after { width: 44px; height: 44px; margin: -22px 0 0 -22px; top: 55%; }
+.tw-arch.ring .tw-bell { animation: twSwing 2.4s ease-out both; }
+
+/* ---------- the cellar (the rooms that are in no set): the same windows, two rows ---------- */
+.tw-cellar .tw-wins { row-gap: 10px; }
+.tw-cellar { --wash: rgba(150, 175, 230, 0.08); contain-intrinsic-height: auto 252px; }
+
+/* ---------- the ground (its hills, pines and cottages are an image, above): and the stone the tower stands on ---------- */
+.tw-ground { position: relative; z-index: 2; height: 78px; margin-top: -12px; }
+.tw-ground::before, .tw-ground::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #8fa3d8 0, #5a6a9a 1.5px, #33437a 4px, #1a2655 100%); box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4); }
+.tw-ground::before { top: 4px; width: calc(min(var(--tw-w), 100% - 46px) + 22px); height: 9px; }
+.tw-ground::after { top: 13px; width: calc(min(var(--tw-w), 100% - 46px) + 44px); height: 10px; background: linear-gradient(180deg, #5a6a9a 0, #2c3b72 2px, #141e48 100%); }
+.tw-hint { margin: 2px 8px 0; text-align: center; font: 600 calc(13px * var(--ts))/1.4 var(--f-ui); color: var(--muted); }
+
+/* ---------- calm: the stars hold still in Reduce Motion and on low-end phones, and a one-shot bell never starts in Reduce Motion ---------- */
+html.reduced .tw-stars i, html.low-end .tw-stars i, .tw.calm .tw-stars i, html.reduced .tw-glass > .bdg, .tw.calm .tw-glass > .bdg { animation: none; }
+html.reduced .tw-win, html.reduced .tw-next { transition: none; }
+html.low-end .tw-flash, html.low-end .tw-bell::before, html.low-end .tw-bell::after { display: none !important; }
+/* a very narrow phone (320 px): tighter strips and windows, and the strip drops the set's name */
+@media (max-width: 340px) {
+  .tw-wins { gap: 6px; padding-left: 12px; padding-right: 12px; }
+  .tw-band { gap: 5px; padding: 0 8px; } .tw-crest { width: 24px; height: 24px; } .tw-ft b { font-size: calc(14px * (1 + (var(--ts) - 1) * 0.3)); } .tw-chip { padding: 4px 7px; font-size: calc(14px * var(--ts)); } .tw-bell { width: 20px; height: 24px; }
+  .tw-sn { display: none; }
+}
