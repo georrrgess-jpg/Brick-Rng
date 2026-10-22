@@ -54,7 +54,7 @@ html.shapes .skin-patchwork .brick:not(.fusebrick) .deco::after { opacity: 0.35;
 .skin-glowcap { --spc: rgba(255, 250, 232, var(--spa, 0.97)); }
 html.shapes .skin-glowcap { --spa: 0.35; }
 .skin-glowcap :where(.brick:not(.fusebrick)) .face {
-  inset: 15% 1.5% 22% 1.5%;
+  inset: 11% 1.5% 20% 1.5%;
   border-radius: 50% 50% 14% 14% / 92% 92% 20% 20%;
   background:
     var(--sp, linear-gradient(transparent, transparent)),
@@ -69,6 +69,10 @@ html.shapes .skin-glowcap { --spa: 0.35; }
   box-shadow: 0 0.035em 0.07em 0.01em color-mix(in srgb, var(--glow) 95%, #fff), 0 0.09em 0.2em color-mix(in srgb, var(--glow) 60%, transparent);
 }
 :root:not(.shapes) .skin-glowcap .brick:not(.fusebrick) .stud { opacity: 0; }
+/* the cap is wider than it is tall, so the hint is sized to come out square (and round, and in proportion) on it */
+html.shapes .skin-glowcap .brick:not(.fusebrick) .stud { top: 45%; width: 26%; height: 36%; }
+html.shapes .skin-glowcap .brick[data-c="3"]:not(.fusebrick) .stud { width: 23.4%; height: 32.4%; }
+html.shapes .skin-glowcap .brick[data-c="5"]:not(.fusebrick) .stud { width: 31%; height: 43%; }
 /* each colour counts its spots differently, so the board never looks printed */
 .skin-glowcap .brick[data-c="0"] { --sp: radial-gradient(ellipse 0.082em 0.062em at 27% 40%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.062em 0.05em at 51% 27%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.09em 0.066em at 74% 41%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.05em 0.04em at 41% 60%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.045em 0.036em at 63% 64%, var(--spc) 0 72%, transparent 80%); }
 .skin-glowcap .brick[data-c="1"] { --sp: radial-gradient(ellipse 0.088em 0.066em at 31% 38%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.054em 0.042em at 58% 26%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.076em 0.058em at 72% 51%, var(--spc) 0 72%, transparent 80%), radial-gradient(ellipse 0.048em 0.038em at 45% 62%, var(--spc) 0 72%, transparent 80%); }
@@ -210,11 +214,11 @@ html.shapes .skin-potion .brick:not(.fusebrick) .stud { opacity: 1; }
 /* Rush: every potion boils. The bubbles rise twice as fast and the liquid glows (a static glow in .stud, a brighter rim) */
 .run.rushing .skin-potion > .brick:nth-child(3n):nth-child(-n+63):not(.fusebrick) .deco::after { animation-duration: 1.5s; }
 .run.rushing .skin-potion > .brick:nth-child(3n):nth-child(-n+63):not(.fusebrick) .deco::before { animation-duration: 1.9s; }
-:root:not(.shapes) .run.rushing .skin-potion .brick:not(.fusebrick) .stud {
+html:not(.low-end):not(.reduced):not(.shapes) .run.rushing .skin-potion .brick:not(.fusebrick) .stud {
   opacity: 1; left: 0; top: 0; width: 100%; height: 100%; transform: none; border-radius: inherit; box-shadow: none;
   background: radial-gradient(ellipse 44% 34% at 50% 72%, color-mix(in srgb, var(--glow) 82%, #fff) 0, color-mix(in srgb, var(--glow) 50%, transparent) 48%, transparent 100%);
 }
-.run.rushing .skin-potion :where(.brick:not(.fusebrick)) .face { box-shadow: inset 0 0 0 0.022em rgba(255, 255, 255, 0.7), inset 0 0 0.2em color-mix(in srgb, var(--glow) 80%, transparent), inset 0.03em 0.04em 0.08em rgba(255, 255, 255, 0.28), 0 0.05em 0 color-mix(in srgb, var(--lo) 55%, #000), 0 0 0.2em color-mix(in srgb, var(--glow) 55%, transparent), 0 0.11em 0.13em rgba(0, 0, 0, 0.4); }
+html:not(.low-end):not(.reduced) .run.rushing .skin-potion :where(.brick:not(.fusebrick)) .face { box-shadow: inset 0 0 0 0.022em rgba(255, 255, 255, 0.7), inset 0 0 0.2em color-mix(in srgb, var(--glow) 80%, transparent), inset 0.03em 0.04em 0.08em rgba(255, 255, 255, 0.28), 0 0.05em 0 color-mix(in srgb, var(--lo) 55%, #000), 0 0 0.2em color-mix(in srgb, var(--glow) 55%, transparent), 0 0.11em 0.13em rgba(0, 0, 0, 0.4); }
 /* stage-up: the corks pop (class set by js/s4-skins.js for a moment), one in three */
 .skin-potion.s4-corks > .brick:nth-child(3n):nth-child(-n+63):not(.fusebrick) .face::after { animation: s4-cork 0.34s cubic-bezier(0.2, 0.7, 0.4, 1) 1; animation-delay: calc(var(--ph, 0) * 20ms); }
 @keyframes s4-cork { 0% { transform: translateY(0) rotate(0); } 42% { transform: translateY(-0.3em) rotate(-16deg); } 78% { transform: translateY(0.03em) rotate(3deg); } 100% { transform: translateY(0) rotate(0); } }
@@ -292,13 +296,13 @@ html.shapes .skin-gemcut .brick:not(.fusebrick) .stud { opacity: 1; }
 @keyframes hgBot { from { transform: scaleY(0.1); } to { transform: scaleY(1); } }
 /* Rush: time stops. The sand freezes mid-fall, the glass frosts, the stream turns to hanging grains. */
 .run.rushing .skin-hourglass .brick:not(.fusebrick) .deco::before, .run.rushing .skin-hourglass .brick:not(.fusebrick) .deco::after { animation-play-state: paused; }
-.run.rushing .skin-hourglass .brick:not(.fusebrick) .deco {
+html:not(.low-end):not(.reduced) .run.rushing .skin-hourglass .brick:not(.fusebrick) .deco {
   background:
     var(--hg-frost) 0 0 / 100% 100% no-repeat,
     var(--hg-glass) 0 0 / 100% 100% no-repeat,
     repeating-linear-gradient(180deg, #ffffff 0 0.035em, transparent 0.035em 0.09em) 50% 67% / 0.05em 16% no-repeat;
 }
-.run.rushing .skin-hourglass :where(.brick:not(.fusebrick)) .face { box-shadow:
+html:not(.low-end):not(.reduced) .run.rushing .skin-hourglass :where(.brick:not(.fusebrick)) .face { box-shadow:
     inset 0 0 0 0.03em #e2f6ff, inset 0 0 0 0.05em rgba(40, 90, 140, 0.6), inset 0 0 0.16em rgba(200, 240, 255, 0.75),
     inset 0 -0.08em 0.12em color-mix(in srgb, var(--lo) 70%, #000), 0 0.06em 0 color-mix(in srgb, var(--lo) 50%, #1a0c00), 0 0.12em 0.14em rgba(0, 0, 0, 0.42); }
 /* the turn (stage-up): the sand runs down to the bottom bulb while the glass turns over (the turn itself is a transform on .deco, see js/s4-skins.js) */
@@ -333,7 +337,7 @@ html.shapes .skin-sigil .brick:not(.fusebrick) .stud { z-index: 1; }
 html.shapes .skin-sigil .brick:not(.fusebrick) .deco { opacity: 0.55; }
 /* the great circle under the bricks: it only shows in the gaps, and it only turns during Rush */
 .field.skin-sigil::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; background: var(--sg-great) center / 98% 98% no-repeat; transition: opacity 0.5s; }
-.run.rushing .field.skin-sigil::before { opacity: 0.95; animation: sgGreat 48s linear infinite; }
+html:not(.low-end):not(.reduced) .run.rushing .field.skin-sigil::before { opacity: 0.95; animation: sgGreat 48s linear infinite; }
 @keyframes sgGreat { to { transform: rotate(360deg); } }
 html:is(.low-end, .reduced) .field.skin-sigil::before { transition: none; animation: none !important; }
 /* the rune frame set into the board while Rush runs (js/s4-skins.js) */
@@ -351,10 +355,10 @@ html:is(.low-end, .reduced) .field.skin-sigil::before { transition: none; animat
    the glass is capped at 20 percent white: a brighter moon washes Sapphire and Amethyst toward one lilac, so never brighten it for looks.
    The same rules draw the 3 x 3 board of the item sheet and the reveal (.mg-demo): --ms scales the moon, --mgc is its centre in cells. */
 .field.skin-moonglass::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 4%; opacity: 0.4;
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 4%; opacity: 0.6;
   background: var(--mg-moon, none) center / 100% 100% no-repeat; transition: opacity 0.6s;
 }
-.run.rushing .field.skin-moonglass::before {
+html:not(.low-end):not(.reduced) .run.rushing .field.skin-moonglass::before {
   opacity: 1;
   background:
     radial-gradient(circle 3.42em at 4em 4em, rgba(250, 252, 255, 1) 0, rgba(222, 232, 255, 0.95) 92%, rgba(255, 255, 255, 1) 96%, rgba(150, 175, 255, 0) 100%),
@@ -369,10 +373,17 @@ html:is(.low-end, .reduced) .field.skin-sigil::before { transition: none; animat
     linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 88%, #fff), var(--lo) 95%);
   box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #b9c4dc, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7), 0 0.055em 0 color-mix(in srgb, var(--lo) 40%, #000), 0 0.12em 0.14em rgba(0, 0, 0, 0.42);
 }
+/* a streak of light across the glass, and a bead of it on the lead (Rush replaces this layer with the moon's slice) */
+.skin-moonglass .brick:not(.fusebrick) .deco {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 17% 14%, rgba(255, 255, 255, 0.85) 0 0.014em, transparent 0.03em),
+    linear-gradient(118deg, transparent 22%, rgba(255, 255, 255, 0.2) 34%, rgba(255, 255, 255, 0.06) 44%, transparent 52%);
+}
 /* the etched sigil: frosted glass in the shape of the colour (baked), the Shape hint when hints are on */
 :root:not(.shapes) .skin-moonglass .brick:not(.fusebrick) .stud { width: 46%; height: 46%; top: 50%; border-radius: 0; box-shadow: none; background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.95), rgba(235, 242, 255, 0.72) 70%); }
 /* Rush: each pane carries its slice of the moon (centre at the middle of the board, radius 3.3 cells) plus its seas and craters, as light over the glass */
-:is(.run.rushing .skin-moonglass, .skin-moonglass.mg-demo) .brick:not(.fusebrick) .deco {
+html:not(.low-end):not(.reduced) :is(.run.rushing .skin-moonglass, .skin-moonglass.mg-demo) .brick:not(.fusebrick) .deco {
   opacity: 1;
   --u: calc(1em * var(--ms, 1));
   --x: calc((var(--mgc, 3.945) - var(--c, 0)) * 1em); --y: calc((var(--mgc, 3.945) - var(--r, 0)) * 1em);
@@ -386,7 +397,7 @@ html:is(.low-end, .reduced) .field.skin-sigil::before { transition: none; animat
     radial-gradient(circle calc(3.3 * var(--u)) at calc(var(--x) - 0.6 * var(--u)) calc(var(--y) - 0.7 * var(--u)), rgba(255, 255, 255, 0.2) 0, rgba(240, 245, 255, 0.13) 70%, rgba(225, 233, 255, 0.08) 100%),
     radial-gradient(circle calc(3.3 * var(--u)) at var(--x) var(--y), rgba(220, 230, 255, 0.06) 0 99%, rgba(10, 12, 30, 0) 100%);
 }
-:is(.run.rushing .skin-moonglass, .skin-moonglass.mg-demo) :where(.brick:not(.fusebrick)) .face { box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #e6eeff, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7), 0 0 0.18em rgba(200, 220, 255, 0.35), 0 0.12em 0.14em rgba(0, 0, 0, 0.42); }
+html:not(.low-end):not(.reduced) :is(.run.rushing .skin-moonglass, .skin-moonglass.mg-demo) :where(.brick:not(.fusebrick)) .face { box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #e6eeff, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7), 0 0 0.18em rgba(200, 220, 255, 0.35), 0 0.12em 0.14em rgba(0, 0, 0, 0.42); }
 /* the 3 x 3 board of the item sheet and the reveal */
 .hero-bricks.skin-moonglass { --mgc: 1.445; }
 .hero-bricks.skin-moonglass.mg-demo { --ms: 0.375; }

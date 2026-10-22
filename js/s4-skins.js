@@ -223,7 +223,7 @@
     if (style) Object.keys(style).forEach((k) => el.style.setProperty(k, style[k]));
     if (!el.animate) return null;
     L.appendChild(el);
-    const a = el.animate(frames, Object.assign({ fill: 'forwards' }, opts));
+    const a = el.animate(frames, Object.assign({ fill: 'both' }, opts));   // 'both': a sprite with a delay waits in its first keyframe, not in its plain style
     let fin = false;
     const done = () => { if (fin) return; fin = true; el.remove(); };
     a.onfinish = done; a.oncancel = done;
