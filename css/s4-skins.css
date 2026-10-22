@@ -16,6 +16,8 @@
 
 /* a skin that animates keeps each brick's animated layers apart from the rest of the page */
 .skin-potion .brick, .skin-gemcut .brick, .skin-hourglass .brick, .skin-sigil .brick { contain: layout; }
+/* with Shape hints on, the white hint always sits on top of whatever the skin draws */
+html.shapes :is(.skin-patchwork, .skin-glowcap, .skin-spellbook, .skin-origami, .skin-potion, .skin-gemcut, .skin-hourglass, .skin-sigil, .skin-moonglass) .brick:not(.fusebrick) .stud { z-index: 3; }
 
 /* ---------------------------------------------------------------- Patchwork (Common)
    The first fabric in the game: a puffy quilted square, a fine weave, a seam allowance that lies flat round a pillowed middle, a running
@@ -244,7 +246,6 @@ html.shapes .skin-potion .brick:not(.fusebrick) .stud { opacity: 1; }
 }
 .skin-gemcut .brick:not(.fusebrick) .stud { opacity: 0; }
 html.shapes .skin-gemcut .brick:not(.fusebrick) .stud { opacity: 1; }
-html.shapes .skin-gemcut .brick:not(.fusebrick) .deco { opacity: 0.55; }
 /* Rush: the glints come faster (the same layer, a shorter cycle) */
 .run.rushing .skin-gemcut > .brick:nth-child(3n):nth-child(-n+63):not(.fusebrick) .deco::after { animation-duration: 2.6s; }
 
@@ -347,9 +348,10 @@ html:is(.low-end, .reduced) .field.skin-sigil::before { transition: none; animat
    stage this run, from a crescent at stage 1 to full at stage 8 (js/s4-skins.js writes --mg-moon). In Rush the moon comes up full behind the
    window and every pane shows its own slice of the same moon, positioned from the brick's row and column (--r and --c, written by js/view.js):
    a crisp bright rim, dark seas and craters, with the gaps glowing silver. Static paint, nothing moves on the bricks. The moon's light over
-   the glass is capped at 20 percent white: a brighter moon washes Sapphire and Amethyst toward one lilac, so never brighten it for looks. */
+   the glass is capped at 20 percent white: a brighter moon washes Sapphire and Amethyst toward one lilac, so never brighten it for looks.
+   The same rules draw the 3 x 3 board of the item sheet and the reveal (.mg-demo): --ms scales the moon, --mgc is its centre in cells. */
 .field.skin-moonglass::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 4%; opacity: 0.34;
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 4%; opacity: 0.4;
   background: var(--mg-moon, none) center / 100% 100% no-repeat; transition: opacity 0.6s;
 }
 .run.rushing .field.skin-moonglass::before {
@@ -369,20 +371,92 @@ html:is(.low-end, .reduced) .field.skin-sigil::before { transition: none; animat
 }
 /* the etched sigil: frosted glass in the shape of the colour (baked), the Shape hint when hints are on */
 :root:not(.shapes) .skin-moonglass .brick:not(.fusebrick) .stud { width: 46%; height: 46%; top: 50%; border-radius: 0; box-shadow: none; background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.95), rgba(235, 242, 255, 0.72) 70%); }
-/* Rush: each pane carries its slice of the moon (centre at board 4em, 4em; radius 3.3em) plus its seas and craters, as light over the glass */
-.run.rushing .skin-moonglass .brick:not(.fusebrick) .deco {
+/* Rush: each pane carries its slice of the moon (centre at the middle of the board, radius 3.3 cells) plus its seas and craters, as light over the glass */
+:is(.run.rushing .skin-moonglass, .skin-moonglass.mg-demo) .brick:not(.fusebrick) .deco {
   opacity: 1;
-  --x: calc((3.945 - var(--c, 0)) * 1em); --y: calc((3.945 - var(--r, 0)) * 1em);
+  --u: calc(1em * var(--ms, 1));
+  --x: calc((var(--mgc, 3.945) - var(--c, 0)) * 1em); --y: calc((var(--mgc, 3.945) - var(--r, 0)) * 1em);
   background:
-    radial-gradient(circle 3.34em at var(--x) var(--y), rgba(255, 255, 255, 0) 0 3.12em, rgba(255, 255, 255, 0.55) 3.24em, rgba(255, 255, 255, 0) 3.34em),
-    radial-gradient(ellipse 1.25em 0.95em at calc(var(--x) - 0.9em) calc(var(--y) - 0.75em), rgba(48, 58, 108, 0.36) 0, rgba(48, 58, 108, 0.22) 60%, rgba(48, 58, 108, 0) 100%),
-    radial-gradient(ellipse 1.05em 1.3em at calc(var(--x) + 0.95em) calc(var(--y) + 0.35em), rgba(48, 58, 108, 0.32) 0, rgba(48, 58, 108, 0.18) 62%, rgba(48, 58, 108, 0) 100%),
-    radial-gradient(ellipse 0.85em 0.6em at calc(var(--x) - 0.35em) calc(var(--y) + 1.5em), rgba(48, 58, 108, 0.3), rgba(48, 58, 108, 0) 100%),
-    radial-gradient(circle 0.32em at calc(var(--x) - 1.85em) calc(var(--y) + 0.6em), rgba(255, 255, 255, 0.45) 0 40%, rgba(48, 58, 108, 0.3) 55%, rgba(48, 58, 108, 0) 100%),
-    radial-gradient(circle 0.26em at calc(var(--x) + 1.6em) calc(var(--y) - 1.55em), rgba(255, 255, 255, 0.45) 0 40%, rgba(48, 58, 108, 0.3) 55%, rgba(48, 58, 108, 0) 100%),
-    radial-gradient(circle 3.3em at calc(var(--x) - 0.6em) calc(var(--y) - 0.7em), rgba(255, 255, 255, 0.2) 0, rgba(240, 245, 255, 0.13) 70%, rgba(225, 233, 255, 0.08) 100%),
-    radial-gradient(circle 3.3em at var(--x) var(--y), rgba(220, 230, 255, 0.06) 0 99%, rgba(10, 12, 30, 0) 100%);
+    radial-gradient(circle calc(3.34 * var(--u)) at var(--x) var(--y), rgba(255, 255, 255, 0) 0 calc(3.12 * var(--u)), rgba(255, 255, 255, 0.55) calc(3.24 * var(--u)), rgba(255, 255, 255, 0) calc(3.34 * var(--u))),
+    radial-gradient(ellipse calc(1.25 * var(--u)) calc(0.95 * var(--u)) at calc(var(--x) - 0.9 * var(--u)) calc(var(--y) - 0.75 * var(--u)), rgba(48, 58, 108, 0.36) 0, rgba(48, 58, 108, 0.22) 60%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(ellipse calc(1.05 * var(--u)) calc(1.3 * var(--u)) at calc(var(--x) + 0.95 * var(--u)) calc(var(--y) + 0.35 * var(--u)), rgba(48, 58, 108, 0.32) 0, rgba(48, 58, 108, 0.18) 62%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(ellipse calc(0.85 * var(--u)) calc(0.6 * var(--u)) at calc(var(--x) - 0.35 * var(--u)) calc(var(--y) + 1.5 * var(--u)), rgba(48, 58, 108, 0.3), rgba(48, 58, 108, 0) 100%),
+    radial-gradient(circle calc(0.32 * var(--u)) at calc(var(--x) - 1.85 * var(--u)) calc(var(--y) + 0.6 * var(--u)), rgba(255, 255, 255, 0.45) 0 40%, rgba(48, 58, 108, 0.3) 55%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(circle calc(0.26 * var(--u)) at calc(var(--x) + 1.6 * var(--u)) calc(var(--y) - 1.55 * var(--u)), rgba(255, 255, 255, 0.45) 0 40%, rgba(48, 58, 108, 0.3) 55%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(circle calc(3.3 * var(--u)) at calc(var(--x) - 0.6 * var(--u)) calc(var(--y) - 0.7 * var(--u)), rgba(255, 255, 255, 0.2) 0, rgba(240, 245, 255, 0.13) 70%, rgba(225, 233, 255, 0.08) 100%),
+    radial-gradient(circle calc(3.3 * var(--u)) at var(--x) var(--y), rgba(220, 230, 255, 0.06) 0 99%, rgba(10, 12, 30, 0) 100%);
 }
-.run.rushing .skin-moonglass :where(.brick:not(.fusebrick)) .face { box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #e6eeff, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7), 0 0 0.18em rgba(200, 220, 255, 0.35), 0 0.12em 0.14em rgba(0, 0, 0, 0.42); }
-html:is(.low-end, .reduced) .field.skin-moonglass::before { transition: none; }
+:is(.run.rushing .skin-moonglass, .skin-moonglass.mg-demo) :where(.brick:not(.fusebrick)) .face { box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #e6eeff, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7), 0 0 0.18em rgba(200, 220, 255, 0.35), 0 0.12em 0.14em rgba(0, 0, 0, 0.42); }
+/* the 3 x 3 board of the item sheet and the reveal */
+.hero-bricks.skin-moonglass { --mgc: 1.445; }
+.hero-bricks.skin-moonglass.mg-demo { --ms: 0.375; }
+.hero-bricks.skin-moonglass::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.4; transition: opacity 0.5s;
+  background: radial-gradient(circle 1.28em at 1.5em 1.5em, rgba(250, 252, 255, 1) 0, rgba(222, 232, 255, 0.95) 92%, rgba(255, 255, 255, 1) 96%, rgba(150, 175, 255, 0) 100%);
+}
+.hero-bricks.skin-moonglass.mg-demo::before { opacity: 1; }
+html:is(.low-end, .reduced) .field.skin-moonglass::before, html:is(.low-end, .reduced) .hero-bricks.skin-moonglass::before { transition: none; }
 
+/* ---------------------------------------------------------------- moment sprites (js/s4-skins.js)
+   Short-lived DOM sprites in the sprite layer #s3fx (css/s3-skins.css) or, for the ones that must stay inside the frame, in #board. Each is
+   one element moved with transform and opacity only; a moment uses at most three. Fills over the bricks stay at 35 percent or less. */
+.s4-vapor { border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--vc, #fff) 55%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 70%, transparent) 38%, transparent 70%); }
+.s4-smoke {
+  transform-origin: 50% 100%; filter: blur(1.5px);
+  background:
+    radial-gradient(circle at 50% 90%, color-mix(in srgb, var(--vc, #fff) 78%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 70%, transparent) 38%, transparent 66%),
+    radial-gradient(circle at 44% 66%, color-mix(in srgb, var(--vc, #fff) 70%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 64%, transparent) 36%, transparent 62%),
+    radial-gradient(circle at 57% 42%, color-mix(in srgb, var(--vc, #fff) 74%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 60%, transparent) 34%, transparent 60%),
+    radial-gradient(circle at 48% 16%, color-mix(in srgb, var(--vc, #fff) 80%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 56%, transparent) 32%, transparent 58%);
+}
+.s4-cloud {
+  filter: blur(1px);
+  background:
+    radial-gradient(circle at 24% 38%, #fff 0 1.4px, transparent 2.6px), radial-gradient(circle at 68% 30%, #fff 0 1.2px, transparent 2.4px), radial-gradient(circle at 48% 62%, #fff 0 1.6px, transparent 2.8px), radial-gradient(circle at 78% 58%, #fff 0 1.2px, transparent 2.4px),
+    radial-gradient(circle at 28% 58%, color-mix(in srgb, var(--vc, #fff) 70%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 60%, transparent) 30%, transparent 52%),
+    radial-gradient(circle at 52% 40%, color-mix(in srgb, var(--vc, #fff) 80%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 62%, transparent) 34%, transparent 58%),
+    radial-gradient(circle at 76% 60%, color-mix(in srgb, var(--vc, #fff) 70%, #fff) 0, color-mix(in srgb, var(--vc, #fff) 60%, transparent) 30%, transparent 52%);
+}
+.s4-beam { border-radius: 8px; transform-origin: 50% 100%; background: linear-gradient(0deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.25)); box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.6); }
+.s4-fan {
+  /* seven crisp rays, one in each brick colour (lines, not a fill), over a faint wash */
+  background:
+    conic-gradient(from 141deg at 50% 0%, var(--k0) 0 3.4deg, transparent 3.4deg 11deg, var(--k1) 11deg 14.4deg, transparent 14.4deg 22deg, var(--k2) 22deg 25.4deg, transparent 25.4deg 33deg, var(--k3) 33deg 36.4deg, transparent 36.4deg 44deg, var(--k4) 44deg 47.4deg, transparent 47.4deg 55deg, var(--k5) 55deg 58.4deg, transparent 58.4deg 66deg, var(--k6) 66deg 69.4deg, transparent 69.4deg),
+    conic-gradient(from 138deg at 50% 0%, rgba(255, 255, 255, 0.12) 0 78deg, transparent 78deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 0%, #000 0, #000 52%, transparent 76%); mask-image: radial-gradient(circle at 50% 0%, #000 0, #000 52%, transparent 76%);
+}
+.s4-gleam { z-index: 6; background: linear-gradient(90deg, transparent 0, rgba(255, 255, 255, 0.2) 38%, rgba(255, 255, 255, 0.34) 50%, rgba(255, 255, 255, 0.2) 62%, transparent 100%); }
+.s4-cast { background: var(--cast) center / 100% 100% no-repeat; }
+.s4-pillar { border-radius: 50% 50% 0 0 / 12% 12% 0 0; transform-origin: 50% 100%; background: linear-gradient(0deg, rgba(255, 240, 190, 0), rgba(255, 240, 190, 0.42) 8%, rgba(255, 250, 230, 0.28) 55%, rgba(255, 240, 190, 0)); }
+.s4-frame { z-index: 8; border-radius: 22px; border: 3px solid #ffd36b; box-shadow: 0 0 16px #ffd36b, inset 0 0 16px rgba(255, 211, 107, 0.5); }
+.s4-shaft { background: linear-gradient(180deg, rgba(232, 240, 255, 0), rgba(232, 240, 255, 0.4) 12%, rgba(232, 240, 255, 0.26) 70%, rgba(232, 240, 255, 0)); -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent); mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent); }
+.s4-stream { z-index: 6; background: linear-gradient(180deg, transparent, rgba(232, 240, 255, 0.34) 36%, rgba(255, 255, 255, 0.55) 50%, rgba(232, 240, 255, 0.34) 64%, transparent); }
+.s4-stream.v { background: linear-gradient(90deg, transparent, rgba(232, 240, 255, 0.34) 36%, rgba(255, 255, 255, 0.55) 50%, rgba(232, 240, 255, 0.34) 64%, transparent); }
+
+/* ---------------------------------------------------------------- badges (the art inside .bdg-art: a hero brick in front of two others)
+   A thin silver rim inside the frame and the hero colour's sigil in the corner mark every Series 4 badge. */
+.s4b { position: absolute; inset: 0; }
+.s4b-rim { position: absolute; inset: 6.5%; border-radius: calc(var(--bs) * 0.15); border: max(1px, calc(var(--bs) * 0.013)) solid rgba(232, 240, 255, 0.75); box-shadow: inset 0 0 calc(var(--bs) * 0.05) rgba(232, 240, 255, 0.3); pointer-events: none; }
+.s4b-back { position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0, rgba(255, 255, 255, 0) 68%); pointer-events: none; }
+.s4b-k { position: absolute; display: block; filter: drop-shadow(0 calc(var(--bs) * 0.012) calc(var(--bs) * 0.014) rgba(0, 0, 0, 0.5)); }
+.s4b-k .brick { position: relative; left: auto; top: auto; width: 1em; height: 1em; transform: none; will-change: auto; }
+.s4b-k.k1 { left: 9%; top: 15%; font-size: calc(var(--bs) * 0.3); transform: rotate(-10deg); }
+.s4b-k.k2 { right: 9%; top: 12%; font-size: calc(var(--bs) * 0.3); transform: rotate(9deg); }
+.s4b-k.kh { left: 50%; bottom: 11%; font-size: calc(var(--bs) * 0.52); transform: translateX(-50%) rotate(-3deg); }
+.s4b-mark { position: absolute; left: 10.5%; bottom: 10%; width: calc(var(--bs) * 0.15); height: calc(var(--bs) * 0.15); opacity: 0.92; filter: drop-shadow(0 0 calc(var(--bs) * 0.02) rgba(232, 240, 255, 0.8)); }
+.s4b-mark svg { width: 100%; height: 100%; display: block; }
+.bdg.still .s4b-k { filter: none; }
+/* the hero brick keeps a little life in a badge that is not still (the board's third-of-the-board rule does not reach a lone brick) */
+.bdg:not(.still) .s4b.skin-hourglass .kh .brick:not(.fusebrick) .deco::before { animation: hgTop 16s linear infinite alternate; }
+.bdg:not(.still) .s4b.skin-hourglass .kh .brick:not(.fusebrick) .deco::after { animation: hgBot 16s linear infinite alternate; }
+.bdg:not(.still) .s4b.skin-potion .kh .brick:not(.fusebrick) .deco::before { animation: s4-tip 3.8s ease-in-out infinite alternate; }
+.bdg:not(.still) .s4b.skin-potion .kh .brick:not(.fusebrick) .deco::after { animation: s4-bub 3.2s ease-in infinite; }
+.bdg:not(.still) .s4b.skin-gemcut .kh .brick:not(.fusebrick) .deco::after { animation: s4-glint 4.5s ease-in-out infinite; }
+.bdg:not(.still) .s4b.skin-sigil .kh .brick:not(.fusebrick) .deco { animation: sgTurn 18s linear infinite; }
+
+/* ---------------------------------------------------------------- low-end phones and Reduce Motion: every skin of the series holds its pose */
+html:is(.low-end, .reduced) :is(.skin-potion, .skin-gemcut, .skin-hourglass, .skin-sigil) .brick .deco,
+html:is(.low-end, .reduced) :is(.skin-potion, .skin-gemcut, .skin-hourglass, .skin-sigil) .brick .deco::before,
+html:is(.low-end, .reduced) :is(.skin-potion, .skin-gemcut, .skin-hourglass, .skin-sigil) .brick .deco::after,
+html:is(.low-end, .reduced) .skin-potion .brick .face::after { animation: none !important; }
+html:is(.low-end, .reduced) .skin-hourglass .brick .deco::before, html:is(.low-end, .reduced) .skin-hourglass .brick .deco::after { transition: none; }
