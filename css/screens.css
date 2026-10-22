@@ -102,6 +102,16 @@
 /* ---------- Shop ---------- */
 .shop-intro { font: 700 calc(15px * var(--ts))/1.4 var(--f-ui); color: var(--muted); padding: 0 4px; }
 .chest-card { position: relative; display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 14px; border-radius: var(--r-l); background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 22%, var(--ink-3)), var(--ink-2) 70%); border: 1px solid color-mix(in srgb, var(--ac) 45%, transparent); box-shadow: var(--sh-2); overflow: hidden; }
+/* Shop: the Moonwick spotlight (one new item, changing daily) and the "N new" chip on a chest */
+.spotlight { display: grid; grid-template-columns: 64px minmax(0, 1fr) 24px; align-items: center; gap: 12px; width: 100%; min-height: 84px; padding: 10px 14px 10px 10px; border-radius: var(--r-l); text-align: left; color: var(--text); border: 1px solid color-mix(in srgb, var(--rc) 55%, #cfe0ff 25%); background: radial-gradient(120% 150% at 0% 0%, color-mix(in srgb, var(--rc) 32%, #262d6e), #121643 72%); box-shadow: var(--sh-2), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+.spotlight:active { transform: scale(0.985); }
+.sp-badge { width: 64px; height: 64px; display: grid; place-items: center; }
+.sp-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sp-txt small { font: 800 calc(11px * var(--ts)) var(--f-ui); letter-spacing: 0.12em; text-transform: uppercase; color: #cfe0ff; }
+.sp-txt b { font-size: calc(20px * var(--ts)); line-height: 1.1; overflow-wrap: anywhere; }
+.sp-txt em { font: 700 calc(13px * var(--ts)) var(--f-ui); font-style: normal; color: var(--muted); }
+.sp-go { width: 24px; height: 24px; display: grid; place-items: center; color: #cfe0ff; } .sp-go svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.cc-info .tag.moon { align-self: flex-start; }
 .chest-card.cc-golden { border-color: #ffd24a; box-shadow: 0 0 36px rgba(255, 200, 60, 0.35), var(--sh-2); }
 .cc-art { position: relative; display: grid; place-items: center; }
 .cc-halo { position: absolute; inset: 6%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--ac) 65%, transparent), transparent 68%); animation: haloPulse 3.4s ease-in-out infinite; }

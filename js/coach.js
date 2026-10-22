@@ -109,29 +109,31 @@
     /** Called by the router when a tab opens. Waits a beat so the screen has settled. */
     onScreen(id) {
       const key = id === 'missions' ? (BR.Router.screens.missions.tab === 'pass' ? 'pass' : 'missions') : id;
-      if (!CARDS[key] || (seen()[key] && !(id === 'home' && !seen().whatsnew4))) return;
+      if (!CARDS[key] || (seen()[key] && !(id === 'home' && !seen().whatsnew5))) return;
       clearTimeout(this._t);
       this._t = setTimeout(() => { if (BR.Router.current !== id) return; if (id === 'home') this.whatsNew(); this.show(key); }, 650);
     },
     /** Players who come from an older version get one "what's new" card (new players get the Welcome card instead). */
     whatsNew() {
       const d = BR.Storage.data, n = d.notice;
-      if (seen().whatsnew4 || showing) return;
-      if (!(d.runs > 0 || n)) { seen().whatsnew4 = true; BR.Storage.save(); return; }
-      seen().whatsnew4 = true; seen().home = true; delete d.notice; BR.Storage.save();
+      if (seen().whatsnew5 || showing) return;
+      if (!(d.runs > 0 || n)) { seen().whatsnew5 = true; seen().whatsnew4 = true; BR.Storage.save(); return; }
+      seen().whatsnew5 = true; seen().whatsnew4 = true; seen().home = true; delete d.notice; BR.Storage.save();
       const lines = [
-        ['bolt', 'Menus and runs are much smoother, especially on phones.'],
-        ['clock', 'A clearer run screen: the stage, the multiplier and your power-ups are all labelled.'],
-        ['gift', 'A daily streak with bigger rewards, and a goal to chase in every run.'],
+        ['gift', '30 new cosmetics in five sets, made of candlelight, sand and stars.'],
+        ['flag', 'Season 4 on the Pop Pass: 30 tiers of chests, items and hats.'],
+        ['star', 'Fizz wears hats now. The Party Hat is free: find it in the Collection.'],
+        ['bolt', 'Smoother menus and a fairer run.'],
       ];
-      if (n && n.kind === 'dupes' && n.coins) lines.splice(2, 0, ['plus', `Your spare duplicates were turned into ${BR.fmt(n.coins)} Coins.`]);
+      if (n && n.kind === 'dupes' && n.coins) lines.splice(3, 0, ['plus', `Your spare duplicates were turned into ${BR.fmt(n.coins)} Coins.`]);
       showing = true;
-      const body = `<div class="coach-hero"><span class="ch-glow"></span><span class="ch-ico">${BR.icon('gift')}</span></div><h2 class="coach-title display">Update 4: Ignite</h2><ul class="coach-list">${lines.map(([ic, t]) => `<li><span class="cl-ico">${BR.icon(ic)}</span><span>${t}</span></li>`).join('')}</ul>`;
-      BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: 'Let\'s go', cls: 'btn-xl' }], onClose: () => { showing = false; } });
+      const hat = BR.hatArt ? BR.hatArt('h_party', 76) : BR.icon('gift');
+      const body = `<div class="coach-hero moon"><span class="ch-glow"></span><span class="ch-ico">${hat}</span></div><h2 class="coach-title display">Moonwick is open</h2><ul class="coach-list">${lines.map(([ic, t]) => `<li><span class="cl-ico">${BR.icon(ic)}</span><span>${t}</span></li>`).join('')}</ul>`;
+      BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: 'Let\'s go', cls: 'btn-xl' }, { label: 'See the Collection', cls: 'btn-dark', onClick: () => { BR.Router.go('collection'); } }], onClose: () => { showing = false; } });
     },
     /** Marks every card, banner and run tip as seen (the tests use this so help does not cover what they check). */
-    markAllSeen() { const d = seen(); Object.keys(CARDS).forEach((k) => { d[k] = true; }); Object.keys(BANNERS).forEach((k) => { d['b_' + k] = true; }); ['fuse', 'stage', 'rush', 'power'].forEach((k) => { d['rt_' + k] = true; }); d.whatsnew3 = true; d.whatsnew4 = true; },
+    markAllSeen() { const d = seen(); Object.keys(CARDS).forEach((k) => { d[k] = true; }); Object.keys(BANNERS).forEach((k) => { d['b_' + k] = true; }); ['fuse', 'stage', 'rush', 'power'].forEach((k) => { d['rt_' + k] = true; }); d.whatsnew3 = true; d.whatsnew4 = true; d.whatsnew5 = true; },
     /** Profile > Help: every card comes back the next time its screen opens. */
-    reset() { BR.Storage.data.seen = { whatsnew3: true, whatsnew4: true }; BR.Storage.save(); },
+    reset() { BR.Storage.data.seen = { whatsnew3: true, whatsnew4: true, whatsnew5: true }; BR.Storage.save(); },
   };
 })();

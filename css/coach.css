@@ -11,6 +11,10 @@
 .coach-list li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--r-m); background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line); font: 700 calc(15px * var(--ts))/1.3 var(--f-ui); color: #efe6ff; }
 .cl-ico { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--cyan) 20%, transparent); }
 .cl-ico svg { width: 19px; height: 19px; fill: none; stroke: var(--cyan); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+/* Moonwick's card: a night plate with a silver moon glow, Fizz in the free Party Hat on it */
+.coach-hero.moon .ch-glow { background: radial-gradient(circle, rgba(207, 224, 255, 0.5), transparent 66%); }
+.coach-hero.moon .ch-ico { overflow: visible; background: radial-gradient(circle at 50% 30%, #3a3f86, #161a45 75%); box-shadow: 0 6px 0 #0b0e2c, 0 14px 26px rgba(150, 175, 255, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 0 0 0 2px rgba(207, 224, 255, 0.45); }
+.coach-hero.moon .ch-ico .bdg { width: 76px; height: 76px; }
 html.reduced .ch-glow, html.reduced .ch-ico { animation: none; }
 /* the first-chest tip is a line under the opening's title: the chest and the hold button stay free */
 .coach-hint { pointer-events: none; position: absolute; z-index: 7; left: 50%; top: calc(var(--sat) + 76px); width: min(calc(100% - 32px), 440px); display: flex; align-items: center; gap: 10px; padding: 2px 2px 2px 12px; border-radius: 99px; background: rgba(34, 22, 78, 0.94); border: 1px solid rgba(180, 140, 255, 0.55); box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45); opacity: 0; transform: translate(-50%, -10px); transition: opacity 0.3s, transform 0.45s var(--ease-spring); }

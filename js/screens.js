@@ -340,8 +340,24 @@
   const live0 = (odds) => { const l = odds.filter((r) => r.pct > 0); if (!l.length) return 'Complete'; const a = l[0], b = l[l.length - 1]; if (a === b) return `${a.rarity.name} 100%`; return `${a.rarity.name} ${Math.round(a.pct)}% · ${b.rarity.name} ${Math.round(b.pct)}%`; };
 
   /* ------------------------------------------------------------------ Shop */
+  /** Moonwick items that are still in a chest (the two Pass exclusives are not), of one type or all. */
+  const moonLeft = (type) => {
+    const own = new Set(P.ownedIds());
+    return BR.ITEMS.filter((i) => i.series === 4 && !i.pass && (!type || i.type === type) && !own.has(i.id));
+  };
+  /** One new item to show off at the top of the Shop: it changes every day, and the better ones come up first-ish (rare and above). */
+  const spotlightItem = () => {
+    const left = moonLeft().sort((a, b) => a.id.localeCompare(b.id));
+    const fine = left.filter((i) => i.rarity !== 'common');
+    const pool = fine.length ? fine : left;
+    return pool.length ? pool[Math.floor(Date.now() / 864e5) % pool.length] : null;
+  };
   const Shop = {
     render() {
+      const spot = spotlightItem();
+      const spotHTML = spot ? `<button class="spotlight stg" data-spot="${spot.id}" style="--rc:${R(spot.rarity).color}" type="button" aria-label="New in Moonwick: ${esc(spot.name)}, ${R(spot.rarity).name} ${BR.ITEM_TYPES[spot.type].name}. See it">
+          <span class="sp-badge">${BR.Badge.html(spot, null, { size: 64, still: true })}</span>
+          <span class="sp-txt"><small>New in Moonwick</small><b class="display">${esc(spot.name)}</b><em>${R(spot.rarity).name} ${BR.ITEM_TYPES[spot.type].name}</em></span><span class="sp-go" aria-hidden="true">${BR.icon('arrow')}</span></button>` : '';
       const order = (P.chestCount('golden') ? ['golden'] : []).concat(BR.CHEST_ORDER);
       const cards = order.map((id) => {
         const c = BR.CHESTS[id], n = P.chestCount(id), can = P.canOpen(id), st = P.chestStatus(id);
@@ -354,18 +370,21 @@
         else action = c.cost != null ? (can ? `<button class="btn btn-gold btn-sm" data-act="open" data-chest="${id}" type="button">${BR.coin()} ${c.cost}</button>` : `<button class="btn btn-gold btn-sm short" data-act="open" data-chest="${id}" type="button" aria-disabled="true">${BR.coin()} Need ${fmt(c.cost - P.coins)} more</button>`) : '';
         const N = BR.CFG.pityEvery, filled = st.pityIn ? N - st.pityIn : 0;
         const pity = st.pityIn ? `<div class="pity" role="img" aria-label="An Epic or better is guaranteed within ${st.pityIn} chest${st.pityIn === 1 ? '' : 's'}"><span class="pips">${Array.from({ length: N }, (_, k) => `<i class="${k < filled ? 'on' : ''}"></i>`).join('')}</span><small>Epic or better guaranteed within ${st.pityIn} chest${st.pityIn === 1 ? '' : 's'}</small></div>` : '';
+        const fresh = c.golden ? 0 : moonLeft(c.type).length;
+        const chip = fresh ? `<span class="tag moon" title="New in Moonwick">${fresh} new</span>` : '';
         const left = c.golden ? '' : st.complete ? `<small class="cc-left">You own all ${st.total} ${c.sub}</small>` : `<small class="cc-left">${st.left} of ${st.total} ${c.sub} left to find</small>${pity}`;
         return `<article class="chest-card stg cc-${id} ${st.complete ? 'complete' : ''}" data-chestcard="${id}" style="--ac:${c.accent}">
           <div class="cc-art"><span class="cc-halo"></span>${BR.chestSVG(id, LITE)}</div>
           <div class="cc-info">
             <div class="cc-top"><h3 class="display">${c.name}</h3><button class="info-btn" data-act="odds" data-chest="${id}" aria-label="Odds for ${c.name}" type="button">${BR.icon('info')}</button></div>
-            <p class="cc-blurb">${c.blurb}</p>
+            <p class="cc-blurb">${c.blurb}</p>${chip}
             <div class="odds-mini" title="Odds"><div class="om-bar">${mini}</div><small>${live0(odds)}</small></div>${left}
             <div class="cc-act">${action}</div>
           </div></article>`;
       }).join('');
       this.el.innerHTML = `<div class="scroll">
         ${BR.Coach.banner('shop')}
+        ${spotHTML}
         ${cards}
         <h2 class="sec-title stg">How to earn Coins</h2>
         <div class="card card-pad earn stg">${BR.earnListHTML()}</div>
@@ -591,12 +610,13 @@
   };
 
   /* item detail sheet */
-  BR.itemSheet = function (uid, type) {
-    const inst = uid === 'default' ? null : P.instance(uid);
-    const item = inst ? P.itemOf(inst) : BR.DEFAULTS[type];
+  BR.itemSheet = function (uid, type, preview) {
+    // a preview shows an item that is not owned yet (the Shop's spotlight): its moment plays, and the button leads to the chest that holds it
+    const inst = preview || uid === 'default' ? null : P.instance(uid);
+    const item = preview || (inst ? P.itemOf(inst) : BR.DEFAULTS[type]);
     if (!item) return;
     const r = R(item.rarity);
-    const equipped = inst ? P.isEquipped(inst.uid) : P.equipped(item.type).inst === null;
+    const equipped = preview ? false : inst ? P.isEquipped(inst.uid) : P.equipped(item.type).inst === null;
     const where = item.pass ? 'Pop Pass reward' : item.isDefault ? 'Always yours' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name;
     const body = `<div class="detail" style="--rc:${r.color}">
         <div class="detail-prev"><span class="dp-glow"></span><div class="hero-host"></div></div>
@@ -607,7 +627,8 @@
     let demo = null, clipT = 0, sheet = null;
     // the demo's sparks are drawn on the page-wide canvas: keep them inside the preview well, never over the text and buttons below it
     const clip = () => { const well = sheet && sheet.body.querySelector('.detail-prev'); if (!well || !fxEl) return; const b = well.getBoundingClientRect(); fxEl.style.clipPath = `inset(${Math.max(0, b.top).toFixed(1)}px ${Math.max(0, innerWidth - b.right).toFixed(1)}px ${Math.max(0, innerHeight - b.bottom).toFixed(1)}px ${Math.max(0, b.left).toFixed(1)}px round 24px)`; };
-    const actions = [{ label: equipped ? 'Equipped' : 'Equip', cls: equipped ? 'btn-dark' : 'btn-green', disabled: equipped, onClick: () => { P.equip(inst ? inst.uid : 'default', item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap'); BR.toast(`${esc(item.name)} equipped`, 'good'); BR.Router.rerender(); } },
+    const chestId = BR.ITEM_TYPES[item.type].chest;
+    const actions = preview ? [{ label: `Show me the ${BR.CHESTS[chestId].name}`, cls: '', onClick: () => goShopChest(chestId) }] : [{ label: equipped ? 'Equipped' : 'Equip', cls: equipped ? 'btn-dark' : 'btn-green', disabled: equipped, onClick: () => { P.equip(inst ? inst.uid : 'default', item.type); BR.Skins.apply(); BR.audio.equip(); BR.haptic('tap'); BR.toast(`${esc(item.name)} equipped`, 'good'); BR.Router.rerender(); } },
       { label: 'Try it', cls: 'btn-dark', onClick: () => {
         BR.audio.ui();
         // the practice board ends on the Collection: come back to this sheet, with the grid where it was
@@ -928,7 +949,7 @@
   /* ------------------------------------------------------------------ events + registration */
   function bind(screen, handler) {
     screen.el.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-uid],[data-equip],[data-equiphat],[data-hat],[data-hatlock],[data-tier],[data-trophy],[data-locked]');
+      const t = e.target.closest('[data-act],[data-type],[data-rar],[data-tab],[data-spot],[data-uid],[data-equip],[data-equiphat],[data-hat],[data-hatlock],[data-tier],[data-trophy],[data-locked]');
       if (!t || !screen.el.contains(t)) return;
       handler(t, e);
     });
@@ -976,6 +997,7 @@
     });
     bind(Shop, (t) => {
       const a = t.dataset.act;
+      if (t.dataset.spot) { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(null, null, BR.itemById[t.dataset.spot]); return; }
       if (common(a, t)) return;
       if (a === 'open') {
         const id = t.dataset.chest;
