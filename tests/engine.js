@@ -81,3 +81,38 @@ for (let seed = 1; seed < 30; seed++) {
   assert(Math.abs((f1 - e.fuse) / (fp - plain.fuse) - 0.85) < 0.02, 'about 85%');
 }
 console.log('engine rules ok');
+
+// ---- Update 5: Save and leave, then Resume, gives back the same run (stage progress, clock, combo, Fuse bricks, power-up order)
+{
+  let checked = 0;
+  for (let seed = 1; seed <= 12; seed++) {
+    const e = new BR.Engine({ seed, mode: 'rush', skill: 0.6 }), rng = BR.makeRng(seed);
+    e.stage = 4; e.goal = BR.stageGoal(4);
+    // play until there are Fuse bricks and some stage progress, at a steady pace so the fuse never runs out
+    for (let i = 0; i < 40 && !e.over; i++) {
+      e.tick(0.8); e.fuse = Math.max(e.fuse, 10);
+      const taps = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = e.plan(r, c); if (p) taps.push(p); }
+      e.commit(rng.pick(taps));
+    }
+    let fbs = 0; for (const row of e.board.grid) for (const b of row) if (b.fb) fbs++;
+    const snap = JSON.parse(JSON.stringify(e.snapshot()));
+    const r = new BR.Engine({ seed, mode: 'rush', snapshot: snap });
+    const grid = (x, f) => JSON.stringify(x.board.grid.map((row) => row.map(f)));
+    assert.strictEqual(r.stage, e.stage); assert.strictEqual(r.score, e.score);
+    assert.strictEqual(r.stageScore, e.stageScore, 'the stage bar comes back');
+    assert.strictEqual(r.time, e.time, 'the run clock comes back');
+    assert.strictEqual(r.streak, e.streak, 'the combo comes back');
+    assert.strictEqual(r.maxCombo, e.maxCombo); assert.strictEqual(r.charge, e.charge); assert.strictEqual(r.cursor, e.cursor);
+    assert.deepStrictEqual(r.inv, e.inv); assert.deepStrictEqual(r.stats, e.stats);
+    assert.strictEqual(grid(r, (b) => b.color), grid(e, (b) => b.color), 'the board colors come back');
+    assert.strictEqual(grid(r, (b) => b.fb || 0), grid(e, (b) => b.fb || 0), 'the Fuse bricks and their countdowns come back');
+    assert.strictEqual(r.goal, e.goal); assert.strictEqual(r.sparkUsed, e.sparkUsed);
+    assert(r.fuse >= Math.min(e.fuse, BR.CFG.fuse.resumeGrace) - 1e-9 && r.fuse <= e.fuse + BR.CFG.fuse.resumeGrace, 'the fuse is the saved fuse (or the short grace)');
+    if (fbs) checked++;
+  }
+  assert(checked >= 3, 'the round trip was checked with Fuse bricks on the board (' + checked + ' of 12 runs)');
+  // an old (v1) snapshot still loads: the stage bar starts empty, as it did
+  const e1 = new BR.Engine({ seed: 3, mode: 'rush' }); const old = JSON.parse(JSON.stringify(e1.snapshot())); ['stageScore', 'time', 'streak', 'fuseBricks', 'cursor'].forEach((k) => delete old[k]); old.v = 1;
+  const r1 = new BR.Engine({ seed: 3, mode: 'rush', snapshot: old }); assert.strictEqual(r1.stageScore, 0); assert.strictEqual(r1.time, 0);
+}
+console.log('save and resume round trip ok');

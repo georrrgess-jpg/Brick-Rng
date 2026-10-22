@@ -19,6 +19,27 @@ const { launch } = require('./lib');
   ok(await page.evaluate((b) => JSON.stringify(BR.Storage.data.profile.loadout) === b, before), 'the loadout did not come back');
   ok(await page.evaluate(() => JSON.stringify(BR.Storage.loadRun()) === '{"marker":"real-run"}'), 'the saved run is gone after Try it');
   ok(await page.evaluate(() => BR.Storage.data.runs === 12), 'Try it counted as a run');
+
+  // Update 5: practice is a look, not a run. From every way out (Pause, Stop; the API calls Restart used to reach) nothing is paid,
+  // counted, saved or left equipped.
+  const snap = () => page.evaluate(() => ({ coins: BR.Storage.data.profile.coins, runs: BR.Storage.data.runs, lo: JSON.stringify(BR.Storage.data.profile.loadout), run: JSON.stringify(BR.Storage.loadRun()), xp: BR.Storage.data.profile.xp + ':' + BR.Storage.data.profile.level }));
+  const was = await snap();
+  await page.evaluate(() => { const v = BR.Storage.data.profile.vault.find((x) => x.itemId === 'f_lava'); BR.itemSheet(v.uid, 'skin'); });
+  await page.waitForTimeout(800);
+  await page.click('.sheet-actions .btn:has-text("Try it")');
+  await page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 15000 });
+  const tap = await page.evaluate(() => { const e = BR.Run.engine; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (e.plan(r, c)) return BR.Run.view.pagePoint(r, c); });
+  await page.mouse.click(tap.x, tap.y); await page.waitForTimeout(900);
+  await page.click('#btnPause'); await page.waitForTimeout(700);
+  ok(await page.evaluate(() => !document.querySelector('.sheet [data-p="restart"]') && !document.querySelector('.sheet [data-p="leave"]') && !!document.querySelector('.sheet [data-p="stop"]')), 'the practice pause sheet still offers Restart or Save and leave');
+  // the calls Restart made are harmless on a practice board
+  await page.evaluate(() => BR.Run.bankSilently());
+  { const m = await snap(); ok(m.coins === was.coins && m.runs === was.runs && m.xp === was.xp, 'bankSilently paid or counted a practice board', JSON.stringify(was), JSON.stringify(m)); }
+  await page.click('.sheet [data-p="stop"]');
+  await page.waitForFunction(() => BR.Router.current === 'collection', null, { timeout: 10000 });
+  const after = await snap();
+  ok(after.coins === was.coins && after.runs === was.runs && after.lo === was.lo && after.run === was.run && after.xp === was.xp, 'Stop trying it changed Coins, runs, XP, the loadout or the saved run', JSON.stringify(was), JSON.stringify(after));
+
   ok(errors.length === 0, 'console errors', errors.join('|'));
   await browser.close();
   console.log(problems ? problems + ' PROBLEMS' : 'tryit ok');

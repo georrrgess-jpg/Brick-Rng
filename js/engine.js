@@ -254,9 +254,11 @@
     /* ---------- save / resume ---------- */
     snapshot() {
       return {
-        v: 1, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
-        inv: Object.assign({}, this.inv), charge: this.charge, stats: JSON.parse(JSON.stringify(this.stats)),
+        v: 2, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
+        inv: Object.assign({}, this.inv), charge: this.charge, cursor: this.cursor, stats: JSON.parse(JSON.stringify(this.stats)),
         maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, fuse: this.fuse, rushMeter: this.rush.active ? 0 : this.rush.meter, director: this.director ? this.director.snapshot() : null, colors: this.board.grid.map((row) => row.map((b) => b.color)),
+        // everything else a run is made of, so Save and leave then Resume gives back the same run
+        stageScore: this.stageScore, time: this.time, streak: this.streak, fuseBricks: this.board.grid.map((row) => row.map((b) => b.fb || 0)),
       };
     }
     _restore(s) {
@@ -265,9 +267,19 @@
       // resuming must not refill the fuse (Save and leave would be a free refill), but a few seconds of grace keep it from ending at once
       if (!this.chill && s.fuse != null) this.fuse = Math.min(this.fuseMax, Math.max(+s.fuse || 0, BR.CFG.fuse.resumeGrace));
       if (s.rushMeter != null) this.rush.meter = s.rushMeter;
+      // v2 snapshots carry the stage's progress, the run clock, the combo and the Fuse bricks' countdowns
+      if (Number.isFinite(s.stageScore)) this.stageScore = Math.max(0, s.stageScore);
+      if (Number.isFinite(s.time)) this.time = Math.max(0, s.time);
+      if (Number.isFinite(s.streak)) this.streak = Math.max(0, s.streak);
+      if (Number.isFinite(s.cursor)) this.cursor = s.cursor;
+      this.rush.lastPop = this.time;
       if (this.director) this.director.restore(s.director);
       this.goal = this.chill ? BR.chillGoal(this.stage) : BR.stageGoal(this.stage);
-      for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) this.board.grid[r][c].color = s.colors[r][c];
+      for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) {
+        const b = this.board.grid[r][c]; b.color = s.colors[r][c];
+        const fb = s.fuseBricks && s.fuseBricks[r] && s.fuseBricks[r][c];
+        if (fb > 0) b.fb = fb; else delete b.fb;
+      }
       this.board.version++;
       this.board.ensureMove(null);
     }

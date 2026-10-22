@@ -691,7 +691,13 @@
       this.clearHover(); this.view.hideHint(); if (this.armed) this.disarm();
       if (BR.Music) BR.Music.duck(true);
       if (!silent) BR.audio.ui();
-      const body = `<div class="stack pause-list">
+      // Try it is a look, not a run: it can be resumed or stopped, and nothing else (no Restart, no Save and leave)
+      const body = this.practice
+        ? `<div class="stack pause-list">
+        <button class="btn btn-xl" data-p="resume">${BR.icon('play')} Resume</button>
+        <button class="btn btn-dark" data-p="settings">${BR.icon('sound')} Sound and vibration</button>
+        <button class="btn btn-dark" data-p="stop">${BR.icon('flag')} Stop trying it</button></div>`
+        : `<div class="stack pause-list">
         <button class="btn btn-xl" data-p="resume">${BR.icon('play')} Resume</button>
         <button class="btn btn-dark" data-p="restart">${BR.icon('reroll')} Restart</button>
         <button class="btn btn-dark" data-p="settings">${BR.icon('sound')} Sound and vibration</button>
@@ -704,8 +710,9 @@
         BR.audio.ui(); BR.haptic('tap');
         if (k === 'resume') sh.close();
         else if (k === 'settings') this.quickSettings();
+        else if (k === 'stop') { this.leaving = true; sh.close(); this.endPractice(); }
         else if (k === 'end') this.confirmEnd(sh);
-        else if (k === 'restart') { this.leaving = true; sh.close(); this.bankSilently(); setTimeout(() => this.start({ mode: this.mode === 'daily' ? 'rush' : this.mode, boosts: this.mode === 'rush' ? this.boosts : {} }), 350); }
+        else if (k === 'restart' && !this.practice) { this.leaving = true; sh.close(); this.bankSilently(); setTimeout(() => this.start({ mode: this.mode === 'daily' ? 'rush' : this.mode, boosts: this.mode === 'rush' ? this.boosts : {} }), 350); }
         else if (k === 'leave') { this.leaving = true; sh.close(); this.saveSnap(); this.exitToHome(); }
       });
     },
@@ -728,6 +735,7 @@
     },
     /** Bank XP, Coins and stats for a run that is being abandoned (restart). */
     bankSilently() {
+      if (this.practice) return;   // a practice board never pays, counts or saves
       if (!this.engine || this.over || this.engine.stats.pops === 0) { BR.Storage.clearRun(); return; }
       this.over = true; this.clock = false;
       this.finalize(this.engine.summary(), 'ended', true);
