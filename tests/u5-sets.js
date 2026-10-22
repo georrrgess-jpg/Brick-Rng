@@ -11,7 +11,8 @@
 //              (no timer, no animation, no particle) happens when no full set is worn
 //   flourish   each set's event plays its flourish: at most 30 particles (every canvas particle, link, ring and DOM layer, counted from outside by wrapping the
 //              fx object and watching the DOM), none after 900 ms, DOM layers animate transform and opacity only, everything stays inside the board's box
-//              (so never over the HUD), nothing is left behind, the engine and the save are untouched, once per 6 s, the right event for the right set
+//              (so never over the HUD), none of it over the game's own big texts (the stage wipe, the Rush banner, callouts: DOM layers sit below them,
+//              canvas pieces never touch their boxes), nothing is left behind, the engine and the save are untouched, once per 6 s, the right event for the right set
 //              (Spire: the first stage-up of a run and every Rush start; Vault: only a SAVED Last Spark), results stops it, Reduce Motion and low-end play nothing
 //   demo       BR.Sets.flourish(id, element) plays inside any element (the Try it board, the Tower view), restores the element, and can be stopped
 // The flourish checks run on a virtual clock (timers, frames, performance.now and every Web Animation are stepped by the test), so a busy machine cannot
@@ -229,15 +230,7 @@ const info = (...a) => console.log(...a);
     const { page, errors } = await fresh(browser);
     await inject(page);
     await page.evaluate(SPY); await page.evaluate(DATA);
-    // positive control: the spy sees a timer that sets.js makes (a flourish of the Library, played here on purpose)
-    await wear(page, SET_ITEMS.library);
-    await startRun(page);
-    await spyReset(page);
-    await fire(page, 'line');
-    let s = await spy(page);
-    ok(s.timers >= 1 && s.fx > 0 && s.anims.length === 0, 'spy control: a Library flourish should make timers and fx calls', s);
-    await page.waitForFunction(() => !BR.Sets.last || true); await page.waitForTimeout(1100);
-
+    let s;
     const noneCases = {
       'the default loadout': [], 'three of four Library items': SET_ITEMS.library.slice(0, 3), 'four Series 4 items of no set': ['f_patchwork', 'b_wishdust', 'a_isles', 'u_runechain'],
       'the Library set with the Glade board': [SET_ITEMS.library[0], SET_ITEMS.library[1], SET_ITEMS.glade[2], SET_ITEMS.library[3]],
@@ -250,8 +243,18 @@ const info = (...a) => console.log(...a);
       await page.evaluate(() => { BR.Sets.rest(); ['pop', 'line', 'rushStart', 'stageUp', 'spark', 'sparkEnd', 'rushEnd', 'results'].forEach((t) => BR.Skins.onEvent(t, __D(t))); BR.Skins.apply(); });
       s = await spy(page);
       ok(s.timers === 0 && s.fx === 0 && s.anims.length === 0, `${label}: the set code made ${s.timers} timers, ${s.fx} fx calls, ${s.anims.length} animations with no full set worn`, s);
-      ok(await page.evaluate(() => !document.getElementById('setsArt') || true), '');
+      ok(await page.evaluate(() => !document.getElementById('setsArt')), `${label}: art was baked with no full set worn`);
     }
+
+    // positive control: the spy sees a timer that sets.js makes (a flourish of the Library, played here on purpose)
+    await wear(page, SET_ITEMS.library);
+    await startRun(page);
+    await spyReset(page);
+    await fire(page, 'line');
+    s = await spy(page);
+    ok(s.timers >= 1 && s.fx > 0 && s.anims.length > 0, 'spy control: a Library flourish should make timers, fx calls and animations the spy can see', s);
+    await page.waitForFunction(() => !BR.Sets.last || true); await page.waitForTimeout(1100);
+
 
     // the crest of every set
     for (const id of ORDER) {
@@ -409,6 +412,47 @@ const info = (...a) => console.log(...a);
       };
     };
   };
+  /** Plays the REAL game event (so its own big texts are up: the stage wipe, the Rush banner, the callouts) and checks, frame by frame, that nothing of the
+      set covers any visible text: the canvas sprites of the flourish never touch a text's box, and the DOM layers are always below the text (hit-testing with
+      pointer events switched on for everything). */
+  const TEXT = () => {
+    window.__text = (type) => {
+      const fx = BR.fx, run = BR.Run, orig = BR.Sets.onEvent, mine = [];
+      BR.Sets.onEvent = function (t, d, c) { const before = new Set(fx.parts); const out = orig.call(this, t, d, c); fx.parts.forEach((p) => { if (!before.has(p) && p.kind === 'img') mine.push(p); }); return out; };
+      BR.Sets.rest();
+      if (type === 'stageUp') run.stageUp({ from: 1, to: 2, mult: 1.5 });
+      else if (type === 'rushStart') { run.el.classList.add('rushing'); run.rushStart(); }
+      else if (type === 'sparkEnd') run.sparkEnd(true);
+      else if (type === 'line') { run.callout('GREAT!', '#ffd66b'); BR.Skins.onEvent('line', __D('line')); }
+      const hs = document.createElement('style'); hs.textContent = 'html.hit *{pointer-events:auto!important}'; document.head.appendChild(hs);
+      const hits = {}, seen = new Set(); let checked = 0, over = 0, stages = 0;
+      for (let f = 0; f < 75; f++) {
+        window.__vc.step(16.7);
+        const texts = Array.from(document.querySelectorAll('.stage-wipe.go .sw-text span, .stage-wipe.go .sw-text b, .stage-wipe.go .sw-text em, #rushBanner.go span, .callout, #score, #stageTag, #stageGoal, #multTag, #fuseTime, #goalLine.show, #lastSpark.on b'))
+          .map((el) => { const q = el.getBoundingClientRect(); return { el, l: q.left, t: q.top, r: q.right, b: q.bottom, name: el.id || el.className || el.tagName }; })
+          .filter((q) => q.r - q.l > 2 && q.b - q.t > 2 && getComputedStyle(q.el).opacity > 0.3);
+        texts.forEach((q) => seen.add(q.name));
+        mine.forEach((p) => {
+          if (p.life >= p.max || p.a < 0.02) return;
+          const vis = p.a * Math.min(1, (1 - p.life / p.max) * 2.2); if (vis < 0.25) return;
+          const w = p.size * Math.max(Math.abs(p.sx), 0.01), h = w * (p.img.height / p.img.width) * Math.abs(p.sy / (p.sx || 1)), rad = Math.min(w, h) * 0.42;
+          texts.forEach((q) => { if (p.x + rad > q.l && p.x - rad < q.r && p.y + rad > q.t && p.y - rad < q.b) hits[q.name] = (hits[q.name] || 0) + 1; });
+        });
+        if (document.querySelector('.sf-stage')) {
+          stages++;
+          document.documentElement.classList.add('hit');
+          texts.forEach((q) => {
+            if (q.el.id === 'score' || q.el.id === 'stageTag') return;
+            const stack = document.elementsFromPoint((q.l + q.r) / 2, (q.t + q.b) / 2), ti = stack.indexOf(q.el), si = stack.findIndex((e) => e.closest && e.closest('.sf-stage'));
+            if (si >= 0 && ti >= 0) { checked++; if (si < ti) over++; }
+          });
+          document.documentElement.classList.remove('hit');
+        }
+      }
+      BR.Sets.onEvent = orig; hs.remove(); run.el.classList.remove('rushing');
+      return { sprites: mine.length, hits, seen: Array.from(seen), checked, over, stages };
+    };
+  };
   const clockStep = (page, ms) => page.evaluate((ms) => window.__vc.step(ms), ms);
   const trace = (page, kind, arg, o) => page.evaluate(([k, a, o]) => window.__trace(k, a, o), [kind, arg, o || {}]);
 
@@ -426,9 +470,9 @@ const info = (...a) => console.log(...a);
     await wear(page, SET_ITEMS[id]);
     await startRun(page);
     await page.evaluate(() => { BR.Run.clock = false; });   // a flourish is looked at on a still board: the fuse does not burn while the clock is ours
-    await page.evaluate(CLOCK); await page.evaluate(TRACE);
+    await page.evaluate(CLOCK); await page.evaluate(TRACE); await page.evaluate(TEXT);
     const art0 = await page.evaluate(() => !!document.getElementById('setsArt'));
-    ok(!art0, `${id}: art was baked before any flourish`);
+    ok(art0 === (id !== 'glade'), `${id}: art baked at run start ${art0} (every set but the Glade has DOM art, baked when the run starts so the first flourish does not stall)`);
     const geo = await rects(page);
     ok(!hit(geo.board, geo.strip) && !hit(geo.board, geo.score) && !hit(geo.board, geo.time) && !hit(geo.board, geo.band), `${id}: the board's box overlaps HUD text, so "inside the board" would not mean "clear of text"`);
 
@@ -450,7 +494,7 @@ const info = (...a) => console.log(...a);
     ok(t.stages === 0 && t.leftover.every((n) => n === 0) && t.live === 0, `${id}: left behind: ${t.stages} stages, particles/links/rings ${t.leftover}, ${t.live} steered`, t);
     ok(t.engineSame && t.saveSame, `${id}: the engine or the save changed (engine ${t.engineSame}, save ${t.saveSame})`);
     const art1 = await page.evaluate(() => !!document.getElementById('setsArt'));
-    ok(art1 === ['alchemy', 'vault'].includes(id), `${id}: baked art present ${art1}`);
+    ok(art1 === (id !== 'glade'), `${id}: baked art present ${art1}`);
     summary.push(`${id.padEnd(8)} ${type.padEnd(9)} ${String(t.last && t.last.particles).padStart(2)} particles (${t.calls} fx + ${t.dom} DOM)  ends ${String(t.end).padStart(3)} ms  stage gone ${t.stageGone || '-'}`);
 
     // once per 6 s: a second event, a second later, plays nothing; after 6 s it plays again
@@ -500,6 +544,18 @@ const info = (...a) => console.log(...a);
     ok(stopped.after === 0 && (id === 'library' || id === 'spire' || stopped.during === 1), `${id}: results left ${stopped.after} stages (during: ${stopped.during})`, stopped);
     await clockStep(page, 1100);
 
+    // never over text: the real event, with the game's own texts up (the Spire also on its Rush start)
+    for (const ev of id === 'spire' ? ['stageUp', 'rushStart'] : [type]) {
+      await clockStep(page, 6100);
+      if (id === 'spire' && ev === 'stageUp') await page.evaluate(() => { BR.Run.engine = new BR.Engine({ mode: 'rush', seed: 13, boosts: {} }); BR.Run.engine.fuse = 25; });   // the first stage-up of a run
+      const tx = await page.evaluate((ev) => window.__text(ev), ev);
+      ok(Object.keys(tx.hits).length === 0, `${id}: on ${ev} its pieces cover text: ${JSON.stringify(tx.hits)}`);
+      ok(tx.over === 0 && tx.checked > 20 && tx.stages > 20, `${id}: on ${ev} its DOM layers were above the game's text ${tx.over} times of ${tx.checked} (stage up for ${tx.stages} frames)`);
+      ok(ev !== 'stageUp' || tx.seen.includes('swNum'), `${id}: the stage wipe's text never showed in the check`, tx.seen);
+      ok(ev !== 'rushStart' || tx.seen.includes('SPAN'), `${id}: the Rush banner's text never showed in the check`, tx.seen);
+      await clockStep(page, 1500);
+    }
+
     // Reduce Motion and low-end on the virtual clock too: no flourish, no fx call, no timer
     for (const mode of ['reduced', 'low']) {
       await page.evaluate((m) => { const s = BR.Storage.data.settings; s.reduced = m === 'reduced'; s.perf = m === 'low' ? 'low' : 'high'; BR.App.applySettings(); BR.Sets.rest(); }, mode);
@@ -521,6 +577,14 @@ const info = (...a) => console.log(...a);
         ok(pos === 'fixed' || pos === '', `demo ${sid}: the host's position is now ${pos}`);
       }
       await page.evaluate(() => document.getElementById('demoHost').remove());
+      // the context the Skins handlers get ({ fx, view }) works too: the stage goes into the run's own effect layer
+      const vctx = await page.evaluate(() => {
+        window.__vc.step(7000);
+        const h = BR.Sets.flourish('spire', { fx: BR.fx, view: BR.Run.view }), st = document.querySelectorAll('#fxlayer > .sf-stage').length;
+        window.__vc.step(1000);
+        return { ok: !!h, st, after: document.querySelectorAll('.sf-stage').length };
+      });
+      ok(vctx.ok && vctx.st === 1 && vctx.after === 0, 'demo: a { fx, view } context', vctx);
       // a plain (static) host gets position: relative while it plays and is given back; stop() ends it
       const sp = await page.evaluate(() => {
         const h = document.createElement('div'); h.id = 'staticHost'; h.style.cssText = 'width:200px;height:200px;margin:300px 0 0 20px'; document.getElementById('app').appendChild(h);

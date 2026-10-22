@@ -8,15 +8,30 @@
 
 .set-crest { flex: none; align-self: center; width: 22px; height: 22px; margin: -1px 0; background: var(--sc-img) center / contain no-repeat; pointer-events: none; }
 
-.sf-stage { position: absolute; z-index: 6; pointer-events: none; overflow: hidden; contain: layout paint style; }
+.sf-stage { position: absolute; z-index: 6; pointer-events: none; overflow: hidden; isolation: isolate; contain: layout paint style; }
 .sf { position: absolute; display: block; opacity: 0; transform-origin: 50% 50%; background: none no-repeat center / 100% 100%; will-change: transform, opacity; pointer-events: none; }
 
 /* Glade: the thread of light the fireflies run on (a dashed ring with a soft green glow) */
 .sf-thread { border-radius: 50%; border: 3px dashed rgba(214, 255, 238, 0.95); box-shadow: 0 0 0 1px rgba(6, 40, 34, 0.55), 0 0 20px 5px rgba(110, 255, 205, 0.62), inset 0 0 20px 4px rgba(110, 255, 205, 0.42); }
 
 /* Alchemy: the gold the board turns to, and the ripple (a ring band that grows from nothing past the board's edge, the stage clips it) */
-.sf-wash { background: radial-gradient(ellipse 80% 72% at 50% 50%, rgba(255, 222, 110, 0.56), rgba(255, 186, 52, 0.46) 62%, rgba(220, 130, 10, 0.42)); }
+.sf-wash { background: radial-gradient(ellipse 80% 72% at 50% 50%, rgba(255, 224, 100, 0.52), rgba(255, 190, 40, 0.42) 62%, rgba(226, 134, 6, 0.4)); }
 .sf-ripple { border-radius: 50%; background: radial-gradient(circle closest-side, rgba(255, 214, 110, 0) 56%, rgba(255, 214, 110, 0.18) 66%, rgba(255, 232, 150, 0.85) 80%, rgba(255, 248, 214, 0.95) 85%, rgba(255, 214, 110, 0) 96%); }
 .sf-ripple.b { background: radial-gradient(circle closest-side, rgba(255, 214, 110, 0) 60%, rgba(255, 214, 110, 0.12) 70%, rgba(255, 224, 140, 0.6) 82%, rgba(255, 244, 200, 0.7) 86%, rgba(255, 214, 110, 0) 96%); }
+
+/* Library: the near wing of a paper bird flaps about its shoulder (the bird's own opacity carries it), and the pages that fly off the line */
+.sf-wing { opacity: 1; transform-origin: 50% 49.1%; }
+.sf-page { border-radius: 2px; background: linear-gradient(135deg, #fffaf0, #efe2c0); border: 1px solid rgba(138, 122, 82, 0.7); box-shadow: 0 1px 2px rgba(28, 12, 48, 0.5); }
+.sf-page.gold { background: linear-gradient(135deg, #fff2bd, #ffcf6b); border-color: rgba(122, 82, 0, 0.7); }
+
+/* Vault: the motes of sand that circle backwards (soft glows in four tints) */
+.sf-grain { border-radius: 50%; }
+.sf-grain.c0 { background: radial-gradient(circle closest-side, #fff 0, #ffe9a8 28%, rgba(255, 233, 168, 0.45) 58%, rgba(255, 233, 168, 0)); }
+.sf-grain.c1 { background: radial-gradient(circle closest-side, #fff 0, #ffcf6b 28%, rgba(255, 207, 107, 0.45) 58%, rgba(255, 207, 107, 0)); }
+.sf-grain.c2 { background: radial-gradient(circle closest-side, #fff 0, #fff6d0 28%, rgba(255, 246, 208, 0.45) 58%, rgba(255, 246, 208, 0)); }
+.sf-grain.c3 { background: radial-gradient(circle closest-side, #fff 0, #e8f0ff 28%, rgba(232, 240, 255, 0.45) 58%, rgba(232, 240, 255, 0)); }
+
+/* Spire: a line of the constellation (a silver bar that grows from the star it starts at, with a dark edge so it shows on every brick) */
+.sf-line { transform-origin: 0 50%; border-radius: 2px; background: linear-gradient(90deg, rgba(232, 240, 255, 0.92), #fff 60%, #e8f0ff); box-shadow: 0 0 0 1.5px rgba(20, 12, 58, 0.85), 0 0 7px 1px rgba(170, 190, 255, 0.65); }
 
 html.reduced .sf-stage, html.low-end .sf-stage { display: none; }

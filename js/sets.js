@@ -8,7 +8,7 @@
          Alchemy  Great Work           Rush start         a golden ripple turns the board gold for a beat, a transmutation circle turns
          Vault    Time Turn            Last Spark saved   a ghost clock face turns back over the board, sand runs up
          Spire    Moonwick Ascendant   first stage-up of a run and every Rush start: constellation lines draw across the board
-   A set never changes points, time, odds or drops (nothing here reads or writes the engine). A flourish lasts at most 900 ms, adds at most 30
+   A set never changes points, time, odds or drops (nothing here writes the engine, the board or the save). A flourish lasts at most 900 ms, adds at most 30
    particles (every canvas particle, link, ring and DOM layer counts, and the budget is enforced by the helpers that make them), moves DOM layers on
    transform and opacity only, draws nothing over the HUD (it stays inside the board's box) and is OFF with Reduce Motion and on low-end phones.
 
@@ -20,7 +20,7 @@
      BR.Sets.worn()                     the set id of the current loadout, or null
      BR.Sets.ownedIds()                 a Set of the item ids in the vault (browser, reads the save)
      BR.Sets.crest(id, size)            the crest as an SVG string (size in px, 22 by default; below 30px the art drops its hairlines)
-     BR.Sets.crestUri(id)               the same as a css url("data:image/svg+xml,...") value
+     BR.Sets.crestUri(id, size)         the same as a css url("data:image/svg+xml,...") value (22px art by default)
      BR.Sets.fires(id, type, d, first)  does this event play this set's flourish? (first: it is the first stage-up of the run)
      BR.Sets.CAP                        { ms: 900, particles: 30, gap: 6000 }
    Browser only:
@@ -29,6 +29,7 @@
                                         stop() } or null (Reduce Motion, low-end, no room). An explicit call ignores the 6 s gap and restarts a running one.
      BR.Sets.onEvent(type, d, ctx)      registered on BR.Skins.handlers: plays the worn set's flourish when its event comes
      BR.Sets.refresh()                  rebuild the crest from the loadout (an applyHook does it after every BR.Skins.apply)
+     BR.Sets.warm(id)                   bake a set's bitmaps and art now (the crest does it when a run starts, so a flourish never stalls on its first play)
      BR.Sets.last                       what the last flourish did: { set, ms, particles, at } (ms and particles as declared by the helpers)
      BR.Sets.rest()                     forget the last play time (tests and demos) */
 (function () {
@@ -129,7 +130,7 @@
     },
     ownedIds() { const v = BR.Storage && BR.Storage.data && BR.Storage.data.profile && BR.Storage.data.profile.vault; return new Set((v || []).map((i) => i.itemId)); },
     crest,
-    crestUri: (id) => uri(crest(id, 32)),
+    crestUri: (id, size) => uri(crest(id, size || 22)),
     /** does this event play the flourish of set `id`? `first` says it is the first stage-up of the run (only the Spire cares) */
     fires(id, type, d, first) {
       if (id === 'library') return type === 'line';
@@ -179,6 +180,7 @@
     const eng = BR.Run && BR.Run.engine;
     if (!el || !eng || eng === state.popEngine || !BR.Router || BR.Router.current !== 'run') return;
     state.popEngine = eng;
+    if (Sets.warm) Sets.warm(state.worn);
     if (BR.reducedMotion || !el.animate) return;
     el.animate([
       { transform: 'scale(0.2) rotate(-24deg)', opacity: 0 },
@@ -203,35 +205,17 @@
   const mix = (a, b, t) => { const x = rgb(a), y = rgb(b); return '#' + x.map((v, i) => clamp(Math.round(v * t + y[i] * (1 - t)), 0, 255).toString(16).padStart(2, '0')).join(''); };
   /** Set a sprite's alpha to v at any age: js/fx.js fades a sprite over the last 45% of its life, so that fade is divided back out. */
   function alpha(p, v) { const f = Math.min(1, (1 - p.life / p.max) * 2.2); p.a = f > 0.02 ? Math.min(v / f, 60) : 0; }
-  const sine = (t) => Math.sin(clamp(t, 0, 1) * Math.PI);
 
-  /* ---- baked bitmaps (FX.bake: one canvas per key, made the first time a flourish needs it) */
-  /** device scale for canvas shadows (shadowBlur ignores the transform) */
-  const dpr = () => Math.min(window.devicePixelRatio || 1, 2);
+  /* ---- baked bitmaps (FX.bake: one canvas per key, made the first time a flourish needs it). Only what is drawn on the particle canvas lives here (the
+     Glade's fireflies and toadstools, which run round the edge of the board where no text ever is); the larger pictures are DOM layers below. */
   const PAPER = {
     cream: { lit: '#fff8e6', mid: '#f1e4c4', shade: '#cdbd94', edge: '#8a7a52', beak: '#ffb066' },
     gold: { lit: '#fff2bd', mid: '#ffcf6b', shade: '#c8902e', edge: '#7a5200', beak: '#ff9a3d' },
     silver: { lit: '#ffffff', mid: '#dbe6ff', shade: '#9fb0da', edge: '#56668f', beak: '#ffcf6b' },
   };
-  const WING = [[24, 2], [7, 17], [20, 46]];   // the near wing's tip: up, level, down
-  /** a paper bird facing right, folded in three facets with a soft dark shadow so it reads on any brick; one baked wing position (0 up, 1 level, 2 down) */
-  const birdImg = (tone, frame) => bake('sfbird' + tone + frame, 96, 72, (c) => {
-    const P = PAPER[tone], tip = WING[frame];
-    c.scale(1.5, 1.5);
-    c.shadowColor = 'rgba(28, 12, 48, 0.6)'; c.shadowBlur = 3.2 * dpr(); c.shadowOffsetY = 1.2 * dpr();
-    const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fillStyle = fill; c.fill(); c.strokeStyle = P.edge; c.lineWidth = 1; c.lineJoin = 'round'; c.stroke(); };
-    poly([[30, 24], [46, 22], [tip[0] + 18, tip[1] + (frame === 2 ? -2 : 4)]], P.shade);                    // the far wing, behind
-    poly([[3, 27], [12, 27], [8, 32]], P.shade);                                                              // tail
-    poly([[8, 32], [26, 22], [46, 20], [60, 27], [46, 30], [27, 34]], P.lit);                                 // back
-    poly([[8, 32], [27, 34], [46, 30], [31, 42]], P.mid);                                                     // belly
-    poly([[46, 20], [60, 27], [46, 30]], '#ffffff');                                                          // head
-    c.fillStyle = P.beak; c.beginPath(); c.moveTo(60, 27); c.lineTo(64, 29.5); c.lineTo(57, 29.4); c.closePath(); c.fill();
-    const w0 = [22, 25], w1 = [42, 22], wm = [32, 23.5];
-    poly([w0, wm, tip], P.mid); poly([wm, w1, tip], P.lit);
-    c.shadowColor = 'transparent';
-    c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 0.8; c.lineCap = 'round'; c.beginPath(); c.moveTo(wm[0], wm[1]); c.lineTo(tip[0], tip[1]); c.moveTo(26, 22); c.lineTo(27, 34); c.stroke();
-    c.fillStyle = '#2a2640'; c.beginPath(); c.arc(52, 25.2, 1.3, 0, TAU); c.fill();
-  });
+  const STARS = [[GOLD, '#ffcf6b'], [SILVER, '#9fb4ff'], ['#ffe9a8', '#ffcf6b']];   // a star's core and halo colours
+  /** device scale for canvas shadows (shadowBlur ignores the transform) */
+  const dpr = () => Math.min(window.devicePixelRatio || 1, 2);
   /** a firefly with a comet tail, head to the right: a dark pool so it shows on bright bricks, a halo, a hot core, a tail that fades to nothing */
   const cometImg = (col) => bake('sfcomet' + col, 128, 48, (c) => {
     let g = c.createRadialGradient(100, 24, 2, 100, 24, 24); g.addColorStop(0, 'rgba(6, 22, 18, 0.45)'); g.addColorStop(1, 'rgba(6, 22, 18, 0)');
@@ -257,24 +241,10 @@
     [[16, 18, 3.2], [26, 14.6, 2.6], [32.5, 21, 2.2]].forEach(([x, y, r]) => { c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); });
     c.strokeStyle = 'rgba(255, 255, 255, 0.7)'; c.lineWidth = 1.2; c.lineCap = 'round'; c.beginPath(); c.moveTo(13, 15); c.quadraticCurveTo(15, 11.8, 19, 10.8); c.stroke();
   });
-  /** a four-point sparkle with a soft halo and a thin dark edge, so a white star still reads on a yellow brick */
-  const starImg = (core, halo) => bake('sfstar' + core + halo, 56, 56, (c) => {
-    c.translate(28, 28);
-    const g = c.createRadialGradient(0, 0, 0, 0, 0, 22); g.addColorStop(0, rgba(halo, 0.8)); g.addColorStop(1, rgba(halo, 0));
-    c.fillStyle = g; c.beginPath(); c.arc(0, 0, 22, 0, TAU); c.fill();
-    const ray = (r, k) => { c.beginPath(); c.moveTo(0, -r); c.quadraticCurveTo(k, -k, r, 0); c.quadraticCurveTo(k, k, 0, r); c.quadraticCurveTo(-k, k, -r, 0); c.quadraticCurveTo(-k, -k, 0, -r); c.closePath(); };
-    c.shadowColor = 'rgba(16, 10, 48, 0.7)'; c.shadowBlur = 3 * dpr(); c.shadowOffsetY = 0.6 * dpr();
-    ray(26, 3.2); c.fillStyle = rgba(core, 0.99); c.fill();
-    c.shadowBlur = 0; c.shadowOffsetY = 0;
-    ray(11, 3.6); c.fillStyle = '#ffffff'; c.fill();
-  });
-  /** a soft round dot of light */
-  const dotImg = (col) => bake('sfdot' + col, 32, 32, (c) => {
-    const g = c.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, '#ffffff'); g.addColorStop(0.22, rgba(mix(col, '#ffffff', 0.5), 0.95)); g.addColorStop(0.5, rgba(col, 0.4)); g.addColorStop(1, rgba(col, 0));
-    c.fillStyle = g; c.fillRect(0, 0, 32, 32);
-  });
 
-  /* ---- DOM art (SVG pictures baked into one stylesheet the first time they are used; the layers only move, never repaint) */
+  /* ---- DOM art (SVG pictures baked into one stylesheet the first time they are used; the layers only move, never repaint).
+     Everything bigger than a spark is a DOM layer on purpose: the stage sits below the game's own big texts (callouts, the stage wipe, the Rush
+     banner), so a flourish can never cover them, which a particle on the full-screen canvas could not promise. */
   const sv = (inner, vb) => `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${vb || '-100 -100 200 200'}'>${inner}</svg>`;
   const poly = (n, r, rot) => Array.from({ length: n }, (_, i) => { const a = ((rot + (i * 360) / n) * Math.PI) / 180; return f1(Math.cos(a) * r) + ',' + f1(Math.sin(a) * r); }).join(' ');
   const ART = {
@@ -306,6 +276,25 @@
     },
     /* the hands, each drawn from the middle of its own box so a turn about the centre is all it takes */
     minute: () => sv(`<path d='M-3.4 12L-1.4 -74L0 -84L1.4 -74L3.4 12Z' fill='#ffe9a8' stroke='#e8f0ff' stroke-width='1.1' stroke-linejoin='round'/>`),
+    /* a paper bird facing right, folded in facets with a soft dark shadow (blurred once, in the picture): the body and the far wing here, the near wing
+       in its own layer (wing...) that flaps about the shoulder at (32, 23.5). Both pictures share one box: view box -4 -4 72 56. */
+    ...Object.fromEntries(Object.keys(PAPER).flatMap((t) => {
+      const P = PAPER[t], pg = (pts, fill) => `<polygon points='${pts.map((q) => q.join(',')).join(' ')}' fill='${fill}' stroke='${P.edge}' stroke-width='1' stroke-linejoin='round'/>`, VB = '-4 -4 72 56';
+      const back = [[8, 32], [26, 22], [46, 20], [60, 27], [46, 30], [27, 34]], belly = [[8, 32], [27, 34], [46, 30], [31, 42]];
+      const bird = () => sv(
+        `<defs><filter id='b' x='-20%' y='-30%' width='140%' height='170%'><feGaussianBlur stdDeviation='1.7'/></filter></defs>` +
+        `<g fill='rgba(28,12,48,.6)' filter='url(#b)' transform='translate(0 2.2)'><polygon points='${back.map((q) => q.join(',')).join(' ')}'/><polygon points='${belly.map((q) => q.join(',')).join(' ')}'/><polygon points='22,24 46,22 40,4'/></g>` +
+        pg([[30, 24], [46, 22], [41, 5]], P.shade) + pg([[3, 27], [12, 27], [8, 32]], P.shade) + pg(back, P.lit) + pg(belly, P.mid) + pg([[46, 20], [60, 27], [46, 30]], '#ffffff') +
+        `<polygon points='60,27 64,29.5 57,29.4' fill='${P.beak}'/><circle cx='52' cy='25.2' r='1.3' fill='#2a2640'/><path d='M26 22L27 34' stroke='rgba(255,255,255,.85)' stroke-width='.8' stroke-linecap='round'/>`, VB);
+      const wing = () => sv(pg([[22, 25], [32, 23.5], [7, 17]], P.mid) + pg([[32, 23.5], [42, 22], [7, 17]], P.lit) + `<path d='M32 23.5L7 17' stroke='rgba(255,255,255,.9)' stroke-width='.8' stroke-linecap='round'/>`, VB);
+      return [['bird' + t, bird], ['wing' + t, wing]];
+    })),
+    /* a four-point sparkle with a soft halo and a thin dark edge, so a white star still reads on a yellow brick; one picture per colour pair in STARS */
+    ...Object.fromEntries([0, 1, 2].map((i) => [`star${i}`, () => {
+      const [core, halo] = STARS[i], ray = (r, k) => `M0 ${-r}Q${k} ${-k} ${r} 0Q${k} ${k} 0 ${r}Q${-k} ${k} ${-r} 0Q${-k} ${-k} 0 ${-r}Z`;
+      return sv(`<defs><radialGradient id='h'><stop offset='0' stop-color='${halo}' stop-opacity='.85'/><stop offset='1' stop-color='${halo}' stop-opacity='0'/></radialGradient></defs><circle r='25' fill='url(#h)'/>` +
+        `<path d='${ray(27.5, 3.4)}' fill='rgba(16,10,48,.55)'/><path d='${ray(26, 3.2)}' fill='${core}'/><path d='${ray(11, 3.6)}' fill='#ffffff'/>`, '-30 -30 60 60');
+    }])),
     hour: () => sv(`<path d='M-4.6 12L-2.6 -42L0 -54L2.6 -42L4.6 12Z' fill='#ffcf6b' stroke='#e8f0ff' stroke-width='1.1' stroke-linejoin='round'/><circle cy='-32' r='4' fill='none' stroke='#e8f0ff' stroke-width='1.2'/><circle r='6.4' fill='#ffcf6b' stroke='#e8f0ff' stroke-width='1.3'/><circle r='2' fill='#fff6d0'/>`),
   };
   const baked = {};
@@ -353,24 +342,22 @@
       return st;
     }
     /** a DOM layer in the stage (box in px from the board's corner), animated on transform and opacity only, starting `from` ms in */
-    el(cls, box, frames, from, dur, easing) {
+    el(cls, box, frames, from, dur, easing, o = {}) {
       const st = this.mount();
       if (!st || !this.take()) return null;
       const e = document.createElement('i');
       e.className = 'sf ' + cls;
       e.style.cssText = `left:${f1(box.x)}px;top:${f1(box.y)}px;width:${f1(box.w)}px;height:${f1(box.h)}px`;
-      st.appendChild(e);
-      const d = Math.max(0, Math.min(dur, CAP.ms - from));
-      this.mark(from + d);
-      if (d > 0 && e.animate) this.anims.push(e.animate(frames, { duration: d, delay: from, easing: easing || 'linear', fill: 'none' }));
+      (o.parent || st).appendChild(e);
+      const n = o.iterations || 1, d = Math.max(0, Math.min(dur, (CAP.ms - from) / n));   // n runs of dur ms (a wing flapping) are trimmed to the cap as a whole
+      this.mark(from + d * n);
+      if (d > 0 && e.animate) this.anims.push(e.animate(frames, { duration: d, delay: from, easing: easing || 'linear', fill: 'none', iterations: n, direction: o.direction || 'normal', iterationStart: o.iterationStart || 0 }));
       return e;
     }
     /** put a particle (or link or ring) the fx object just made on the list to be cleared when this play ends */
     own(list, n) { const p = list.length > n ? list[list.length - 1] : null; if (p) this.parts.push(p); return p; }
     sprite(o) { if (!this.live || !this.take()) return null; o.max = this.life(o.max); const n = this.fx.parts.length; this.fx.sprite(o); return this.own(this.fx.parts, n); }
     spark(o) { if (!this.live || !this.take()) return null; o.max = this.life(o.max); const n = this.fx.parts.length; this.fx.emit(Object.assign({ kind: 'spark' }, o)); return this.own(this.fx.parts, n); }
-    conf(o) { if (!this.live || !this.take()) return null; o.max = this.life(o.max); const n = this.fx.parts.length; this.fx.emit(Object.assign({ kind: 'conf' }, o)); return this.own(this.fx.parts, n); }
-    link(x0, y0, x1, y1, color, sec, width) { if (!this.live || !this.take()) return null; const n = this.fx.links.length; this.fx.link(x0, y0, x1, y1, color, this.life(sec), width); return this.own(this.fx.links, n); }
     /** a ring grows to at most the distance to the board's nearest edge, so it never reaches the HUD */
     ring(x, y, color, radius, sec, width) {
       if (!this.live || !this.take()) return null;
@@ -403,51 +390,56 @@
     if (!fx || !box || !layer) return null;
     const r = box.getBoundingClientRect();
     if (!(r.width > 24 && r.height > 24)) return null;
-    return { host, view, fx, layer, g: { L: r.left, T: r.top, W: r.width, H: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2, k: clamp(r.width / 369, 0.3, 1.2), radius: (host ? getComputedStyle(host).borderRadius : getComputedStyle(box).borderRadius) || '22px' } };
+    return { host, view, fx, layer, g: { L: r.left, T: r.top, W: r.width, H: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2, k: clamp(r.width / 369, 0.45, 1.2), radius: (host ? getComputedStyle(host).borderRadius : getComputedStyle(box).borderRadius) || '22px' } };
   }
 
   /* ---------------------------------------------------------------- Library: Bookstorm
-     The blasted line lifts off as a flock of paper birds (a V of seven, wings flapping, each on its own wavering path) that sweeps along the line
-     and across the board, shedding gold glints, while pages fly off the line behind it. The birds are canvas sprites steered along their path;
-     the pages are the ordinary paper particle. */
+     The blasted line lifts off as a flock of paper birds (a V of five, each wing a layer of its own that flaps about the shoulder, each bird on its own
+     wavering path) that sweeps along the line and across the board; paper pages fly off the line behind it and gold glints are shed in its wake. A bird
+     is only seen inside the board (it fades in at one edge and out at the other) and the whole stage is a DOM layer, below the game's own texts. */
+  /** where a body thrown with speed v, pulled by gravity gr, slowed by drag dr, is after t seconds (one axis) */
+  const ball = (p0, v, gr, dr, t) => p0 + (v / dr) * (1 - Math.exp(-dr * t)) + (gr / dr) * (t - (1 - Math.exp(-dr * t)) / dr);
   function bookstorm(P, g, d) {
-    const pl = d && d.res && d.res.plan, vert = !!(pl && pl.lineV && !pl.lineH), dir = Math.random() < 0.5 ? 1 : -1;
+    const pl = d && d.res && d.res.plan, vert = !!(pl && pl.lineV && !pl.lineH), dir = Math.random() < 0.5 ? 1 : -1, k = g.k;
     const idx = clamp(pl && (vert ? pl.c : pl.r) != null ? (vert ? pl.c : pl.r) : 3, 0, 7), along = vert ? g.H : g.W, across = vert ? g.W : g.H;
-    const lat = clamp(((idx + 0.5) / 8) * across, 100 * g.k, across - 100 * g.k);     // the flock's centre line, from the board's edge
-    // f runs along the flight from the entry side, s across it; the point on the page
-    const pt = (f, s) => { const a = dir > 0 ? f : along - f; return vert ? { x: g.L + lat + s, y: g.T + g.H - a } : { x: g.L + a, y: g.T + lat + s }; };
-    const tones = ['cream', 'gold', 'cream', 'silver', 'cream', 'gold', 'silver'];
-    const slots = [[0, 0], [-42, -32], [-42, 32], [-84, -62], [-84, 62], [-126, -92], [-126, 92]], T = CAP.ms - 40, wobs = slots.map(() => rnd(0, TAU));
+    const lat = clamp(((idx + 0.5) / 8) * across, 100 * k, across - 100 * k);     // the flock's centre line, from the board's edge
+    // f runs along the flight from the entry side, s across it; the point in the stage (px from the board's corner)
+    const pt = (f, s) => { const a = dir > 0 ? f : along - f; return vert ? { x: lat + s, y: g.H - a } : { x: a, y: lat + s }; };
+    const tones = ['cream', 'gold', 'cream', 'silver', 'gold'], slots = [[0, 0], [-42, -32], [-42, 32], [-84, -62], [-84, 62]], T = CAP.ms - 40, N = 18, mirror = !vert && dir < 0;
     const place = (i, u) => {
-      const [back, side] = slots[i], e = lerp(u, easeIO(u), 0.55);
-      const s = clamp(lat + side * g.k * (1 - 0.3 * e) + Math.sin(e * 6.5 + wobs[i]) * 9 * g.k - Math.sin(e * Math.PI) * 24 * g.k, 34 * g.k, across - 34 * g.k);   // a bird never leaves the board's box
-      const f = lerp(-40 * g.k, along + 70 * g.k, e) + back * g.k, p = pt(clamp(f, 0, along), s - lat);
+      const [back, side] = slots[i], e = lerp(u, easeIO(u), 0.55), ph = (i * 2.1) % TAU;
+      const s = clamp(lat + side * k * (1 - 0.3 * e) + Math.sin(e * 6.5 + ph) * 9 * k - Math.sin(e * Math.PI) * 24 * k, 34 * k, across - 34 * k);   // a bird never leaves the board's box
+      const f = lerp(-40 * k, along + 70 * k, e) + back * k, p = pt(f, s - lat);
       p.f = f;
       return p;
     };
-    slots.forEach((s, i) => {
-      const frames = [0, 1, 2].map((f) => birdImg(tones[i], f)), mirror = !vert && dir < 0;
-      const sp = P.sprite({ img: frames[1], x: g.cx, y: g.cy, size: (i ? 64 : 78) * g.k, max: T / 1000, a: 0 });
-      steer(sp, (q) => {
-        const ms = q.life * 1000, u = clamp(ms / T, 0, 1), a = place(i, u), b = place(i, Math.min(1, u + 0.02));
-        q.x = a.x; q.y = a.y; q.vx = q.vy = 0;
-        q.sx = mirror ? -1 : 1; q.rot = mirror ? Math.atan2(a.y - b.y, a.x - b.x) : Math.atan2(b.y - a.y, b.x - a.x);
-        q.img = frames[[0, 1, 2, 1][Math.floor(ms / 75 + i) % 4]];
-        // the flock comes out of one edge of the board and goes into the other: a bird is only seen inside the box (and fades in and out over its first and last 30px)
-        alpha(q, clamp(a.f / (30 * g.k), 0, 1) * clamp((along - a.f) / (30 * g.k), 0, 1) * clamp((T - ms) / 120, 0, 1));
-      });
+    slots.forEach((slot, i) => {
+      const W = 64 * (i ? 0.82 : 1) * k * 1.2 * (72 / 64), H = W * 56 / 72, frames = [];
+      for (let j = 0; j <= N; j++) {
+        const u = j / N, a = place(i, u), b = place(i, Math.min(1, u + 0.02)), rot = mirror ? Math.atan2(a.y - b.y, a.x - b.x) : Math.atan2(b.y - a.y, b.x - a.x);
+        // seen only inside the board: in over the first 30px of one edge, out over the last 30px of the other
+        frames.push({ offset: u, opacity: clamp(a.f / (30 * k), 0, 1) * clamp((along - a.f) / (30 * k), 0, 1), transform: `translate(${f1(a.x)}px, ${f1(a.y)}px) rotate(${rot.toFixed(3)}rad) scaleX(${mirror ? -1 : 1})` });
+      }
+      const bird = P.el('sf-bird ' + art('bird' + tones[i]), { x: -W / 2, y: -H / 2, w: W, h: H }, frames, 0, T);
+      if (bird) P.el('sf-wing ' + art('wing' + tones[i]), { x: 0, y: 0, w: W, h: H }, [{ transform: 'rotate(46deg)' }, { transform: 'rotate(-54deg)' }], 0, 150, 'ease-in-out', { parent: bird, iterations: T / 150, direction: 'alternate', iterationStart: (i * 0.37) % 1 });
     });
-    // pages spray off the line along the flight, flipping as they fall (slow enough to stay inside the board's box), and gold glints are shed in the flock's wake
-    const mid = pt(along * 0.5, 0), inset = (p) => ({ x: clamp(p.x, g.L + 24 * g.k, g.L + g.W - 24 * g.k), y: clamp(p.y, g.T + 24 * g.k, g.T + g.H - 24 * g.k) });
-    for (let i = 0; i < 8; i++) {
-      const f0 = along * (0.12 + 0.76 * (i / 7)), p = pt(f0, rnd(-8, 8)), v = clamp(Math.min(rnd(50, 100), 1.4 * (along - f0 - 28)), 10, 100), side = rnd(-60, 60);
-      P.conf({ x: p.x, y: p.y, vx: vert ? side : dir * v, vy: vert ? -dir * v : rnd(-100, -30), g: 170, drag: 1.6, rot: rnd(0, TAU), vr: rnd(-10, 10), sway: rnd(0, TAU), size: rnd(12, 17) * g.k, max: rnd(0.62, 0.84), color: ['#f4ecd8', '#fff8e6', GOLD, '#f4ecd8'][i % 4] });
+    // pages spray off the line along the flight and flip as they fall (slow enough to stay inside the board's box)
+    const mid = pt(along * 0.5, 0);
+    for (let i = 0; i < 6; i++) {
+      const f0 = along * (0.14 + 0.62 * (i / 5)), p = pt(f0, rnd(-8, 8)), life = rnd(0.6, 0.8), v = clamp(Math.min(rnd(50, 100) * k, 1.4 * (along - f0 - 28)), 10, 100), side = rnd(-60, 60) * k;
+      const vx = vert ? side : dir * v, vy = vert ? -dir * v : rnd(-100, -30) * k, gy = vert ? 0 : 170, spin = rnd(-5, 5), r0 = rnd(0, TAU), frames = [];
+      for (let j = 0; j <= 6; j++) {
+        const t = (life * j) / 6, flip = j % 2 ? 0.18 : 1;
+        frames.push({ offset: j / 6, opacity: j < 5 ? 1 : 1 - (j - 5) * 0.9, transform: `translate(${f1(ball(p.x, vx, 0, 1.6, t))}px, ${f1(ball(p.y, vy, gy, 1.6, t))}px) rotate(${(r0 + spin * t).toFixed(2)}rad) scaleY(${flip})` });
+      }
+      P.el('sf-page' + (i % 3 === 1 ? ' gold' : ''), { x: -7 * k, y: -5 * k, w: 14 * k, h: 10 * k }, frames, 0, life * 1000);
     }
-    for (let i = 0; i < 8; i++) P.at(100 + i * 80, () => {
-      const p = inset(place(i % 7, clamp((100 + i * 80) / T, 0, 1)));
-      P.spark({ x: p.x, y: p.y, vx: rnd(-24, 24), vy: rnd(-24, 24), g: 0, drag: 1.4, size: rnd(2.4, 4), max: rnd(0.3, 0.5), color: i % 2 ? GOLD : '#fff6d0' });
+    // gold glints shed in the flock's wake: tiny canvas sparks
+    for (let i = 0; i < 6; i++) P.at(100 + i * 110, () => {
+      const q = place(i % 5, clamp((100 + i * 110) / T, 0, 1)), x = g.L + clamp(q.x, 24 * k, g.W - 24 * k), y = g.T + clamp(q.y, 24 * k, g.H - 24 * k);
+      P.spark({ x, y, vx: rnd(-24, 24), vy: rnd(-24, 24), g: 0, drag: 1.4, size: rnd(2.4, 4), max: rnd(0.3, 0.5), color: i % 2 ? GOLD : '#fff6d0' });
     });
-    P.ring(mid.x, mid.y, GOLD, 52 * g.k, 0.4, 2);
+    P.ring(g.L + mid.x, g.T + mid.y, GOLD, 52 * k, 0.4, 2);
     audio('noise', { dur: 0.3, vol: 0.05, from: 3400, to: 1700, q: 1.1, type: 'bandpass', attack: 0.06 });
     audio('noise', { dur: 0.28, vol: 0.04, from: 2600, to: 1400, q: 1.1, type: 'bandpass', attack: 0.05, at: 0.16 });
   }
@@ -510,10 +502,10 @@
   }
 
   /* ---------------------------------------------------------------- Vault: Time Turn
-     A ghost clock face fades up over the board and its hands spin backwards, the minute hand one and a half times round; a silver ring goes out,
-     and motes of sand circle backwards into the middle while a few grains run up from the bottom edge. */
+     A ghost clock face fades up over the board and its hands spin backwards, the minute hand one and a half times round; a silver ring goes out, motes
+     of sand circle backwards into the middle (each a soft DOM glow on a circular path) and a few grains run up from the bottom edge. */
   function timeTurn(P, g) {
-    const W = g.W, H = g.H, s = Math.min(W, H) * 0.86, box = { x: W / 2 - s / 2, y: H / 2 - s / 2, w: s, h: s };
+    const W = g.W, H = g.H, s = Math.min(W, H) * 0.86, box = { x: W / 2 - s / 2, y: H / 2 - s / 2, w: s, h: s }, k = g.k;
     const fade = [0, 0.8, 0.7, 0], off = [0, 0.2, 0.62, 1];
     const frames = (t) => off.map((o, i) => ({ offset: o, opacity: fade[i], transform: t[i] }));
     P.el('sf-face ' + art('face'), box, frames(['scale(0.82) rotate(-8deg)', 'scale(1) rotate(0deg)', 'scale(1.02) rotate(0deg)', 'scale(1.08) rotate(0deg)']), 0, 840, 'ease-out');
@@ -521,24 +513,23 @@
     P.el('sf-hand ' + art('hour'), box, frames(['scale(0.82) rotate(0deg)', 'scale(1) rotate(-18deg)', 'scale(1.02) rotate(-36deg)', 'scale(1.08) rotate(-45deg)']), 0, 840, 'cubic-bezier(0.3, 0.1, 0.3, 1)');
     P.ring(g.cx, g.cy, SILVER, s * 0.5, 0.62, 3);
     P.at(240, () => P.ring(g.cx, g.cy, GOLD, s * 0.34, 0.5, 2));
-    const sand = ['#ffe9a8', GOLD, '#fff6d0', SILVER], T = CAP.ms - 60;
+    const T = CAP.ms - 60, N = 12;
     for (let i = 0; i < 10; i++) {
-      const th0 = (i / 10) * TAU + rnd(-0.2, 0.2), delay = 40 + i * 22, r0 = s * 0.46;
-      const sp = P.sprite({ img: dotImg(sand[i % 4]), x: g.cx, y: g.cy, size: (i % 3 ? 12 : 17) * g.k, max: T / 1000, a: 0 });
-      steer(sp, (q) => {
-        const ms = q.life * 1000, u = clamp((ms - delay) / (T - delay), 0, 1), th = th0 - easeIO(u) * 3.4, r = lerp(r0, s * 0.12, easeIO(u * 0.9));
-        q.x = g.cx + Math.cos(th) * r; q.y = g.cy + Math.sin(th) * r; q.vx = q.vy = 0;
-        alpha(q, clamp((ms - delay) / 100, 0, 1) * clamp((CAP.ms - 80 - ms) / 200, 0, 1));
-      });
+      const th0 = (i / 10) * TAU + rnd(-0.2, 0.2), delay = 40 + i * 22, r0 = s * 0.46, size = (i % 3 ? 14 : 20) * k, dur = T - delay, fr = [];
+      for (let j = 0; j <= N; j++) {
+        const u = j / N, th = th0 - easeIO(u) * 3.4, r = lerp(r0, s * 0.12, easeIO(u * 0.9));
+        fr.push({ offset: u, opacity: clamp(u * dur / 100, 0, 1) * clamp((dur - u * dur - 40) / 160, 0, 1), transform: `translate(${f1(W / 2 + Math.cos(th) * r)}px, ${f1(H / 2 + Math.sin(th) * r)}px)` });
+      }
+      P.el('sf-grain c' + (i % 4), { x: -size / 2, y: -size / 2, w: size, h: size }, fr, delay, dur);
     }
-    for (let i = 0; i < 6; i++) P.spark({ x: g.cx + rnd(-16, 16) * g.k, y: g.T + g.H * 0.9, vx: rnd(-16, 16), vy: rnd(-230, -140), g: 90, drag: 0.9, size: rnd(1.8, 3), max: rnd(0.5, 0.7), color: i % 2 ? GOLD : '#ffe9a8' });
+    for (let i = 0; i < 6; i++) P.spark({ x: g.cx + rnd(-16, 16) * k, y: g.T + g.H * 0.9, vx: rnd(-16, 16), vy: rnd(-230, -140), g: 90, drag: 0.9, size: rnd(1.8, 3), max: rnd(0.5, 0.7), color: i % 2 ? GOLD : '#ffe9a8' });
     audio('tone', { f: 196, dur: 0.9, vol: 0.07, attack: 0.004 }); audio('tone', { f: 541, dur: 0.5, vol: 0.022, attack: 0.004 });
     for (let i = 0; i < 4; i++) audio('tone', { f: 1180 - i * 70, dur: 0.05, vol: 0.03, attack: 0.002, at: 0.08 + i * 0.085 });
   }
 
   /* ---------------------------------------------------------------- Spire: Moonwick Ascendant
-     A constellation draws itself across the board: stars light one after another, a line grows from each to the next (a silver line over a dark
-     one, so it shows on every brick colour; fx.js draws the newest link first, so the dark one is made after the silver), the last star flashes and the whole figure fades together. */
+     A constellation draws itself across the board: stars light one after another, a line grows from each to the next (a silver bar with a dark edge, so it
+     shows on every brick colour), the last star flashes and the whole figure fades together. Stars and lines are DOM layers (below the game's texts). */
   const FIGURES = [
     // the tower: up one side, round the apex, down the other and across the door
     { s: [[0.28, 0.9], [0.34, 0.54], [0.22, 0.44], [0.5, 0.1], [0.78, 0.44], [0.66, 0.54], [0.72, 0.9]], e: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [1, 5]] },
@@ -548,45 +539,39 @@
     { s: [[0.1, 0.8], [0.16, 0.5], [0.34, 0.24], [0.6, 0.14], [0.84, 0.28], [0.9, 0.56], [0.52, 0.5]], e: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [3, 6]] },
   ];
   let lastFigure = -1;
-  /** js/fx.js fades a link linearly from the moment it is made; keep this one at 13% of its age (nearly full strength) until `fadeAt`, then fade it out by `endAt` (both ms after the flourish began) */
-  function holdLink(q, from, fadeAt, endAt) {
-    if (q.life < 0.03) return;
-    const fl = (fadeAt - from) / 1000, el = (endAt - from) / 1000, t = q.life < fl ? 0.13 : 0.13 + 0.87 * (q.life - fl) / (el - fl);
-    q.max = q.life / Math.min(t, 1);
-  }
   function ascendant(P, g) {
     let fi = (Math.random() * FIGURES.length) | 0; if (fi === lastFigure) fi = (fi + 1) % FIGURES.length; lastFigure = fi;
-    const F = FIGURES[fi], pad = 0.07, mir = Math.random() < 0.5, step = 80, t0 = 50, END = CAP.ms - 30, core = [GOLD, SILVER, '#ffe9a8'];
-    const pts = F.s.map(([u, v]) => ({ x: g.L + g.W * (pad + (mir ? 1 - u : u) * (1 - 2 * pad)), y: g.T + g.H * (pad + v * (1 - 2 * pad)) }));
+    const F = FIGURES[fi], pad = 0.07, mir = Math.random() < 0.5, step = 80, t0 = 50, END = CAP.ms - 30, k = g.k;
+    const pts = F.s.map(([u, v]) => ({ x: g.W * (pad + (mir ? 1 - u : u) * (1 - 2 * pad)), y: g.H * (pad + v * (1 - 2 * pad)) }));   // in the stage
     const starAt = (i) => t0 + i * step;
     pts.forEach((pt, i) => {
-      const delay = starAt(i), big = fi === 0 && i === 3 ? 1.3 : 1;
-      const sp = P.sprite({ img: starImg(core[i % 3], i % 2 ? '#9fb4ff' : '#ffcf6b'), x: pt.x, y: pt.y, size: 50 * g.k * big, max: END / 1000, a: 0 });
-      steer(sp, (q) => {
-        const ms = q.life * 1000, u = (ms - delay) / 140;
-        q.sx = q.sy = u < 0 ? 0 : (0.3 + 0.7 * easeOut(u) + 0.35 * sine(u)) * (1 + 0.1 * Math.sin(ms * 0.02 + i * 2));
-        q.rot = 0.4 * (1 - easeOut(u));
-        alpha(q, clamp(u * 2, 0, 1) * clamp((END - ms) / 240, 0, 1));
-      });
+      const delay = starAt(i), D = END - delay, S = 57.7 * k * (fi === 0 && i === 3 ? 1.3 : 1), fadeAt = Math.max(D - 240, 160), key = [[0, 0, 0.3, 23], [70, 1, 1.35, 6], [140, 1, 1, 0]];
+      for (let t = 250, n = 0; t < fadeAt - 40; t += 110, n++) key.push([t, 1, n % 2 ? 0.94 : 1.12, 0]);
+      key.push([fadeAt, 1, 1, 0], [D, 0, 1, 0]);
+      P.el('sf-star ' + art('star' + (i % 3)), { x: pt.x - S / 2, y: pt.y - S / 2, w: S, h: S }, key.map(([t, o, sc, r]) => ({ offset: t / D, opacity: o, transform: `scale(${sc}) rotate(${r}deg)` })), delay, D);
     });
     F.e.forEach(([a, b]) => {
-      const from = starAt(a) + 20, len = step * 0.95;
-      P.at(from, () => {
-        [[SILVER, 2.2], ['#140c3a', 4.8]].forEach(([col, w]) => {
-          const l = P.link(pts[a].x, pts[a].y, pts[a].x, pts[a].y, col, (END - from) / 1000, w * Math.max(0.7, g.k));
-          steer(l, (q) => { const u = easeOut(clamp((q.life * 1000) / len, 0, 1)); q.x1 = lerp(pts[a].x, pts[b].x, u); q.y1 = lerp(pts[a].y, pts[b].y, u); holdLink(q, from, 600, END); });
-        });
-      });
+      const from = starAt(a) + 20, D = END - from, len = Math.hypot(pts[b].x - pts[a].x, pts[b].y - pts[a].y), ang = Math.atan2(pts[b].y - pts[a].y, pts[b].x - pts[a].x), h = 2.4 * Math.max(0.8, k), grow = step * 0.95, fadeAt = Math.max(grow + 10, 600 - from);
+      const tf = (sx) => `rotate(${ang.toFixed(4)}rad) scaleX(${sx})`;
+      P.el('sf-line', { x: pts[a].x, y: pts[a].y - h / 2, w: len, h }, [{ offset: 0, opacity: 1, transform: tf(0) }, { offset: grow / D, opacity: 1, transform: tf(1) }, { offset: fadeAt / D, opacity: 1, transform: tf(1) }, { offset: 1, opacity: 0, transform: tf(1) }], from, D, 'ease-out');
     });
     const last = pts[pts.length - 1];
     P.at(starAt(pts.length - 1) + 60, () => {
-      P.ring(last.x, last.y, GOLD, 56 * g.k, 0.38, 2.4);
-      for (let i = 0; i < 4; i++) { const a = rnd(0, TAU); P.spark({ x: last.x, y: last.y, vx: Math.cos(a) * 130, vy: Math.sin(a) * 130, g: 30, drag: 2.2, size: rnd(2, 3.4), max: rnd(0.3, 0.46), color: i % 2 ? SILVER : GOLD }); }
+      for (let i = 0; i < 4; i++) { const a = rnd(0, TAU); P.spark({ x: g.L + last.x, y: g.T + last.y, vx: Math.cos(a) * 130, vy: Math.sin(a) * 130, g: 30, drag: 2.2, size: rnd(2, 3.4), max: rnd(0.3, 0.46), color: i % 2 ? SILVER : GOLD }); }
     });
     [1047, 1319, 1568, 2093].forEach((f, i) => audio('tone', { f, dur: 0.22, vol: 0.026, attack: 0.004, at: 0.05 + i * 0.1 }));
   }
 
   const FLOURISH = { library: bookstorm, glade: fairyRing, alchemy: greatWork, vault: timeTurn, spire: ascendant };
+  /** bake a set's pictures when a run starts (a flourish then never stalls on its first play); everything is cached, so this costs nothing after the first run */
+  const WARM = {
+    library: () => ['cream', 'gold', 'silver'].forEach((t) => { art('bird' + t); art('wing' + t); }),
+    glade: () => { ['#e6ff8a', '#7affd2'].forEach(cometImg); ['#ffd36b', '#6bffd0'].forEach(capImg); },
+    alchemy: () => { art('circle'); },
+    vault: () => { art('face'); art('minute'); art('hour'); },
+    spire: () => [0, 1, 2].forEach((i) => art('star' + i)),
+  };
+    Sets.warm = (id) => { if (WARM[id] && !calm() && BR.FX && BR.FX.bake) WARM[id](); };
 
   /** run set `id`'s flourish in the board resolved from ctx; returns the handle or null. An event play (not explicit) waits out the 6 s gap. */
   function play(id, ctx, d, explicit) {
