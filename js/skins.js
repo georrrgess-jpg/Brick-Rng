@@ -114,6 +114,9 @@
       } else if (type === 'stageUp') {
         this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
         if (M.dragon) fx.flash('#ff7a2a', 0.2, 320);
+      } else if (type === 'spark' || type === 'sparkEnd' || type === 'results') {
+        // the Last Spark starting and ending, and the results opening (Moonwick fuses, boards and sets react to them)
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
       }
     },
     lightning(boardEl, at) {
