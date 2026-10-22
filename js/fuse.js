@@ -700,6 +700,40 @@
       for (let i = 0; i < n; i++) P.glintAt(this.tx0 + this.x0 + this.L * (x0 + (x1 - x0) * Math.random()), y + rnd(-9, 9));
     },
 
+    /** a one-off burst of the fuse's own particles for a moment (js/s4-fuses.js): kind 'spark' | 'glint' | 'special' (its drips, bubbles, grains, chips or dust),
+        from (ox, oy) css px off the bomb's middle. Never more than n, never more than the pool has room for. Returns how many were made. */
+    burstAt(kind, n, ox, oy, o) {
+      if (!this.ok || BR.reducedMotion || BR.lowEnd || !this.hostRect) return 0;
+      o = o || {};
+      const P = this.parts, x0 = this.bx + (ox || 0), y0 = this.cvTop + this.by + (oy || 0), shape = P.spec && P.spec.shape;
+      n = Math.min(n, MAXP - P.live - 2);
+      let made = 0;
+      for (let i = 0; i < n; i++) {
+        const a = o.arc ? o.arc[0] + Math.random() * (o.arc[1] - o.arc[0]) : Math.random() * 6.283, sp = (o.speed || 90) * (0.45 + Math.random() * 0.75);
+        let q = null;
+        if (kind === 'spark') { q = P.spawn(K.spark, x0, y0, true); if (q) { q.sp = P.sp.spark[i % P.sp.spark.length]; q.life = rnd(0.35, 0.7); q.sc = rnd(0.8, 1.4); q.g = o.g == null ? 120 : o.g; q.drag = 1.3; } }
+        else if (kind === 'glint') { q = P.spawn(K.glint, x0, y0, true); if (q) { q.sp = P.sp.glint[i % P.sp.glint.length]; q.life = rnd(0.45, 0.8); q.sc = rnd(0.7, 1.3); q.g = o.g || 0; q.drag = 1; } }
+        else if (P.sp.special.length) {
+          q = P.spawn(K.special, x0, y0, true);
+          if (q) {
+            q.sp = P.sp.special[(Math.random() * P.sp.special.length) | 0]; q.life = rnd(0.5, 0.95); q.sc = rnd(0.8, 1.3); q.g = o.g == null ? 140 : o.g; q.drag = 0.9;
+            if (shape === 'twinkle' || shape === 'stardust' || shape === 'chip') { q.base = q.sc; q.pulse = rnd(10, 18); }
+            if (shape === 'bubble') { q.sway = rnd(4, 9); q.grow = 0.12; }
+            if (shape === 'sprinkle' || shape === 'fleck' || shape === 'chip' || shape === 'shard') q.vr = rnd(-9, 9);
+          }
+        }
+        if (!q) continue;
+        q.vx = Math.cos(a) * sp; q.vy = Math.sin(a) * sp - (o.lift || 0); made++;
+      }
+      return made;
+    },
+    /** a bright sweep along the rope from the bomb to the flame (the glint layer; js/s4-fuses.js uses it for a shimmer and for the moonbeam) */
+    sweep(ms) {
+      if (!this.ok || !this.glint || BR.reducedMotion || BR.lowEnd) return;
+      const x1 = this.L * clamp(this.d / this.fmax, 0, 1);
+      this.glint.animate([{ transform: 'translate3d(-17px,0,0)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate3d(${x1.toFixed(0)}px,0,0)`, opacity: 0.9, offset: 0.8 }, { transform: `translate3d(${(x1 + 12).toFixed(0)}px,0,0)`, opacity: 0 }], { duration: ms || 500, easing: 'ease-out' });
+    },
+
     /* ------------------------------------------------------------------ time changes the player can see */
     /** +sec seconds: a chip flies from `from` (page coordinates of the popped group) to the readout, then the rope grows */
     gain(sec, from, kind, delayMs) {
