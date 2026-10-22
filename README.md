@@ -61,8 +61,17 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
 - There are 58 items. Series 3 "Carnival" adds 10 skins, 10 pops, 4 boards and 4 fuses.
 - Cosmetics never change scoring. Run Boosts (Long Fuse 25, Head Start 15, Rush Start 20 Coins) are a purchase: the
   sheet before a run shows each price, the total and what you will have left, and nothing is charged until you press Start.
-- Help is short: three cards (Welcome, the first chest, the Pop Pass) and a one-line banner with a close button on the other
-  screens (Profile > Help shows them again). The first three runs start straight away; the Boosts sheet comes from run 4.
+- Help is short: two cards (Welcome, whose button starts the first run, and the Pop Pass), a hint line on the first chest opening
+  (it never covers the chest or the hold button) and a one-line banner with a close button on the other screens (Profile > Help
+  shows them again). The first three runs start straight away; the Boosts sheet comes from run 4. After that the sheet remembers your
+  last choice: Home shows a chip that starts the next run with the same Boosts in one tap, and a run started with no Boosts makes Play
+  one tap too (the chip beside it opens the sheet).
+- **Menus (Update 5)**: the status bar (level ring, title, a gear that opens Settings, Coins) lives outside the screens and never
+  moves; tabs cross-fade with a short stagger; the Shop tab shows how many chests are waiting and the Missions tab a dot for new
+  missions; Home puts the chests banner under the hero and opens a chest in one tap; an item is worn from the circle on its card.
+  Sheets take keyboard focus, keep Tab inside, make the page behind inert and give focus back; on desktop and in landscape they are
+  centred dialogs of at most 560px in two columns that fade where they scroll. Larger text is one type scale (`--ts`), not zoom.
+  Colours mean one thing: green is free, gold spends Coins, red cannot be undone, hot pink is the one main action.
 
 ## Layout
 ```
@@ -70,7 +79,7 @@ index.html          screens + layers
 sw.js               offline cache (service worker)
 manifest.webmanifest, icons/   install as an app
 css/base.css        design tokens, buttons, sheets, tab bar
-css/screens.css     Home, Shop, Collection, Missions, Profile
+css/screens.css     Home, Shop, Collection, Missions, Profile, the status bar pieces (all text sizes are `calc(Npx * var(--ts))`: run tools/typescale.py)
 css/run.css         the run screen: fuse, board, Rush, results
 css/chest.css       chest stage, chest parts and idle life, hold ring, reel, reveals
 css/skins.css       Skins, Boards, previews (Series 1 and 2)
@@ -91,11 +100,11 @@ js/fuse.js          the shared fuse engine, BR.Fuse: rope, burning end, readout,
 js/badges.js        the item badge (used in the reel, Collection, Pass, reveals)
 js/coach.js         first-time tip cards and the what's-new card
 js/view.js          board renderer and board animations (WAAPI)
-js/ui.js            router, sheets, toasts, haptics
+js/ui.js            router (cross-fading tabs, badges), sheets (focus, inert, fade edge), toasts, haptics
 js/chestart.js      chest artwork: each chest is a stack of parts so the rituals move them with plain transforms
 js/spin.js          reel physics (solved landing) and the reel strip
 js/openings.js      hold to open, bursts, spin, rarity reveals
-js/screens.js       the five tab screens and the odds panel
+js/screens.js       the five tab screens, the status bar (BR.Chrome), Settings and the other sheets, the odds panel
 js/run.js           the run controller (HUD, input, Rush, stages, results)
 js/main.js          boot, settings, the self-tuning Graphics setting, the error guard, the splash
 tools/bundle.py     single-file bundle
@@ -128,6 +137,8 @@ node tests/visual.js    # regressions that were once seen: the logo, odds text, 
 node tests/uiaudit.js [--list]   # every screen and sheet: text is 12px or larger, controls are 44px or larger
 node tests/tryit.js     # Try it leaves the loadout, a saved run and the run counter alone
 node tests/u4cosmetics.js   # the older boards, skins and pops after the Update 4 touch-up
+node tests/keyframes.js # no @keyframes name is defined twice (the later file would silently replace the first)
+node tests/u5-menus.js  # menus: focus in sheets, tab badges, the fixed status bar, keyboard reach, hero overflow, landscape Play, sheet widths, Larger text, Reduce Motion, toasts, swaps, Boosts memory, the Pass track
 ```
 UI tests use Playwright's Chromium (paths in `tests/lib.js`). Progress is stored in `localStorage` under
 `poprush.v4`. Saves from earlier versions are migrated on first launch: Update 1 (Shardfall) Shards become Coins, and

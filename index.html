@@ -44,6 +44,13 @@
   </div>
 
   <main id="screens">
+    <!-- The status bar lives outside the screens: it never moves when a tab changes (js/screens.js, BR.Chrome). -->
+    <header class="topbar" id="topbar">
+      <button class="lvl-badge" id="tbLevel" data-act="go-pass" type="button"></button>
+      <h1 id="tbTitle"></h1>
+      <button class="icon-btn gear-btn" id="tbGear" data-act="open-settings" type="button" aria-label="Settings"></button>
+      <button class="pill gold coin-btn" id="tbCoins" data-act="go-coins" type="button" aria-label="Your Coins"></button>
+    </header>
     <section class="screen" id="s-home" aria-label="Home"></section>
     <section class="screen" id="s-shop" aria-label="Shop"></section>
     <section class="screen" id="s-collection" aria-label="Collection"></section>
@@ -139,7 +146,7 @@
   </main>
 
   <nav class="tabbar" id="tabbar" aria-label="Main">
-    <button class="tab" data-tab="shop"><svg viewBox="0 0 24 24"></svg><span>Shop</span></button>
+    <button class="tab" data-tab="shop"><svg viewBox="0 0 24 24"></svg><span>Shop</span><em class="tbadge" id="badgeShop" aria-hidden="true"></em></button>
     <button class="tab" data-tab="collection"><svg viewBox="0 0 24 24"></svg><span>Collection</span></button>
     <button class="tab tab-play" data-tab="home"><i class="play-disc"><svg viewBox="0 0 24 24"></svg></i><span>Home</span></button>
     <button class="tab" data-tab="missions"><svg viewBox="0 0 24 24"></svg><span>Missions</span><em class="dot" id="dotMissions"></em></button>
@@ -150,7 +157,7 @@
   <div id="layer-overlays"></div>
   <div id="layer-opening"></div>
   <div id="layer-sheets"></div>
-  <div id="toasts" aria-live="polite"></div>
+  <div id="toasts" aria-live="polite"><div class="toast-slot top" id="toastsTop"></div><div class="toast-slot bottom" id="toastsBottom"></div></div>
 </div>
 
 <noscript><p style="color:#fff;text-align:center;margin-top:30vh;font-family:sans-serif">Pop Rush needs JavaScript.</p></noscript>

@@ -16,7 +16,11 @@ const { launch } = require('./lib');
     await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 0; BR.Storage.data.profile.coins = 2000; BR.Router.go('shop'); BR.Router.go('home'); });
     await page.waitForTimeout(1400);
     ok(await open(page) && /Welcome/.test(await title(page)), 'welcome card on first Home', await title(page));
+    // Update 5 (M-I7): "Let's pop" starts the first run instead of only closing the card
     await close(page);
+    await page.waitForFunction(() => BR.Router.current === 'run', null, { timeout: 5000 }).catch(() => ok(false, "Let's pop did not start the first run"));
+    await page.evaluate(() => { BR.Run.exitToHome(); }); await page.waitForTimeout(900);
+    await page.evaluate(() => { BR.Storage.clearRun(); BR.Router.go('home'); }); await page.waitForTimeout(500);
     const shown = [];
     for (const t of ['shop', 'collection', 'missions', 'profile']) {
       await page.evaluate((t) => BR.Router.go(t), t); await page.waitForTimeout(1300);
@@ -45,10 +49,17 @@ const { launch } = require('./lib');
     ok(!(await open(page)), 'a card covers the Boosts sheet');
     await page.evaluate(() => BR.Back.closeTop()); await page.waitForTimeout(700);
 
-    // the opening card comes with the first chest
+    // the opening tip comes with the first chest, as a line under the title (M-I7): no card, and it never covers the chest or the hold button
     await page.evaluate(() => { BR.App.openChest('brick'); }); await page.waitForTimeout(3200);
-    ok(await open(page) && /chest/i.test(await title(page)), 'opening card', await title(page));
-    if (await open(page)) await close(page);
+    ok(!(await open(page)), 'a card covers the chest opening');
+    const hint = await page.evaluate(() => { const h = document.querySelector('.coach-hint'), f = document.querySelector('.hold'), c = document.querySelector('.op-title'); if (!h) return null; const r = (e) => { const b = e.getBoundingClientRect(); return { t: b.top, b: b.bottom, l: b.left, r: b.right }; }; const a = r(h), hb = r(f), cb = r(c); const hit = (x, y) => !(a.r <= y.l || a.l >= y.r || a.b <= y.t || a.t >= y.b); return { text: h.textContent, overlapsHold: hit(a, hb), overlapsChest: hit(a, cb), tall: a.b - a.t, on: h.classList.contains('on') }; });
+    ok(hint && /hold/i.test(hint.text) && hint.on, 'no hold hint line on the first chest', JSON.stringify(hint));
+    ok(hint && !hint.overlapsHold && !hint.overlapsChest && hint.tall <= 64, 'the hold hint covers the title or the hold button, or is more than a line', JSON.stringify(hint));
+    // a short press says to keep holding (M-I21)
+    await page.evaluate(() => { document.querySelector('.coach-hint .tb-x').click(); }); await page.waitForTimeout(500);
+    const hb = await page.locator('.hold').boundingBox();
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down(); await page.waitForTimeout(250); await page.mouse.up(); await page.waitForTimeout(700);
+    ok(await page.evaluate(() => { const h = document.querySelector('.coach-hint'); return !!h && /keep holding/i.test(h.textContent); }), 'an early release did not say to keep holding');
     await page.evaluate(() => { BR.Openings.current.close(false); }); await page.waitForTimeout(700);
     // never during a run
     await page.evaluate(() => { BR.Storage.data.seen = {}; __app.startRun({ mode: 'rush', boosts: {} }); });

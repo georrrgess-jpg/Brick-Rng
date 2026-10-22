@@ -16,6 +16,10 @@ const { launch } = require('./lib');
   ok(await page.evaluate(() => BR.Progress.equipped('skin').item.name === 'Magma'), 'the item is not worn during Try it');
   ok(await page.evaluate(() => JSON.stringify(BR.Storage.loadRun()) === '{"marker":"real-run"}'), 'a saved run was overwritten by the practice board');
   await page.waitForFunction(() => BR.Router.current === 'collection', null, { timeout: 20000 });
+  // Update 5 (M-I6): the practice board ends on the item sheet it came from, so the player can equip what they just tried
+  await page.waitForSelector('.sheet.detail-sheet.on', { timeout: 5000 }).catch(() => {});
+  ok(await page.evaluate(() => { const t = document.querySelector('.sheet.detail-sheet.on h2'); return !!t && t.textContent === 'Magma'; }), 'Try it did not return to the item sheet');
+  await page.evaluate(() => BR.Back.closeTop()); await page.waitForTimeout(600);
   ok(await page.evaluate((b) => JSON.stringify(BR.Storage.data.profile.loadout) === b, before), 'the loadout did not come back');
   ok(await page.evaluate(() => JSON.stringify(BR.Storage.loadRun()) === '{"marker":"real-run"}'), 'the saved run is gone after Try it');
   ok(await page.evaluate(() => BR.Storage.data.runs === 12), 'Try it counted as a run');
@@ -37,6 +41,8 @@ const { launch } = require('./lib');
   { const m = await snap(); ok(m.coins === was.coins && m.runs === was.runs && m.xp === was.xp, 'bankSilently paid or counted a practice board', JSON.stringify(was), JSON.stringify(m)); }
   await page.click('.sheet [data-p="stop"]');
   await page.waitForFunction(() => BR.Router.current === 'collection', null, { timeout: 10000 });
+  await page.waitForSelector('.sheet.detail-sheet.on', { timeout: 5000 }).catch(() => {});
+  await page.evaluate(() => BR.Back.closeTop()); await page.waitForTimeout(600);
   const after = await snap();
   ok(after.coins === was.coins && after.runs === was.runs && after.lo === was.lo && after.run === was.run && after.xp === was.xp, 'Stop trying it changed Coins, runs, XP, the loadout or the saved run', JSON.stringify(was), JSON.stringify(after));
 
