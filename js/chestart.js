@@ -115,7 +115,7 @@
 
   /* ======================================================================= Board Chest */
   function board() {
-    const tc = ['#ff5468', '#4a8dff', '#34d98a', '#ffcf3f', '#b36bff', '#ff8a3d', '#25d0f0', '#ff5468', '#4a8dff'];
+    const tc = ['#ff5468', '#4a8dff', '#34d98a', '#ffcf3f', '#d46bf2', '#ff8a3d', '#25d0f0', '#ff5468', '#4a8dff'];
     const tiles = tc.map((c, i) => `<rect class="tile t${i}" x="${70 + (i % 3) * 21}" y="${64 + Math.floor(i / 3) * 15}" width="18" height="12" rx="3.2" fill="${c}"/><rect x="${71.5 + (i % 3) * 21}" y="${65 + Math.floor(i / 3) * 15}" width="15" height="3.4" rx="1.7" fill="#fff" opacity=".35"/>`).join('');
     const ice = [[44, 14], [60, 9], [76, 12], [124, 11], [140, 15], [156, 10]].map(([x, h]) => `<path d="M${x - 4} 110L${x + 4} 110L${x} ${110 + h}Z" fill="#e8fbff" opacity=".92"/>`).join('');
     const dome = 'M34 112Q34 46 100 42Q166 46 166 112Z';

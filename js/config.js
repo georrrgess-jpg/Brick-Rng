@@ -95,7 +95,9 @@
     { name: 'Sapphire', hi: '#78adff', lo: '#2759dc', glow: '#4a8dff' },
     { name: 'Emerald', hi: '#68f2ac', lo: '#0f9c5d', glow: '#34d98a' },
     { name: 'Topaz', hi: '#ffe272', lo: '#e79a08', glow: '#ffcf3f' },
-    { name: 'Amethyst', hi: '#cb98ff', lo: '#7d33dc', glow: '#b36bff' },
+    // Amethyst was a blue-violet that merged with Sapphire for colour-blind players (CIEDE2000 1.9 to 3.9 under deuteranopia and protanopia);
+    // it is now an orchid magenta (7.5 and 9.5, and 27.6 for everyone else). Shape hints still tell them apart by outline.
+    { name: 'Amethyst', hi: '#d98cf0', lo: '#9a1f94', glow: '#d46bf2' },
     { name: 'Amber', hi: '#ffae6e', lo: '#e55a18', glow: '#ff8a3d' },
     { name: 'Aqua', hi: '#7ae8ff', lo: '#0f9cc4', glow: '#25d0f0' },
   ];
