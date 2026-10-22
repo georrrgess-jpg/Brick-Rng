@@ -7,7 +7,7 @@
   const P = BR.Progress;
   const R = (id) => BR.rarityById[id];
   const FIRST_LOCKED = 0;    // small "not found yet" tiles built up front
-  const FIRST_CARDS = 6;     // cards the Collection grid builds before its first frame; the rest fill in afterwards
+  const FIRST_CARDS = 4;     // cards the Collection grid builds before its first frame; the rest fill in afterwards
   const LITE = { lite: true };   // static chest art for lists: one flat SVG instead of a stack of layers
   const ringSVG = (frac, size = 44, w = 5) => {
     const r = (size - w) / 2, c = 2 * Math.PI * r;
