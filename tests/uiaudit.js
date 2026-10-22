@@ -43,6 +43,9 @@ async function audit_one(width, height, large) {
   await run('missions', () => { BR.Router.screens.missions.tab = 'daily'; BR.Router.go('missions'); BR.Router.rerender(); });
   await run('pass', () => { BR.Router.screens.missions.tab = 'pass'; BR.Router.go('missions'); BR.Router.rerender(); }, 1500);
   await run('trophies', () => { BR.Router.screens.missions.tab = 'trophies'; BR.Router.go('missions'); BR.Router.rerender(); });
+  await run('hats', () => { BR.Progress.grantHat('h_top'); const C = BR.Router.screens.collection; C.type = 'hat'; C.view = 'items'; BR.Router.go('collection'); BR.Router.rerender(); }, 1500);
+  await run('tower', () => { const C = BR.Router.screens.collection; C.type = 'skin'; C.view = 'tower'; BR.Router.go('collection'); BR.Router.rerender(); }, 1800);
+  await page.evaluate(() => { const C = BR.Router.screens.collection; C.view = 'items'; C.type = 'skin'; });
   await run('profile', () => BR.Router.go('profile'));
   await page.evaluate(() => BR.Router.go('home')); await page.waitForTimeout(900);   // let the screen settle: animations pause under a sheet
   const sheet = async (label, fn, ms) => { await run(label, fn, ms); await page.evaluate(() => { while (BR.Back.depth) BR.Back.closeTop(); }); await page.waitForTimeout(550); };
@@ -52,6 +55,10 @@ async function audit_one(width, height, large) {
   await sheet('settings', () => BR.settingsSheet(), 900);
   await sheet('item', () => { const v = BR.Storage.data.profile.vault[0]; BR.itemSheet(v.uid, BR.itemById[v.itemId].type); }, 1200);
   await sheet('locked', () => { const it = BR.ITEMS.find((i) => !BR.Progress.owns(i.id) && !i.pass); BR.lockedSheet(it.id); }, 900);
+  await sheet('hat', () => BR.hatSheet('h_top'), 1000);
+  await sheet('hat locked', () => BR.hatLockedSheet('h_pom'), 900);
+  await sheet('spotlight', () => { BR.itemSheet(null, null, BR.itemById.f_hourglass); }, 1200);
+  await sheet('whats new', () => { const d = BR.Storage.data; d.seen.whatsnew5 = false; d.runs = 12; BR.Coach.whatsNew(); }, 1000);
   if (full) {
     await run('run', () => { BR.Router.go('home'); __app.startRun({ mode: 'rush', boosts: {} }); }, 2500);
     await run('pause', () => { BR.Run.pause(); }, 900);

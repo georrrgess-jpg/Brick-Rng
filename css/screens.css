@@ -107,7 +107,7 @@
 .spotlight:active { transform: scale(0.985); }
 .sp-badge { width: 64px; height: 64px; display: grid; place-items: center; }
 .sp-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.sp-txt small { font: 800 calc(11px * var(--ts)) var(--f-ui); letter-spacing: 0.12em; text-transform: uppercase; color: #cfe0ff; }
+.sp-txt small { font: 800 calc(12px * var(--ts)) var(--f-ui); letter-spacing: 0.12em; text-transform: uppercase; color: #cfe0ff; }
 .sp-txt b { font-size: calc(20px * var(--ts)); line-height: 1.1; overflow-wrap: anywhere; }
 .sp-txt em { font: 700 calc(13px * var(--ts)) var(--f-ui); font-style: normal; color: var(--muted); }
 .sp-go { width: 24px; height: 24px; display: grid; place-items: center; color: #cfe0ff; } .sp-go svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
