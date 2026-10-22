@@ -58,14 +58,14 @@
   /* The pop the recipes are drawing right now, as the handler below saw it: its size, centre and a call counter, so a recipe can ration
      itself ("every second brick sends a bird") and lean away from the group. Stale after 800 ms; Reduce Motion never sets it (the handler
      does not run), and the recipes then fall back to counting their own calls. */
-  const PC = { dir: 1, t: -1e9, last: -1e9, size: 0, cx: 0, cy: 0, k: 0, birds: 0, ghosts: 0, rush: false, nodes: null, portal: null, hang: 0 };
+  const PC = { dir: 1, t: -1e9, last: -1e9, size: 0, cx: 0, cy: 0, k: 0, birds: 0, ghosts: 0, nodes: null, portal: null, hang: 0 };
   function popInfo() {
     const t = now(), fresh = t - PC.t < 800;
     if (!fresh && t - PC.last > 350) { PC.k = 0; PC.birds = 0; PC.ghosts = 0; }
     PC.last = t; PC.k++;
     return { fresh, size: fresh ? PC.size : 0, k: PC.k, cx: fresh ? PC.cx : null, cy: fresh ? PC.cy : null };
   }
-  const rushOn = () => { const e = BR.Run && BR.Run.engine; return !!(e && e.rush && e.rush.active) || PC.rush; };
+  const rushOn = () => { const e = BR.Run && BR.Run.engine; return !!(e && e.rush && e.rush.active && BR.Router && BR.Router.current === 'run'); };
 
   /* ------------------------------------------------------------------ shared bitmaps (baked the first time they are needed) */
   /** A soft round glow: a white-hot centre fading through the colour to nothing. */
@@ -96,7 +96,7 @@
     let g = c.createRadialGradient(cx, cy, 2, cx, cy, 22); g.addColorStop(0, 'rgba(8,16,8,.34)'); g.addColorStop(1, 'rgba(8,16,8,0)');
     c.fillStyle = g; c.fillRect(0, 0, 64, 64);
     g = c.createRadialGradient(cx, cy, 0, cx, cy, 31);
-    g.addColorStop(0, rgba(mix(glow, WHITE, 0.5), 0.95)); g.addColorStop(0.28, rgba(glow, 0.62)); g.addColorStop(0.62, rgba(glow, 0.2)); g.addColorStop(1, rgba(glow, 0));
+    g.addColorStop(0, rgba(mix(glow, WHITE, 0.45), 1)); g.addColorStop(0.3, rgba(glow, 0.8)); g.addColorStop(0.62, rgba(glow, 0.34)); g.addColorStop(1, rgba(glow, 0));
     c.fillStyle = g; c.fillRect(0, 0, 64, 64);
     // two pale, nearly clear wings behind the bulb
     c.fillStyle = 'rgba(240,255,232,.55)';
@@ -268,7 +268,7 @@
   const mulberry = (s) => () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const flakePts = (seed) => { const R = mulberry(seed), k = 6 + ((R() * 2) | 0), pts = []; for (let i = 0; i < k; i++) { const a = (i / k) * TAU + R() * 0.5, r = 8.2 + R() * 4.6; pts.push([14 + Math.cos(a) * r, 14 + Math.sin(a) * r * 0.9]); } return pts; };
   const flakeImg = (C, shape, dark) => bake('s4flake' + (dark ? C.glow : 'b') + shape + (dark ? 'd' : 'l'), 28, 28, (c) => {
-    const pts = flakePts(shape * 31 + 7), tones = dark ? [mix('#b8741c', C.glow, 0.3), mix('#e0a030', C.hi, 0.2), mix('#9c600e', C.glow, 0.26), mix('#f0b43c', C.hi, 0.18)] : ['#fff6c4', '#ffe27a', '#ffd04a', '#f6b73a'];
+    const pts = flakePts(shape * 31 + 7), tones = dark ? [mix('#cc8a22', C.glow, 0.26), mix('#eab038', C.hi, 0.2), mix('#b8741a', C.glow, 0.24), mix('#f6c24a', C.hi, 0.16)] : ['#fff6c4', '#ffe27a', '#ffd04a', '#f6b73a'];
     c.lineJoin = 'round';
     // facets fan out from an off-centre crinkle point
     const o = [14 + (shape - 1) * 1.6, 13.5];
@@ -556,7 +556,7 @@
     const shapes = '<circle r="46"/><rect x="-32.5" y="-32.5" width="65" height="65"/><path d="M0 -32.5L32.5 32.5H-32.5Z"/><circle cy="12.4" r="20"/>';
     let ticks = '';
     for (let i = 0; i < 24; i++) { const a = i * TAU / 24, r1 = i % 2 ? 49 : 52; ticks += `<path d="M${(Math.cos(a) * 46).toFixed(1)} ${(Math.sin(a) * 46).toFixed(1)}L${(Math.cos(a) * r1).toFixed(1)} ${(Math.sin(a) * r1).toFixed(1)}"/>`; }
-    return `<svg viewBox="-56 -56 112 112" fill="none" stroke-linejoin="round" stroke-linecap="round"><g stroke="#ff9a1e" stroke-width="4.2" opacity=".5">${shapes}${ticks}</g><g stroke="#fff0b0" stroke-width="1.6">${shapes}${ticks}</g></svg>`;
+    return `<svg viewBox="-56 -56 112 112" fill="none" stroke-linejoin="round" stroke-linecap="round"><g stroke="#4a2400" stroke-width="5.6" opacity=".8">${shapes}${ticks}</g><g stroke="#ff9a1e" stroke-width="3.6" opacity=".9">${shapes}${ticks}</g><g stroke="#fff0b0" stroke-width="1.5">${shapes}${ticks}</g></svg>`;
   });
   MO.goldleaf = {
     pop(G, d, ctx) {
@@ -628,42 +628,61 @@
 
   /* ===================================================================== SANDFALL moments */
   /** Points of an hourglass (two cones meeting at the waist, a cap at each end), in px around its centre. */
+  const HG_W = 25, HG_H = 41;
   const HOURGLASS = () => once('hg', () => {
-    const W = 19, H = 32, pts = [];
-    for (let i = 0; i < 5; i++) { const x = -W + (i * 2 * W) / 4; pts.push([x, -H, 1], [x, H, 0]); }
-    for (let k = 1; k <= 4; k++) { const t = k / 4; pts.push([-W * (1 - t), -H * (1 - t), 1], [W * (1 - t), -H * (1 - t), 1], [-W * (1 - t), H * (1 - t), 0], [W * (1 - t), H * (1 - t), 0]); }
-    pts.push([0, -8, 1], [0, 8, 0]);
+    const W = HG_W, H = HG_H, pts = [];
+    for (let i = 0; i < 4; i++) { const x = -W + (i * 2 * W) / 3; pts.push([x, -H, 1], [x, H, 0]); }
+    for (let k = 1; k <= 3; k++) { const t = k / 3.4; pts.push([-W * (1 - t), -H * (1 - t), 1], [W * (1 - t), -H * (1 - t), 1], [-W * (1 - t), H * (1 - t), 0], [W * (1 - t), H * (1 - t), 0]); }
     return pts;
+  });
+  /** The hourglass drawn once as a bitmap: a glass outline, the sand in its top and bottom bulbs, a thread of sand through the waist, in the brick's tint. */
+  const hourglassImg = (C) => bake('s4hg' + C.glow, 64, 104, (c) => {
+    const sand = mix('#f0d49a', C.hi, 0.45), glassLine = mix('#fff3d2', C.hi, 0.2), cx = 32;
+    c.lineJoin = c.lineCap = 'round';
+    const glass = () => { c.beginPath(); c.moveTo(10, 10); c.lineTo(54, 10); c.lineTo(54, 20); c.quadraticCurveTo(54, 40, 36, 52); c.quadraticCurveTo(54, 64, 54, 84); c.lineTo(54, 94); c.lineTo(10, 94); c.lineTo(10, 84); c.quadraticCurveTo(10, 64, 28, 52); c.quadraticCurveTo(10, 40, 10, 20); c.closePath(); };
+    glass(); c.fillStyle = 'rgba(255,240,205,.16)'; c.fill();
+    c.fillStyle = rgba(sand, 0.95);
+    c.beginPath(); c.moveTo(16, 22); c.lineTo(48, 22); c.quadraticCurveTo(47, 38, 34, 48); c.lineTo(30, 48); c.quadraticCurveTo(17, 38, 16, 22); c.closePath(); c.fill();
+    c.fillRect(cx - 1, 50, 2, 30);
+    c.beginPath(); c.moveTo(14, 90); c.quadraticCurveTo(22, 70, cx, 70); c.quadraticCurveTo(42, 70, 50, 90); c.closePath(); c.fill();
+    c.shadowColor = rgba(C.glow, 0.8); c.shadowBlur = 6 * dpr();
+    glass(); c.strokeStyle = rgba(glassLine, 0.95); c.lineWidth = 2.6; c.stroke();
+    c.shadowBlur = 0;
+    c.fillStyle = rgba(mix('#d9a850', C.hi, 0.3), 1); c.fillRect(6, 4, 52, 7); c.fillRect(6, 93, 52, 7);
+    c.fillStyle = 'rgba(255,255,255,.7)'; c.fillRect(8, 5, 48, 2);
   });
   function hgStep(p, dt, e) {
     const u = p.life;
     if (u < e.g1) { const m = easeOut(u / e.g1); p.x = lerp(e.sx, e.tx, m); p.y = lerp(e.sy, e.ty, m); }
-    else if (u < e.p0) { p.x = e.tx + Math.sin(u * 38 + e.ph) * 1.1; p.y = e.ty + (e.top ? (u - e.g1) * 16 : 0) + Math.cos(u * 33 + e.ph) * 1.1; }
-    else { const m = clamp((u - e.p0) / e.fl, 0, 1), s = easeIn(m); p.x = lerp(e.tx, e.rx, s) + Math.sin(m * Math.PI) * e.arc; p.y = lerp(e.ty, e.ry, s); }
+    else { p.x = e.tx + Math.sin(u * 38 + e.ph) * 1.1; p.y = e.ty + (e.top ? Math.min(0.12, u - e.g1) * 14 : 0) + Math.cos(u * 33 + e.ph) * 1.1; }
     p.vx = p.vy = 0;
   }
   const grainCols = (C) => [C.hi, mix(C.hi, WHITE, 0.42), SAND[0], SAND[1], SAND[2], C.hi];
   MO.sandfall = {
     pop(G, d, ctx) {
       const fx = ctx.fx, n = G.n; if (n < 8 || G.line) return;
-      const C = tints(G.col.glow, G.col.hi), ro = readout(G), cols = grainCols(C);
+      const C = tints(G.col.glow, G.col.hi), ro = readout(G), cols = grainCols(C), W = HG_W, H = HG_H, cx = G.c0.x, cy = G.c0.y;
       let pts = HOURGLASS(); if (BR.lowEnd) pts = pts.filter((q, i) => i % 2 === 0);
-      const t0 = 60;
+      const t0 = 40, HOLD = 0.27;
+      // 1. the grains gather from the group into the shape (90 ms), the shape holds, and the glass appears around them
       pts.forEach((q, i) => {
         const src = G.cells[(Math.random() * G.cells.length) | 0];
-        const e = { sx: src.x + rnd(-14, 14), sy: src.y + rnd(-14, 14), tx: G.c0.x + q[0], ty: G.c0.y + q[1], top: q[2], rx: ro.x + rnd(-6, 6), ry: ro.y + rnd(-4, 4), g1: 0.1, p0: 0.29 + i * 0.003, fl: 0.14, ph: rnd(0, TAU), arc: rnd(-14, 14) };
-        later(() => { const p = mo(fx, { kind: 'shard', shape: 'pixel', x: e.sx, y: e.sy, size: rnd(2.6, 3.6), spread: 0, max: e.p0 + e.fl, color: cols[i % cols.length], g: 0, drag: 0, rot: 0, vr: 0 }); steer(p, hgStep, e); }, t0);
+        const e = { sx: src.x + rnd(-14, 14), sy: src.y + rnd(-14, 14), tx: cx + q[0], ty: cy + q[1], top: q[2], g1: 0.09, ph: rnd(0, TAU) };
+        later(() => { const p = mo(fx, { kind: 'shard', shape: 'pixel', x: e.sx, y: e.sy, size: rnd(3.4, 4.6), spread: 0, max: HOLD, color: cols[i % cols.length], g: 0, drag: 0, rot: 0, vr: 0 }); steer(p, hgStep, e); }, t0);
       });
-      // the shape, drawn thin behind the grains while they hold
-      const W = 19, H = 32, cx = G.c0.x, cy = G.c0.y, lc = mix(SAND[2], C.hi, 0.25);
       later(() => {
-        [[-W, -H, W, -H], [-W, H, W, H], [-W, -H, W, H], [W, -H, -W, H]].forEach((s) => mlink(fx, cx + s[0], cy + s[1], cx + s[2], cy + s[3], lc, 0.26, 1.3));
+        mspr(fx, { img: hourglassImg(C), x: cx, y: cy, size: 64, max: 0.24, a: 1, fadeIn: 0.3, drag: 1 });
         sound('whoosh');
-      }, t0 + 100);
-      // the time chip lands in a sandy puff
+      }, t0 + 90);
+      // 2. then it pours toward the fuse readout: pinches of sand, head first, one every 22 ms
+      for (let i = 0, k = cnt(6); i < k; i++) later(() => {
+        const sx = cx + rnd(-8, 8), sy = cy + rnd(0, 14), dx = ro.x - sx, dy = ro.y - sy, fl = 0.17;
+        mspr(fx, { img: sandStreak(C, i % 2), x: sx, y: sy, vx: dx / fl, vy: dy / fl, drag: 0, size: 14, max: fl, a: 1, fadeIn: 0.05, rot: Math.atan2(-dx, dy), sy: 1.15 });
+      }, t0 + HOLD * 1000 + i * 20);
+      // 3. the time chip lands in a sandy puff
       later(() => {
-        mspr(fx, { img: sandPuff(C), x: ro.x, y: ro.y, size: 46, max: 0.2, a: 0.9, grow: 0.7 });
-        for (let i = 0, k = cnt(6); i < k; i++) { const a = rnd(0, TAU), s = rnd(40, 120); mo(fx, { kind: 'spark', x: ro.x, y: ro.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, drag: 2.2, size: rnd(1.6, 2.8), max: rnd(0.14, 0.2), color: pick(SAND) }); }
+        mspr(fx, { img: sandPuff(C), x: ro.x, y: ro.y, size: 48, max: 0.2, a: 0.9, grow: 0.7 });
+        for (let i = 0, k = cnt(4); i < k; i++) { const a = rnd(0, TAU), s = rnd(40, 120); mo(fx, { kind: 'spark', x: ro.x, y: ro.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, drag: 2.2, size: rnd(1.8, 3), max: rnd(0.14, 0.2), color: pick(SAND) }); }
       }, 370);
     },
     line(d, ctx) {
@@ -672,16 +691,21 @@
       L.pts.forEach((q, j) => {
         const delay = (L.horiz ? Math.abs(j - L.at) : j) * 18;
         later(() => {
-          mspr(fx, { img: sandStreak(C, j % 2), x: q.x + rnd(-6, 6), y: q.y, vx: rnd(-14, 14), vy: rnd(120, 260), g: 1500, drag: 0.5, size: rnd(8, 11), max: rnd(0.34, 0.44), a: 1, fadeIn: 0.04, sy: 1.2 });
+          if (!BR.lowEnd || j % 2 === 0) mspr(fx, { img: sandStreak(C, j % 2), x: q.x + rnd(-6, 6), y: q.y, vx: rnd(-14, 14), vy: rnd(120, 260), g: 1500, drag: 0.5, size: rnd(11, 15), max: rnd(0.34, 0.44), a: 1, fadeIn: 0.04, sy: 1.2 });
           for (let k = 0, m = cnt(3); k < m; k++) mo(fx, { kind: 'shard', shape: 'pixel', x: q.x + rnd(-12, 12), y: q.y + rnd(-6, 8), vx: rnd(-26, 26), vy: rnd(60, 280), g: 1500, drag: 0.5, size: rnd(1.8, 3), spread: 0, max: rnd(0.32, 0.44), color: cols[(j + k) % cols.length], rot: 0, vr: 0 });
         }, delay);
       });
     },
     stageUp(d, ctx) {
-      const fx = ctx.fx, b = boardRect(d.run ? { view: d.run.view } : ctx), k = cnt(40);
-      for (let i = 0; i < k; i++) {
-        const x = b.left + ((i + 0.5) / k) * b.width + rnd(-4, 4), c = i % 4 === 3 ? BR.PALETTE[i % 7].hi : pick(SAND);
-        later(() => mo(fx, { kind: 'shard', shape: 'pixel', x, y: b.top - 8, vx: rnd(-12, 12), vy: rnd(160, 300), g: 1300, drag: 0.5, size: rnd(2, 3.4), spread: 0, max: rnd(0.5, 0.62), color: c, rot: 0, vr: 0 }), rnd(0, 150));
+      // a curtain of sand: pinches of sand (baked columns of grains) side by side across the board, with loose grains between them, all falling top to bottom
+      const fx = ctx.fx, b = boardRect(d.run ? { view: d.run.view } : ctx), ks = cnt(24), kg = cnt(16), C = tints(BR.PALETTE[(d.info && d.info.to ? d.info.to : 1) % 7].glow);
+      for (let i = 0; i < ks; i++) {
+        const x = b.left + ((i + 0.5) / ks) * b.width + rnd(-3, 3);
+        later(() => mspr(fx, { img: sandStreak(C, i % 2), x, y: b.top - 34, vx: rnd(-8, 8), vy: rnd(200, 300), g: 1500, drag: 0.4, size: rnd(14, 18), max: rnd(0.5, 0.62), a: 1, fadeIn: 0.05, sy: 1.3 }), rnd(0, 170));
+      }
+      for (let i = 0; i < kg; i++) {
+        const x = b.left + ((i + 0.5) / kg) * b.width + rnd(-8, 8), c = i % 3 === 2 ? BR.PALETTE[i % 7].hi : pick(SAND);
+        later(() => mo(fx, { kind: 'shard', shape: 'pixel', x, y: b.top - 8, vx: rnd(-12, 12), vy: rnd(160, 300), g: 1300, drag: 0.5, size: rnd(3, 4.4), spread: 0, max: rnd(0.5, 0.62), color: c, rot: 0, vr: 0 }), rnd(0, 170));
       }
     },
   };
@@ -702,12 +726,22 @@
   const swirlSvg = () => once('swirl', () => {
     let arms = '';
     for (let k = 0; k < 4; k++) { let dd = ''; for (let i = 0; i <= 40; i++) { const t = i / 40, r = 8 + t * 88, a = k * TAU / 4 + t * 5.4; dd += (i ? 'L' : 'M') + (Math.cos(a) * r).toFixed(1) + ' ' + (Math.sin(a) * r).toFixed(1); } arms += `<path d="${dd}" stroke="${k % 2 ? '#ffd36a' : '#27dcc6'}"/>`; }
-    return `<svg viewBox="-100 -100 200 200" fill="none" stroke-width="1.8" stroke-linecap="round"><g opacity=".9">${arms}</g><circle r="97" stroke="#27dcc6" stroke-width="1.4" opacity=".7"/><circle r="90" stroke="#ffd36a" stroke-width=".9" opacity=".5" stroke-dasharray="2 7"/></svg>`;
+    return `<svg viewBox="-100 -100 200 200" fill="none" stroke-width="2.6" stroke-linecap="round"><g opacity=".95">${arms}</g><circle r="97" stroke="#27dcc6" stroke-width="2" opacity=".8"/><circle r="90" stroke="#ffd36a" stroke-width="1.4" opacity=".6" stroke-dasharray="2 7"/></svg>`;
   });
-  const RUSH = { swirl: null, sky: null, ghosts: 0 };
+  const RUSH = { swirl: null, sky: null, watch: 0 };
   const killEl = (k, ms) => {
     const el = RUSH[k]; RUSH[k] = null; if (!el) return;
     if (el.animate && ms) { const a = el.animate([{ opacity: +getComputedStyle(el).opacity || 1 }, { opacity: 0 }], { duration: ms, fill: 'forwards' }); a.onfinish = () => el.remove(); setTimeout(() => el.remove(), ms + 200); } else el.remove();
+  };
+  /** The Rush decorations live in the app-wide background, so they must go when Rush ends however the run is left (quitting from the pause
+      menu fires no Rush-end event): while one exists, a slow check takes it down as soon as the run is no longer in Rush. */
+  const watchRush = () => {
+    if (RUSH.watch) return;
+    RUSH.watch = setInterval(() => {
+      const run = BR.Run && BR.Run.el, on = !!(run && run.classList.contains('rushing')) && (!BR.Router || BR.Router.current === 'run');
+      if (!on) { killEl('swirl', 240); killEl('sky', 240); }
+      if (!RUSH.swirl && !RUSH.sky) { clearInterval(RUSH.watch); RUSH.watch = 0; }
+    }, 400);
   };
   MO.whirlgate = {
     pop(G, d, ctx) {
@@ -748,11 +782,11 @@
         cssOnce(); killEl('swirl');
         const S = b.width * 1.62, el = document.createElement('div');
         el.className = 's4-swirl';
-        el.style.cssText = `left:${(cx - S / 2).toFixed(1)}px;top:${(cy - S / 2).toFixed(1)}px;width:${S.toFixed(1)}px;height:${S.toFixed(1)}px;opacity:.34`;
+        el.style.cssText = `left:${(cx - S / 2).toFixed(1)}px;top:${(cy - S / 2).toFixed(1)}px;width:${S.toFixed(1)}px;height:${S.toFixed(1)}px;opacity:.5`;
         el.innerHTML = '<i>' + swirlSvg() + '</i>';
         bg.insertBefore(el, bg.querySelector('.vignette'));
-        if (el.animate) el.animate([{ transform: 'scale(0.3)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 0.8, offset: 0.55 }, { transform: 'scale(1)', opacity: 0.34 }], { duration: 640, easing: 'cubic-bezier(0.2,0.7,0.3,1)' });
-        RUSH.swirl = el;
+        if (el.animate) el.animate([{ transform: 'scale(0.3)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 0.9, offset: 0.55 }, { transform: 'scale(1)', opacity: 0.5 }], { duration: 640, easing: 'cubic-bezier(0.2,0.7,0.3,1)' });
+        RUSH.swirl = el; watchRush();
       }
       // a ring of comets wheels once around the board as the gate opens
       const k = cnt(12), ti = cometImg(TEAL, TEAL_D), gi = cometImg('#ffe08a', GOLD_D), rx = b.width / 2 + 18, ry = b.height / 2 + 36;
@@ -780,13 +814,14 @@
   }
 
   /* ===================================================================== CONSTELLATION moments */
+  /* the three creatures, facing right, as a star map: points in a 100 x 100 box and the lines between them */
   const CREATURES = {
-    stag: { pts: [[14, 45], [24, 48], [44, 43], [64, 45], [68, 58], [46, 58], [28, 58], [76, 32], [90, 35], [80, 40], [74, 26], [70, 14], [80, 12], [64, 8], [86, 4], [78, 66], [90, 62], [66, 72], [74, 84], [14, 66], [6, 60], [22, 72], [14, 84]],
-      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 1], [3, 7], [7, 8], [8, 9], [9, 7], [7, 10], [10, 11], [10, 12], [11, 13], [12, 14], [4, 15], [15, 16], [4, 17], [17, 18], [6, 19], [19, 20], [6, 21], [21, 22]] },
-    whale: { pts: [[94, 54], [84, 42], [66, 36], [46, 38], [28, 46], [18, 52], [6, 34], [14, 50], [4, 66], [28, 62], [48, 68], [70, 68], [86, 62], [82, 52], [58, 82], [62, 68], [80, 40], [78, 28], [70, 18], [88, 20]],
-      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 5], [4, 9], [9, 10], [10, 11], [11, 12], [12, 0], [11, 15], [15, 14], [14, 10], [16, 17], [17, 18], [17, 19]] },
-    fox: { pts: [[92, 48], [82, 40], [78, 24], [74, 38], [90, 26], [86, 38], [80, 54], [70, 44], [48, 40], [28, 46], [16, 38], [6, 26], [10, 48], [32, 58], [54, 58], [68, 56], [72, 78], [60, 80], [30, 80], [42, 80]],
-      lines: [[1, 2], [2, 3], [1, 4], [4, 5], [1, 0], [0, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 9], [9, 13], [13, 14], [14, 15], [15, 7], [15, 16], [15, 17], [13, 18], [14, 19]] },
+    stag: { pts: [[14, 46], [36, 40], [60, 41], [70, 30], [82, 25], [93, 31], [79, 18], [73, 9], [64, 3], [86, 8], [93, 2], [70, 14], [62, 12], [64, 58], [42, 59], [22, 56], [62, 75], [61, 92], [72, 60], [75, 76], [76, 92], [20, 74], [18, 92], [33, 59], [36, 75], [34, 92], [6, 40]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [4, 6], [6, 7], [7, 8], [6, 9], [9, 10], [7, 11], [11, 12], [2, 13], [13, 14], [14, 15], [15, 0], [13, 16], [16, 17], [13, 18], [18, 19], [19, 20], [15, 21], [21, 22], [14, 23], [23, 24], [24, 25], [0, 26]] },
+    whale: { pts: [[95, 52], [85, 40], [62, 33], [40, 37], [22, 47], [6, 29], [14, 48], [7, 67], [36, 63], [60, 69], [82, 63], [50, 85], [68, 75], [82, 50], [77, 35], [77, 21], [68, 11], [87, 11]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 4], [4, 8], [8, 9], [9, 10], [10, 0], [9, 11], [11, 12], [12, 9], [14, 15], [15, 16], [15, 17], [1, 14]] },
+    fox: { pts: [[95, 51], [84, 44], [76, 38], [69, 19], [64, 36], [81, 21], [88, 55], [70, 49], [46, 46], [24, 50], [10, 45], [4, 31], [8, 17], [19, 10], [30, 62], [58, 62], [67, 58], [64, 78], [64, 92], [72, 60], [74, 80], [75, 92], [28, 80], [26, 92], [38, 62], [40, 80], [42, 92]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 1], [0, 6], [6, 16], [2, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [9, 14], [14, 15], [15, 16], [16, 7], [15, 17], [17, 18], [16, 19], [19, 20], [20, 21], [14, 22], [22, 23], [24, 25], [25, 26], [15, 24]] },
   };
   const creatureOf = (idx) => (idx === 0 || idx === 5 ? 'fox' : idx === 1 || idx === 6 ? 'whale' : 'stag');   // Ruby and Amber: fox, Sapphire and Aqua: whale, the rest: stag
   const creatureSvg = (kind, C) => once('cr-' + kind + C.glow, () => {
@@ -880,7 +915,7 @@
       const el = document.createElement('div'); el.className = 's4-sky'; el.innerHTML = SKY();
       bg.insertBefore(el, bg.querySelector('.vignette'));
       if (el.animate) el.animate([{ opacity: 0 }, { opacity: 0.85 }], { duration: 700, fill: 'forwards', easing: 'ease-out' });
-      RUSH.sky = el;
+      RUSH.sky = el; watchRush();
     },
     rushEnd() { killEl('sky', 360); },
     stageUp(d, ctx) {
@@ -935,7 +970,7 @@
       const fx = ctx.fx, b = boardRect(d.run ? { view: d.run.view } : ctx), path = perimeter(b, 17, 24), C = tints(BR.PALETTE[(Math.random() * 7) | 0].glow), k = cnt(6);
       for (let i = 0; i < k; i++) {
         const Ci = tints(BR.PALETTE[i % 7].glow), img = ghostImg(Ci, false), s0 = (i / k) * path.P;
-        const p = mspr(fx, { img, x: 0, y: 0, size: 28, max: 0.84, a: 1, fadeIn: 0.1 });
+        const p = mspr(fx, { img, x: 0, y: 0, size: 38, max: 0.84, a: 1, fadeIn: 0.1 });
         steer(p, trackStep, { path, s0, dist: path.P * 0.5, dir: 1 });
         if (p) { const q = path.at(s0); p.x = q.x; p.y = q.y; }
         for (let t = 1; t <= 4; t++) later(() => mo(fx, { kind: 'spark', x: p ? p.x : 0, y: p ? p.y : 0, vx: rnd(-8, 8), vy: rnd(-8, 8), drag: 1.5, size: rnd(3, 5), max: rnd(0.16, 0.22), color: t % 2 ? Ci.hi : '#d8efff' }), t * 150);
@@ -973,7 +1008,6 @@
       PC.t = now(); PC.size = ctx.n; PC.cx = G.c0.x; PC.cy = G.c0.y; PC.k = 0; PC.birds = 0; PC.ghosts = 0; PC.nodes = null; PC.portal = null;
       if (MO[rec] && MO[rec].pop) MO[rec].pop(G, d, ctx);
     } else if (type === 'line' || type === 'rushStart' || type === 'rushEnd' || type === 'stageUp') {
-      if (type === 'rushStart') PC.rush = true; else if (type === 'rushEnd') PC.rush = false;
       const rec = BR.Skins.pop, m = MO[rec];
       if (m && m[type]) m[type](d, ctx);
       if (type === 'rushEnd') { killEl('swirl', 320); killEl('sky', 360); }
@@ -1098,5 +1132,5 @@
   if (!regBadges()) { window.addEventListener('DOMContentLoaded', regBadges); setTimeout(regBadges, 0); }
 
   /* exposed for tests/u5-pops.js */
-  BR.S4Pops = { PC, MINE, RUSH };
+  BR.S4Pops = { PC, MINE, RUSH, beasts: () => ['stag', 'whale', 'fox'].map((k) => creatureSvg(k, tints(BR.PALETTE[0].glow))) };
 })();

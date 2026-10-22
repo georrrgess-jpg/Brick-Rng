@@ -149,10 +149,10 @@ const since = (page, k) => page.evaluate((k) => window.__log.slice(k), k);
     await page.evaluate(() => { window.__t0 = performance.now(); });
     await fn();
     let last = 0, maxS = 0, maxL = 0;
-    for (let t = 0; t <= 1300; t += 1000 / 60) {
-      await frame(page, 1000 / 60);
-      const a = await page.evaluate(() => window.__alive());
-      if (a.p || a.r || a.l || a.s) last = t + 1000 / 60;
+    for (let t = 0; t < 1300; t += 25) {   // (25 ms steps: the end is measured to within one step, rounded up)
+      await page.clock.runFor(25);
+      const a = await page.evaluate(() => { window.__sync(25); return window.__alive(); });
+      if (a.p || a.r || a.l || a.s) last = t + 25;
       maxS = Math.max(maxS, a.s);
     }
     const log = await since(page, k);
@@ -181,7 +181,7 @@ const since = (page, k) => page.evaluate((k) => window.__log.slice(k), k);
       ok(m.last <= 600 + 1, `${pop} Line Blast: the moment lasts ${f1(m.last)} ms (max 600)`);
       await run(page, 1500, 50);
       // Rush start, Rush end, stage-up
-      m = await measure('rushStart', 900, async () => { await page.evaluate(() => { BR.Skins.onEvent('rushStart', { run: BR.Run, view: BR.Run.view }); }); });
+      m = await measure('rushStart', 900, async () => { await page.evaluate(() => { BR.Run.el.classList.add('rushing'); BR.Skins.onEvent('rushStart', { run: BR.Run, view: BR.Run.view }); }); });
       out[pop].rush = m;
       ok(m.mo <= 40 + 1e-9, `${pop} Rush start: ${m.mo} moment particles (max 40)`);
       ok(m.maxS <= 3, `${pop} Rush start: ${m.maxS} DOM sprites at once (max 3)`);
@@ -189,7 +189,7 @@ const since = (page, k) => page.evaluate((k) => window.__log.slice(k), k);
       const decor = await page.evaluate(() => document.querySelectorAll('#bg .s4-swirl, #bg .s4-sky').length);
       if (!opts.low && (pop === 'b_whirlgate' || pop === 'b_constellation')) ok(decor === 1, `${pop}: expected one Rush decoration while Rush runs, found ${decor}`);
       if (opts.low) ok(decor === 0, `${pop}: low-end keeps no Rush decoration (found ${decor})`);
-      await page.evaluate(() => { BR.Skins.onEvent('rushEnd', { run: BR.Run }); });
+      await page.evaluate(() => { BR.Run.el.classList.remove('rushing'); BR.Skins.onEvent('rushEnd', { run: BR.Run }); });
       await run(page, 800, 50);
       const decor2 = await page.evaluate(() => document.querySelectorAll('#bg .s4-swirl, #bg .s4-sky').length);
       ok(decor2 === 0, `${pop}: ${decor2} Rush decorations left after Rush ended`);
@@ -199,14 +199,14 @@ const since = (page, k) => page.evaluate((k) => window.__log.slice(k), k);
       ok(m.maxS <= 3, `${pop} stage-up: ${m.maxS} DOM sprites at once (max 3)`);
       ok(m.last <= 900 + 1, `${pop} stage-up: the moment lasts ${f1(m.last)} ms (max 900)`);
       // Rush: a pop in Rush adds its Rush beat (Gold Leaf dust) inside the same limits
-      await page.evaluate(() => { BR.Skins.onEvent('rushStart', { run: BR.Run, view: BR.Run.view }); const e = BR.Run.engine; e.rush.active = true; e.rush.left = 8; });
-      cells = group(9); await setBoard(page, cells, col); await run(page, 200);
+      await page.evaluate(() => { BR.Run.el.classList.add('rushing'); BR.Skins.onEvent('rushStart', { run: BR.Run, view: BR.Run.view }); const e = BR.Run.engine; e.rush.active = true; e.rush.left = 8; });
+      cells = group(9); await setBoard(page, cells, col); await run(page, 1500, 50);   // (the Rush start moment is over before the pop is measured)
       m = await measure('rushPop', 600, async () => { await tap(page, mid(cells)); });
       out[pop].rushPop = m;
       ok(m.mo <= 40 + 1e-9, `${pop} pop in Rush: ${m.mo} moment particles (max 40)`);
       ok(m.maxS <= 3, `${pop} pop in Rush: ${m.maxS} DOM sprites at once (max 3)`);
       ok(m.last <= 600 + 1, `${pop} pop in Rush: the moment lasts ${f1(m.last)} ms (max 600)`);
-      await page.evaluate(() => { BR.Run.engine.rush.active = false; BR.Skins.onEvent('rushEnd', { run: BR.Run }); });
+      await page.evaluate(() => { BR.Run.engine.rush.active = false; BR.Run.el.classList.remove('rushing'); BR.Skins.onEvent('rushEnd', { run: BR.Run }); });
       await run(page, 2600, 50);
       const left = await page.evaluate(() => ({ live: BR.U4.live.length, parts: BR.App.fx.parts.length, links: BR.App.fx.links.length, rings: BR.App.fx.rings.length, sprites: document.querySelectorAll('#s3fx > *').length, decor: document.querySelectorAll('#bg .s4-swirl, #bg .s4-sky').length }));
       ok(left.live === 0 && left.parts === 0 && left.links === 0 && left.rings === 0 && left.sprites === 0 && left.decor === 0, `${pop}: leftovers after the moments (${JSON.stringify(left)})`);
@@ -218,6 +218,19 @@ const since = (page, k) => page.evaluate((k) => window.__log.slice(k), k);
   const cell = (m) => `${String(m.mo).padStart(2)}p ${m.maxS}s ${String(Math.round(m.last)).padStart(3)}ms`;
   console.log('pop'.padEnd(16) + ['big pop', 'line', 'rush start', 'stage-up', 'pop in rush'].map((s) => s.padStart(15)).join(''));
   mrows.forEach((r) => console.log(r[0].padEnd(16) + r.slice(1).map((m) => cell(m).padStart(15)).join('')));
+
+  /* quitting in the middle of Rush fires no Rush-end event: the decorations in the background still go */
+  for (const pop of ['b_whirlgate', 'b_constellation'].filter((id) => POPS.includes(id))) {
+    await startRun(page, [pop]);
+    await page.evaluate(() => { BR.Run.el.classList.add('rushing'); BR.Skins.onEvent('rushStart', { run: BR.Run, view: BR.Run.view }); });
+    await run(page, 800, 50);
+    const during = await page.evaluate(() => document.querySelectorAll('#bg .s4-swirl, #bg .s4-sky').length);
+    ok(during === 1, `${pop}: expected one Rush decoration before quitting, found ${during}`);
+    await page.evaluate(() => { BR.Run.exitToHome(); });
+    await run(page, 1500, 50);
+    const after = await page.evaluate(() => document.querySelectorAll('#bg .s4-swirl, #bg .s4-sky').length);
+    ok(after === 0, `${pop}: ${after} Rush decorations stay on the home screen after quitting in Rush`);
+  }
 
   /* the lines Constellation draws stay inside their own life: 0.9 s, twice that in Rush */
   if (POPS.includes('b_constellation')) {
