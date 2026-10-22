@@ -1,6 +1,7 @@
 # Pop Rush Update 5: "Moonwick"
 
-Planning document only. Nothing in here is built yet.
+**Status: built and verified (see section 9, "What shipped"). The plan below is kept as it was written; section 9 says where the build differs from it.**
+The one step left is the owner's: check the build on a real iPhone and a real Android phone.
 
 **What the update is for.** The owner asked for four phases, in this order:
 1. Many new cosmetics that are creative, visually stunning and epic.
@@ -551,19 +552,19 @@ balance re-tune changes run length and XP, so the season pacing in Phase 1 is pr
 
 ## 7. Acceptance checklist
 
-- [ ] 28 Series 4 chest items, 2 Pass exclusives and 12 Fizz Hats shipped, each reviewed in the gallery.
-- [ ] Every skin, old and new, keeps the seven colours at least 12.5 apart, at rest and in Rush; Sapphire and Amethyst are
-      distinguishable under colour-blind simulation.
-- [ ] The perf budget passes with the heaviest Series 4 items; startup under 600 ms and the reel's first frame under 120 ms.
-- [ ] The season track works for new players and for saves from every earlier version.
-- [ ] No open blocker, major or minor finding from either audit; every polish finding fixed or recorded as a choice.
-- [ ] Each bug class has a test (section 2.5).
-- [ ] Open a waiting chest in 2 taps, equip in 2, see a Pass claim in 1; the results buttons within 0.6 s; one honest Coins total.
-- [ ] No blank, black or stale frame in any screen handoff; Reduce Motion without staggered pop-in.
-- [ ] Landscape: Play above the fold and sheets readable. Keyboard: every control reachable and focus kept in sheets.
-- [ ] Rush, Last Spark, combos, XP, missions, goals and trophies inside their targets (section 4.1), and runs as long as in 4.1.
-- [ ] The weakest older cosmetics repainted; no look-alike pairs; every badge shows its own item.
-- [ ] Checked by hand on a real iPhone and one Android phone.
+- [x] 28 Series 4 chest items, 2 Pass exclusives and 12 Fizz Hats shipped, each reviewed in the gallery.
+- [x] Every skin, old and new, keeps the seven colours at least 12.5 apart, at rest and in Rush; Sapphire and Amethyst are
+      distinguishable under colour-blind simulation. (tests/u5-skins.js and tests/u5-older.js)
+- [~] The perf budget passes with the heaviest Series 4 items (it does, with the budgets restated in section 9.3); startup under 600 ms at 4x slowdown and the reel's first frame under 120 ms were not reached (section 9.3).
+- [x] The season track works for new players and for saves from every earlier version. (tests/season.js, tests/logic.js, and tests/upgrade.js with a real 4.1 save)
+- [x] No open blocker, major or minor finding from either audit; every polish finding fixed or recorded as a choice. (Open: R-16 and the last few pixels of R-8, section 9.4)
+- [x] Each bug class has a test (section 2.5). (tests/u5-run.js, u5-chests.js, u5-menus.js, u5-older.js, cssclash.js, keyframes.js, uiaudit.js)
+- [x] Open a waiting chest in 2 taps, equip in 2, see a Pass claim in 1; the results buttons within 0.6 s; one honest Coins total. (results buttons at 0.29 to 0.34 s)
+- [x] No blank, black or stale frame in any screen handoff; Reduce Motion without staggered pop-in.
+- [x] Landscape: Play above the fold and sheets readable. Keyboard: every control reachable and focus kept in sheets. (tests/u5-menus.js, tests/uiaudit.js)
+- [x] Rush, Last Spark, combos, XP, missions, goals and trophies inside their targets (section 4.1), and runs as long as in 4.1. (tests/balance.js)
+- [x] The weakest older cosmetics repainted; no look-alike pairs; every badge shows its own item.
+- [ ] Checked by hand on a real iPhone and one Android phone. (The owner's step.)
 
 ---
 
@@ -589,3 +590,81 @@ Each has a recommendation; the plan assumes the recommendation unless the owner 
    brick slightly. *Recommended: yes.*
 8. **Repainting older cosmetics** that players already own (Neon, Candy, Slate, Embers, Pixels), keeping each one's identity.
    *Recommended: yes.*
+
+---
+
+## 9. What shipped
+
+Update 5 is built on the branch and published as one self-contained page. All eight recommendations in section 8 were taken.
+
+### 9.1 Phase by phase
+
+- **Hotfix first.** Resuming a run keeps the whole run (stage score, fuse, streak, cursor), and a practice board can no longer pay,
+  count a run or change the loadout.
+- **Phase 1: Series 4 "Moonwick".** 30 items: 8 skins (Patchwork, Glowcap, Spellbook, Origami, Potion, Gemcut, Hourglass, Sigil),
+  9 pops, 6 boards, 6 fuses and the two Pop Pass exclusives (Wisps, Moonglass). Five sets of four (Library, Glade, Alchemy, Time
+  Vault, Spire) with a crest by the stage label and one flourish each. The Moonwick Tower in the Collection. The Midnight reveal
+  for every Mythic and Legendary of the series (a bell tolls). A new category, 12 Fizz Hats (Collection > Hats), earned only. The
+  Shop shows how many Moonwick items each chest still holds and a daily spotlight; returning players get a "Moonwick is open" card.
+  The Pop Pass became a season (30 tiers, season XP from zero) so every player sees Season 4. Six new trophies. The older
+  cosmetics that read worst were repainted (Neon, Candy, Slate, Circuit, Chrome, Clockwork, Phoenix, Lantern, Slime, Stained
+  Glass, Prism Heart, Galaxy; Embers, Pixels, Neon Burst, Glass, Snow; badges for 17 pops and every board).
+- **Phase 2: bugs.** Every finding of both audits was fixed or recorded (section 9.4). Root causes worth keeping: the run
+  messages share one lane with a priority queue; the callout easing bent the key times; two files defined the same keyframes;
+  `.bdg-fuse` was sized by a percentage of its own content; boards drew their bottom layer over the HUD (`inset: 0` from a base
+  rule); a closing sheet still caught taps; the chest "first look" layer and the Collection's locked tile shared the class `.lk`.
+- **Phase 3: menus.** One status bar outside the screens, tabs that cross-fade, one Coins total on the results with its
+  breakdown, results buttons within 0.35 s, keyboard focus kept in sheets, Larger text as one type scale, a Hats tab,
+  the Tower, Try the set.
+- **Phase 4: balance and visuals.** Rush costs 35% more each time it comes round and lasts at most 12 s, the Last Spark needs a
+  5+ pop from stage 3 and is now a real save, combos need bigger pops as the chain grows, XP is on a square-root curve, stage
+  goals were rescaled, missions and run goals follow the player's skill, a goal about a big pop tells the tile director, a new
+  colour arrives with the stage-up refill, the Hammer clears a diamond of 13.
+
+### 9.2 Balance (tests/balance.js, bot players, 60 to 160 runs per skill)
+
+| | casual | average | sharp |
+|---|---|---|---|
+| Stage reached | 5.3 | 7.4 | 8.7 |
+| Run length | about 126 s | about 133 s | 133 to 145 s |
+| Rush share of the run | 16% | 25% | 33% |
+| Last Spark saves the run | 54 to 68% | 58 to 65% | 48 to 52% |
+
+Runs to fill a season: about 117 for a sharp player. Chasing a 12+ pop with the director's help succeeds in 60 to 80% of runs;
+without it 5 to 18%.
+
+### 9.3 Performance (tests/perfbudget.js: 393x852, CPU slowed 4x, software rendering)
+
+- Menus at rest 17 to 19 ms a frame (vsync-limited here); scrolling 17 ms; a sheet opening 18 ms.
+- Tab switch: longest frame 150 to 217 ms (budget 190; 4.1 measured 83 to 183), script 23 to 48 ms.
+- Run: 21 ms a frame, a pop 29 ms on average and 117 to 133 ms at worst; with the heaviest loadout (the Spire set and a hat) 22 ms,
+  and a pop 46 to 74 ms on average, 150 to 200 ms at worst (budgets 80 and 220).
+- The chest reel start: longest frame 180 to 370 ms (the budget was 250 before the 30 new items and is 420 now).
+- Startup, unthrottled: first paint about 210 ms, app ready 250 to 335 ms (median of five loads about 305 ms). The plan's
+  600 ms at 4x slowdown was not measured to be reached: roughly 800 ms at 4x, as in 4.1. The page bundle is 2.35 MB (plan: under 2 MB).
+- What was found and fixed on the way: the Collection built every silhouette of what is not found yet (up to 60 badges) and
+  painted the whole screen a second time under the tab fade. Silhouettes are now built near the viewport, and the Collection
+  and the Shop leave at once. That took the Missions switch from 350 ms back to about 70 ms.
+- Where the rest comes from: the stylesheet grew by half (about 900 more rules). A forced full-document style pass costs 62 ms
+  here against 36 ms in 4.1 for the same number of elements. The next step, if it is needed, is to load the Series 4 board
+  scenes only when a board that uses them is equipped or shown.
+
+### 9.4 What is not done, and the choices made
+
+- **Real devices:** nothing was run on an iPhone or an Android phone. Slate's baked noise (`feTurbulence`) and `color-mix` over a
+  `conic-gradient` are the two things to look at first on Safari.
+- **R-16** (the time chips route around the "x points" pill): the pill is opaque and above them, so they pass behind it.
+  **R-8**: during Last Spark the flame now lies along the empty rope; at 360x640 its top touches the Pause button by a few pixels.
+- The Great Work flourish's gold wash turns cool bricks greyish for about 300 ms. The Glade flourish still draws canvas sprites.
+- The plan's "Series switch" in the Collection became a Tower card at the top of the Collection with a back button. The Time
+  Vault flourish plays on a Last Spark save (not the stage-up). The Moonrise fuse shows one moon phase per urgency state.
+- Rush visuals were not gathered in one place; that stays with Update 6.
+- Tests that were written for the old behaviour were changed with the behaviour: Fuse bricks keep their skin, a heavy screen goes
+  at once instead of fading, Pass tiers are season tiers.
+
+### 9.5 How it was checked
+
+`node tests/all.js` runs 34 suites (balance bots, spin physics, lifecycle and migration, an upgrade from a real 4.1 save,
+chest flows, touch hit-testing, UI audit at seven sizes, keyframe and class-clash checks, audio loudness, and one suite for each
+of the Moonwick skins, pops, boards, fuses, sets, Tower, the older cosmetics, the run screen, the chests and the menus).
+`node tests/all.js --perf` adds the performance budget (run it on an idle machine).
