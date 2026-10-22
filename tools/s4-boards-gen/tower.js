@@ -211,9 +211,9 @@ function css() {
       rw: RW,
       ring: [[1.2, '#0a1226'], [3, '#5a6a9a'], [4, '#e8f0ff']],
       drop: '0 0 12px rgba(160, 190, 255, 0.3), 0 8px 22px rgba(0, 0, 0, 0.55)',
-      tooled: 'inset 0 0 0 1.4px rgba(200, 214, 240, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4), inset 0 0 0 3.5px rgba(160, 190, 255, 0.28)',
+      tooled: 'inset 0 0 0 1.4px rgba(200, 214, 240, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4)',
       caps: { tl: R.ref('captl'), tr: R.ref('captr'), bl: R.ref('capbl'), br: R.ref('capbr') },
-      boardBg: `${ref.phases} no-repeat 50% 1px / 60px 8px`,
+      boardBg: `${ref.phases} no-repeat 50% 0.3px / 48px 6.4px`,
       glow: 'rgba(160, 190, 255, 0.3)',
     }),
   };

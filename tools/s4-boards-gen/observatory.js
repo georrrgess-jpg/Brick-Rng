@@ -230,7 +230,7 @@ function css() {
   --a-glow: rgba(127, 178, 255, 0.25);${R.decls()}`,
     run: `
 .board-observatory .run-active .bg::before { display: block; left: 0; width: calc(100% + 260px); top: 0; height: var(--s4-th); background: ${ref.stars} repeat-x 0 0 / 260px 100px; will-change: transform; animation: s4Stars 70s linear infinite; }
-.board-observatory .run-active .bg .scene-fx { display: block; left: 0; right: 0; top: 0; width: auto; height: var(--s4-th); background: ${pMount}, ${tDome}; animation: none; will-change: auto; }
+.board-observatory .run-active .bg .scene-fx { display: block; left: 0; right: 0; top: 0; width: auto; height: var(--s4-th); background: var(--s4-hud), ${pMount}, ${tDome}; animation: none; will-change: auto; }
 .board-observatory .run-active .bg .scene-fx.b { display: none; }
 .board-observatory .run-active .bg::after { display: block; left: calc(var(--s4-cx) + var(--s4-cw) * 0.12 - var(--s4-bh) * 0.375); bottom: calc(var(--s4-bh) * 0.29 - var(--s4-bh) * 0.375); width: calc(var(--s4-bh) * 0.75); height: calc(var(--s4-bh) * 0.75); background: ${ref.planets} no-repeat center / 100% 100%; transform-origin: 50% 50%; will-change: transform; animation: s4Orbit 46s linear infinite; }
 /* moment layers (js/s4-scenes.js) */

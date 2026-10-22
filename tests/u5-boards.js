@@ -21,7 +21,8 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
   let problems = 0;
   const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } };
   const { browser, page, errors } = await launch({ width: 393, height: 852, dsf: 1 });
-  const setup = () => page.evaluate(() => { BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 12; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); });
+  // launch() gives up waiting for the app after 8 s; on a busy machine the boot can take longer, and a boot that finishes after the flags are set would reset them (the Welcome card then covers the board)
+  const setup = async () => { await page.waitForFunction(() => window.__app, null, { timeout: 180000 }); return page.evaluate(() => { BR.Coach.markAllSeen(); BR.Storage.data.seenTutorial = true; BR.Storage.data.runs = 12; BR.Storage.data.settings.sound = false; BR.Storage.data.settings.music = false; BR.Storage.data.settings.perf = 'high'; BR.App.applySettings(); }); };
   await setup();
   const run = async (ids) => {
     await page.evaluate((ids) => {
@@ -223,7 +224,8 @@ const HUD_SIZES = [[393, 852], [360, 640], [430, 932]];
     arr.forEach((s) => { s.end = (s.st == null ? 0 : s.st - L) + s.et; });
     return { count: arr.length, end: Math.max(0, ...arr.map((s) => s.end)), maxConc, maxParts, props: Array.from(new Set(arr.flatMap((s) => s.props))), who: arr.map((s) => s.who) };
   }, { type, watchMs });
-  const layerState = () => page.evaluate(() => Array.from(document.querySelectorAll('#bg .s4x, #boardWrap .s4x')).map((el) => { const cs = getComputedStyle(el); return el.className + '|' + cs.opacity + '|' + cs.transform + '|' + cs.translate; }));
+  // a layer that bobs or drifts on its own (an endless animation) is compared by its opacity and its translate only: its transform is wherever the loop is
+  const layerState = () => page.evaluate(() => Array.from(document.querySelectorAll('#bg .s4x, #boardWrap .s4x')).map((el) => { const cs = getComputedStyle(el); const loops = el.getAnimations().some((a) => a.effect && a.effect.getComputedTiming().iterations === Infinity); return el.className + '|' + cs.opacity + '|' + (loops ? 'loops' : cs.transform) + '|' + cs.translate; }));
   // a moment leaves nothing running: the layers' own idle loops (bob, drift) are not moments, so endless animations are not counted
   const stuck = () => page.evaluate(() => ({ running: document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.s4x') && a.effect.getComputedTiming().iterations !== Infinity).length, beams: document.querySelectorAll('#fxlayer .s4x.beam').length }));
 

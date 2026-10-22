@@ -202,7 +202,7 @@ function css() {
   const bgList = [fireHalo, brewHalo, bgPiece(ref.cauldron, P.cauldron), bgPiece(ref.props, P.props), tFloor, tGlow, tTop, soot, paper, base];
   const rivets = (c1, c2) => {
     const r = `radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, ${c1} 1.5px, ${c2} 2.2px, transparent 2.7px)`;
-    return `${r} 0 0.4px / 24px 8px repeat-x, ${r} 12px calc(100% - 0.4px) / 24px 8px repeat-x, ${r} 0.4px 12px / 8px 24px repeat-y, ${r} calc(100% - 0.4px) 0 / 8px 24px repeat-y`;
+    return `${r} 0 0.2px / 24px 6px repeat-x, ${r} 12px calc(100% - 0.2px) / 24px 6px repeat-x, ${r} 0.2px 12px / 6px 24px repeat-y, ${r} calc(100% - 0.2px) 0 / 6px 24px repeat-y`;
   };
   return {
     plate: [16, 9, 6, 0.82],

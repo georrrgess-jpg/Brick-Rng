@@ -225,7 +225,7 @@
 .board-alchemy .board-wrap::after { content: ''; position: absolute; inset: -9px; border-radius: 33px; pointer-events: none; background: var(--s4-alchemy-captl) no-repeat left top / 44px 44px, var(--s4-alchemy-captr) no-repeat right top / 44px 44px, var(--s4-alchemy-capbl) no-repeat left bottom / 44px 44px, var(--s4-alchemy-capbr) no-repeat right bottom / 44px 44px; }
 .board-alchemy .board { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 36px rgba(255, 150, 60, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 0 40px rgba(0, 0, 0, 0.45); }
 .board-alchemy .board::after { box-shadow: inset 0 0 0 1.4px rgba(246, 176, 116, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4); }
-.board-alchemy .board::after { background: radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) 0 0.4px / 24px 8px repeat-x, radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) 12px calc(100% - 0.4px) / 24px 8px repeat-x, radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) 0.4px 12px / 8px 24px repeat-y, radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) calc(100% - 0.4px) 0 / 8px 24px repeat-y; }
+.board-alchemy .board::after { background: radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) 0 0.2px / 24px 6px repeat-x, radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) 12px calc(100% - 0.2px) / 24px 6px repeat-x, radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) 0.2px 12px / 6px 24px repeat-y, radial-gradient(circle at 50% 50%, #ffe8d0 0 0.8px, #c46a2f 1.5px, #5a2a0e 2.2px, transparent 2.7px) calc(100% - 0.2px) 0 / 6px 24px repeat-y; }
 
 /* ================================================================ observatory */
 .board-observatory {
@@ -276,7 +276,7 @@
 }
 
 .board-observatory .run-active .bg::before { display: block; left: 0; width: calc(100% + 260px); top: 0; height: var(--s4-th); background: var(--s4-observatory-stars) repeat-x 0 0 / 260px 100px; will-change: transform; animation: s4Stars 70s linear infinite; }
-.board-observatory .run-active .bg .scene-fx { display: block; left: 0; right: 0; top: 0; width: auto; height: var(--s4-th); background: var(--s4-observatory-mount) no-repeat calc(var(--s4-cx) + var(--s4-cw) * -0.27 + calc(var(--s4-th) * -0.478)) calc(var(--s4-th) * 0.564) / auto calc(var(--s4-th) * 0.6), var(--s4-observatory-dome) repeat-x 50% 0 / auto var(--s4-th); animation: none; will-change: auto; }
+.board-observatory .run-active .bg .scene-fx { display: block; left: 0; right: 0; top: 0; width: auto; height: var(--s4-th); background: var(--s4-hud), var(--s4-observatory-mount) no-repeat calc(var(--s4-cx) + var(--s4-cw) * -0.27 + calc(var(--s4-th) * -0.478)) calc(var(--s4-th) * 0.564) / auto calc(var(--s4-th) * 0.6), var(--s4-observatory-dome) repeat-x 50% 0 / auto var(--s4-th); animation: none; will-change: auto; }
 .board-observatory .run-active .bg .scene-fx.b { display: none; }
 .board-observatory .run-active .bg::after { display: block; left: calc(var(--s4-cx) + var(--s4-cw) * 0.12 - var(--s4-bh) * 0.375); bottom: calc(var(--s4-bh) * 0.29 - var(--s4-bh) * 0.375); width: calc(var(--s4-bh) * 0.75); height: calc(var(--s4-bh) * 0.75); background: var(--s4-observatory-planets) no-repeat center / 100% 100%; transform-origin: 50% 50%; will-change: transform; animation: s4Orbit 46s linear infinite; }
 /* moment layers (js/s4-scenes.js) */
@@ -403,7 +403,7 @@
 .board-tower .board-wrap::before { content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; box-shadow: 0 0 0 1.2px #0a1226, 0 0 0 3px #5a6a9a, 0 0 0 4px #e8f0ff, 0 0 12px rgba(160, 190, 255, 0.3), 0 8px 22px rgba(0, 0, 0, 0.55); }
 .board-tower .board-wrap::after { content: ''; position: absolute; inset: -4px; border-radius: 28px; pointer-events: none; background: var(--s4-tower-captl) no-repeat left top / 39px 39px, var(--s4-tower-captr) no-repeat right top / 39px 39px, var(--s4-tower-capbl) no-repeat left bottom / 39px 39px, var(--s4-tower-capbr) no-repeat right bottom / 39px 39px; }
 .board-tower .board { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 36px rgba(160, 190, 255, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 0 40px rgba(0, 0, 0, 0.45); }
-.board-tower .board::after { box-shadow: inset 0 0 0 1.4px rgba(200, 214, 240, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4), inset 0 0 0 3.5px rgba(160, 190, 255, 0.28); background: var(--s4-tower-phases) no-repeat 50% 1px / 60px 8px; }
+.board-tower .board::after { box-shadow: inset 0 0 0 1.4px rgba(200, 214, 240, 0.6), inset 0 0 0 2.6px rgba(0, 0, 0, 0.4); background: var(--s4-tower-phases) no-repeat 50% 0.3px / 48px 6.4px; }
 :is(.hero-board, .mini-board).board-tower { --s4-tw-mfx: -0.35; --s4-tw-bfx: 0.4; }
 
 
