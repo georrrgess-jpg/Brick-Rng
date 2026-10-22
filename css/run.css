@@ -350,3 +350,5 @@
   .res-actions { flex-direction: row; align-items: stretch; gap: 10px; padding-top: 8px; padding-bottom: calc(var(--sab) + 10px); }
   .res-actions .btn-xl { flex: 2; min-height: 48px; font-size: 20px; padding: 0 16px; } .res-actions .row { flex: 1.5; } .res-actions .row .btn { min-height: 48px; }
 }
+/* the "x points" pill is opaque, so a time chip passing under it (the red -5s drops out of the readout) goes cleanly behind it */
+.mult { background: #2b2150; }

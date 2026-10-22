@@ -148,6 +148,20 @@ function analyse(samples, name, vw) {
   const waitResults = () => page.waitForSelector('.results.on', { timeout: 15000 });
   const snap = () => page.evaluate(() => { const D = BR.Storage.data, p = D.profile; return { coins: p.coins, runs: D.runs, xp: p.xp, level: p.level, last: D.lastDay, ring: p.streak.ring, rec: D.recent.rush.length, stats: p.stats.runs, trophies: Object.keys(p.trophies).length }; });
 
+  /* ---- a pop that saves the Last Spark and is also a big pop shows RELIT!, not the size callout that was raised a line earlier */
+  await startRun(page, 'rush');
+  await page.evaluate(() => { BR.Run.clearLane(); const e = BR.Run.engine; e.sparkUsed = false; e.fuse = 0.02; e.streak = 0; e.stageScore = 0; });
+  await page.waitForFunction(() => BR.Run.engine.spark > 0, null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(250);
+  await setBoard(page, BOARDS.n24);
+  await page.evaluate(() => { BR.Run.clearLane(); window.__ev = {}; });
+  const relitP = page.evaluate(() => BR.Run.tap(2, 3));
+  const relitS = await page.evaluate(() => window.__sample(1500, 25));
+  await relitP; await idle(page);
+  const relitTexts = [...new Set(relitS.flatMap((s) => s.items.filter((i) => i[0].startsWith('callout')).map((i) => i[0].replace('callout:', ''))))];
+  ok(relitTexts.includes('RELIT!'), 'a Last Spark save with a 24-brick pop did not show RELIT!', relitTexts.join(','));
+  ok(!relitTexts.some((t) => /INSANE|HUGE|GREAT|NICE/.test(t)), 'the size callout was shown with RELIT!', relitTexts.join(','));
+
   /* ---- Fuse bricks keep their colour (and still carry the ring and the countdown) */
   await startRun(page, 'rush');
   await setBoard(page, ['01234560', '01234560', '23456012', '34560123', '45601234', '56012345', '60123456', '01234560']);

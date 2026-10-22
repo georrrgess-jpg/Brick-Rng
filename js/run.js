@@ -19,7 +19,7 @@
     clock: false, busy: false, paused: false, modal: false, over: true, armed: null, leaving: false,
     pressed: false, hoverCell: null, hoverPlan: null, hoverVer: -1, hoverArmed: null, buffered: null, lastPointer: null,
     idleTimer: 0, popsThisRun: 0, last: 0, hb: 0, warned: false, perfN: 0, perfSum: 0,
-    lane: { cur: null, q: [], timer: 0, busyUntil: 0 }, pendingRush: false, goalFlashUntil: 0,
+    lane: { cur: null, q: [], timer: 0, busyUntil: 0, batch: false }, pendingRush: false, goalFlashUntil: 0,
 
     /* ===================================================================== setup */
     init(app) {
@@ -402,7 +402,7 @@
       const m = { text, color: color || '#ffd66b', pri, at: now, t0: 0, el: null, anim: null, wait: o.wait != null ? o.wait : pri >= PRI.line ? 900 : 380, dur: BR.reducedMotion ? 700 : o.dur || (pri >= PRI.system ? 1150 : 920) };
       if (L.cur && pri >= L.cur.pri + 15 && now - L.cur.t0 > 140) this.cutLane();
       L.q.push(m);
-      this.pumpLane();
+      if (!L.batch) this.pumpLane();   // inside feedback() the messages of one pop are collected first, so the most important one shows first
     },
     /** Show the next waiting message if the slot is free. */
     pumpLane() {
@@ -657,8 +657,14 @@
       if (this.buffered) this.flushBuffer(); else this.refreshHover();
     },
 
-    /** Everything the player should feel the instant a pop happens. */
+    /** Everything the player should feel the instant a pop happens. The callouts it raises are collected first (lane.batch) and then
+        sorted by importance, so RELIT! is not starved by a size callout that happened to be created a line earlier. */
     feedback(res) {
+      const L = this.lane;
+      L.batch = true;
+      try { this.feedbackNow(res); } finally { L.batch = false; this.pumpLane(); }
+    },
+    feedbackNow(res) {
       const e = this.engine, p = res.plan, view = this.view, n = p.n;
       const flavor = BR.Skins.pop === 'classic' ? null : BR.Skins.pop;
       BR.audio.pop(n, e.streak, flavor);
