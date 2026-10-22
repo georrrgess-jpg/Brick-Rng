@@ -16,7 +16,7 @@ const ONLY = flag('only') ? flag('only').split(',') : null, QUICK = process.argv
 const [W, H] = (flag('size') || '393x852').split('x').map(Number);
 fs.mkdirSync(OUT, { recursive: true });
 
-const FUSES = ['default', 'u_rope', 'u_wire', 'u_neon', 'u_ice', 'u_plasma', 'u_candy', 'u_vine', 'u_rod', 'u_phoenix', 'u_dragon'];
+const FUSES = ['default', 'u_rope', 'u_wire', 'u_neon', 'u_ice', 'u_plasma', 'u_candy', 'u_vine', 'u_rod', 'u_phoenix', 'u_dragon', 'u_candle', 'u_wand', 'u_elixir', 'u_sandglass', 'u_runechain', 'u_moonrise'];
 // each column: the engine fields to hold, the data-z it must reach, and the face it must show
 const STATES = [
   { id: 'calm', hold: 'e.fuse = 27', z: 'calm', x: 'calm' },

@@ -9,8 +9,13 @@
    (the chips are a pool in the markup); with Reduce Motion or a low-end phone there are no particles, no flicker and no shake,
    but the readout still changes color and icon and the bomb still changes expression.
 
+   Update 5 (Series 4 "Moonwick") adds: six more bodies with DOM layers of their own (flask liquid, hourglass sand, golem runes, moon phases),
+   the Fizz hat (setHat: one element inside .fz-pulse, poses in css/hats.css, js/hats.js), special particles drip / twinkle / bubble /
+   grain / chip / stardust, and lazy baking of each fuse's stylesheet (nothing but the Basic Cord is built at boot).
+
    API: init(host) layout() update(state, dt) gain(sec, from, kind, delayMs) burst(sec) stageUp() sparkStart() sparkEnd(saved)
-        rushStart() rushEnd() setFuse(itemOrClass) beat() reset(state) fuseOut() bombPoint() destroy() */
+        rushStart() rushEnd() setFuse(itemOrClass) setHat(id | null) beat() reset(state) fuseOut() bombPoint() destroy()
+        on(name, fn) for 'reset' 'spark' 'sparkEnd' 'z' (the js/s4-fuses.js moments), bake(cls, parts) */
 (function () {
   const BR = (window.BR = window.BR || {});
   const A = BR.FuseArt;
@@ -30,39 +35,75 @@
   /* ------------------------------------------------------------------ the generated stylesheet: every fuse's tokens as CSS custom properties */
   const ICE = { tongue: ['#a8dcff', '#58a8ff', '#3a6cf0'], core: ['#ffffff', '#d8f0ff'], halo: 'rgba(120,190,255,0.6)' };
   const frostBg = (c) => `repeating-linear-gradient(60deg, rgba(255,255,255,0.6) 0 1.5px, transparent 1.5px 7px), repeating-linear-gradient(-60deg, rgba(255,255,255,0.45) 0 1px, transparent 1px 9px), linear-gradient(180deg, rgba(255,255,255,0.72), ${rgba(c, 0.5)} 40%, rgba(140,195,240,0.46))`;
-  function tokenCSS(cls, t) {
-    const f = t.flame, b = t.bomb, F = b.face;
+  /** one fuse's stylesheet, in parts so each is built only when it is needed:
+      base = rope, flame, colors, face and flow vars + the rules that depend on them; body = the live bomb's body, cracks and frost;
+      mini = the small preview's body (face baked in); nt = the same bodies without their topper, for when a hat is worn */
+  function tokenCSS(cls, t, part) {
+    const f = t.flame, b = t.bomb, F = b.face, sel = `.${cls}`, kind = b.kind;
     const railH = t.railH || t.h + 2;
-    const sel = `.${cls}`;
-    const vars = [
-      ['h', t.h + 'px'], ['rail-h', railH + 'px'], ['rope', t.rope.base], ['rope-lo', t.rope.low], ['rope-cr', t.rope.crit],
-      ['gs0', t.gs[0]], ['gs1', t.gs[1]], ['gs2', t.gs[2]], ['rail-bg', t.rail.bg], ['rail-line', t.rail.line],
-      ['tongue', A.flameURI(f.shape, 'tongue', f.tongue)], ['core', A.flameURI(f.shape, 'core', f.core)],
-      ['tongue-ice', A.flameURI(f.shape, 'tongue', ICE.tongue)], ['core-ice', A.flameURI(f.shape, 'core', ICE.core)],
-      ['halo', f.halo[0]], ['halo-ice', ICE.halo], ['fs', f.big ? 1.4 : 1.12],
-      ['flame-all', A.flameAllURI(f.shape, { halo: f.halo, tongue: f.tongue, core: f.core })],
-      ['ember-a', t.ember[0]], ['ember-b', t.ember[1]], ['ash', t.ash], ['heat', t.heat],
-      ['body', A.bodyURI(b.kind, b.pal, null)], ['body-mini', A.bodyURI(b.kind, b.pal, F)],
-      ['sclera', F.sclera], ['pupil', F.pupil], ['line', F.line], ['mouth', F.mouth || F.line], ['blush', F.blush], ['fy', F.ey - 36],
-      ['cracks', A.cracksURI(t.cracks || '#ff5a3a', '#fff3d0')], ['frostb', A.frostBombURI(t.frost)], ['frost-bg', frostBg(t.frost)], ['wick', t.wick || t.ember[0]],
-    ];
-    let css = `${sel}{${vars.map(([k, v]) => `--fz-${k}:${v}`).join(';')}}\n`;
-    if (t.rope.bare) css += `${sel} .fz-tex,${sel} .fz-hot,${sel} .fz-cr,${sel} .mf-fill{box-shadow:none}\n`;
-    if (t.rope.flow) css += `${sel}.fuse .fz-flow{display:block;animation:fzFlow .7s linear infinite}\n`;
-    if (f.ring) css += `${sel}.fuse .fz-ringfx{display:block}\n`;
-    if (F.slit) css += `${sel}.fuse .fz-pupil{width:26%;margin-left:-13%;border-radius:40%}${sel}.fuse .fz-pupil::after{display:none}\n`;
+    let vars = [], css = '';
+    if (part === 'base') {
+      vars = [
+        ['h', t.h + 'px'], ['rail-h', railH + 'px'], ['rope', t.rope.base], ['rope-lo', t.rope.low], ['rope-cr', t.rope.crit],
+        ['gs0', t.gs[0]], ['gs1', t.gs[1]], ['gs2', t.gs[2]], ['rail-bg', t.rail.bg], ['rail-line', t.rail.line],
+        ['tongue', A.flameURI(f.shape, 'tongue', f.tongue)], ['core', A.flameURI(f.shape, 'core', f.core)],
+        ['tongue-ice', A.flameURI(f.shape, 'tongue', ICE.tongue)], ['core-ice', A.flameURI(f.shape, 'core', ICE.core)],
+        ['halo', f.halo[0]], ['halo-ice', ICE.halo], ['fs', f.big ? 1.4 : 1.12], ['tf', (f.tf || 0.22) + 's'],
+        ['flame-all', A.flameAllURI(f.shape, { halo: f.halo, tongue: f.tongue, core: f.core })],
+        ['ember-a', t.ember[0]], ['ember-b', t.ember[1]], ['ash', t.ash], ['heat', t.heat],
+        ['sclera', F.sclera], ['pupil', F.pupil], ['line', F.line], ['mouth', F.mouth || F.line], ['blush', F.blush], ['fy', F.ey - 36], ['fsc', F.sc || 1],
+        ['frost-bg', frostBg(t.frost)], ['wick', t.wick || t.ember[0]],
+      ];
+      if (t.gold) vars.push(['gold', t.gold]);
+      if (t.hot) vars.push(['hot', t.hot]);
+      const fl = t.rope.flow;
+      if (fl) { const o = fl === true ? {} : fl; if (o.bg) vars.push(['flow-bg', o.bg]); vars.push(['flow-p', (o.p || 15) + 'px'], ['flow-dur', (o.dur || 0.7) + 's'], ['flow-dir', o.rev ? 'reverse' : 'normal']); }
+    } else if (part === 'body') {
+      vars = [['body', A.bodyURI(kind, b.pal, null)], ['cracks', A.cracksURI(t.cracks || '#ff5a3a', t.crackLine || '#fff3d0', t.crackKind)], ['frostb', A.frostBombURI(t.frost, kind)]];
+    } else if (part === 'mini') vars = [['body-mini', A.bodyURI(kind, b.pal, F, { mini: true })]];
+    else if (part === 'nt') vars = [['body-nt', A.bodyURI(kind, b.pal, null, { nt: true })], ['body-mini-nt', A.bodyURI(kind, b.pal, F, { mini: true, nt: true })]];
+    css = `${sel}{${vars.map(([k, v]) => `--fz-${k}:${v}`).join(';')}}\n`;
+    if (part === 'base') {
+      if (t.rope.bare) css += `${sel} .fz-tex,${sel} .fz-hot,${sel} .fz-cr,${sel} .mf-fill{box-shadow:none}\n`;
+      if (t.rope.flow) css += `${sel}.fuse .fz-flow{display:block}\n`;
+      if (f.ring) css += `${sel}.fuse .fz-ringfx{display:block}\n`;
+      if (F.slit) css += `${sel}.fuse .fz-pupil{width:26%;margin-left:-13%;border-radius:40%}${sel}.fuse .fz-pupil::after{display:none}\n`;
+    } else if (part === 'body' && A.XTRA[kind] && A.XTRA[kind].css) css += A.XTRA[kind].css(`${sel}.fuse`);
     return css;
+  }
+  /** build the parts of a fuse class's stylesheet that are not in the page yet ('base', 'body', 'mini', 'nt'). The Basic Cord (the default for
+      anything without a class) is baked whole at init; every other fuse is baked when it is first shown: equipped, previewed or worn with a hat. */
+  const have = {};
+  function bake(cls, parts) {
+    const t = A.TOKENS[cls];
+    if (!t) return;
+    let css = '';
+    for (const part of parts || ['base', 'body', 'mini']) {
+      const key = cls + '/' + part;
+      if (have[key]) continue;
+      have[key] = 1;
+      css += tokenCSS(cls, t, part);
+    }
+    if (!css) return;
+    const el = document.createElement('style');
+    el.dataset.fuse = cls; el.textContent = css;
+    document.head.appendChild(el);
   }
   function buildSheet() {
     if (document.getElementById('fuseTokens')) return;
     const style = document.createElement('style');
     style.id = 'fuseTokens';
     // the Basic Cord doubles as the default for anything that has no fuse class yet
-    let css = tokenCSS('fuse', A.TOKENS['fuse-classic']).replace(/^\.fuse\{/, '.fuse,.mini-fuse{');
-    for (const [cls, t] of Object.entries(A.TOKENS)) css += tokenCSS(cls, t);
-    style.textContent = css;
+    const t0 = A.TOKENS['fuse-classic'];
+    style.textContent = ['base', 'body', 'mini', 'nt'].map((p) => tokenCSS('fuse', t0, p)).join('').replace(/^\.fuse\{/gm, '.fuse,.mini-fuse{');
     document.head.appendChild(style);
+    ['base', 'body', 'mini', 'nt'].forEach((p) => { have['fuse-classic/' + p] = 1; });
+    // the rest of the catalogue is built in the quiet after the first paint (previews that need one sooner ask for it with bake())
+    const rest = Object.keys(A.TOKENS).filter((c) => c !== 'fuse-classic');
+    const next = () => { const c = rest.shift(); if (!c) return; bake(c, ['base', 'mini']); (window.requestIdleCallback || ((f) => setTimeout(f, 250)))(next); };
+    setTimeout(() => (window.requestIdleCallback || ((f) => setTimeout(f, 250)))(next), 2500);
   }
+  A.ensure = bake;
 
   /* ------------------------------------------------------------------ particles: one pool of 40, sprites drawn once, one small canvas */
   const MAXP = 40;
@@ -90,17 +131,34 @@
     streak: (col) => (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(1, '#fff'); g.fillStyle = gr; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, 0); g.lineTo(w, h); g.closePath(); g.fill(); },
     mote: (col) => (g, w, h) => { const r = w / 2, gr = g.createRadialGradient(r, r, 0, r, r, r); gr.addColorStop(0, rgba(col, 0.95)); gr.addColorStop(0.35, rgba(col, 0.5)); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, w, h); },
     wisp: (col) => (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(1, rgba(col, 0.9)); g.fillStyle = gr; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w - h / 2, 0); g.lineTo(w - h / 2, h); g.closePath(); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(w - h / 2, h / 2, h * 0.36, 0, 6.283); g.fill(); g.fillStyle = rgba(col, 0.6); g.beginPath(); g.arc(w - h / 2, h / 2, h * 0.5, 0, 6.283); g.fill(); },
+    /** wax drip: a teardrop with a bright spot */
+    drip: (col, col2) => (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, col); gr.addColorStop(1, col2 || col); g.fillStyle = gr; g.beginPath(); g.moveTo(w / 2, 0); g.bezierCurveTo(w / 2 + 0.4, h * 0.28, w, h * 0.5, w, h * 0.7); g.arc(w / 2, h * 0.7, w / 2, 0, Math.PI, false); g.bezierCurveTo(0, h * 0.5, w / 2 - 0.4, h * 0.28, w / 2, 0); g.fill(); g.strokeStyle = 'rgba(150,90,20,0.45)'; g.lineWidth = 0.5; g.stroke(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(w * 0.36, h * 0.66, w * 0.14, 0, 6.283); g.fill(); },
+    /** wand twinkle: a thin four-point star on a soft glow */
+    twinkle: (col) => (g, w, h) => { const c = w / 2, r = c * 0.9; const gr = g.createRadialGradient(c, c, 0, c, c, c); gr.addColorStop(0, rgba(col, 0.6)); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.beginPath(); g.moveTo(c, c - r); g.quadraticCurveTo(c + 0.6, c - 0.6, c + r, c); g.quadraticCurveTo(c + 0.6, c + 0.6, c, c + r); g.quadraticCurveTo(c - 0.6, c + 0.6, c - r, c); g.quadraticCurveTo(c - 0.6, c - 0.6, c, c - r); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(c, c, 1.1, 0, 6.283); g.fill(); },
+    /** elixir bubble: a clear ring with a highlight */
+    bubble: (col) => (g, w, h) => { const c = w / 2; g.fillStyle = rgba(col, 0.2); g.beginPath(); g.arc(c, c, c - 0.7, 0, 6.283); g.fill(); g.strokeStyle = rgba(col, 0.95); g.lineWidth = 0.9; g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(c * 0.7, c * 0.66, c * 0.2, 0, 6.283); g.fill(); },
+    /** sand grain */
+    grain: (col) => (g, w, h) => { g.fillStyle = col; g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, 6.283); g.fill(); },
+    /** runechain: grey stone chips, and (the colors after the second) glowing rune motes */
+    chip: (col, col2, i) => (g, w, h) => {
+      if (i >= 2) { const c = w / 2, gr = g.createRadialGradient(c, c, 0, c, c, c); gr.addColorStop(0, '#fff'); gr.addColorStop(0.3, col); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, w, h); return; }
+      g.fillStyle = col; g.beginPath(); g.moveTo(w * 0.1, h * 0.6); g.lineTo(w * 0.35, 0); g.lineTo(w * 0.95, h * 0.3); g.lineTo(w * 0.8, h); g.lineTo(w * 0.2, h * 0.95); g.closePath(); g.fill(); g.strokeStyle = 'rgba(220,235,255,0.7)'; g.lineWidth = 0.6; g.stroke();
+    },
+    /** moonlight dust: a tiny sparkle */
+    stardust: (col) => (g, w, h) => { const c = w / 2; const gr = g.createRadialGradient(c, c, 0, c, c, c); gr.addColorStop(0, rgba(col, 0.55)); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.beginPath(); g.moveTo(c, 0.6); g.lineTo(c + 0.9, c - 0.9); g.lineTo(w - 0.6, c); g.lineTo(c + 0.9, c + 0.9); g.lineTo(c, h - 0.6); g.lineTo(c - 0.9, c + 0.9); g.lineTo(0.6, c); g.lineTo(c - 0.9, c - 0.9); g.closePath(); g.fill(); },
     lick: (col, col2) => (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, col); gr.addColorStop(1, col2 || col); g.fillStyle = gr; g.beginPath(); g.moveTo(w / 2, 0); g.bezierCurveTo(w * 0.7, h * 0.3, w, h * 0.5, w * 0.8, h * 0.8); g.bezierCurveTo(w * 0.7, h, w * 0.3, h, w * 0.2, h * 0.8); g.bezierCurveTo(0, h * 0.5, w * 0.4, h * 0.35, w / 2, 0); g.fill(); },
   };
   /** size of each special shape, in css px */
-  const SIZE = { sprinkle: [8, 3.4], leaf: [11, 8], feather: [16, 6], shard: [9, 9], fleck: [4, 2.4], streak: [16, 3.4], mote: [14, 14], wisp: [18, 8], lick: [8, 13], arc: [0, 0] };
+  const SIZE = { sprinkle: [8, 3.4], leaf: [11, 8], feather: [16, 6], shard: [9, 9], fleck: [4, 2.4], streak: [16, 3.4], mote: [14, 14], wisp: [18, 8], lick: [8, 13], arc: [0, 0], drip: [5, 8], twinkle: [11, 11], bubble: [9, 9], grain: [3.2, 3.2], chip: [7, 6], stardust: [9, 9] };
+  /** the special shapes that glow (drawn with 'lighter') */
+  const GLOW = new Set(['mote', 'wisp', 'streak', 'twinkle', 'stardust']);
 
   class Particles {
     constructor(cv) {
       this.cv = cv; this.ctx = cv.getContext('2d');
       this.dpr = 1; this.w = 0; this.h = 0;
-      this.p = []; for (let i = 0; i < MAXP; i++) this.p.push({ on: false, k: 0, sp: null, x: 0, y: 0, vx: 0, vy: 0, g: 0, drag: 0, age: 0, life: 1, rot: 0, vr: 0, sc: 1, grow: 0, ph: 0, sway: 0, a: 1, pts: new Float32Array(12), col: '#fff' });
-      this.live = 0; this.dirty = false; this.sp = null; this.spk = [];
+      this.p = []; for (let i = 0; i < MAXP; i++) this.p.push({ on: false, k: 0, sp: null, x: 0, y: 0, vx: 0, vy: 0, g: 0, drag: 0, age: 0, life: 1, rot: 0, vr: 0, sc: 1, grow: 0, ph: 0, sway: 0, a: 1, pulse: 0, base: 1, pts: new Float32Array(12), col: '#fff' });
+      this.live = 0; this.dirty = false; this.sp = null; this.spk = []; this.body0 = 0; this.bodyL = 0; this.hh = 8;
     }
     resize(w, h) {
       this.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -123,8 +181,9 @@
       S.special = [];
       if (sp && sp.shape !== 'arc') {
         const sz = SIZE[sp.shape];
-        S.special = sp.colors.map((c, i) => sprite(sz[0], sz[1], d, SHAPES[sp.shape](c, sp.colors[(i + 1) % sp.colors.length])));
+        S.special = sp.colors.map((c, i) => sprite(sz[0], sz[1], d, SHAPES[sp.shape](c, sp.colors[(i + 1) % sp.colors.length], i)));
       }
+      this.hh = (t.h || 14) / 2;
       this.sp = S; this.spec = sp; this.arcCols = sp && sp.shape === 'arc' ? sp.colors : null;
       this.kill();
     }
@@ -138,7 +197,7 @@
     spawn(k, x, y, pri) {
       const q = this.free(pri); if (!q) return null;
       if (!q.on) this.live++;
-      q.on = true; q.k = k; q.x = x; q.y = y; q.age = 0; q.rot = 0; q.vr = 0; q.sc = 1; q.grow = 0; q.sway = 0; q.ph = Math.random() * 6.283; q.a = 1; q.g = 0; q.drag = 0; q.vx = 0; q.vy = 0;
+      q.on = true; q.k = k; q.x = x; q.y = y; q.age = 0; q.rot = 0; q.vr = 0; q.sc = 1; q.grow = 0; q.sway = 0; q.pulse = 0; q.base = 1; q.ph = Math.random() * 6.283; q.a = 1; q.g = 0; q.drag = 0; q.vx = 0; q.vy = 0;
       return q;
     }
     /* each recipe sets velocity, gravity, life and sprite */
@@ -183,6 +242,18 @@
         case 'wisp': { const a = rnd(0, 6.28), sp2 = rnd(70, 110); q.vx = Math.cos(a) * sp2; q.vy = Math.sin(a) * sp2; q.vr = rnd(5, 8) * (Math.random() < 0.5 ? 1 : -1); q.drag = 0.4; q.life = rnd(0.6, 0.95); break; }
         case 'lick': q.vx = rnd(-14, 14); q.vy = -rnd(60, 110); q.g = -30; q.drag = 0.8; q.life = rnd(0.35, 0.6); q.sc = rnd(0.7, 1.15); q.grow = -1.1; break;
         case 'streak': { const a = rnd(-2.9, -0.2), sp2 = rnd(170, 320); q.vx = Math.cos(a) * sp2; q.vy = Math.sin(a) * sp2; q.g = 380; q.drag = 1.1; q.life = rnd(0.22, 0.4); break; }
+        // Candlewick: a drop of wax slides off the lower edge of the rope near the flame, falls a little and sets
+        case 'drip': q.x = x - rnd(2, 30); q.y = y + (this.hh || 8) - 1; q.vx = rnd(-3, 3); q.vy = rnd(2, 10); q.g = 360; q.drag = 0.1; q.life = rnd(0.5, 0.8); q.sc = rnd(0.8, 1.15); break;
+        // Star Wand: stars wink on and off around the tip and drift up
+        case 'twinkle': q.x = x + rnd(-14, 6); q.y = y + rnd(-16, 6); q.vx = rnd(-8, 8); q.vy = -rnd(6, 24); q.drag = 0.3; q.life = rnd(0.55, 1); q.base = rnd(0.55, 1.15); q.pulse = rnd(14, 24); q.rot = rnd(-0.3, 0.3); break;
+        // Elixir: bubbles rise from the rope and pop
+        case 'bubble': q.x = x - rnd(0, 34); q.y = y - rnd(0, 3); q.vx = rnd(-5, 5); q.vy = -rnd(22, 50); q.g = -6; q.drag = 0.3; q.sway = rnd(5, 11); q.life = rnd(0.7, 1.25); q.sc = rnd(0.6, 1.15); q.grow = 0.12; break;
+        // Sandglass: grains pour straight down from the burning end
+        case 'grain': q.x = x + rnd(-3, 3); q.y = y + rnd(0, 5); q.vx = rnd(-5, 5); q.vy = rnd(8, 30); q.g = 560; q.drag = 0.05; q.life = rnd(0.4, 0.65); q.sc = rnd(0.7, 1.3); break;
+        // Runechain: stone chips fly off and fall; the glowing rune motes (sprites 3 and 4) float up
+        case 'chip': if (arr.indexOf(q.sp) >= 2) { q.vx = rnd(-10, 10); q.vy = -rnd(10, 28); q.drag = 0.4; q.life = rnd(0.7, 1.1); q.sc = rnd(0.7, 1.2); q.pulse = 12; q.base = q.sc; } else { q.vx = rnd(-46, 46); q.vy = -rnd(16, 74); q.g = 430; q.drag = 0.3; q.life = rnd(0.55, 0.9); q.rot = rnd(0, 6.28); q.vr = rnd(-10, 10); q.sc = rnd(0.7, 1.2); } break;
+        // Moonrise: dust along the whole ribbon, drifting toward the flame
+        case 'stardust': q.x = this.body0 + Math.random() * Math.max(10, this.bodyL); q.y = y + rnd(-5, 5); q.vx = rnd(4, 18); q.vy = rnd(-8, 4); q.drag = 0.2; q.life = rnd(0.9, 1.6); q.base = rnd(0.6, 1.2); q.pulse = rnd(10, 18); break;
         default: break;
       }
     }
@@ -207,6 +278,7 @@
         if (q.sway) q.vx += Math.sin(q.age * 4.2 + q.ph) * q.sway * dt * 3;
         q.x += q.vx * dt; q.y += q.vy * dt;
         q.rot += q.vr * dt; q.sc += q.grow * dt;
+        if (q.pulse) q.sc = q.base * (0.45 + 0.55 * Math.abs(Math.sin(q.age * q.pulse + q.ph)));
         if (q.k === K.special && this.spec && this.spec.shape === 'wisp') { const c = Math.cos(q.vr * dt), s = Math.sin(q.vr * dt), vx = q.vx * c - q.vy * s; q.vy = q.vx * s + q.vy * c; q.vx = vx; q.rot = Math.atan2(q.vy, q.vx); }
         if (q.k === K.special && this.spec && this.spec.shape === 'streak') q.rot = Math.atan2(q.vy, q.vx);
         if (q.k === K.spark && this.spec && this.spec.shape === 'streak') q.rot = Math.atan2(q.vy, q.vx);
@@ -230,7 +302,7 @@
         g.globalCompositeOperation = pass ? 'lighter' : 'source-over';
         for (let i = 0; i < MAXP; i++) {
           const q = this.p[i]; if (!q.on) continue;
-          const add = ADD.has(q.k) || (q.k === K.special && this.spec && (this.spec.shape === 'mote' || this.spec.shape === 'wisp' || this.spec.shape === 'streak'));
+          const add = ADD.has(q.k) || (q.k === K.special && this.spec && GLOW.has(this.spec.shape));
           if (add !== !!pass) continue;
           const a = this.alpha(q);
           if (a < 0.02) continue;
@@ -267,7 +339,7 @@
     host: null, ok: false, z: '', cls: '', tok: null,
     d: 30, fmax: 30, lastT: 30, floor: 0, pend: 0, spring: 0, v: 0, flying: [], resp: null, fast: false,
     tw: 240, L: 249, x0: -9, tx0: 0, tyH: 32, ty: 13, bx: 31, by: 32, bs: 62, wx: 0, wy: -40, rx: 200, ry: 32, cvH: 92, cvTop: 40, rushPeak: 0, tipKey: '',
-    sp: 0, fshown: -1, mood: '', moodT: 0, moodNext: '', moodNext2: 0, prevZ: '', savedFlag: false, dgs: null,
+    sp: 0, fshown: -1, mood: '', moodT: 0, moodNext: '', moodNext2: 0, prevZ: '', savedFlag: false, dgs: null, hatId: null, hat: null, xKind: '', bpx: 0.97, ls: {}, hooks: {}, dropT: 0,
     acc: { spark: 0, ember: 0, smoke: 0, ash: 0, special: 0, glint: 0 }, clock: 0, rushMax: 8, lastTick: -1, key: 0, hostRect: null, laid: false,
 
     init(host) {
@@ -276,7 +348,9 @@
       buildSheet();
       const q = (s) => host.querySelector(s);
       this.host = host;
-      this.bomb = q('.bomb'); this.pulse = q('.fz-pulse'); this.track = q('.fuse-track');
+      this.bomb = q('.bomb'); this.pulse = q('.fz-pulse'); this.track = q('.fuse-track'); this.body = q('.fz-body'); this.face = q('.fz-face');
+      // the layer behind the body (the flask's liquid, the moon's halo): one element, built once, filled by the body kind
+      this.xb = this.pulse.querySelector('.fz-xb') || this.pulse.insertBefore(Object.assign(document.createElement('i'), { className: 'fz-xb' }), this.body);
       this.rope = q('.fuse-fill'); this.inn = q('.fz-in'); this.tip = q('.spark'); this.flare = q('.fz-flare');
       this.glint = q('.fz-glint'); this.gold = q('.fz-gold'); this.burnFlash = q('.fz-burnflash'); this.redFlash = q('.fz-redflash');
       this.time = q('.fuse-time'); this.numBox = q('.fz-numbox'); this.num = q('.fz-num');
@@ -286,6 +360,7 @@
       const dg = (c) => { const el = q('.fz-dg.' + c); return { el, cur: el.children[0], prev: el.children[1], val: el.children[0].textContent }; };
       this.dg = { t: dg('t'), o: dg('o'), x: dg('x') };
       this.parts = new Particles(this.cv);
+      this.xKind = ''; this.hat = this.pulse.querySelector('.fz-hat');
       const F = BR.CFG.fuse; this.CRIT = F.critical; this.LOW = F.lowFrac;
       this.ok = true;
       this._onVis = () => { if (document.hidden) this.parts.kill(); };
@@ -299,7 +374,8 @@
     destroy() {
       if (!this.ok) return;
       document.removeEventListener('visibilitychange', this._onVis); window.removeEventListener('resize', this._onResize);
-      [this.pulse, this.flare, this.numBox, this.glint, this.gold, this.burnFlash, this.redFlash, this.vig, this.burstEl].concat(this.chipEls).forEach((el) => { if (el) el.getAnimations().forEach((a) => a.cancel()); });
+      [this.pulse, this.flare, this.numBox, this.glint, this.gold, this.burnFlash, this.redFlash, this.vig, this.burstEl, this.hat].concat(this.chipEls).forEach((el) => { if (el) el.getAnimations().forEach((a) => a.cancel()); });
+      this.ls = {};
       this.parts.kill(); this.flying.length = 0; this.pend = 0; this.ok = false; this.host = null;
     },
 
@@ -310,11 +386,65 @@
       const cls = typeof item === 'string' ? item : item && item.cls;
       const c = cls || 'fuse-classic';
       this.tok = A.tokensFor(c);
-      if (c !== this.cls) { this.cls = c; this.parts.setStyle(this.tok); this.acc.special = 0; }
+      if (c !== this.cls) {
+        this.cls = c; bake(c in A.TOKENS ? c : 'fuse-classic', ['base', 'body']); this.parts.setStyle(this.tok); this.acc.special = 0;
+        this.dress();
+      }
       if (!this.parts.sp) this.parts.setStyle(this.tok);
       this.rushMax = BR.CFG.rush.time;
     },
+    /** a new body: put in the DOM layers this kind makes of itself, and move the hat to the new head */
+    dress() {
+      const kind = this.tok.bomb.kind, X = A.XTRA[kind];
+      if (this.xKind !== kind) {
+        this.xKind = kind; this.host.dataset.bk = kind;
+        this.xb.innerHTML = X && X.back ? X.back() : '';
+        this.body.innerHTML = X && X.body ? X.body() : '';
+        if (kind === 'golem') this.host.dataset.rn = this.host.dataset.rn || '1';
+      }
+      this.anchorHat();
+    },
 
+    /* ------------------------------------------------------------------ the hat (js/hats.js draws it, css/hats.css poses it) */
+    /** put a hat on Fizz (an id from BR.HATS) or take it off (null/''). One element inside .fz-pulse, after the face; transform and opacity only. */
+    setHat(id) {
+      this.hatId = id || null;
+      if (!this.ok) return;
+      const H = BR.Hats, h = id && H && H.byId(id);
+      if (this.hat) { this.hat.getAnimations().forEach((a) => a.cancel()); this.hat.remove(); this.hat = null; }
+      this.host.classList.remove('hatted'); delete this.host.dataset.hat;
+      if (!h) return;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = H.html(h.id, this.tok ? this.tok.bomb.kind : 'classic');
+      const el = tmp.firstElementChild;
+      this.face.after(el);
+      this.hat = el; this.host.dataset.hat = h.id;
+      this.anchorHat();
+      this.hatMoves(true);
+    },
+    /** the anchor of the worn hat on the current body, and the body without its topper while a hat is worn */
+    anchorHat() {
+      const h = this.hatId && BR.Hats && BR.Hats.byId(this.hatId);
+      if (!this.hat || !h) return;
+      const kind = this.tok.bomb.kind, a = BR.Hats.anchor(h.id, kind), st = this.hat.style;
+      st.setProperty('--hx', a.x); st.setProperty('--hy', a.y); st.setProperty('--hs', a.s);
+      this.host.dataset.hk = BR.Hats.kindOf(kind);
+      if (h.noTop) bake(this.cls in A.TOKENS ? this.cls : 'fuse-classic', ['nt']);
+      this.host.classList.toggle('hatted', !!h.noTop);
+    },
+    /** a one-shot move on the hat (individual transform properties, so the state pose in css/hats.css keeps its own `transform`) */
+    hatMove(name, frames, opt) {
+      const el = this.hat;
+      if (!el || BR.reducedMotion || BR.lowEnd || !el.animate) return null;
+      if (this.ls[name]) this.ls[name].cancel();
+      return (this.ls[name] = el.animate(frames, Object.assign({ duration: 600, easing: 'cubic-bezier(0.3,0.8,0.3,1)' }, opt)));
+    },
+    hatMoves() { /* the settle after the hat goes on */ this.hatSway(true); },
+    /** the tiny sway of a calm Fizz: two swings, then still (never an idle loop) */
+    hatSway(force) {
+      if (!this.hat || (!force && this.ls.sway && this.ls.sway.playState === 'running')) return;
+      this.hatMove('sway', [{ rotate: '0deg' }, { rotate: '3.2deg', offset: 0.22 }, { rotate: '-2.4deg', offset: 0.5 }, { rotate: '1.2deg', offset: 0.76 }, { rotate: '0deg' }], { duration: 1100, easing: 'ease-in-out' });
+    },
     /** read the geometry once: where the track, the bomb and the readout are, and how big the particle canvas is */
     layout() {
       const h = this.host;
@@ -325,7 +455,7 @@
       this.L = this.tw - this.x0;                                              // the rope runs from under the bomb to the readout
       this.ty = this.track.offsetHeight / 2;
       this.tx0 = tr.left - hr.left; this.tyH = tr.top - hr.top + this.ty;      // the track's origin and its middle line, inside the host
-      this.bx = br.left - hr.left + br.width / 2; this.by = br.top - hr.top + br.height / 2; this.bs = br.width;
+      this.bx = br.left - hr.left + br.width / 2; this.by = br.top - hr.top + br.height / 2; this.bs = br.width; this.bpx = br.width / 64;
       this.rx = rr.left - hr.left + rr.width / 2; this.ry = rr.top - hr.top + rr.height / 2;
       // the bomb's own wick, in track coordinates (the flame jumps there in Last Spark)
       this.wx = this.bx - this.tx0; this.wy = this.by - this.bs * 0.5 - 10 - this.tyH;
@@ -356,11 +486,20 @@
       this.fmax = s && s.fuseMax ? s.fuseMax : 30; this.d = s && s.fuse != null ? s.fuse : this.fmax; this.lastT = this.d; this.floor = this.d; this.key = 0; this.fshown = -1; this.clock = 0;
       this.parts.kill(); this.z = ''; this.lastTick = -1;
       this.host.classList.remove('fz-shatter', 'fz-paused');
+      // moments of the last run (js/s4-fuses.js sets classes starting with mx-): none of them survives into a new run
+      Array.from(this.host.classList).forEach((c) => { if (c.indexOf('mx-') === 0) this.host.classList.remove(c); });
+      if (this.xKind === 'golem') this.host.dataset.rn = '1';
+      if (this.hat) { this.hat.getAnimations().forEach((a) => a.cancel()); this.hat.classList.remove('fh-drop'); }
+      this.ls = {}; clearTimeout(this.dropT);
       this.chipEls.forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
       if (this.vig) this.vig.classList.remove('on', 'lo');
       if (this.laid) this.setStep(this.fmax); else this.layout();
       if (s) this.update(s, 0);
+      this.fire('reset', s);
     },
+    /** js/s4-fuses.js (and anything else that dresses the fuse) listens here: reset, spark, sparkEnd, z */
+    on(name, fn) { (this.hooks[name] = this.hooks[name] || []).push(fn); },
+    fire(name, a) { const l = this.hooks[name]; if (l) for (let i = 0; i < l.length; i++) l[i](a, this); },
 
     /* ------------------------------------------------------------------ per frame */
     update(s, dt) {
@@ -463,8 +602,10 @@
       if (vig) { vig.classList.toggle('lo', z === 'low'); vig.classList.toggle('on', z === 'crit'); }
       if (old === 'spark' && z !== 'spark' && s.fuse > 0.05 && !s.over) this.relit(s);
       if (z === 'frozen') { this.rushPeak = 0; this.pop(this.flare, 1.5, 320); }
-      if (z === 'spark') { this.pop(this.pulse, 1.18, 260); this.pop(this.flare, 1.4, 300); }
+      if (z === 'spark') { this.pop(this.pulse, 1.18, 260); this.pop(this.flare, 1.4, 300); this.hatMove('hover', [{ translate: '0 0' }, { translate: `0 ${(-2.4 * this.bpx).toFixed(1)}px` }, { translate: '0 0' }], { duration: 760, iterations: 4, easing: 'ease-in-out' }); }
+      if (z === 'calm' && old !== 'calm') this.hatSway();
       this.key = 0;
+      this.fire('z', { z, old });
     },
 
     /** the Last Spark window closed with a living fuse: the flame races back out along a new rope, Fizz is relieved, then winks */
@@ -473,6 +614,11 @@
       this.resp = { t0: tnow, from: 0, to: Math.max(s.fuse, 0.1), dur: BR.reducedMotion ? 80 : 520 };
       if (this.z !== 'frozen' && this.z !== 'hold') this.setMood('glad', 0.9, this.savedFlag ? 'wink' : '', this.savedFlag ? 0.6 : 0);   // a pop of 4+ earns the wink; time from a power-up just earns relief
       this.pop(this.flare, 1.5, 420); this.pop(this.pulse, 1.14, 320);
+      // the hat that hovered over the Last Spark drops back on (the pose transition in css/hats.css, quickened here) with a squash
+      if (this.hat && !BR.reducedMotion && !BR.lowEnd) {
+        this.hat.classList.add('fh-drop'); clearTimeout(this.dropT); this.dropT = setTimeout(() => { if (this.hat) this.hat.classList.remove('fh-drop'); }, 700);
+        this.hatMove('squash', [{ scale: '1 1' }, { scale: '1.14 0.8', offset: 0.4 }, { scale: '0.97 1.06', offset: 0.7 }, { scale: '1 1' }], { delay: 230, duration: 460, easing: 'ease-out' });
+      }
       if (!BR.lowEnd && !BR.reducedMotion) { const P = this.parts, y = this.cvTop + this.tyH; for (let i = 0; i < 14; i++) { const q = P.spawn(K.spark, this.tx0 + this.wx, y + this.wy, true); if (q) { q.sp = P.sp.spark[i % P.sp.spark.length]; const a = rnd(-3.14, 0); q.vx = Math.cos(a) * rnd(60, 180); q.vy = Math.sin(a) * rnd(60, 160); q.g = 120; q.drag = 1.2; q.life = rnd(0.4, 0.8); q.sc = rnd(0.8, 1.4); } } }
     },
     setMood(m, t1, m2, t2) { this.mood = m; this.moodT = t1; this.moodNext = m2 || ''; this.moodNext2 = t2 || 0; this.bomb.dataset.x = m; },
@@ -480,12 +626,12 @@
     /* ------------------------------------------------------------------ the readout */
     readout(v, z, running, still) {
       let m, n;
-      if (z === 'spark') { this.num.dataset.m = 'w'; return; }
+      if (z === 'spark') { this.num.dataset.m = 'w'; this.host.dataset.m = 'w'; return; }
       if (v >= 10) { m = 'w'; n = Math.floor(v + 1e-6); } else { m = 't'; n = Math.floor(v * 10 + 1e-6); }
       const key = n + (m === 't' ? 1000 : 0) + 1;                      // a number, so nothing is allocated per frame; 0 means "nothing shown yet"
       if (key === this.key) return;
       const old = this.key; this.key = key;
-      if (this.num.dataset.m !== m) this.num.dataset.m = m;
+      if (this.num.dataset.m !== m) { this.num.dataset.m = m; this.host.dataset.m = m; }   // (the moon's crescent below 10 seconds reads data-m)
       const dir = old && (old > 1000) === (m === 't') ? (old < key ? 1 : -1) : (m === 'w' ? 1 : -1);
       const roll = running && !still && !!old;
       let wholeChanged;
@@ -534,6 +680,7 @@
         a.glint += 1.6 * dt; while (a.glint >= 1) { a.glint -= 1; P.glintAt(this.tx0 + this.x0 + this.L * f * Math.random(), y + rnd(-6, 6)); }
         const sp = P.spec;
         if (sp && sp.shape === 'arc') { a.special += 7 * dt; while (a.special >= 1) { a.special -= 1; P.special(this.tx0 + this.x0 + this.L * f * Math.random(), y + rnd(-5, 5), 'along'); } }
+        else if (sp && sp.frozen && P.live < MAXP - 6) { P.body0 = this.tx0 + this.x0; P.bodyL = this.L * f; a.special += sp.rate * 0.45 * dt; while (a.special >= 1) { a.special -= 1; P.special(px, y); } }   // the moonlight keeps twinkling while time is stopped
         return;
       }
       if (live < 36) {
@@ -543,7 +690,7 @@
         a.ash += 1.5 * m * dt; while (a.ash >= 1) { a.ash -= 1; P.ash(px, y); }
       } else { a.spark = a.ember = a.smoke = a.ash = 0; }
       const sp = P.spec;
-      if (sp && live < MAXP - 2) { a.special += sp.rate * 0.8 * m * dt; while (a.special >= 1) { a.special -= 1; P.special(px, y); } }
+      if (sp && live < MAXP - 2) { P.body0 = this.tx0 + this.x0; P.bodyL = this.L * f; a.special += sp.rate * 0.8 * m * dt; while (a.special >= 1) { a.special -= 1; P.special(px, y); } }
       if (this.resp) { a.glint += 40 * dt; while (a.glint >= 1) { a.glint -= 1; P.glintAt(px - rnd(0, 10), y + rnd(-7, 7)); } }
     },
     /** one-off bursts (stage-up respool sparkle, frost cracking off, gold sparkles on a Line Blast) */
@@ -611,6 +758,7 @@
         if (this.glint) this.glint.animate([{ transform: `translate3d(${px0}px,0,0)`, opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate3d(${px1 + 8}px,0,0)`, opacity: 0.9, offset: 0.75 }, { transform: `translate3d(${px1 + 14}px,0,0)`, opacity: 0 }], { duration: r.gold ? 520 : 340, easing: 'ease-out' });
         this.pop(this.flare, r.big ? 1.7 : 1.3 + Math.min(0.3, r.sec * 0.08), r.big ? 420 : 300);
         this.pop(this.numBox, 1.14, 240);
+        if (this.z === 'calm' || this.z === 'watch') this.hatSway();
       }
       if (r.big && this.burstEl) {
         const b = this.burstEl; b.style.left = this.rx + 'px'; b.style.top = this.ry + 'px';
@@ -659,9 +807,11 @@
       this.setMood('glad', 1.4, '', 0);
       this.pop(this.flare, 1.6, 380); this.pop(this.pulse, 1.1, 300);
       this.burstGlints(0, 0.9, 10);
+      const u = this.bpx;   // the hat tips forward like a bow
+      this.hatMove('bow', [{ rotate: '0deg', translate: '0 0' }, { rotate: '34deg', translate: `${(1.6 * u).toFixed(1)}px ${(3 * u).toFixed(1)}px`, offset: 0.36 }, { rotate: '30deg', translate: `${(1.4 * u).toFixed(1)}px ${(2.6 * u).toFixed(1)}px`, offset: 0.62 }, { rotate: '0deg', translate: '0 0' }], { duration: 800, easing: 'ease-in-out' });
     },
-    sparkStart() { this.savedFlag = false; if (this.ok) this.pop(this.pulse, 1.2, 260); },
-    sparkEnd(saved) { this.savedFlag = !!saved; },
+    sparkStart() { this.savedFlag = false; if (this.ok) { this.pop(this.pulse, 1.2, 260); this.fire('spark'); } },
+    sparkEnd(saved) { this.savedFlag = !!saved; if (this.ok) this.fire('sparkEnd', { saved: !!saved }); },
     rushStart() { if (!this.ok) return; this.burstGlints(0, clamp(this.d / this.fmax, 0, 1), 8); this.pop(this.pulse, 1.12, 280); },
     /** Rush is over: the frost cracks off the rope and flies away in ice shards, and the flame comes back */
     rushEnd() {
@@ -674,17 +824,23 @@
       this.pop(this.flare, 1.8, 360);
     },
     /** the bomb goes off */
-    fuseOut() { if (this.ok) this.setMood('boom', 5, '', 0); },
+    fuseOut() {
+      if (!this.ok) return;
+      this.setMood('boom', 5, '', 0);
+      const u = this.bpx;   // the hat is blown off
+      this.hatMove('fly', [{ translate: '0 0', rotate: '0deg', opacity: 1 }, { translate: `${(8 * u).toFixed(1)}px ${(-44 * u).toFixed(1)}px`, rotate: '150deg', opacity: 1, offset: 0.45 }, { translate: `${(22 * u).toFixed(1)}px ${(-86 * u).toFixed(1)}px`, rotate: '380deg', opacity: 0 }], { duration: 800, fill: 'forwards', easing: 'cubic-bezier(0.2,0.7,0.3,1)' });
+    },
     /** the heartbeat (called with the sound): the bomb swells, the vignette and the number pulse */
     beat() {
       if (!this.ok || BR.reducedMotion) return;
       if (BR.lowEnd) return;
       this.pulse.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)', offset: 0.2 }, { transform: 'scale(0.98)', offset: 0.42 }, { transform: 'scale(1.06)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 340, easing: 'ease-out' });
+      if (this.hat) { const u = this.bpx; this.hatMove('beat', [{ translate: '0 0' }, { translate: `0 ${(-2.6 * u).toFixed(1)}px`, offset: 0.2 }, { translate: '0 0', offset: 0.46 }, { translate: `0 ${(-1.2 * u).toFixed(1)}px`, offset: 0.62 }, { translate: '0 0' }], { duration: 340, easing: 'ease-out' }); }
       if (this.vig && this.vig.classList.contains('on')) this.vig.animate([{ opacity: 0.7 }, { opacity: 1, offset: 0.2 }, { opacity: 0.7 }], { duration: 380 });
       this.pop(this.numBox, 1.18, 260);
     },
     /** for tests and the fuse sheet */
-    debug() { return { z: this.z, x: this.bomb && this.bomb.dataset.x, d: this.d, pend: this.pend, particles: this.parts ? this.parts.live : 0, cls: this.cls, mood: this.mood }; },
+    debug() { return { z: this.z, x: this.bomb && this.bomb.dataset.x, d: this.d, pend: this.pend, particles: this.parts ? this.parts.live : 0, cls: this.cls, mood: this.mood, hat: this.hatId, kind: this.xKind }; },
   };
   BR.Fuse = Fuse;
   if (BR.Skins && BR.Skins.applyHooks) BR.Skins.applyHooks.push(() => Fuse.sync());
