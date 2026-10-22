@@ -58,7 +58,7 @@
   /* The pop the recipes are drawing right now, as the handler below saw it: its size, centre and a call counter, so a recipe can ration
      itself ("every second brick sends a bird") and lean away from the group. Stale after 800 ms; Reduce Motion never sets it (the handler
      does not run), and the recipes then fall back to counting their own calls. */
-  const PC = { t: -1e9, last: -1e9, size: 0, cx: 0, cy: 0, k: 0, birds: 0, ghosts: 0, rush: false, nodes: null, portal: null, hang: 0 };
+  const PC = { dir: 1, t: -1e9, last: -1e9, size: 0, cx: 0, cy: 0, k: 0, birds: 0, ghosts: 0, rush: false, nodes: null, portal: null, hang: 0 };
   function popInfo() {
     const t = now(), fresh = t - PC.t < 800;
     if (!fresh && t - PC.last > 350) { PC.k = 0; PC.birds = 0; PC.ghosts = 0; }
@@ -75,32 +75,37 @@
     c.fillStyle = g; c.fillRect(0, 0, 32, 32);
   });
   /** A four-point sparkle: thin curved rays around a hot centre, with a soft halo in `halo`. */
-  const star4Img = (core, halo) => bake('s4st4' + core + halo, 44, 44, (c) => {
-    c.translate(22, 22);
-    const g = c.createRadialGradient(0, 0, 0, 0, 0, 14); g.addColorStop(0, rgba(halo, 0.65)); g.addColorStop(1, rgba(halo, 0));
-    c.fillStyle = g; c.beginPath(); c.arc(0, 0, 14, 0, TAU); c.fill();
+  const star4Img = (core, halo) => bake('s4st4' + core + halo, 56, 56, (c) => {
+    c.translate(28, 28);
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, 18); g.addColorStop(0, rgba(halo, 0.7)); g.addColorStop(1, rgba(halo, 0));
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, 18, 0, TAU); c.fill();
     const ray = (r, k) => { c.beginPath(); c.moveTo(0, -r); c.quadraticCurveTo(k, -k, r, 0); c.quadraticCurveTo(k, k, 0, r); c.quadraticCurveTo(-k, k, -r, 0); c.quadraticCurveTo(-k, -k, 0, -r); c.closePath(); };
-    ray(21, 2.4); c.fillStyle = rgba(core, 0.95); c.fill();
-    ray(9, 2.8); c.fillStyle = WHITE; c.fill();
+    c.shadowColor = 'rgba(30,12,50,.55)'; c.shadowBlur = 3 * dpr(); c.shadowOffsetY = 0.6 * dpr();   // a thin dark edge, so a white star reads on a yellow brick
+    ray(26.5, 3.1); c.fillStyle = rgba(core, 0.97); c.fill();
+    c.shadowBlur = 0; c.shadowOffsetY = 0;
+    ray(11, 3.4); c.fillStyle = WHITE; c.fill();
   });
 
   /* ===================================================================== FIREFLIES (Common)
      A firefly is a warm yellow-green bulb in a halo of the brick's colour. It does not fly, it wanders: its heading is a smooth random
      walk (so the path curls), it drifts upward, and it blinks: the whole sprite drops to a quarter of its size and a quarter of its light
      every 120 to 260 ms. One soft glint in the brick's colour marks where the brick was. */
-  const ffImg = (glow) => bake('s4ff' + glow, 52, 52, (c) => {
-    const cx = 26, cy = 27;
-    let g = c.createRadialGradient(cx, cy, 0, cx, cy, 26);
-    g.addColorStop(0, rgba(mix(glow, WHITE, 0.45), 0.85)); g.addColorStop(0.3, rgba(glow, 0.5)); g.addColorStop(0.65, rgba(glow, 0.16)); g.addColorStop(1, rgba(glow, 0));
-    c.fillStyle = g; c.fillRect(0, 0, 52, 52);
+  const ffImg = (glow) => bake('s4ff' + glow, 64, 64, (c) => {
+    const cx = 32, cy = 33;
+    // a soft dark pool under the light, so a pale brick (Topaz, Aqua) still lets the glow read
+    let g = c.createRadialGradient(cx, cy, 2, cx, cy, 22); g.addColorStop(0, 'rgba(8,16,8,.34)'); g.addColorStop(1, 'rgba(8,16,8,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+    g = c.createRadialGradient(cx, cy, 0, cx, cy, 31);
+    g.addColorStop(0, rgba(mix(glow, WHITE, 0.5), 0.95)); g.addColorStop(0.28, rgba(glow, 0.62)); g.addColorStop(0.62, rgba(glow, 0.2)); g.addColorStop(1, rgba(glow, 0));
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64);
     // two pale, nearly clear wings behind the bulb
-    c.fillStyle = 'rgba(235,255,225,.42)';
-    [-1, 1].forEach((s) => { c.save(); c.translate(cx + s * 2.2, cy - 2.4); c.rotate(s * 0.62); c.beginPath(); c.ellipse(s * 3.4, -3.4, 5.6, 2.1, 0, 0, TAU); c.fill(); c.restore(); });
+    c.fillStyle = 'rgba(240,255,232,.55)';
+    [-1, 1].forEach((s) => { c.save(); c.translate(cx + s * 2.6, cy - 3); c.rotate(s * 0.62); c.beginPath(); c.ellipse(s * 4.6, -4.6, 7.4, 2.7, 0, 0, TAU); c.fill(); c.restore(); });
     // thorax, and the glowing abdomen
-    c.fillStyle = '#26301a'; c.beginPath(); c.ellipse(cx, cy - 2.4, 2.4, 3, 0, 0, TAU); c.fill();
-    g = c.createRadialGradient(cx, cy + 3.6, 0, cx, cy + 3.6, 6.4);
-    g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, '#f1ffa0'); g.addColorStop(0.75, '#c8ff4a'); g.addColorStop(1, 'rgba(200,255,74,0)');
-    c.fillStyle = g; c.beginPath(); c.arc(cx, cy + 3.6, 6.4, 0, TAU); c.fill();
+    c.fillStyle = '#1c2412'; c.beginPath(); c.ellipse(cx, cy - 3, 3.1, 3.9, 0, 0, TAU); c.fill();
+    g = c.createRadialGradient(cx, cy + 5, 0, cx, cy + 5, 9);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, '#f4ffa8'); g.addColorStop(0.7, '#c8ff3c'); g.addColorStop(1, 'rgba(200,255,60,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy + 5, 9, 0, TAU); c.fill();
   });
   function fireflyStep(p, dt, e) {
     // the heading turns on a noisy angular velocity that always relaxes back to zero: gentle curls, never loops
@@ -118,10 +123,11 @@
   }
   PR.fireflies = function ({ x, y, glow, hi, n, power }) {
     const fx = this, C = tints(glow, hi), k = Math.max(1, Math.ceil(n * 0.35));
-    spr(fx, { img: glowImg(C.glow), x, y, size: 62, max: 0.3, a: 0.85, grow: 0.7, drag: 1 });
+    spr(fx, { img: glowImg(C.glow), x, y, size: 68, max: 0.3, a: 1, grow: 0.8, drag: 1 });
+    const big = 1 + (9 - Math.min(9, n)) * 0.045;   // a crowd gets fewer fireflies per brick, so each one is a little bigger
     for (let i = 0; i < k; i++) {
       const a = rnd(-Math.PI * 0.95, -Math.PI * 0.05), v = rnd(70, 190) * (0.9 + 0.1 * power);
-      const p = spr(fx, { img: ffImg(C.glow), x: x + rnd(-7, 7), y: y + rnd(-5, 5), vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0, drag: 0.9, size: rnd(30, 38), max: rnd(1.4, 1.9), a: 1, fadeIn: 0.07, rot: 0 });
+      const p = spr(fx, { img: ffImg(C.glow), x: x + rnd(-7, 7), y: y + rnd(-5, 5), vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0, drag: 0.9, size: rnd(44, 54) * big, max: rnd(1.4, 1.9), a: 1, fadeIn: 0.07, rot: 0 });
       steer(p, fireflyStep, { h: a, w: 0, sp: rnd(46, 72), rise: rnd(26, 46), ph: rnd(0, TAU), bt: rnd(0.04, 0.2), on: true, s: 1, size: 1 });
     }
   };
@@ -146,8 +152,8 @@
     const J = Math.ceil(k / 2);
     for (let i = 0; i < k; i++) {
       const j = i >> 1, strand = i & 1, big = i % 3 === 0;
-      const e = { x, y, ph: strand * Math.PI + j * 0.95 + rnd(-0.12, 0.12), w: rnd(8.2, 9.6) * (strand ? -1 : 1) * 1, R: rnd(9, 14) + (big ? 2 : 0), rise: lerp(58, 118, J > 1 ? j / (J - 1) : 0.5) * (0.92 + 0.08 * power), s: big ? 1 : 0.72, a: 1, spin: rnd(-2.5, 2.5) };
-      const p = spr(fx, { img: imgs[i % imgs.length], x, y, size: big ? 17 : 12, rot: rnd(0, TAU), max: rnd(0.82, 1.05), a: 1, fadeIn: 0.05, vx: rnd(-26, 26), vy: rnd(-120, -60), drag: 1.6, g: 0 });
+      const e = { x, y, ph: strand * Math.PI + j * 0.95 + rnd(-0.12, 0.12), w: rnd(8.2, 9.6) * (strand ? -1 : 1) * 1, R: rnd(12, 18) + (big ? 2 : 0), rise: lerp(62, 124, J > 1 ? j / (J - 1) : 0.5) * (0.92 + 0.08 * power), s: big ? 1 : 0.72, a: 1, spin: rnd(-2.5, 2.5) };
+      const p = spr(fx, { img: imgs[i % imgs.length], x, y, size: big ? 27 : 19, rot: rnd(0, TAU), max: rnd(0.82, 1.05), a: 1, fadeIn: 0.05, vx: rnd(-26, 26), vy: rnd(-120, -60), drag: 1.6, g: 0 });
       steer(p, wishStep, e);
     }
     spr(fx, { img: glowImg(C.glow), x, y, size: 50, max: 0.26, a: 0.8, grow: 0.8 });
@@ -157,7 +163,7 @@
      The brick folds into a paper bird: flat paper in the brick's colour, a lit facet and a shaded one, white creases. It flaps (three
      baked wing positions, swapped every 70 ms), climbs away to the side, and tilts into its glide. Three scraps of paper flutter down
      from the fold. In a big pop only every second brick sends a bird (never more than six); the others send scraps only. */
-  const BIRD_TIP = [[25, 1], [8, 12], [20, 40]];   // wing tip, up / level / down
+  const BIRD_TIP = [[26, 0], [20, 12], [18, 42]];   // wing tip, up / level / down
   const birdImg = (C, frame) => bake('s4bird' + C.glow + frame, 56, 44, (c) => {
     const tip = BIRD_TIP[frame], edge = rgba(C.lo, 0.6);
     const poly = (pts, fill, stroke) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fillStyle = fill; c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = 0.9; c.lineJoin = 'round'; c.stroke(); } };
@@ -193,7 +199,7 @@
       PC.birds++; used++;
       const dir = info.cx != null && Math.abs(x - info.cx) > 6 ? Math.sign(x - info.cx) : (PC.birds % 2 ? 1 : -1);
       const frames = [0, 1, 2].map((f) => birdImg(C, f));
-      const p = spr(fx, { img: frames[1], x, y, vx: dir * rnd(110, 170), vy: rnd(-250, -190), g: 0, drag: 0.4, size: rnd(34, 40) * (0.92 + 0.08 * power), max: rnd(1.25, 1.55), a: 1, fadeIn: 0.05, sx: dir, rot: -dir * 0.3 });
+      const p = spr(fx, { img: frames[1], x, y, vx: dir * rnd(110, 170), vy: rnd(-250, -190), g: 0, drag: 0.4, size: rnd(42, 50) * (0.92 + 0.08 * power), max: rnd(1.25, 1.55), a: 1, fadeIn: 0.05, sx: dir, rot: -dir * 0.3 });
       steer(p, birdStep, { frames, dir, up: rnd(95, 135), spd: rnd(125, 175) });
     }
     const cols = ['#f4ecd8', '#efe3c8', C.hi];
@@ -232,10 +238,10 @@
     c.lineJoin = c.lineCap = 'round';
     sigilPath(c, i, cx, cy, r); c.fillStyle = rgba(C.glow, 0.2); c.fill();
     c.shadowColor = C.glow; c.shadowBlur = 10 * dpr();
-    c.strokeStyle = rgba(C.glow, 0.95); c.lineWidth = 4.6; sigilPath(c, i, cx, cy, r); c.stroke();
+    c.strokeStyle = rgba(C.glow, 0.95); c.lineWidth = 5.4; sigilPath(c, i, cx, cy, r); c.stroke();
     c.shadowBlur = 0;
-    c.strokeStyle = rgba(mix(C.hi, WHITE, 0.72), 1); c.lineWidth = 1.8; sigilPath(c, i, cx, cy, r); c.stroke();
-    c.lineWidth = 1.5; sigilMark(c, i, cx, cy, r); c.stroke();
+    c.strokeStyle = rgba(mix(C.hi, WHITE, 0.72), 1); c.lineWidth = 2.2; sigilPath(c, i, cx, cy, r); c.stroke();
+    c.lineWidth = 1.9; sigilMark(c, i, cx, cy, r); c.stroke();
   });
   PR.runes = function ({ x, y, glow, hi, n, power }) {
     const fx = this, C = tints(glow, hi), img = sigilImg(C), info = popInfo();
@@ -244,8 +250,8 @@
     for (let i = 0; i < g; i++) {
       const main = i === 0, a = -Math.PI / 2 + (i % 2 ? 1 : -1) * rnd(0.55, 1.25) * (i > 2 ? 1.3 : 1), v = main ? 0 : rnd(170, 250) * (0.9 + 0.1 * power);
       const life = main ? rnd(0.56, 0.66) : rnd(0.6, 0.78);
-      const p = spr(fx, { img, x: x + (main ? 0 : rnd(-4, 4)), y: y + (main ? -2 : rnd(-4, 4)), vx: main ? rnd(-14, 14) : Math.cos(a) * v, vy: main ? -28 : Math.sin(a) * v - 20, g: -10, drag: 3.1, size: main ? (crowd ? 24 : 31) : rnd(17, 22), rot: rnd(-0.5, 0.5), vr: rnd(-2.6, 2.6), max: life, a: 1, grow: main ? 0.55 : 0.3, fadeIn: 0.05 });
-      const mi = Math.round(m / g) + (i === 0 && m % g ? 1 : 0);
+      const p = spr(fx, { img, x: x + (main ? 0 : rnd(-4, 4)), y: y + (main ? -2 : rnd(-4, 4)), vx: main ? rnd(-14, 14) : Math.cos(a) * v, vy: main ? -28 : Math.sin(a) * v - 20, g: -10, drag: 3.1, size: main ? (crowd ? 28 : 36) : rnd(21, 27), rot: rnd(-0.5, 0.5), vr: rnd(-2.6, 2.6), max: life, a: 1, grow: main ? 0.55 : 0.3, fadeIn: 0.05 });
+      const mi = Math.floor(m / g) + (i < m % g ? 1 : 0);
       if (p && mi > 0) later(() => {
         if (!p || p.life >= p.max) return;
         for (let k = 0; k < mi; k++) { const b = rnd(0, TAU), s = rnd(30, 120); fx.emit({ kind: 'spark', x: p.x + rnd(-6, 6), y: p.y + rnd(-6, 6), vx: Math.cos(b) * s, vy: Math.sin(b) * s - 30, g: 60, drag: 1.8, size: rnd(1.8, 3.2), max: rnd(0.3, 0.5), color: k % 2 ? C.hi : WHITE }); }
@@ -262,7 +268,7 @@
   const mulberry = (s) => () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const flakePts = (seed) => { const R = mulberry(seed), k = 6 + ((R() * 2) | 0), pts = []; for (let i = 0; i < k; i++) { const a = (i / k) * TAU + R() * 0.5, r = 8.2 + R() * 4.6; pts.push([14 + Math.cos(a) * r, 14 + Math.sin(a) * r * 0.9]); } return pts; };
   const flakeImg = (C, shape, dark) => bake('s4flake' + (dark ? C.glow : 'b') + shape + (dark ? 'd' : 'l'), 28, 28, (c) => {
-    const pts = flakePts(shape * 31 + 7), tones = dark ? [mix('#7a4a0c', C.glow, 0.42), mix('#b87a1c', C.hi, 0.3), mix('#98600f', C.glow, 0.3), mix('#d9a032', C.hi, 0.22)] : ['#fff6c4', '#ffe27a', '#ffd04a', '#f6b73a'];
+    const pts = flakePts(shape * 31 + 7), tones = dark ? [mix('#b8741c', C.glow, 0.3), mix('#e0a030', C.hi, 0.2), mix('#9c600e', C.glow, 0.26), mix('#f0b43c', C.hi, 0.18)] : ['#fff6c4', '#ffe27a', '#ffd04a', '#f6b73a'];
     c.lineJoin = 'round';
     // facets fan out from an off-centre crinkle point
     const o = [14 + (shape - 1) * 1.6, 13.5];
@@ -272,7 +278,7 @@
       c.fillStyle = tones[i % tones.length]; c.fill();
     }
     c.beginPath(); pts.forEach((q, i) => (i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]))); c.closePath();
-    c.strokeStyle = dark ? 'rgba(60,30,0,.55)' : 'rgba(255,255,230,.85)'; c.lineWidth = 0.8; c.stroke();
+    c.strokeStyle = dark ? 'rgba(70,34,0,.6)' : 'rgba(255,255,230,.85)'; c.lineWidth = 0.8; c.stroke();
     c.strokeStyle = dark ? 'rgba(255,225,150,.3)' : 'rgba(150,80,0,.28)'; c.lineWidth = 0.6;
     c.beginPath(); pts.forEach((q, i) => { if (i % 2 === 0) { c.moveTo(o[0], o[1]); c.lineTo(q[0], q[1]); } }); c.stroke();
   });
@@ -299,12 +305,12 @@
     p.vr = 0;
   }
   PR.goldleaf = function ({ x, y, glow, hi, n, power }) {
-    const fx = this, C = tints(glow, hi), k = clamp(Math.round(n * 0.75), 2, 7);
+    const fx = this, C = tints(glow, hi), k = Math.max(1, Math.min(7, n - 1, Math.round(n * 0.75)));   // flakes, and the gilded glint on top: never more than n
     spr(fx, { img: gildImg(C), x, y, size: brickSize() * 0.96, max: 0.11, a: 1, grow: 0.1, drag: 1 });
     for (let i = 0; i < k; i++) {
       const sh = i % 3, a = rnd(-Math.PI * 0.95, -Math.PI * 0.05), v = rnd(60, 250) * (0.9 + 0.1 * power);
       const bright = flakeImg(C, sh, false), dark = flakeImg(C, sh, true);
-      const p = spr(fx, { img: bright, x: x + rnd(-8, 8), y: y + rnd(-6, 6), vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 190, drag: 2.5, size: rnd(12, 18) * (0.92 + 0.08 * power), rot: rnd(0, TAU), max: rnd(1.1, 1.6), a: 1, fadeIn: 0.04 });
+      const p = spr(fx, { img: bright, x: x + rnd(-8, 8), y: y + rnd(-6, 6), vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 190, drag: 2.5, size: rnd(15, 22) * (0.92 + 0.08 * power), rot: rnd(0, TAU), max: rnd(1.1, 1.6), a: 1, fadeIn: 0.04 });
       steer(p, flakeStep, { bright, dark, ph: rnd(0, TAU), ph0: rnd(0, TAU), w: rnd(8.5, 14) * (Math.random() < 0.5 ? -1 : 1), r0: rnd(0, TAU) });
     }
   };
@@ -314,16 +320,20 @@
      of grains (a baked cluster, so one particle is a pinch of sand) that pour straight down in a narrow stream. In Rush time stands still:
      the grains hang in the air for 200 ms, trembling, before they fall. */
   const SAND = ['#ecd39a', '#dcb877', '#f5e6c0'];
-  const sandPuff = (C) => bake('s4puff' + C.glow, 40, 40, (c) => {
-    const col = mix('#e6c98c', C.hi, 0.3), g = c.createRadialGradient(20, 20, 0, 20, 20, 20);
-    g.addColorStop(0, rgba(mix(col, WHITE, 0.4), 0.7)); g.addColorStop(0.5, rgba(col, 0.36)); g.addColorStop(1, rgba(col, 0));
-    c.fillStyle = g; c.fillRect(0, 0, 40, 40);
+  const sandPuff = (C) => bake('s4puff' + C.glow, 48, 48, (c) => {
+    const col = mix('#ecd29a', C.hi, 0.38), g = c.createRadialGradient(24, 24, 0, 24, 24, 24);
+    g.addColorStop(0, rgba(mix(col, WHITE, 0.5), 0.9)); g.addColorStop(0.45, rgba(col, 0.55)); g.addColorStop(1, rgba(col, 0));
+    c.fillStyle = g; c.fillRect(0, 0, 48, 48);
+    const R = mulberry(5); c.fillStyle = rgba(mix(col, WHITE, 0.3), 0.8);
+    for (let i = 0; i < 16; i++) { const a = R() * TAU, r = 4 + R() * 17; c.fillRect(24 + Math.cos(a) * r, 24 + Math.sin(a) * r, 1.8, 1.8); }
   });
-  const sandStreak = (C, v) => bake('s4streak' + C.glow + v, 12, 38, (c) => {
-    const R = mulberry(77 + v * 13), cols = [C.hi, mix(C.hi, WHITE, 0.5), SAND[0], SAND[1], WHITE];
-    for (let i = 0; i < 17; i++) {
-      const t = i / 17, y = 2 + t * 34 + R() * 3, x = 6 + (R() - 0.5) * (3.4 + t * 3.8);
-      c.globalAlpha = 1 - t * 0.78; c.fillStyle = cols[(R() * cols.length) | 0]; c.fillRect(Math.round(x), Math.round(y), 2, R() < 0.3 ? 3 : 2);
+  /** A pinch of sand as one bitmap: about forty grains in a narrow column that thins out downward, each with a dark edge. */
+  const sandStreak = (C, v) => bake('s4streak' + C.glow + v, 18, 70, (c) => {
+    const R = mulberry(77 + v * 13), cols = [C.hi, mix(C.hi, WHITE, 0.5), SAND[0], SAND[1], WHITE, C.hi];
+    for (let i = 0; i < 44; i++) {
+      const t = i / 44, y = 3 + t * 62 + R() * 4, x = 9 + (R() - 0.5) * (4 + t * 7), w = R() < 0.3 ? 3 : 2.2, h = R() < 0.3 ? 3.4 : 2.4;
+      c.globalAlpha = (1 - t * 0.8) * 0.9; c.fillStyle = 'rgba(70,40,10,.5)'; c.fillRect(Math.round(x) + 0.8, Math.round(y) + 0.8, w, h);
+      c.globalAlpha = 1 - t * 0.8; c.fillStyle = cols[(R() * cols.length) | 0]; c.fillRect(Math.round(x), Math.round(y), w, h);
     }
   });
   function sandHang(p, dt, e) {
@@ -333,15 +343,15 @@
   }
   PR.sandfall = function ({ x, y, glow, hi, n, power }) {
     const fx = this, C = tints(glow, hi), rush = rushOn(), ss = Math.ceil(n / 3), gr = Math.max(1, Math.round(n * 1.05));
-    spr(fx, { img: sandPuff(C), x, y: y + 2, size: brickSize() * 1.15, max: 0.42, a: 0.85, grow: 0.5, vy: 20, drag: 1.5 });
+    spr(fx, { img: sandPuff(C), x, y: y + 2, size: brickSize() * 1.4, max: 0.46, a: 0.78, grow: 0.5, vy: 24, drag: 1.5 });
     const gcols = [C.hi, mix(C.hi, WHITE, 0.42), SAND[0], SAND[1], SAND[2], C.hi];
     const G = rush ? 900 : 1150;
     for (let i = 0; i < gr; i++) {
-      const p = put(fx, { kind: 'shard', shape: 'pixel', x: x + rnd(-11, 11), y: y + rnd(-14, 4), vx: rnd(-34, 34), vy: rnd(-90, 90), g: G * rnd(0.85, 1.1), drag: rush ? 6 : 0.8, size: rnd(1.6, 2.7), spread: 0, max: rnd(0.55, 0.9), color: gcols[i % gcols.length], rot: 0, vr: 0 });
+      const p = put(fx, { kind: 'shard', shape: 'pixel', x: x + rnd(-11, 11), y: y + rnd(-14, 4), vx: rnd(-34, 34), vy: rnd(-90, 90), g: G * rnd(0.85, 1.1), drag: rush ? 6 : 0.8, size: rnd(2.6, 4), spread: 0, max: rnd(0.55, 0.9), color: gcols[i % gcols.length], rot: 0, vr: 0 });
       if (rush && p) { p.g = 0; steer(p, sandHang, { hang: 0.2, g: G * rnd(0.85, 1.1), ph: rnd(0, TAU), rel: 0 }); }
     }
     for (let i = 0; i < ss; i++) {
-      const p = spr(fx, { img: sandStreak(C, i % 2), x: x + rnd(-8, 8), y: y + rnd(-8, 2), vx: rnd(-16, 16), vy: rnd(20, 120), g: rush ? 0 : G, drag: rush ? 6 : 0.7, size: rnd(7, 10), max: rnd(0.5, 0.8), a: 1, fadeIn: 0.05, sy: 1.1 });
+      const p = spr(fx, { img: sandStreak(C, i % 2), x: x + rnd(-8, 8), y: y + rnd(-8, 2), vx: rnd(-16, 16), vy: rnd(20, 120), g: rush ? 0 : G, drag: rush ? 6 : 0.7, size: rnd(11, 15), max: rnd(0.5, 0.8), a: 1, fadeIn: 0.05, sy: 1.1 });
       if (rush && p) { p.g = 0; steer(p, sandHang, { hang: 0.2, g: G, ph: rnd(0, TAU), rel: 0 }); }
     }
   };
@@ -351,11 +361,12 @@
      angle grows, so they spin faster the closer they get, and end in a pinpoint flash. A comet starts in the brick's colour, turns deep
      teal as it falls in, and ends gold. In a big pop every brick's comets spiral into the group's portal instead of their own centre. */
   const TEAL = '#27dcc6', TEAL_D = '#0e8c93', GOLD_D = '#d69220';
-  const cometImg = (col, tail) => bake('s4comet' + col + tail, 104, 20, (c) => {
-    const g = c.createLinearGradient(0, 0, 52, 0); g.addColorStop(0, rgba(tail, 0)); g.addColorStop(0.55, rgba(mix(tail, col, 0.5), 0.45)); g.addColorStop(1, rgba(col, 0.95));
-    c.fillStyle = g; c.beginPath(); c.moveTo(1, 10); c.quadraticCurveTo(30, 5, 52, 5.2); c.arc(52, 10, 4.8, -Math.PI / 2, Math.PI / 2); c.quadraticCurveTo(30, 15, 1, 10); c.fill();
-    const h = c.createRadialGradient(52, 10, 0, 52, 10, 9); h.addColorStop(0, '#ffffff'); h.addColorStop(0.4, rgba(mix(col, WHITE, 0.55), 0.9)); h.addColorStop(1, rgba(col, 0));
-    c.fillStyle = h; c.beginPath(); c.arc(52, 10, 9, 0, TAU); c.fill();
+  const cometImg = (col, tail) => bake('s4comet' + col + tail, 120, 28, (c) => {
+    // the head sits at the middle of the bitmap (so the particle's position is the head), the tail runs off to the left
+    const g = c.createLinearGradient(2, 0, 60, 0); g.addColorStop(0, rgba(tail, 0)); g.addColorStop(0.5, rgba(mix(tail, col, 0.45), 0.5)); g.addColorStop(1, rgba(col, 0.98));
+    c.fillStyle = g; c.beginPath(); c.moveTo(2, 14); c.quadraticCurveTo(34, 8, 60, 8.2); c.arc(60, 14, 5.8, -Math.PI / 2, Math.PI / 2); c.quadraticCurveTo(34, 20, 2, 14); c.fill();
+    const h = c.createRadialGradient(60, 14, 0, 60, 14, 13); h.addColorStop(0, '#ffffff'); h.addColorStop(0.38, rgba(mix(col, WHITE, 0.6), 0.92)); h.addColorStop(1, rgba(col, 0));
+    c.fillStyle = h; c.beginPath(); c.arc(60, 14, 13, 0, TAU); c.fill();
   });
   function spiralStep(p, dt, e) {
     const t = clamp(p.life / p.max, 0, 1), s = Math.pow(t, 1.5), r = e.r0 * (1 - s);
@@ -366,19 +377,20 @@
     e.started = true;
     const sp = Math.hypot(vx, vy) / Math.max(dt, 0.001);
     p.x = nx; p.y = ny; p.vx = p.vy = 0;
-    p.sx = clamp(sp / 330, 0.5, 1.5) * (1 - 0.35 * s); p.sy = 1 - 0.4 * s;
+    p.sx = clamp(sp / 330, 0.55, 1.4) * (1 - 0.3 * s); p.sy = 1 - 0.35 * s;
     p.img = t < 0.34 ? e.i0 : t < 0.72 ? e.i1 : e.i2;
     const fade = Math.min(1, (1 - t) * 2.2);
     p.a = (t < 0.88 ? 1 : (1 - t) / 0.12) / Math.max(0.22, fade);
-    if (t > 0.9 && !e.flashed && e.grp && !e.grp.done) { e.grp.done = true; e.flashed = true; put(e.fx, { kind: 'spark', x: nx, y: ny, size: e.big ? 6 : 9, max: 0.14, color: WHITE }); if (!e.big) e.fx.ring(nx, ny, TEAL, 26, 0.3, 2); }
+    if (t > 0.9 && !e.flashed && e.grp && !e.grp.done) { e.grp.done = true; e.flashed = true; spr(e.fx, { img: glowImg('#8ff5e6'), x: nx, y: ny, size: e.big ? 30 : 50, max: 0.2, a: 1, grow: 0.7 }); if (!e.big) e.fx.ring(nx, ny, TEAL, 26, 0.3, 2); }
   }
   PR.whirlgate = function ({ x, y, glow, hi, n, power }) {
     const fx = this, C = tints(glow, hi), k = clamp(n - 2, 2, 7), p0 = PC.portal && now() - PC.portal.t < 700 ? PC.portal : null;
     const i0 = cometImg(mix(C.glow, WHITE, 0.15), C.lo), i1 = cometImg(TEAL, TEAL_D), i2 = cometImg('#ffe08a', GOLD_D);
-    const dir = p0 ? p0.dir : Math.random() < 0.5 ? 1 : -1, a00 = rnd(0, TAU), grp = { done: false };
+    const info = popInfo(); if (info.k === 1) PC.dir = Math.random() < 0.5 ? 1 : -1;   // every vortex of one pop turns the same way, so a crowd reads as one big whirl
+    const dir = p0 ? p0.dir : PC.dir || 1, a00 = rnd(0, TAU), grp = { done: false };
     for (let i = 0; i < k; i++) {
       const a0 = a00 + (i / k) * TAU, r0 = rnd(34, 50) * (0.9 + 0.1 * power);
-      const p = spr(fx, { img: i0, x: x + Math.cos(a0) * r0, y: y + Math.sin(a0) * r0, size: rnd(46, 60), max: rnd(0.5, 0.62), a: 1, fadeIn: 0.05, rot: a0 + dir * Math.PI / 2 });
+      const p = spr(fx, { img: i0, x: x + Math.cos(a0) * r0, y: y + Math.sin(a0) * r0, size: rnd(76, 94), max: rnd(0.5, 0.62), a: 1, fadeIn: 0.05, rot: a0 + dir * Math.PI / 2 });
       if (BR.reducedMotion && p) { p.vx = -Math.cos(a0) * r0 / p.max; p.vy = -Math.sin(a0) * r0 / p.max; p.drag = 0; p.rot = a0 + Math.PI; }
       steer(p, spiralStep, { x, y, tx: p0 ? p0.x : x, ty: p0 ? p0.y : y, a0, r0, dir, turns: rnd(1.05, 1.4), i0, i1, i2, fx, grp, big: !!p0, started: false });
     }
@@ -496,7 +508,7 @@
     if (inner) el.innerHTML = inner;
     if (!el.animate) return null;
     L.appendChild(el);
-    const a = el.animate(frames, Object.assign({ fill: 'forwards' }, opts));
+    const a = el.animate(frames, Object.assign({ fill: 'both' }, opts));
     let fin = false;
     const done = () => { if (fin) return; fin = true; el.remove(); };
     a.onfinish = done; a.oncancel = done;
@@ -549,7 +561,7 @@
   MO.goldleaf = {
     pop(G, d, ctx) {
       const fx = ctx.fx, n = G.n, hit = hitStop(n);
-      if (n >= 8) {
+      if (n >= 8 && !G.line) {
         const S = clamp(Math.max(G.box.x1 - G.box.x0, G.box.y1 - G.box.y0) + brickSize() * 1.5, 140, 190);
         dom('s4-alch', G.c0.x, G.c0.y, S, S, [
           { transform: 'scale(0.55) rotate(-34deg)', opacity: 0 },
@@ -581,7 +593,9 @@
       const fx = ctx.fx, v = L.v, cell = v.cell, p0 = v.layerPoint(0, 0), len = cell * BR.CFG.cols, host = document.getElementById('fxlayer');
       if (host) {
         // the beam turns molten gold: a hot core laid over the game's own beam
+        cssOnce();
         const el = document.createElement('div');
+        el.className = 's4m';
         const g = L.horiz ? '90deg' : '180deg';
         el.style.cssText = `position:absolute;pointer-events:none;z-index:5;border-radius:999px;background:linear-gradient(${g},transparent,#fff3c0 16%,#ffbd2e 50%,#fff3c0 84%,transparent);box-shadow:0 0 26px 7px rgba(255,170,30,.7);will-change:transform,opacity;`;
         if (L.horiz) { el.style.left = p0.x - cell / 2 + 'px'; el.style.top = p0.y + L.fixed * cell - cell * 0.3 + 'px'; el.style.width = len + 'px'; el.style.height = cell * 0.6 + 'px'; }
@@ -608,7 +622,7 @@
       const r = strip.getBoundingClientRect(); if (!r.width) return;
       const el = dom('s4-shim', r.left + r.width / 2, r.top + r.height / 2, r.width, r.height, [{ opacity: 1 }, { opacity: 1, offset: 0.82 }, { opacity: 0 }], { duration: 760 }, '<b></b>');
       if (el && el.firstChild && el.firstChild.animate) el.firstChild.animate([{ transform: 'translateX(-130%) skewX(-20deg)' }, { transform: 'translateX(360%) skewX(-20deg)' }], { duration: 640, delay: 40, easing: 'cubic-bezier(0.35,0.1,0.4,1)', fill: 'both' });
-      for (let i = 0, k = cnt(9); i < k; i++) later(() => mo(ctx.fx, { shape: 'star', x: r.left + r.width * (0.08 + 0.84 * (i / Math.max(1, k - 1))) + rnd(-8, 8), y: r.top + r.height * rnd(0.2, 0.8), vx: rnd(-20, 20), vy: rnd(-70, -20), drag: 1.4, size: rnd(5, 9), max: rnd(0.28, 0.4), rot: rnd(0, TAU), vr: rnd(-6, 6), color: GOLDS[i % 4] }), 40 + i * 62);
+      for (let i = 0, k = cnt(9); i < k; i++) later(() => mo(ctx.fx, { shape: 'star', x: r.left + r.width * (0.08 + 0.84 * (i / Math.max(1, k - 1))) + rnd(-8, 8), y: r.top + r.height * rnd(0.2, 0.8), vx: rnd(-20, 20), vy: rnd(-70, -20), drag: 1.4, size: rnd(5, 9), max: rnd(0.28, 0.4), rot: rnd(0, TAU), vr: rnd(-6, 6), color: GOLDS[i % 4] }), 40 + i * 48);
     },
   };
 
@@ -631,7 +645,7 @@
   const grainCols = (C) => [C.hi, mix(C.hi, WHITE, 0.42), SAND[0], SAND[1], SAND[2], C.hi];
   MO.sandfall = {
     pop(G, d, ctx) {
-      const fx = ctx.fx, n = G.n; if (n < 8) return;
+      const fx = ctx.fx, n = G.n; if (n < 8 || G.line) return;
       const C = tints(G.col.glow, G.col.hi), ro = readout(G), cols = grainCols(C);
       let pts = HOURGLASS(); if (BR.lowEnd) pts = pts.filter((q, i) => i % 2 === 0);
       const t0 = 60;
@@ -697,7 +711,7 @@
   };
   MO.whirlgate = {
     pop(G, d, ctx) {
-      const fx = ctx.fx, n = G.n; if (n < 8) return;
+      const fx = ctx.fx, n = G.n; if (n < 8 || G.line) return;
       const c = G.c0, R = clamp(Math.max(G.box.x1 - G.box.x0, G.box.y1 - G.box.y0) / 2 + 40, 64, 120), S = R * 2, dir = Math.random() < 0.5 ? 1 : -1, tn = now();
       PC.portal = { x: c.x, y: c.y, t: tn, dir, R, close: tn + 440 };
       const open = [{ transform: 'scale(0.15) rotate(0deg)', opacity: 0 }, { transform: `scale(1.06) rotate(${dir * 36}deg)`, opacity: 1, offset: 0.28 }, { transform: `scale(1) rotate(${dir * 86}deg)`, opacity: 1, offset: 0.74 }, { transform: `scale(0.05) rotate(${dir * 124}deg)`, opacity: 0 }];
@@ -708,7 +722,7 @@
       const i1 = cometImg(TEAL, TEAL_D), i2 = cometImg('#ffe08a', GOLD_D);
       for (let i = 0, k = cnt(14); i < k; i++) {
         const a0 = (i / k) * TAU, r0 = R * rnd(0.85, 1.05);
-        const p = mspr(fx, { img: i % 2 ? i1 : i2, x: c.x + Math.cos(a0) * r0, y: c.y + Math.sin(a0) * r0, size: rnd(34, 46), max: rnd(0.32, 0.42), a: 1, fadeIn: 0.05, rot: a0 + Math.PI / 2 });
+        const p = mspr(fx, { img: i % 2 ? i1 : i2, x: c.x + Math.cos(a0) * r0, y: c.y + Math.sin(a0) * r0, size: rnd(66, 84), max: rnd(0.32, 0.42), a: 1, fadeIn: 0.05, rot: a0 + Math.PI / 2 });
         steer(p, spiralStep, { x: c.x, y: c.y, tx: c.x, ty: c.y, a0, r0, dir, turns: rnd(0.8, 1.1), i0: i1, i1, i2, fx, grp: null, big: true, started: false });
       }
       later(() => { mring(fx, c.x, c.y, TEAL, 40, 0.14, 3); mo(fx, { kind: 'spark', x: c.x, y: c.y, size: 14, max: 0.12, color: WHITE }); sound('thud', 0.6); }, 440);
@@ -724,7 +738,7 @@
       const ang = Math.atan2(B.y - A.y, B.x - A.x), len = Math.hypot(B.x - A.x, B.y - A.y), life = 0.32, ti = cometImg(TEAL, TEAL_D), gi = cometImg('#ffe08a', GOLD_D);
       for (let i = 0, k = cnt(14); i < k; i++) later(() => {
         const o = rnd(-cell * 0.18, cell * 0.18);
-        mspr(fx, { img: i % 2 ? ti : gi, x: A.x - Math.sin(ang) * o, y: A.y + Math.cos(ang) * o, vx: Math.cos(ang) * len / life, vy: Math.sin(ang) * len / life, drag: 0, size: rnd(44, 60), rot: ang, max: life, a: 1, fadeIn: 0.05 });
+        mspr(fx, { img: i % 2 ? ti : gi, x: A.x - Math.sin(ang) * o, y: A.y + Math.cos(ang) * o, vx: Math.cos(ang) * len / life, vy: Math.sin(ang) * len / life, drag: 0, size: rnd(80, 100), rot: ang, max: life, a: 1, fadeIn: 0.05 });
       }, 90 + i * 16);
       later(() => { mring(fx, B.x, B.y, TEAL, cell * 1.1, 0.2, 2.6); mo(fx, { kind: 'spark', x: B.x, y: B.y, size: 10, max: 0.14, color: WHITE }); }, 330);
     },
@@ -744,7 +758,7 @@
       const k = cnt(12), ti = cometImg(TEAL, TEAL_D), gi = cometImg('#ffe08a', GOLD_D), rx = b.width / 2 + 18, ry = b.height / 2 + 36;
       for (let i = 0; i < k; i++) {
         const a0 = (i / k) * TAU, dir = 1;
-        const p = mspr(fx, { img: i % 2 ? ti : gi, x: cx + Math.cos(a0) * rx, y: cy + Math.sin(a0) * ry, size: rnd(46, 58), max: 0.62, a: 1, fadeIn: 0.08, rot: a0 + Math.PI / 2 });
+        const p = mspr(fx, { img: i % 2 ? ti : gi, x: cx + Math.cos(a0) * rx, y: cy + Math.sin(a0) * ry, size: rnd(84, 100), max: 0.62, a: 1, fadeIn: 0.08, rot: a0 + Math.PI / 2 });
         steer(p, orbitStep, { cx, cy, rx, ry, a0, dir });
       }
     },
@@ -781,8 +795,8 @@
     let path = ''; D.lines.forEach(([a, b]) => { path += `M${D.pts[a][0]} ${D.pts[a][1]}L${D.pts[b][0]} ${D.pts[b][1]}`; });
     const halo = mix(C.hi, WHITE, 0.15);
     let stars = '';
-    D.pts.forEach(([x, y], i) => { const r = deg[i] >= 3 ? 2.9 : deg[i] === 1 ? 1.8 : 2.2; stars += `<circle cx="${x}" cy="${y}" r="${(r * 2.6).toFixed(1)}" fill="${halo}" opacity=".28"/><circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`; });
-    return `<svg viewBox="0 0 100 100" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${path}" stroke="${halo}" stroke-width="3.4" opacity=".3"/><path d="${path}" stroke="#eef4ff" stroke-width="1.2" opacity=".92"/>${stars}</svg>`;
+    D.pts.forEach(([x, y], i) => { const r = deg[i] >= 3 ? 3.6 : deg[i] === 1 ? 2.3 : 2.8; stars += `<circle cx="${x}" cy="${y}" r="${(r * 2.6).toFixed(1)}" fill="${halo}" opacity=".28"/><circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`; });
+    return `<svg viewBox="0 0 100 100" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${path}" stroke="${halo}" stroke-width="4.2" opacity=".34"/><path d="${path}" stroke="#eef4ff" stroke-width="1.6" opacity=".95"/>${stars}</svg>`;
   });
   /** The group as a constellation: stars at the brick centres (nudged a little), joined along the adjacency, tapped brick first. */
   function constellation(G) {
@@ -826,11 +840,11 @@
         K.edges.forEach(([a, b], i) => later(() => {
           const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, e = 8;
           mlink(fx, a.x + ux * e, a.y + uy * e, b.x - ux * e, b.y - uy * e, lc, life, 1.5, 'ln');
-          mo(fx, { kind: 'spark', x: a.x, y: a.y, vx: dx / 0.04, vy: dy / 0.04, drag: 0, size: 3.6, max: 0.05, color: WHITE });
+          if (!BR.lowEnd || i % 2 === 0) mo(fx, { kind: 'spark', x: a.x, y: a.y, vx: dx / 0.04, vy: dy / 0.04, drag: 0, size: 3.6, max: 0.05, color: WHITE });
           if (i < 8) ping(BR.audio && BR.audio._degFreq ? BR.audio._degFreq(7 + i) : 880 * Math.pow(2, [0, 2, 4, 7, 9][i % 5] / 12), 0, 0.034, 0.2);
         }, 40 + i * gap));
       }
-      if (n >= 8) {
+      if (n >= 8 && !G.line) {
         const b = boardRect(ctx), dir = G.c0.x > b.left + b.width / 2 ? -1 : 1, S = clamp(b.width * 0.5, 160, 200), kind = creatureOf(C.i);
         const p0 = { x: G.c0.x, y: G.c0.y }, p1 = { x: dir > 0 ? b.right + S * 0.3 : b.left - S * 0.3, y: clamp(G.c0.y - b.height * 0.12, b.top + S * 0.3, b.bottom - S * 0.4) };
         const frames = [], N = 14, flip = dir > 0 ? 1 : -1;
@@ -850,10 +864,15 @@
       const fx = ctx.fx, fwd = L.at <= (L.pts.length - 1) / 2, a = fwd ? L.pts[0] : L.pts[L.pts.length - 1], b = fwd ? L.pts[L.pts.length - 1] : L.pts[0], cell = L.v.cell;
       const A = L.horiz ? { x: a.x + (fwd ? -cell : cell), y: a.y } : { x: a.x, y: a.y + (fwd ? -cell : cell) }, B = L.horiz ? { x: b.x + (fwd ? cell : -cell), y: b.y } : { x: b.x, y: b.y + (fwd ? cell : -cell) };
       const T = 0.34, vx = (B.x - A.x) / T, vy = (B.y - A.y) / T, C = tints(L.color.glow, L.color.hi);
-      mo(fx, { kind: 'spark', x: A.x, y: A.y, vx, vy, drag: 0, size: 9, max: T, color: SILVER });
-      mo(fx, { kind: 'spark', x: A.x, y: A.y, vx, vy, drag: 0, size: 17, max: T, color: mix(C.glow, SILVER, 0.4) });
+      // the head: a bright four-point star on a halo in the line's colour; the tail: a thin silver streak that fades, and sparks left behind
+      mspr(fx, { img: glowImg(mix(C.glow, SILVER, 0.5)), x: A.x, y: A.y, vx, vy, drag: 0, size: 56, max: T, a: 0.9 });
+      mspr(fx, { img: star4Img(WHITE, '#bcd0ff'), x: A.x, y: A.y, vx, vy, drag: 0, size: 38, max: T, a: 1, rot: 0.5 });
       const steps = cnt(18);
-      for (let i = 1; i <= steps; i++) later(() => { const u = i / steps, x = lerp(A.x, B.x, u), y = lerp(A.y, B.y, u); mo(fx, { kind: 'spark', x: x + rnd(-2, 2), y: y + rnd(-2, 2), vx: rnd(-14, 14), vy: rnd(-14, 14), drag: 1.4, size: rnd(3, 5.6), max: rnd(0.14, 0.2), color: i % 3 === 0 ? C.hi : SILVER }); }, (T * 1000 * i) / steps);
+      for (let i = 1; i <= steps; i++) later(() => {
+        const u = i / steps, x = lerp(A.x, B.x, u), y = lerp(A.y, B.y, u), x0 = lerp(A.x, B.x, Math.max(0, u - 2.4 / steps)), y0 = lerp(A.y, B.y, Math.max(0, u - 2.4 / steps));
+        mlink(fx, x0, y0, x, y, SILVER, 0.26, 3.4);
+        mo(fx, { kind: 'spark', x: x + rnd(-3, 3), y: y + rnd(-3, 3), vx: rnd(-16, 16), vy: rnd(-16, 16), drag: 1.4, size: rnd(3.4, 6), max: rnd(0.14, 0.2), color: i % 3 === 0 ? C.hi : SILVER });
+      }, (T * 1000 * i) / steps);
     },
     rushStart(d, ctx) {
       const bg = document.getElementById('bg'); if (!bg || BR.lowEnd) return;
@@ -865,9 +884,9 @@
     },
     rushEnd() { killEl('sky', 360); },
     stageUp(d, ctx) {
-      const fx = ctx.fx, b = boardRect(d.run ? { view: d.run.view } : ctx), path = perimeter(b, 9, 16), k = cnt(14), img = star4Img(WHITE, '#9fb8ff');
+      const fx = ctx.fx, b = boardRect(d.run ? { view: d.run.view } : ctx), path = perimeter(b, 9, 16), k = cnt(16), img = star4Img(WHITE, "#9fb8ff");
       for (let i = 0; i < k; i++) {
-        const p = mspr(fx, { img, x: 0, y: 0, size: i % 3 === 0 ? 20 : 14, max: 0.84, a: 1, fadeIn: 0.1, rot: rnd(0, 1) });
+        const p = mspr(fx, { img, x: 0, y: 0, size: i % 3 === 0 ? 32 : 23, max: 0.84, a: 1, fadeIn: 0.1, rot: rnd(0, 1) });
         steer(p, wheelStep, { path, P: path.P, s0: (i / k) * path.P });
         if (p) { const q = path.at((i / k) * path.P); p.x = q.x; p.y = q.y; }
       }
@@ -891,15 +910,15 @@
   }
   MO.wisps = {
     pop(G, d, ctx) {
-      const fx = ctx.fx, n = G.n; if (n < 8) return;
+      const fx = ctx.fx, n = G.n; if (n < 8 || G.line) return;
       const C = tints(G.col.glow, G.col.hi), c = G.c0, S = clamp(G.box.x1 - G.box.x0 + 70, 84, 130), H = S * 1.2;
       const rise = 120, sw = [];
-      for (let i = 0; i <= 12; i++) { const u = i / 12, e = easeOut(u); sw.push({ offset: u, opacity: u < 0.12 ? u / 0.12 : u > 0.84 ? (1 - u) / 0.16 : 1, transform: `translate(${(Math.sin(u * 7) * 9).toFixed(1)}px, ${(-rise * e).toFixed(1)}px) rotate(${(Math.sin(u * 15) * 13 * (1 - u * 0.4)).toFixed(1)}deg) scale(${(0.55 + 0.5 * Math.min(1, u * 3)).toFixed(3)})` }); }
-      dom('s4-ghost', c.x, c.y, S, H, sw, { duration: 540, delay: 20, easing: 'linear' }, bigGhost(C));
+      for (let i = 0; i <= 12; i++) { const u = i / 12, e = easeOut(u); sw.push({ offset: u, opacity: u < 0.12 ? u / 0.12 : u > 0.8 ? (1 - u) / 0.2 : 1, transform: `translate(${(Math.sin(u * 7) * 9).toFixed(1)}px, ${(-rise * e).toFixed(1)}px) rotate(${(Math.sin(u * 15) * 13 * (1 - u * 0.4)).toFixed(1)}deg) scale(${(0.55 + 0.5 * Math.min(1, u * 3)).toFixed(3)})` }); }
+      dom('s4-ghost', c.x, c.y, S, H, sw, { duration: 500, delay: 20, easing: 'linear' }, bigGhost(C));
       later(() => {
-        const gx = c.x + Math.sin(0.84 * 7) * 9, gy = c.y - rise * easeOut(0.84);
-        for (let i = 0, k = cnt(14); i < k; i++) { const a = rnd(0, TAU), s = rnd(40, 160); mo(fx, { kind: 'spark', x: gx + rnd(-18, 18), y: gy + rnd(-22, 22), vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, drag: 2, size: rnd(2.6, 5), max: rnd(0.12, 0.17), color: i % 3 === 0 ? C.hi : i % 3 === 1 ? WHITE : '#cdeaff' }); }
-      }, 450);
+        const gx = c.x + Math.sin(0.8 * 7) * 9, gy = c.y - rise * easeOut(0.8);
+        for (let i = 0, k = cnt(14); i < k; i++) { const a = rnd(0, TAU), s = rnd(40, 160); mo(fx, { kind: 'spark', x: gx + rnd(-18, 18), y: gy + rnd(-22, 22), vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, drag: 2, size: rnd(2.6, 5), max: rnd(0.12, 0.15), color: i % 3 === 0 ? C.hi : i % 3 === 1 ? WHITE : '#cdeaff' }); }
+      }, 410);
     },
     line(d, ctx) {
       const L = lineOf(d); if (!L) return;
@@ -927,7 +946,7 @@
       const r = tag.getBoundingClientRect(); if (!r.width) return;
       const C = tints(BR.PALETTE[(d.info && d.info.to ? d.info.to : 1) % 7].glow), W = 36, H = 34;
       cssOnce();
-      const wrap = dom('s4-peek', r.left + 20, r.top + 3 - H / 2, W + 6, H, [{ opacity: 1 }, { opacity: 1, offset: 0.9 }, { opacity: 0 }], { duration: 800 }, `<span style="position:absolute;left:3px;top:0;width:${W}px;height:${W * 1.2}px">${bigGhost(C)}</span>`);
+      const wrap = dom('s4-peek', r.left + 20, r.top - 1 - H / 2, W + 6, H, [{ opacity: 1 }, { opacity: 1, offset: 0.9 }, { opacity: 0 }], { duration: 800 }, `<span style="position:absolute;left:3px;top:0;width:${W}px;height:${W * 1.2}px">${bigGhost(C)}</span>`);
       if (wrap && wrap.firstChild.animate) wrap.firstChild.animate([{ transform: `translateY(${H + 4}px) rotate(0deg)` }, { transform: 'translateY(2px) rotate(-6deg)', offset: 0.22 }, { transform: 'translateY(2px) rotate(7deg)', offset: 0.5 }, { transform: 'translateY(2px) rotate(-3deg)', offset: 0.7 }, { transform: `translateY(${H + 4}px) rotate(0deg)` }], { duration: 760, easing: 'ease-in-out', fill: 'both' });
     },
   };
@@ -942,7 +961,7 @@
     else cells = (ctx.cells || []).map((q) => ({ x: q.x, y: q.y, r: -1, c: -1 }));
     let sx = 0, sy = 0, x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     cells.forEach((q) => { sx += q.x; sy += q.y; x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y); });
-    return { cells, n: ctx.n, plan, view: v, c0: { x: sx / cells.length, y: sy / cells.length }, box: { x0, y0, x1, y1 }, col: ctx.col ? ctx.col(0) : BR.PALETTE[0] };
+    return { cells, n: ctx.n, plan, line: !!(plan && plan.line), view: v, c0: { x: sx / cells.length, y: sy / cells.length }, box: { x0, y0, x1, y1 }, col: ctx.col ? ctx.col(0) : BR.PALETTE[0] };
   }
   BR.Skins.handlers.push((type, d, ctx) => {
     if (BR.reducedMotion) return;
@@ -1018,7 +1037,7 @@
   const BCSS = `
 .s4b{width:7.6em;height:7.6em;overflow:visible;filter:drop-shadow(0 0 .3em rgba(255,255,255,.4))}
 .bdg.still .s4b{filter:none}
-.s4b *{transform-box:fill-box;transform-origin:center}
+.s4b-bl,.s4b-tw,.s4b-sp,.s4b-fl,.s4b-wv{transform-box:fill-box;transform-origin:center}
 .s4b-bl{animation:s4bBl 2.1s ease-in-out infinite}
 .s4b-tw{animation:s4bTw 2.4s ease-in-out infinite}
 .s4b-sp{animation:s4bSp 9s linear infinite}
@@ -1036,20 +1055,20 @@
   const DISC = '<circle r="47" fill="#0c0620" opacity=".17"/><circle r="36" fill="#0c0620" opacity=".16"/>';
   const ART = {
     b_fireflies: () => {
-      const ff = (x, y, s, ph) => `<g transform="translate(${x} ${y}) scale(${s})"><g class="s4b-bl" style="animation-delay:${ph}s"><circle r="25" fill="url(#s4ffg)"/><ellipse cx="-6" cy="-7" rx="8" ry="3.2" fill="#fff" opacity=".6" transform="rotate(-35 -6 -7)"/><ellipse cx="6" cy="-7" rx="8" ry="3.2" fill="#fff" opacity=".6" transform="rotate(35 6 -7)"/><ellipse cy="-3" rx="4.4" ry="5.6" fill="#26301a"/><circle cy="7" r="7.4" fill="#e8ff5a" stroke="#4a5a10" stroke-width="1.2"/><circle cy="6" r="3.8" fill="#fff"/></g></g>`;
-      return svgB(`<defs><radialGradient id="s4ffg"><stop offset="0" stop-color="#f6ffb0" stop-opacity=".95"/><stop offset=".45" stop-color="#c6f23c" stop-opacity=".5"/><stop offset="1" stop-color="#c6f23c" stop-opacity="0"/></radialGradient></defs>${DISC}<path d="M-40 34C-22 -8 6 44 36 -30" fill="none" stroke="#fff" stroke-width="2.2" stroke-dasharray="0.1 6" stroke-linecap="round" opacity=".7"/>${ff(-18, 14, 1.05, 0)}${ff(10, -2, 0.78, -0.7)}${ff(32, -26, 0.55, -1.4)}`);
+      const ff = (x, y, s, ph) => `<g transform="translate(${x} ${y}) scale(${s})"><g class="s4b-bl" style="animation-delay:${ph}s"><circle r="27" fill="url(#s4ffg)"/></g><ellipse cx="-7" cy="-8" rx="9" ry="3.6" fill="#fff" opacity=".75" transform="rotate(-35 -7 -8)"/><ellipse cx="7" cy="-8" rx="9" ry="3.6" fill="#fff" opacity=".75" transform="rotate(35 7 -8)"/><ellipse cy="-3" rx="4.8" ry="6" fill="#1c2412" stroke="#000" stroke-width=".8"/><g class="s4b-bl" style="animation-delay:${ph}s"><circle cy="8" r="8" fill="#e8ff3a" stroke="#3a4a08" stroke-width="1.4"/><circle cy="7" r="4.2" fill="#fff"/></g></g>`;
+      return svgB(`<defs><radialGradient id="s4ffg"><stop offset="0" stop-color="#f6ffb0" stop-opacity="1"/><stop offset=".4" stop-color="#c6f23c" stop-opacity=".65"/><stop offset="1" stop-color="#c6f23c" stop-opacity="0"/></radialGradient><radialGradient id="s4ffn" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#1c4a52"/><stop offset="1" stop-color="#06121c"/></radialGradient></defs><circle r="44" fill="url(#s4ffn)" opacity=".92"/><path d="M-40 34C-22 -8 6 44 36 -30" fill="none" stroke="#e8ff7a" stroke-width="2.4" stroke-dasharray="0.1 6" stroke-linecap="round" opacity=".85"/>${ff(-17, 14, 1.2, 0)}${ff(12, -3, 0.88, -0.7)}${ff(31, -27, 0.62, -1.4)}${star4(-33, -26, 4, '#fff', 's4b-tw', '')}${star4(-6, 36, 3.4, '#e8ff7a', 's4b-tw', 'style="animation-delay:-1s"')}`);
     },
     b_wishdust: () => {
-      const pts = [[0, -40, 11, 0], [-15, -26, 6, 1], [15, -17, 8, 2], [-15, -4, 10, 0.5], [15, 9, 7, 1.5], [-15, 22, 9, 2.5], [15, 35, 6, 0.8], [0, 44, 5, 1.8], [-34, -8, 4, 2.2], [34, -30, 4.5, 0.3]];
-      let s = ''; pts.forEach(([x, y, r, d], i) => { s += star4(x, y, r + 3, i % 2 ? '#fff6c8' : '#ffffff', 's4b-tw', `style="animation-delay:${-d}s" stroke="#8a5a00" stroke-width=".9"`); });
-      return svgB(`${DISC}<path d="M0 -40C-26 -30 26 -10 0 4C-26 18 26 34 0 44" fill="none" stroke="#ffd36b" stroke-width="2.6" stroke-linecap="round" opacity=".55"/><path d="M0 -40C26 -30 -26 -10 0 4C26 18 -26 34 0 44" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".5"/>${s}`);
+      const pts = [[0, -38, 12, 0], [-15, -24, 7, 1], [15, -15, 9, 2], [-15, -3, 11, 0.5], [15, 10, 8, 1.5], [-15, 23, 10, 2.5], [15, 35, 7, 0.8], [0, 43, 6, 1.8], [-35, -10, 4, 2.2], [35, -32, 5, 0.3]];
+      let s = ''; pts.forEach(([x, y, r, d], i) => { s += star4(x, y, r + 3.5, i % 2 ? '#fff3b8' : '#ffffff', 's4b-tw', `style="animation-delay:${-d}s" stroke="#a86a00" stroke-width="1"`); });
+      return svgB(`<defs><radialGradient id="s4wdn" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#3a2478"/><stop offset="1" stop-color="#120a30"/></radialGradient></defs><circle r="44" fill="url(#s4wdn)" opacity=".92"/><path d="M0 -38C-28 -28 28 -10 0 4C-28 18 28 34 0 43" fill="none" stroke="#ffd36b" stroke-width="3.2" stroke-linecap="round" opacity=".8"/><path d="M0 -38C28 -28 -28 -10 0 4C28 18 -28 34 0 43" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".7"/>${s}`);
     },
     b_birds: () => svgB(`${DISC}<g class="s4b-fl"><path d="M-8 2L18 -2L-2 -40Z" fill="#d9cdae" stroke="#7a6a44" stroke-width="1.6" stroke-linejoin="round" transform="translate(4 -2)"/><path d="M-44 20L-10 6L16 -6L46 6L20 16L-6 22Z" fill="#fff8e6" stroke="#7a6a44" stroke-width="2" stroke-linejoin="round"/><path d="M-44 20L-6 22L20 16L4 32Z" fill="#e0d4b6" stroke="#7a6a44" stroke-width="2" stroke-linejoin="round"/><path d="M16 -6L46 6L20 16Z" fill="#fffdf3" stroke="#7a6a44" stroke-width="2" stroke-linejoin="round"/><path d="M-16 8L16 0L-12 -46Z" fill="#fff" stroke="#7a6a44" stroke-width="2" stroke-linejoin="round"/><path d="M0 4L-12 -46" stroke="#cbbd98" stroke-width="1.6"/><circle cx="31" cy="3" r="1.8" fill="#2a2640"/><path d="M46 6L52 9L46 10Z" fill="#ff9a3d"/></g><g transform="translate(30 -30) scale(.46)"><path d="M-30 14L0 4L22 -4L34 6L12 12Z" fill="#ff8aa0" stroke="#7a2a3a" stroke-width="3"/><path d="M-6 6L12 -2L-4 -30Z" fill="#ffc2cf" stroke="#7a2a3a" stroke-width="3"/></g><g transform="translate(-30 -30) scale(.4)"><path d="M-30 14L0 4L22 -4L34 6L12 12Z" fill="#ffd36b" stroke="#7a5200" stroke-width="3.4"/><path d="M-6 6L12 -2L-4 -30Z" fill="#fff0a8" stroke="#7a5200" stroke-width="3.4"/></g>`),
     b_runes: () => svgB(`${DISC}<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-15 -27L15 -27L31 0L15 27L-15 27L-31 0Z" fill="rgba(127,178,255,.3)" stroke="#2f6bff" stroke-width="11" opacity=".55"/><path d="M-15 -27L15 -27L31 0L15 27L-15 27L-31 0Z" stroke="#fff" stroke-width="4.6"/><path d="M0 -15L14 0L0 15L-14 0Z" stroke="#cfe0ff" stroke-width="3.4"/><circle r="3.6" fill="#fff" stroke="none"/></g><g class="s4b-sp" style="animation-duration:14s" fill="none" stroke="#e6f0ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="-36" cy="-30" r="8"/><path d="M34 -36L42 -22L26 -22Z"/><path d="M34 26V42M26 34H42"/></g>`),
     b_goldleaf: () => {
-      const f1 = [[-30, -6], [-14, -30], [10, -34], [32, -14], [30, 14], [8, 32], [-18, 26]], tones = ['#fff3b0', '#ffd34a', '#f6b73a', '#ffe27a', '#e49a24', '#ffd34a', '#fff0a0'];
-      let s = ''; f1.forEach((p, i) => { const q = f1[(i + 1) % f1.length]; s += `<path d="M2 -2L${p[0]} ${p[1]}L${q[0]} ${q[1]}Z" fill="${tones[i]}"/>`; });
-      return svgB(`${DISC}<g class="s4b-fl"><g stroke="#6b3d00" stroke-width="2.6" stroke-linejoin="round">${s}</g><path d="M2 -2L-30 -6M2 -2L10 -34M2 -2L30 14M2 -2L-18 26" stroke="#fff8d0" stroke-width="1.2" opacity=".8"/></g><g transform="translate(30 30) rotate(25) scale(.42)"><g stroke="#6b3d00" stroke-width="5" stroke-linejoin="round">${s}</g></g><g transform="translate(-34 28) rotate(-30) scale(.3)"><g stroke="#6b3d00" stroke-width="6" stroke-linejoin="round">${s}</g></g>${star4(-34, -34, 9, '#fff', 's4b-tw', 'stroke="#8a5a00" stroke-width=".8"')}${star4(36, -30, 6, '#fff6c8', 's4b-tw', 'style="animation-delay:-1.2s"')}`);
+      // a sheet of foil, crumpled: a soft irregular outline, a gold gradient, and zigzag creases that catch the light
+      const leaf = (x, y, s, rot, o) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" ${o || ''}><path d="M-34 -2L-20 -28L-4 -20L10 -36L30 -22L25 -5L36 11L14 34L-4 23L-19 36L-31 18Z" fill="url(#s4glf)" stroke="#7a4a00" stroke-width="${(2.2 / s).toFixed(2)}" stroke-linejoin="round"/><path d="M-4 -20L2 -2L-10 8L-4 23M10 -36L2 -2L25 -5M2 -2L14 34" fill="none" stroke="#c47a10" stroke-width="${(1.5 / s).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/><path d="M-26 -8L-14 -12L-8 -2L4 -8M-22 14L-12 8L-6 16L8 6L16 14" fill="none" stroke="#fffdf0" stroke-width="${(1.7 / s).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/></g>`;
+      return svgB(`<defs><linearGradient id="s4glf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffbe0"/><stop offset=".4" stop-color="#ffe066"/><stop offset=".75" stop-color="#f2b030"/><stop offset="1" stop-color="#c47a10"/></linearGradient></defs>${DISC}<g class="s4b-fl">${leaf(-3, 3, 1.02, -10)}</g>${leaf(33, -27, 0.42, 34, 'class="s4b-fl" style="animation-delay:-1s"')}${leaf(32, 34, 0.3, -48, 'class="s4b-fl" style="animation-delay:-2s"')}${star4(-35, -33, 9, '#fff', 's4b-tw', 'stroke="#8a5a00" stroke-width=".8"')}${star4(-38, 30, 5.5, '#fff6c8', 's4b-tw', 'style="animation-delay:-1.2s"')}`);
     },
     b_sandfall: () => {
       const gr = [[-38, -14], [-34, 4], [-40, 22], [36, -20], [38, 0], [34, 18], [-30, -34], [30, -38]];
