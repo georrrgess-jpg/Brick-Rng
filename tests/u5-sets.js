@@ -450,6 +450,7 @@ const info = (...a) => console.log(...a);
         }
       }
       BR.Sets.onEvent = orig; hs.remove(); run.el.classList.remove('rushing');
+      ['rushBanner', 'stageWipe'].forEach((id) => document.getElementById(id).classList.remove('go')); document.querySelectorAll('.callout').forEach((n) => n.remove());   // the game's own texts are put away for the pictures that follow
       return { sprites: mine.length, hits, seen: Array.from(seen), checked, over, stages };
     };
   };

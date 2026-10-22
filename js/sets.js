@@ -487,7 +487,7 @@
      transmutation circle turns once in the middle and gold motes rise. */
   function greatWork(P, g) {
     const W = g.W, H = g.H, cx = W / 2, cy = H / 2, big = Math.max(W, H) * 1.25, s = W * 0.8;
-    P.el('sf-wash', { x: 0, y: 0, w: W, h: H }, [{ opacity: 0 }, { opacity: 0.8, offset: 0.26 }, { opacity: 0.55, offset: 0.55 }, { opacity: 0 }], 0, 800, 'ease-in-out');
+    P.el('sf-wash', { x: 0, y: 0, w: W, h: H }, [{ opacity: 0 }, { opacity: 0.7, offset: 0.26 }, { opacity: 0.48, offset: 0.55 }, { opacity: 0 }], 0, 800, 'ease-in-out');
     P.el('sf-ripple', { x: cx - big / 2, y: cy - big / 2, w: big, h: big }, [{ transform: 'scale(0.06)', opacity: 0.95 }, { opacity: 0.9, offset: 0.5 }, { transform: 'scale(1)', opacity: 0 }], 0, 660, 'cubic-bezier(0.2, 0.7, 0.3, 1)');
     P.el('sf-ripple b', { x: cx - big / 2, y: cy - big / 2, w: big, h: big }, [{ transform: 'scale(0.06)', opacity: 0.8 }, { opacity: 0.7, offset: 0.5 }, { transform: 'scale(0.86)', opacity: 0 }], 150, 640, 'cubic-bezier(0.2, 0.7, 0.3, 1)');
     P.el('sf-circle ' + art('circle'), { x: cx - s / 2, y: cy - s / 2, w: s, h: s }, [
@@ -551,7 +551,7 @@
       P.el('sf-star ' + art('star' + (i % 3)), { x: pt.x - S / 2, y: pt.y - S / 2, w: S, h: S }, key.map(([t, o, sc, r]) => ({ offset: t / D, opacity: o, transform: `scale(${sc}) rotate(${r}deg)` })), delay, D);
     });
     F.e.forEach(([a, b]) => {
-      const from = starAt(a) + 20, D = END - from, len = Math.hypot(pts[b].x - pts[a].x, pts[b].y - pts[a].y), ang = Math.atan2(pts[b].y - pts[a].y, pts[b].x - pts[a].x), h = 2.4 * Math.max(0.8, k), grow = step * 0.95, fadeAt = Math.max(grow + 10, 600 - from);
+      const grow = step * 0.95, from = Math.max(0, starAt(b) - grow + 25), D = END - from, len = Math.hypot(pts[b].x - pts[a].x, pts[b].y - pts[a].y), ang = Math.atan2(pts[b].y - pts[a].y, pts[b].x - pts[a].x), h = 2.4 * Math.max(0.8, k), fadeAt = Math.max(grow + 10, 600 - from);
       const tf = (sx) => `rotate(${ang.toFixed(4)}rad) scaleX(${sx})`;
       P.el('sf-line', { x: pts[a].x, y: pts[a].y - h / 2, w: len, h }, [{ offset: 0, opacity: 1, transform: tf(0) }, { offset: grow / D, opacity: 1, transform: tf(1) }, { offset: fadeAt / D, opacity: 1, transform: tf(1) }, { offset: 1, opacity: 0, transform: tf(1) }], from, D, 'ease-out');
     });
