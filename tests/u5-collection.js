@@ -39,6 +39,21 @@ const ok = (c, m, ...x) => { if (!c) { bad++; console.log('FAIL', m, ...x); } };
     ok(shop.spot && !shop.ovf, 'the spotlight shows and the chips do not wrap', JSON.stringify(shop));
     await page.click('.spotlight'); await page.waitForTimeout(900);
     ok(await page.evaluate(() => { const s = document.querySelector('.sheet'); return !!s && /Show me the/.test(s.textContent) && !/Equip/.test(s.textContent); }), 'the spotlight opens a preview with a way to the chest, not an Equip button');
+    // ---- the Tower: in from the Collection, a lit window opens its item, a dark one says where it comes from, back returns
+    await page.evaluate(() => { ['f_spellbook', 'a_library'].forEach((id) => { if (!BR.Progress.owns(id)) BR.Progress.keep({ itemId: id, shine: 'plain', seed: 3 }); }); BR.Router.go('collection'); }); await page.waitForTimeout(700);
+    await page.evaluate(() => { const c = document.querySelector('.sheet [data-close]'); if (c) c.click(); });
+    await page.click('.tower-entry'); await page.waitForTimeout(1200);
+    ok(await page.evaluate(() => !!document.querySelector('.tw') && document.querySelectorAll('[data-tw-item]').length >= 2), 'the Tower shows the windows of the items you have');
+    await page.evaluate(() => document.querySelector('[data-tw-item]').scrollIntoView({ block: 'center' })); await page.waitForTimeout(500);
+    await page.click('[data-tw-item]'); await page.waitForTimeout(800);
+    ok(await page.evaluate(() => !!document.querySelector('.sheet') && /Equip/.test(document.querySelector('.sheet').textContent)), 'a lit window opens the item sheet');
+    await page.evaluate(() => document.querySelector('.sheet [data-close]').click()); await page.waitForTimeout(700);
+    await page.evaluate(() => document.querySelector('[data-tw-locked]').scrollIntoView({ block: 'center' })); await page.waitForTimeout(500);
+    await page.click('[data-tw-locked]'); await page.waitForTimeout(800);
+    ok(await page.evaluate(() => !!document.querySelector('.sheet') && /Not found yet/.test(document.querySelector('.sheet').textContent)), 'a dark window says where the item comes from');
+    await page.evaluate(() => document.querySelector('.sheet [data-close]').click()); await page.waitForTimeout(700);
+    await page.evaluate(() => document.querySelector('[data-act="close-tower"]').click()); await page.waitForTimeout(600);
+    ok(await page.evaluate(() => !!document.querySelector('#colSeg') && !document.querySelector('.tw')), 'the back button returns to the Collection');
     ok(errors.length === 0, 'console errors', errors.join(' | '));
     await browser.close();
   }

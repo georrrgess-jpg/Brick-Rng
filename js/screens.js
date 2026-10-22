@@ -411,19 +411,43 @@
   /* ------------------------------------------------------------------ Collection */
   const COL_TYPES = BR.TYPE_ORDER.concat('hat');   // the four item types, then Fizz's hats (earned, never in chests)
   const colLabel = (t) => (t === 'hat' ? 'Hats' : BR.ITEM_TYPES[t].plural);
+  const TOWER_ICO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21V10M16 21V10M8 10l4-6 4 6M6 21h12M10.5 21v-4.5a1.5 1.5 0 013 0V21M12 4V2M10.5 13h3"/></svg>`;
   const Collection = {
-    type: 'skin', filter: null,
+    type: 'skin', filter: null, view: 'items',
     render(arrive) {
+      if (this.view === 'tower' && BR.Tower) return this.renderTower();
       const type = this.type;
       const segs = COL_TYPES.map((t) => `<button data-type="${t}" class="${t === type ? 'on' : ''}" type="button" aria-pressed="${t === type}">${colLabel(t)}</button>`).join('');
       this.arrive = !!arrive;
       this.el.innerHTML = `<div class="scroll">
         ${BR.Coach.banner('collection')}
+        ${this.towerEntry()}
         <div class="seg stg" id="colSeg" style="--n:${COL_TYPES.length};--si:${COL_TYPES.indexOf(type)}">${segs}<i class="thumb"></i></div>
         <div class="col-body" id="colBody">${this.bodyHTML()}</div>
         <p class="tiny center">Tap an item to see it. Tap the circle to wear it. Every chest gives something new.</p>
       </div>`;
       this.hydrateGrid();
+    },
+    /** The way into the Tower view: Moonwick progress at a glance and the next floor to finish. */
+    towerEntry() {
+      if (!BR.Tower) return '';
+      const sum = BR.Tower.summary(new Set(P.ownedIds())), next = BR.Tower.nextLine(new Set(P.ownedIds()));
+      return `<button class="tower-entry stg" data-act="open-tower" type="button" aria-label="Moonwick Tower, ${sum.have} of ${sum.total} found. ${next || 'Every floor is lit'}. Open the tower">
+        <span class="te-ico">${TOWER_ICO}</span><span class="te-txt"><b class="display">Moonwick Tower</b><small>${sum.have} of ${sum.total}${next ? ' · ' + esc(next) : ' · every floor is lit'}</small></span><span class="te-go" aria-hidden="true">${BR.icon('arrow')}</span></button>`;
+    },
+    /** The Tower: the Moonwick items as a tower of lit and dark windows. A window opens its item (or where to find it). */
+    renderTower() {
+      this.el.innerHTML = `<div class="scroll"><div class="tw-bar stg"><button class="chip-btn on" data-act="close-tower" type="button" aria-label="Back to the Collection">${BR.icon('back')} Collection</button></div>
+        ${BR.Tower.html({ owned: new Set(P.ownedIds()) })}</div>`;
+      BR.Tower.afterRender(this.el.querySelector('.scroll'), {
+        onItem: (id, uid) => { BR.audio.ui(); BR.haptic('tick'); BR.itemSheet(uid, BR.itemById[id].type); },
+        onLocked: (id) => { BR.audio.ui(); BR.haptic('tick'); BR.lockedSheet(id); },
+      });
+    },
+    setView(v) {
+      if (this.view === v) return;
+      this.view = v; this.render(false);
+      const sc = this.el.querySelector('.scroll'); if (sc) { sc.scrollTop = 0; swapIn(sc, v === 'tower' ? 1 : -1); }
     },
     /** Everything under the type switch: what you wear, the count ring, the rarity filter and the grid. */
     bodyHTML() {
@@ -534,7 +558,7 @@
       BR.toast(id === 'none' ? 'Hat taken off' : `${esc(hatOf(id).name)} equipped`, 'good');
       BR.Router.rerender();
     },
-    onRetap() { this.el.querySelector('.scroll').scrollTo({ top: 0, behavior: BR.reducedMotion ? 'auto' : 'smooth' }); },
+    onRetap() { if (this.view === 'tower') { this.setView('items'); return; } this.el.querySelector('.scroll').scrollTo({ top: 0, behavior: BR.reducedMotion ? 'auto' : 'smooth' }); },
   };
   /** A hat's card: the same box as an item card (see it, wear it), with Fizz wearing the hat on the plate. */
   function hatCard(h, o) {
@@ -1007,6 +1031,8 @@
     });
     Shop.el.addEventListener('click', (e) => { if (e.target.closest('[data-act="toggle-inside"]')) toggleInside(e.target.closest('.odds')); });
     bind(Collection, (t) => {
+      if (t.dataset.act === 'open-tower') { BR.audio.ui(); BR.haptic('tick'); Collection.setView('tower'); return; }
+      if (t.dataset.act === 'close-tower') { BR.audio.ui(); Collection.setView('items'); return; }
       if (t.dataset.type && t.closest('#colSeg')) { BR.audio.ui(); Collection.setType(t.dataset.type); return; }
       if (t.dataset.rar != null && t.classList.contains('chip-btn')) { BR.audio.ui(); Collection.setFilter(t.dataset.rar); return; }
       const a = t.dataset.act;
