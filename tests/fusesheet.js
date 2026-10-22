@@ -56,7 +56,7 @@ const SLOWMO = () => {
     if (BR.Router.current === 'run') { BR.Run.over = true; BR.Run.token++; BR.Router.go('home', { instant: true }); }
     __app.startRun({ mode: 'rush', boosts: {} });
   }, id);
-  const ready = () => page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 15000 });
+  const ready = () => page.waitForFunction(() => BR.Run.clock && !BR.Run.busy && BR.Router.current === 'run', null, { timeout: 15000 });
   // hold the engine in a state: re-apply it every 25ms (the fuse keeps burning between writes, which is fine)
   const hold = (src) => page.evaluate((src) => {
     clearInterval(window.__hold);
@@ -74,8 +74,11 @@ const SLOWMO = () => {
     await equip(id); await ready();
     for (const st of STATES) {
       await hold(st.hold);
+      // a big drop in the held value burns down at ~26 s/s (the fast burn), so wait for the state to arrive, then let the face and rope settle
+      await page.waitForFunction((z) => BR.Fuse.z === z, st.z, { timeout: 4000, polling: 30 }).catch(() => {});
       await page.waitForTimeout(st.id === 'frozen' ? 1000 : st.id === 'spark' ? 600 : 550);
-      const info = await page.evaluate(() => { const d = BR.Fuse.debug(); const f = document.getElementById('fuse'); return Object.assign(d, { z2: f.dataset.z, x2: document.getElementById('bomb').dataset.x, n: BR.Fuse.parts.live }); });
+      const info = await page.evaluate(() => { const d = BR.Fuse.debug(); const f = document.getElementById('fuse'); return Object.assign(d, { z2: f.dataset.z, x2: document.getElementById('bomb').dataset.x, n: BR.Fuse.parts.live, scr: BR.Router.current }); });
+      ok(info.scr === 'run', id, st.id, 'the run screen is not showing', info.scr);
       ok(info.z === st.z && info.z2 === st.z, id, st.id, 'state is', info.z, 'expected', st.z);
       ok(info.x2 === st.x, id, st.id, 'face is', info.x2, 'expected', st.x);
       ok(info.n <= 40, id, st.id, 'particles', info.n);
@@ -156,6 +159,7 @@ const SLOWMO = () => {
     const bigPop = () => page.evaluate(() => { const e = BR.Run.engine; let best = null; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = e.plan(r, c); if (p && (!best || p.cells.length > best.n)) best = { r, c, n: p.cells.length }; } return best && BR.Run.view.pagePoint(best.r, best.c); });
     const popNow = async () => { const a = await bigPop(); await page.mouse.click(a.x, a.y); };
     const calm = (fuse) => page.evaluate((fuse) => { const e = BR.Run.engine; e.rush.active = false; e.rush.meter = 0; e.rush.left = 0; e.freeze = 0; e.spark = 0; e.stageScore = 0; e.streak = 0; e.fuse = fuse; }, fuse);
+    await equip(ONLY ? ONLY[0] : 'default'); await ready();   // (a run must be showing to measure the fuse's place on the screen)
     const fr = await rect();
     const tall = { x: 0, y: fr.y, width: fr.width, height: 340 };
     const scenarios = [

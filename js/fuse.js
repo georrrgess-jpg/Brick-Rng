@@ -216,6 +216,9 @@
       const u = q.age / q.life;
       let a = u < 0.14 ? u / 0.14 : 1;
       if (u > 0.5) a *= 1 - (u - 0.5) / 0.5;
+      // soft canvas edges: a puff of smoke leaving the layer fades out instead of being sliced by its border
+      const ex = Math.min(q.x, this.w - q.x), ey = Math.min(q.y / 1.3, this.h - q.y);
+      if (ex < 12 || ey < 12) a *= Math.max(0, Math.min(ex, ey, 12) / 12);
       return a * q.a;
     }
     draw() {
@@ -328,7 +331,7 @@
       this.wx = this.bx - this.tx0; this.wy = this.by - this.bs * 0.5 - 10 - this.tyH;
       // the particle canvas covers the host and reaches 40px above it (the Last Spark flame sits on the bomb's wick) and 14px below
       const ch = this.hostRect.h + this.cvTop + 14;
-      this.cv.style.marginTop = -this.cvTop + 'px'; this.parts.resize(this.hostRect.w, ch); this.cvH = ch;
+      this.cv.style.left = -this.tx0 + 'px'; this.cv.style.top = -(this.tyH - this.ty) - this.cvTop + 'px'; this.parts.resize(this.hostRect.w, ch); this.cvH = ch;
       h.style.setProperty('--fz-w', this.L + 'px');
       this.setStep(this.fmax);
       if (this.parts.sp) this.parts.setStyle(this.tok || A.tokensFor('fuse-classic'));
@@ -638,10 +641,10 @@
       el.getAnimations().forEach((a) => a.cancel());
       if (BR.reducedMotion) { el.animate([{ opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 1, offset: 0.2, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }, { opacity: 0, transform: `translate3d(${x}px,${y + 24}px,0) translate(-50%,-50%)` }], { duration: 800, fill: 'both' }); return; }
       el.animate([
-        { opacity: 0, transform: `translate3d(${x}px,${y}px,0) translate(-50%,-50%) scale(0.6)` },
-        { opacity: 1, offset: 0.14, transform: `translate3d(${x + 4}px,${y + 10}px,0) translate(-50%,-50%) scale(1.15)` },
-        { opacity: 1, offset: 0.5, transform: `translate3d(${x + 10}px,${y + 34}px,0) translate(-50%,-50%) scale(1) rotate(5deg)` },
-        { opacity: 0, transform: `translate3d(${x + 16}px,${y + 78}px,0) translate(-50%,-50%) scale(0.9) rotate(10deg)` },
+        { opacity: 0, transform: `translate3d(${x}px,${y + 14}px,0) translate(-50%,-50%) scale(0.6)` },
+        { opacity: 1, offset: 0.14, transform: `translate3d(${x + 4}px,${y + 26}px,0) translate(-50%,-50%) scale(1.15)` },
+        { opacity: 1, offset: 0.5, transform: `translate3d(${x + 10}px,${y + 48}px,0) translate(-50%,-50%) scale(1) rotate(5deg)` },
+        { opacity: 0, transform: `translate3d(${x + 16}px,${y + 86}px,0) translate(-50%,-50%) scale(0.9) rotate(10deg)` },
       ], { duration: 820, easing: 'cubic-bezier(0.3,0.1,0.6,1)', fill: 'both' });
     },
     /** a chip with no time change behind it (a label like "+2s" from the board's middle) */
