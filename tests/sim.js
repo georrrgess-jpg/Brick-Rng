@@ -1,7 +1,7 @@
 // Time-stepped simulation of Pop Rush: bots with human-like decision times play full runs.
 // Checks board invariants every action and prints pacing numbers. Run: node tests/sim.js [quick]
 global.window = global;
-for (const f of ['rng', 'board', 'config', 'boosters', 'items', 'chests', 'pass', 'engine']) require('../js/' + f + '.js');
+for (const f of ['rng', 'board', 'config', 'boosters', 'items', 'chests', 'pass', 'director', 'engine']) require('../js/' + f + '.js');
 const BR = global.BR;
 const QUICK = process.argv[2] === 'quick';
 
@@ -12,6 +12,8 @@ if (process.env.RGAIN) BR.CFG.rush.gainBase = +process.env.RGAIN;
 if (process.env.RPER) BR.CFG.rush.gainPerExtra = +process.env.RPER;
 if (process.env.RSTREAK) BR.CFG.rush.gainStreak = +process.env.RSTREAK;
 if (process.env.MULT) BR.CFG.stage.multStep = +process.env.MULT;
+if (process.env.COINREF) BR.CFG.coin.ref = +process.env.COINREF;
+if (process.env.STAGECAP) BR.CFG.coin.stageCap = +process.env.STAGECAP;
 
 function check(e, label) {
   const B = e.board, ids = new Set();
@@ -33,8 +35,8 @@ function allTaps(e) {
 }
 
 /** skill: { think: mean seconds to choose a tap, lock: animation seconds per pop, greedy: 0..1, power: bool } */
-function run(skill, seed, mode = 'rush') {
-  const e = new BR.Engine({ seed, mode });
+function run(skill, seed, mode = 'rush', rating) {
+  const e = new BR.Engine({ seed, mode, skill: rating });
   const rng = BR.makeRng(seed ^ 0xabcdef);
   let guard = 0;
   const advance = (sec) => { for (let t = 0; t < sec && !e.over; t += 0.05) e.tick(Math.min(0.05, sec - t)); };
@@ -83,8 +85,11 @@ const coinsFor = (r) => { let st = 0; for (let k = 1; k <= Math.min(r.cleared, C
 console.log('mode rush: stage reached / run seconds / rushes / Last Spark used / fuse bricks burst vs defused / Coins per run');
 const results = {};
 for (const [key, sk] of Object.entries(skills)) {
+  // the tile director's rating builds up over a player's runs: warm it up the way the game does, then measure
+  let rating = 0.4;
+  if (BR.Director) for (let s = 1; s <= 30; s++) rating = BR.Director.rate(rating, { mode: 'rush', stage: run(sk, 100003 * s, 'rush', rating).stage });
   const runs = [];
-  for (let s = 1; s <= N; s++) runs.push(run(sk, s * 7919));
+  for (let s = 1; s <= N; s++) runs.push(run(sk, s * 7919, 'rush', rating));
   const stages = runs.map((r) => r.stage).sort((a, b) => a - b);
   runs.forEach((r) => { r.coins = coinsFor(r); });
   results[key] = { coins: avg(runs, 'coins'), time: avg(runs, 'time'), stage: avg(runs, 'stage') };

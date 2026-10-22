@@ -95,14 +95,14 @@
       if (mode === 'daily') { st.daily = { day: BR.dayKey(), score: 0, stage: 0 }; BR.Storage.save(); }
       const tutorial = !st.seenTutorial && mode === 'rush';
       const seed = mode === 'daily' ? BR.dailySeed('d' + BR.dayKey()) : undefined;
-      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial, waitFirstPop: tutorial, gentle: tutorial });
+      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial, waitFirstPop: tutorial, gentle: tutorial, skill: st.profile.skill });
       BR.Storage.clearRun();
       return this.begin(engine, { tutorial, goal: mode === 'rush' ? BR.Goals.pick() : null });
     },
     resume() {
       const snap = BR.Storage.loadRun();
       if (!snap) return;
-      const engine = new BR.Engine({ mode: snap.mode, seed: snap.seed, boosts: snap.boosts || {}, snapshot: snap });
+      const engine = new BR.Engine({ mode: snap.mode, seed: snap.seed, boosts: snap.boosts || {}, snapshot: snap, skill: S().profile.skill });
       return this.begin(engine, { resumed: true, goal: snap.goal || null });
     },
 
@@ -782,6 +782,8 @@
       const today = BR.dayKey();
       const firstOfDay = st.lastDay !== today; if (firstOfDay) st.lastDay = today;
       const coins = P.runCoins(sum, { daily, firstOfDay });
+      // the tile director's skill rating follows how far Rush runs go when the fuse ends them (a quit or a restart does not count)
+      if (!silent && reason === 'fuse' && BR.Director) st.profile.skill = BR.Director.rate(st.profile.skill, sum);
       P.earn(coins.total);
       const prevBest = st.best[mode];
       const isBest = sum.score > prevBest;

@@ -557,7 +557,7 @@
         </article>
         <article class="card card-pad stg help-card"><div class="sec-title">Help</div><p class="tiny">New to something? Every part of the game shows a short tip the first time. Show them all again:</p><button class="btn btn-dark btn-sm" data-act="tips">Show the tips again</button></article>
         <article class="card card-pad stg"><div class="sec-title">Data</div><p class="tiny">Your progress is saved on this device. A save code lets you keep a copy or move to a new device.</p><div class="data-btns"><button class="btn btn-dark btn-sm" data-act="save-code">Save code</button><button class="btn btn-dark btn-sm" data-act="restore-code">Restore</button></div><button class="btn btn-dark btn-sm danger" data-act="reset">Reset all progress</button></article>
-        <p class="tiny center version">Pop Rush 4.0 · Ignite</p>
+        <p class="tiny center version">Pop Rush 4.1 · Ignite</p>
       </div>`;
     },
     onShow() { },

@@ -132,14 +132,18 @@
           if (nr !== e.r) moves.push({ id: e.b.id, fromR: e.r, toR: nr, c });
         });
       }
+      // the holes left after gravity; a painter (the tile director) chooses all their colors at once, otherwise one by one
+      const holes = [];
       for (let c = 0; c < cols; c++) {
         const missing = missingBy[c];
-        for (let k = 0; k < missing; k++) {
-          const nr = dir === 'down' ? missing - 1 - k : rows - missing + k;
-          const b = this.newBrick(this._pickColor(nr, c));
-          this.grid[nr][c] = b;
-          spawns.push({ id: b.id, color: b.color, r: nr, c, fromR: dir === 'down' ? nr - missing : nr + missing });
-        }
+        for (let k = 0; k < missing; k++) holes.push({ r: dir === 'down' ? missing - 1 - k : rows - missing + k, c, missing });
+      }
+      const painted = this.painter && holes.length ? this.painter.paint(this, holes) : null;
+      const colorAt = painted ? new Map(painted.map((h) => [h.r * cols + h.c, h.color])) : null;
+      for (const h of holes) {
+        const b = this.newBrick(colorAt ? colorAt.get(h.r * cols + h.c) : this._pickColor(h.r, h.c));
+        this.grid[h.r][h.c] = b;
+        spawns.push({ id: b.id, color: b.color, r: h.r, c: h.c, fromR: dir === 'down' ? h.r - h.missing : h.r + h.missing });
       }
       this.version++;
       return { moves, spawns };

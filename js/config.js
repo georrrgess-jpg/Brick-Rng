@@ -15,7 +15,7 @@
       popPerExtra: 0.4,   // ...plus this for each brick beyond the second
       lineBonus: 5,       // Line Blast
       powerBonus: 2,      // using a power-up
-      burnGrowth: 1.15,   // burn speed multiplier per stage ...
+      burnGrowth: 1.2,    // burn speed multiplier per stage (1.15 before the tile director removed the droughts) ...
       burnCap: 8,         // ... which stops growing at this stage, so a long run is never lost to the clock alone
       floorFrom: 6,       // from this stage a pop of 3+ always pays at least floorTime seconds
       floorTime: 1.4,
@@ -47,7 +47,8 @@
     },
     // Coins for a finished run = scale * sqrt(score / ref) + stageStep * (1 + 2 + .. + stages cleared, capped).
     // Square-root growth keeps sharp players ahead without letting them run away from everyone else.
-    coin: { scale: 14, ref: 50000, stageStep: 1, stageCap: 8, firstOfDay: 20, dailyBonus: 15 },
+    // ref 50000 and stageCap 8 before the tile director: players now go further and score more, so the same Coins need more
+    coin: { scale: 14, ref: 80000, stageStep: 1, stageCap: 7, firstOfDay: 20, dailyBonus: 15 },
     startCoins: 200,
     rerollCost: 30,
     pityEvery: 8,          // every 8th chest of a type without an Epic or better guarantees one

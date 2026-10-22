@@ -76,10 +76,10 @@ for (const [chest, type] of [['brick', 'skin'], ['pop', 'pop'], ['board', 'board
 assert.strictEqual(P.coins, 200);
 assert(P.spend(50) && P.coins === 150 && !P.spend(1000));
 const rc = P.runCoins({ score: 200000, stagesCleared: 5 }, { daily: true, firstOfDay: true });
-assert.strictEqual(rc.points, 28); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 78);
+assert.strictEqual(rc.points, 22); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 72);
 assert(P.runCoins({ score: 0, stagesCleared: 0 }).total === 0, 'an empty run pays nothing');
 assert(P.runCoins({ score: 450000, stagesCleared: 12 }).total < 4 * P.runCoins({ score: 54000, stagesCleared: 3 }).total, 'sharp players earn well under 4x a casual player');
-assert(P.runCoins({ score: 1e9, stagesCleared: 30 }).stages === 36, 'stage bonus is capped');
+assert(P.runCoins({ score: 1e9, stagesCleared: 30 }).stages === 28, 'stage bonus is capped');
 assert.strictEqual(BR.xpForLevel(1), 500);
 let res = P.addXp(499); assert.strictEqual(res.ups.length, 0);
 res = P.addXp(1); assert.strictEqual(res.ups.length, 1); assert.strictEqual(P.level, 2);
@@ -171,6 +171,18 @@ assert.strictEqual(mg.profile.loadout.skin, 'b');
 assert.strictEqual(mg.profile.coins, 500 + 40 + 600, 'duplicates refunded: one Common and one Legendary'); assert.deepStrictEqual(mg.notice, { kind: 'dupes', coins: 640 });
 assert(mg.profile.xp < BR.xpForLevel(3), 'xp clamped to the new level curve'); assert.deepStrictEqual(mg.profile.pity, { skin: 0, pop: 0, board: 0, fuse: 0 });
 assert.strictEqual(mg.profile.chests.brick, 1, 'unopened chests survive'); assert(!('counter' in mg.profile.vault[0]));
+
+// ---- the tile director's skill rating: a new save starts at 0.4; a save from before it starts a little below its best Rush stage;
+// a rating already saved is kept
+for (const k of Object.keys(mem)) delete mem[k];
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+assert.strictEqual(BR.Storage.data.profile.skill, 0.4, 'a new player starts at 0.4');
+mem['poprush.v4'] = JSON.stringify({ v: 4, bestStage: { rush: 8, daily: 0, chill: 0 }, profile: { level: 5, coins: 10 } });
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+assert.strictEqual(BR.Storage.data.profile.skill, 0.667, 'a returning stage-8 player is seeded from the best stage');
+mem['poprush.v4'] = JSON.stringify({ v: 4, bestStage: { rush: 8, daily: 0, chill: 0 }, profile: { level: 5, coins: 10, skill: 0.21 } });
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+assert.strictEqual(BR.Storage.data.profile.skill, 0.21, 'a saved rating is kept');
 
 // ---- review fixes: the best Shine survives a duplicate collapse, bad saves are kept aside, nulls cannot wipe defaults
 for (const k of Object.keys(mem)) delete mem[k];

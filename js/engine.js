@@ -16,6 +16,7 @@
       this.startHammer = !!opts.startHammer;
       this.waitFirstPop = !!opts.waitFirstPop;   // the very first run: the fuse does not burn until the player has popped once
       this.gentle = !!opts.gentle;               // ... and burns 15% slower until stage 2, so the first minute is for learning
+      this.skill = opts.skill;                   // the player's rating (0..1) for the tile director; Daily ignores it
       this.reset(opts.snapshot);
     }
 
@@ -25,7 +26,10 @@
       const C = BR.CFG;
       this.rng = BR.makeRng(snap ? (this.seed + snap.stage * 7919) >>> 0 : this.seed);
       this.board = new BR.Board(C.rows, C.cols, 5, this.rng);
-      this.board.randomFill();
+      // the tile director chooses the colors of new bricks (js/director.js); without it the board refills at random
+      this.director = BR.Director ? new BR.Director(this, { skill: this.skill, fair: this.mode === 'daily', gentle: this.gentle }) : null;
+      this.board.painter = this.director;
+      if (this.director && !snap) this.director.shapeStart(this.board); else this.board.randomFill();
       this.score = 0;
       this.stage = 1;
       this.stageScore = 0;
@@ -132,6 +136,7 @@
       if (plan.n >= 10) { this.stats.bigPops++; this.stats.stageBig++; }
       if (plan.line) { this.stats.lineBlasts++; this.stats.stageLines++; }
       this._score(plan.points);
+      if (this.director) this.director.onPop(plan);
 
       // Fuse bricks: popping one defuses it; every other one ticks down.
       const cells = plan.cells.slice();
@@ -251,7 +256,7 @@
       return {
         v: 1, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
         inv: Object.assign({}, this.inv), charge: this.charge, stats: JSON.parse(JSON.stringify(this.stats)),
-        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, fuse: this.fuse, rushMeter: this.rush.active ? 0 : this.rush.meter, colors: this.board.grid.map((row) => row.map((b) => b.color)),
+        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, fuse: this.fuse, rushMeter: this.rush.active ? 0 : this.rush.meter, director: this.director ? this.director.snapshot() : null, colors: this.board.grid.map((row) => row.map((b) => b.color)),
       };
     }
     _restore(s) {
@@ -260,6 +265,7 @@
       // resuming must not refill the fuse (Save and leave would be a free refill), but a few seconds of grace keep it from ending at once
       if (!this.chill && s.fuse != null) this.fuse = Math.min(this.fuseMax, Math.max(+s.fuse || 0, BR.CFG.fuse.resumeGrace));
       if (s.rushMeter != null) this.rush.meter = s.rushMeter;
+      if (this.director) this.director.restore(s.director);
       this.goal = this.chill ? BR.chillGoal(this.stage) : BR.stageGoal(this.stage);
       for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) this.board.grid[r][c].color = s.colors[r][c];
       this.board.version++;

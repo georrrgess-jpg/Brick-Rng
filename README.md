@@ -13,11 +13,16 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   and the combo), release to pop, slide away to cancel. On a keyboard the arrow keys move a cursor and Enter pops; P pauses,
   1 to 3 use power-ups, R plays again from the results.
 - **The fuse** burns down all the time. Every pop adds seconds: bigger pops add more, a Line Blast adds 5. When the fuse
-  reaches the bomb the run ends. The fuse burns faster for the first eight stages and then stops speeding up, and from
+  reaches the bomb the run ends. The fuse burns 20% faster each stage for the first eight stages and then stops speeding up, and from
   stage 6 a pop of 3+ always pays at least 1.4 seconds, so a long run is never lost to the clock alone.
 - **Last Spark**: once per run, when the fuse hits zero you get 2.5 seconds to land a pop of 4+. Do it and the fuse comes back.
 - **Score to beat**: your best score sits under the score all run, with a gap that closes as you play. Results tell you
   how close you came, and **Beat it** starts the next run.
+- **The board deals fairly.** New bricks are chosen by a tile director (`js/director.js`): they tend to join the big blocks
+  already on the board, a pop of 4 or more is almost always on offer, the board is never just pairs, and every so often it
+  sets up a big one. How much it helps follows the player: more when the fuse is low or a run has gone dry, less when they
+  are cruising, and less past the stage they usually reach, so a new best is still earned. Daily gives everyone the same
+  refills for the same taps.
 - **Stages** have a score goal. Clear it and the fuse refills, the score multiplier goes up and a new color joins.
 - **Rush Mode**: pops of 4+ fill the Rush bar. When it is full the fuse freezes for 8 seconds and every pop scores x3.
 - **Fuse bricks** (from stage 4) count down. Pop them in a group to defuse them for +3 seconds, or they burst and cost 5.
@@ -73,7 +78,7 @@ css/s3-skins.css css/s3-scenes.css    Series 3 skins and boards
 css/fuse.css        the fuse: Fizz, rope, flame, readout, chips, the urgency states (every fuse cosmetic is drawn from tokens)
 css/badges.css      item badges (rarity frame and art, the still version used in the reel)
 css/coach.css       the first-time tip cards
-js/rng.js board.js config.js boosters.js items.js chests.js engine.js storage.js pass.js progress.js missions.js retention.js
+js/rng.js board.js config.js boosters.js items.js chests.js director.js engine.js storage.js pass.js progress.js missions.js retention.js
                     pure logic, runs in Node (tests use it); retention.js is the streak, run goals, records and next goal
 js/audio.js         every sound effect, synthesized: pentatonic pops, a quiet low-passed SFX bus, loudness-tested
 js/music.js         adaptive soundtrack: menu and run arrangements that crossfade on bar lines, stems that join per stage,
@@ -102,6 +107,7 @@ tests/              logic, balance bots, spin physics, Playwright UI tests
 node tests/logic.js     # items, live odds, no-duplicate drops, pity, completion, Coins, XP, pass, trophies, missions, v2/v3 migration
 node tests/engine.js    # fuse rules: burn cap, pop floors, Last Spark, Boosts, reshuffle refund (no browser)
 node tests/sim.js       # time-stepped bots: pacing, run length, Coin income and hours to complete the catalogue
+node tests/director.js  # the tile director: dry spells, pairs-only boards, big-pop rhythm, help under pressure, Daily fairness
 node tests/spin.js      # 1,000 reel landings land exactly on the winning card (no browser)
 node tests/stress.js    # a bot plays the real UI (Rush, Chill, Daily, pause, End Run); DOM must equal engine state
 node tests/flow.js      # every chest opens end to end, equip, a finished set cannot be opened, back out, reduced motion

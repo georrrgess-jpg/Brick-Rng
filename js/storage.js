@@ -34,6 +34,7 @@
       trophies: {},
       streak: { ring: 0, weeks: 0, last: '', shield: 1, best: 0 },   // the daily ring (js/retention.js)
       goalHist: [],                                                // the last run goals, so they do not repeat
+      skill: 0.4,                                                  // the tile director's rating: a slow average of how far Rush runs go (0..1)
       records: { maxLines: 0, maxRushes: 0, history: [] },         // extra personal records and the last 20 Rush scores
       stats: { runs: 0, bricks: 0, rushes: 0, bigPops: 0, powerups: 0, lineBlasts: 0, stages: 0, coinsEarned: 0, chests: 0, dailyRuns: 0, bestCombo: 0, maxGroup: 0, defused: 0 },
     },
@@ -108,14 +109,23 @@
     return { data: d, refund };
   }
 
+  /** A save from before the tile director has no skill rating: start it from the best Rush stage, a little below it,
+      so a strong returning player is not held back early and a new best still means something. */
+  function seedSkill(d, raw) {
+    if (raw && raw.profile && Number.isFinite(raw.profile.skill)) return d;
+    const best = (d.bestStage && d.bestStage.rush) || 0;
+    if (best > 0) d.profile.skill = Math.max(0.1, Math.min(0.9, Math.round(((best - 2) / 9) * 1000) / 1000));
+    return d;
+  }
+
   function load() {
     const d = defaults();
     const cur = read(KEY);
-    if (cur) return deepMerge(d, cur);
+    if (cur) return seedSkill(deepMerge(d, cur), cur);
     // a v4 save that exists but cannot be parsed is kept aside before anything older is tried
     try { const raw = G.localStorage && G.localStorage.getItem(KEY); if (raw) G.localStorage.setItem(KEY + '.corrupt', raw); } catch (e) { /* ignore */ }
     const v3 = read(V3_KEY);
-    if (v3 && BR.itemById) return normalize(deepMerge(d, v3), 0).data;
+    if (v3 && BR.itemById) return seedSkill(normalize(deepMerge(d, v3), 0).data, v3);
     const v2 = read(V2_KEY);
     if (v2 && BR.itemById) return migrateV2(v2);
     return d;

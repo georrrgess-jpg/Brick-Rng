@@ -567,3 +567,54 @@ percent more Coins per run. That is the figure the owner asked for in decision 3
   Island and the home bar. Only Chromium was available here, so Safari is covered by emulating the phone's size, density and
   insets, not by running Safari.
 - If startup on a real phone feels slow, take the step named under the results table.
+
+---
+
+## 14. Update 4.1: the tile director
+
+The new bricks that fall in after a pop used to be random, with a 30% lean toward a neighbour's color. That produced the
+wrong kind of difficulty: the better the player, the worse the board. A sharp player pops the big groups as soon as they
+appear, the random refill rebuilds them slowly, and they were left with dry spells of up to 30 turns with nothing of 4 or
+more, and boards of nothing but pairs on 9% of turns. Runs ended in those droughts, not because the player slowed down.
+
+`js/director.js` now chooses the colors of every new brick. It never changes a brick the player has already seen.
+
+- **Lines up with the big blocks.** Holes are filled from the bricks that touch the old board outward, and each color is
+  weighted by the neighbours it would join, more for neighbours that belong to a big group. A group that is already very
+  large stops attracting its color, so the board never floods.
+- **A floor that always holds.** The director paints a few candidate refills and keeps one that has a move, is not just pairs,
+  and (after a small pop) offers a 4+. If none does, it keeps painting until one does.
+- **A rhythm of big moments.** After a run of pops without an 8+, the next refill sets one up, sometimes as a near Line Blast.
+- **Help that follows the player.** How much it helps (0 to 1) starts from a skill rating, a slow average of how far the
+  player's Rush runs go, kept on the device. It rises when the fuse is low, in the Last Spark, after a dry spell and when the
+  player is taking long to find a move. It falls when they are cruising. Past the stage they usually reach, help tapers off,
+  so runs still end and a new best is earned. More help means bigger groups and big pops more often; less help keeps the
+  floor but makes big groups rarer.
+- **Daily stays fair.** In Daily the director ignores the player's rating and the clock, so the same taps get the same refills
+  for everyone. Chill uses the pace of the 20-move round instead of the fuse.
+- **Ratings for existing players** start a little below their best Rush stage; a new player starts at 0.4. The rating moves
+  only when the fuse ends a Rush run (a quit or a restart does not count).
+
+Because the droughts were what ended runs, removing them made the game much easier, so the difficulty moved to where it is
+fair and visible: the fuse now burns 20% faster per stage (was 15%), still capped at stage 8. The Coin formula was rescaled
+so the economy stays where it was (reference score 80,000, was 50,000; stage bonus up to stage 7, was 8).
+
+Measured by `tests/director.js` (160 Rush runs per bot; each bot's rating warmed up over 30 runs first) and `tests/sim.js`
+(300 runs per bot):
+
+| | Casual | Average | Sharp |
+|---|---|---|---|
+| Biggest group on offer, per turn | 5.8 → 6.0 | 4.6 → 5.1 | 4.1 → 4.7 |
+| Turns in a row without a 4+ (p95 / longest) | 5 / 9 → 2 / 2 | 7 / 15 → 2 / 3 | 9 / 30 → 2 / 4 |
+| Turns with nothing but pairs | 0.1% → 0% | 2.1% → 0% | 9.3% → 0% |
+| A pop of 8+ every | 10.6 → 10.9 pops | 18.8 → 15.8 pops | 26.6 → 18.7 pops |
+| Reshuffles per run | 0 → 0 | 0 → 0 | 0 → 0 |
+| Stage reached (average) | 4.3 → 5.2 | 5.7 → 7.7 | 6.6 → 8.9 |
+| Run length | 136s → 159s | 127s → 148s | 118s → 139s |
+| Hours to own everything (`tests/sim.js`) | 16.6 → 16.3 | 10.1 → 9.8 | 7.8 → 8.6 |
+| Skill rating after 30 runs (new) | 0.49 | 0.78 | 0.86 |
+
+Each player reaches one to two more stages, runs are about 20 seconds longer, and the time to own the collection stays within
+about 10% of before (sharp players take slightly longer because their runs are longer). Skill still matters: the sharp bot
+goes furthest and the casual one least. The director paints a refill in 0.02ms (median) and 0.27ms (99th percentile) on this
+machine.

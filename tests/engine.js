@@ -1,11 +1,11 @@
 // Engine rules: burn cap, pop-time floors, Last Spark, reshuffle refund, snapshot of the spark state.
 global.window = global;
-for (const f of ['rng', 'board', 'config', 'boosters', 'engine']) require('../js/' + f + '.js');
+for (const f of ['rng', 'board', 'config', 'boosters', 'director', 'engine']) require('../js/' + f + '.js');
 const BR = global.BR, assert = require('assert');
 
 // burn grows to stage 8 then stops
 assert.strictEqual(BR.burnRate(1), 1);
-assert(Math.abs(BR.burnRate(8) - Math.pow(1.15, 7)) < 1e-9);
+assert(Math.abs(BR.burnRate(8) - Math.pow(BR.CFG.fuse.burnGrowth, 7)) < 1e-9);
 assert.strictEqual(BR.burnRate(20), BR.burnRate(8), 'burn is capped');
 // pop time floor from stage 6, never below base
 assert.strictEqual(BR.popTime(2, 9), 0.8); assert(Math.abs(BR.popTime(3, 5) - 1.2) < 1e-9); assert.strictEqual(BR.popTime(3, 6), 1.4); assert(BR.popTime(8, 6) > 1.4);
