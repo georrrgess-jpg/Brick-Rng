@@ -5,7 +5,7 @@
    the rest); no filter, backdrop-filter or blend mode anywhere on this block.
    States are `data-z` on #fuse: calm watch low crit spark frozen (Rush) hold (the stage-up freeze). The bomb's face is `data-x` on #bomb.
    =================================================================== */
-.fuse { --fh: 64px; --bs: 62px; --b: calc(var(--bs) / 64); --fz-x0: -9px; --fz-ss: 1; position: relative; z-index: 20; display: flex; align-items: center; gap: 8px; height: var(--fh); contain: layout style; }
+.fuse { --fh: 64px; --bs: 62px; --b: calc(var(--bs) / 64); --fz-x0: -9px; position: relative; z-index: 20; display: flex; align-items: center; gap: 8px; height: var(--fh); contain: layout style; }
 .fuse.hidden { display: none; }
 
 /* ---------------------------------------------------------------- Fizz (the bomb) */
@@ -39,7 +39,7 @@
 .fz-mouth { position: absolute; left: calc(20 * var(--b)); top: calc(43 * var(--b)); width: calc(24 * var(--b)); height: calc(14 * var(--b)); overflow: visible; fill: none; stroke: var(--fz-mouth); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .fz-mouth .m { opacity: 0; transition: opacity 0.12s; } .fz-mouth .m.f { fill: var(--fz-mouth); stroke: none; } .fz-mouth .m.tg1, .fz-mouth .m.tg2 { fill: #ff7a8a; stroke: none; }
 .fz-sweat { position: absolute; right: calc(7 * var(--b)); top: calc(20 * var(--b)); width: calc(6.6 * var(--b)); height: calc(10 * var(--b)); opacity: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M4 .6C4 4 7.4 6.6 7.4 8.6A3.4 3.4 0 0 1 .6 8.6C.6 6.6 4 4 4 .6Z' fill='%23bfeaff' stroke='%236ab8ff' stroke-width='.8'/%3E%3Cellipse cx='2.8' cy='8' rx='.8' ry='1.3' fill='%23fff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
-.fz-wick { position: absolute; left: 50%; top: calc(-8 * var(--b)); width: calc(4.4 * var(--b)); height: calc(11 * var(--b)); margin-left: calc(-2.2 * var(--b)); border-radius: 3px; background: var(--fz-wick, #b88a4a); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25); transform-origin: 50% 100%; transform: scaleY(0); transition: transform 0.2s var(--ease-spring); }
+.fz-wick { position: absolute; left: 50%; top: calc(-8 * var(--b)); width: calc(4.4 * var(--b)); height: calc(11 * var(--b)); margin-left: calc(-2.2 * var(--b)); border-radius: 3px; background: linear-gradient(90deg, var(--fz-wick, #b88a4a), #fff0c0 55%, var(--fz-wick, #b88a4a)); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); transform-origin: 50% 100%; transform: scaleY(0); transition: transform 0.2s var(--ease-spring); }
 .fuse[data-z="spark"] .fz-wick { transform: scaleY(1); }
 .fuse[data-z="spark"] .fuse-track { z-index: 5; }
 
@@ -114,7 +114,7 @@
 .fuse[data-z="frozen"] .fz-heat, .fuse[data-z="hold"] .fz-heat { opacity: 0.16; } .fuse[data-z="frozen"] .fz-ember, .fuse[data-z="hold"] .fz-ember, .fuse[data-z="frozen"] .fz-ash, .fuse[data-z="hold"] .fz-ash { opacity: 0.22; }
 .fuse[data-z="spark"] .fz-heat, .fuse[data-z="spark"] .fz-ember, .fuse[data-z="spark"] .fz-ash { opacity: 0; }
 .fz-flare { left: 0; top: 0; transform-origin: 0 0; }
-.fz-fl { position: absolute; left: 0; top: 0; transform: scale(calc(var(--fz-fs, 1) * var(--fz-ss))); transition: transform 0.35s var(--ease-spring); }
+.fz-fl { position: absolute; left: 0; top: 0; transform: scale(var(--fz-fs, 1)); transition: transform 0.35s var(--ease-spring); }
 .fz-halo, .fz-tongue, .fz-core { position: absolute; }
 .fz-halo { left: -26px; top: -30px; width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, var(--fz-halo), transparent 68%); animation: fzHalo 0.34s ease-in-out infinite alternate; }
 .fz-tongue { left: -16px; top: -28px; width: 32px; height: 40px; background: var(--fz-tongue) center / 100% 100% no-repeat; transform-origin: 50% 72%; animation: fzTongue 0.22s ease-in-out infinite alternate; }
@@ -126,11 +126,13 @@
 @keyframes fzHalo { from { transform: scale(0.9); opacity: 0.8; } to { transform: scale(1.1); opacity: 1; } }
 @keyframes fzSputter { 0%, 100% { transform: scale(1); opacity: 1; } 10% { transform: scale(0.5, 0.6); opacity: 0.55; } 20% { transform: scale(1.18, 1.22); opacity: 1; } 38% { transform: scale(0.66, 0.5); opacity: 0.5; } 52% { transform: scale(1.1, 1.16); opacity: 1; } 66% { transform: scale(0.8, 0.62); opacity: 0.65; } 82% { transform: scale(1.05); opacity: 1; } }
 @keyframes fzSpin { to { transform: rotate(360deg); } }
-/* flame size by state (--fz-ss) and its colors when time stops */
-.fuse[data-z="watch"] { --fz-ss: 1.04; } .fuse[data-z="low"] { --fz-ss: 1.12; } .fuse[data-z="crit"] { --fz-ss: 1.22; } .fuse[data-z="spark"] { --fz-ss: 1.2; } .fuse[data-z="frozen"] { --fz-ss: 0.92; } .fuse[data-z="hold"] { --fz-ss: 0.86; }
+/* flame size by state, and its colors when time stops: plain property rules (state is data-z on the host, never a switched custom property) */
+.fuse[data-z="watch"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.04)); } .fuse[data-z="low"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.12)); } .fuse[data-z="crit"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.22)); }
+.fuse[data-z="spark"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 1.2)); } .fuse[data-z="frozen"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 0.92)); } .fuse[data-z="hold"] .fz-fl { transform: scale(calc(var(--fz-fs, 1) * 0.86)); }
 .fuse[data-z="crit"] .fz-tongue { animation: fzSputter 0.95s linear infinite; } .fuse[data-z="crit"] .fz-core { animation: fzSputter 1.35s linear infinite; } .fuse[data-z="crit"] .fz-halo { animation-duration: 0.14s; }
 .fuse[data-z="spark"] .fz-tongue { animation-duration: 0.12s; } .fuse[data-z="spark"] .fz-core { animation-duration: 0.1s; }
-.fuse[data-z="frozen"], .fuse[data-z="hold"] { --fz-tongue: var(--fz-tongue-ice); --fz-core: var(--fz-core-ice); --fz-halo: var(--fz-halo-ice); --fz-ember-b: #bfe8ff; }
+.fuse[data-z="frozen"] .fz-tongue, .fuse[data-z="hold"] .fz-tongue { background-image: var(--fz-tongue-ice); } .fuse[data-z="frozen"] .fz-core, .fuse[data-z="hold"] .fz-core { background-image: var(--fz-core-ice); }
+.fuse[data-z="frozen"] .fz-halo, .fuse[data-z="hold"] .fz-halo { background-image: radial-gradient(circle, var(--fz-halo-ice), transparent 68%); } .fuse[data-z="frozen"] .fz-ember, .fuse[data-z="hold"] .fz-ember { background-image: linear-gradient(90deg, transparent, #9fd0ff 62%, #bfe8ff); }
 .fuse[data-z="frozen"] .fz-tongue, .fuse[data-z="frozen"] .fz-core, .fuse[data-z="frozen"] .fz-halo { animation: none; }
 .fuse[data-z="hold"] .fz-tongue, .fuse[data-z="hold"] .fz-core { animation-duration: 0.5s; }
 
@@ -140,7 +142,7 @@
 .fz-rring .bg { stroke: rgba(159, 227, 255, 0.2); stroke-width: 3; } .fz-rring .fg { stroke: #9fe3ff; stroke-width: 3; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; stroke-dasharray: 163.36; stroke-dashoffset: 0; }
 .fuse[data-z="frozen"] .fz-rring { opacity: 1; }
 .fz-numbox { display: block; transform-origin: 50% 60%; }
-.fuse-time b.fz-num { display: flex; align-items: flex-end; justify-content: center; height: 28px; font: 700 25px/1 var(--f-display); color: var(--fz-num, #ffd66b); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45); transition: color 0.3s; }
+.fuse-time b.fz-num { display: flex; align-items: flex-end; justify-content: center; height: 28px; font: 700 25px/1 var(--f-display); color: #ffd66b; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45); transition: color 0.3s; }
 .fz-dg { position: relative; display: block; width: 0.62em; height: 1.1em; overflow: hidden; }
 .fz-dg i { position: absolute; left: 0; right: 0; top: 0; display: block; line-height: 1.1em; text-align: center; font-style: normal; }
 .fz-dg i.p { opacity: 0; }
@@ -152,7 +154,7 @@
 .fz-ico { display: none; width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .fuse[data-z="calm"] .ic-flame, .fuse[data-z="watch"] .ic-flame, .fuse[data-z="low"] .ic-glass, .fuse[data-z="crit"] .ic-alert, .fuse[data-z="frozen"] .ic-snow, .fuse[data-z="hold"] .ic-snow, .fuse[data-z="spark"] .ic-bolt { display: block; }
 .fuse[data-z="calm"] .fz-unit, .fuse[data-z="watch"] .fz-unit { color: #d9b46a; } .fuse[data-z="low"] .fz-unit { color: #ffb02e; } .fuse[data-z="crit"] .fz-unit { color: #ff7a8e; } .fuse[data-z="frozen"] .fz-unit, .fuse[data-z="hold"] .fz-unit { color: #9fe3ff; }
-.fuse[data-z="low"] { --fz-num: #ffb02e; } .fuse[data-z="crit"] { --fz-num: #ff4d6d; } .fuse[data-z="frozen"] { --fz-num: #9fe3ff; } .fuse[data-z="hold"] { --fz-num: #e6f7ff; } .fuse[data-z="spark"] { --fz-num: #ff4d6d; }
+.fuse[data-z="low"] .fz-num { color: #ffb02e; } .fuse[data-z="crit"] .fz-num { color: #ff4d6d; } .fuse[data-z="frozen"] .fz-num { color: #9fe3ff; } .fuse[data-z="hold"] .fz-num { color: #e6f7ff; }
 .fuse[data-z="crit"] .fz-num { font-size: 30px; height: 33px; }
 .fuse[data-z="frozen"] .fz-unit span { display: none; }
 .fz-p4 { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1px; text-align: center; }

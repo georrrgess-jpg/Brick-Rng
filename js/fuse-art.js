@@ -221,7 +221,7 @@
   /** Frost on the bomb in Rush: icing along the upper-left of the body with a few icicle points, and glints. */
   const frostBombURI = (c) => {
     const pt = (r, deg) => `${f1(32 + r * Math.cos((deg * Math.PI) / 180))} ${f1(36 + r * Math.sin((deg * Math.PI) / 180))}`;
-    const spikes = { 210: 15.5, 234: 13.5, 252: 17.5 };
+    const spikes = { 210: 19.5, 234: 18.5, 252: 20 };
     const outer = [], inner = [];
     for (let a = 190; a <= 258; a += 6) outer.push(pt(27.6, a));
     for (let a = 258; a >= 190; a -= 6) inner.push(pt(spikes[a] || 22.4 + ((a / 6) % 3) * 0.7, a));

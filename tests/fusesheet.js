@@ -132,10 +132,11 @@ const SLOWMO = () => {
     const strip = async (name, frames, region, every, cols) => {
       // frames photographed at least `every` ms of game time apart (the game's clock runs slowed, see rate(); a screenshot takes a
       // while, so each frame is labelled with the game time it was really taken at)
-      const shots = [], times = [];
+      const shots = [], times = [], zs = [];
       let first = null;
       for (let i = 0; i < frames; i++) {
         const t = await page.evaluate(() => window.__vnow());
+        zs.push(await page.evaluate(() => BR.Fuse.z + '/' + BR.Fuse.debug().x));
         if (first == null) first = t;
         const f = `${OUT}/strip-${name}-${String(i).padStart(2, '0')}.png`;
         await page.screenshot({ path: f, clip: region });
@@ -145,7 +146,7 @@ const SLOWMO = () => {
       const sp2 = await browser.newPage({ viewport: { width: 1400, height: 800 }, deviceScaleFactor: 1 });
       const w = Math.floor(1390 / cols);
       const hf = `${OUT}/strip-${name}.html`;
-      fs.writeFileSync(hf, `<body style="margin:0;background:#120c22;display:flex;flex-wrap:wrap;gap:3px;padding:3px">${shots.map((s, i) => `<div style="position:relative"><img src="file://${s}" width="${w}" style="display:block"><b style="position:absolute;left:4px;top:2px;color:#fff;font:700 12px sans-serif;text-shadow:0 1px 2px #000">${times[i]}ms</b></div>`).join('')}</body>`);
+      fs.writeFileSync(hf, `<body style="margin:0;background:#120c22;display:flex;flex-wrap:wrap;gap:3px;padding:3px">${shots.map((s, i) => `<div style="position:relative"><img src="file://${s}" width="${w}" style="display:block"><b style="position:absolute;left:4px;top:2px;color:#fff;font:700 12px sans-serif;text-shadow:0 1px 2px #000">${times[i]}ms ${zs[i]}</b></div>`).join('')}</body>`);
       await sp2.goto('file://' + hf); await sp2.waitForTimeout(300);
       await sp2.screenshot({ path: `${OUT}/strip-${name}.png`, fullPage: true });
       await sp2.close();

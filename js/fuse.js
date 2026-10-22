@@ -29,7 +29,7 @@
 
   /* ------------------------------------------------------------------ the generated stylesheet: every fuse's tokens as CSS custom properties */
   const ICE = { tongue: ['#a8dcff', '#58a8ff', '#3a6cf0'], core: ['#ffffff', '#d8f0ff'], halo: 'rgba(120,190,255,0.6)' };
-  const frostBg = (c) => `repeating-linear-gradient(60deg, rgba(255,255,255,0.6) 0 1.5px, transparent 1.5px 7px), repeating-linear-gradient(-60deg, rgba(255,255,255,0.45) 0 1px, transparent 1px 9px), linear-gradient(180deg, rgba(255,255,255,0.9), ${rgba(c, 0.76)} 38%, rgba(140,195,240,0.7))`;
+  const frostBg = (c) => `repeating-linear-gradient(60deg, rgba(255,255,255,0.6) 0 1.5px, transparent 1.5px 7px), repeating-linear-gradient(-60deg, rgba(255,255,255,0.45) 0 1px, transparent 1px 9px), linear-gradient(180deg, rgba(255,255,255,0.72), ${rgba(c, 0.5)} 40%, rgba(140,195,240,0.46))`;
   function tokenCSS(cls, t) {
     const f = t.flame, b = t.bomb, F = b.face;
     const railH = t.railH || t.h + 2;
@@ -325,7 +325,7 @@
       this.bx = br.left - hr.left + br.width / 2; this.by = br.top - hr.top + br.height / 2; this.bs = br.width;
       this.rx = rr.left - hr.left + rr.width / 2; this.ry = rr.top - hr.top + rr.height / 2;
       // the bomb's own wick, in track coordinates (the flame jumps there in Last Spark)
-      this.wx = this.bx - this.tx0; this.wy = this.by - this.bs * 0.5 - 5 - this.tyH;
+      this.wx = this.bx - this.tx0; this.wy = this.by - this.bs * 0.5 - 10 - this.tyH;
       // the particle canvas covers the host and reaches 40px above it (the Last Spark flame sits on the bomb's wick) and 14px below
       const ch = this.hostRect.h + this.cvTop + 14;
       this.cv.style.marginTop = -this.cvTop + 'px'; this.parts.resize(this.hostRect.w, ch); this.cvH = ch;
