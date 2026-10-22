@@ -103,7 +103,7 @@
       this.live = 0; this.dirty = false; this.sp = null; this.spk = [];
     }
     resize(w, h) {
-      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       this.w = w; this.h = h;
       this.cv.width = Math.round(w * this.dpr); this.cv.height = Math.round(h * this.dpr);
       this.cv.style.width = w + 'px'; this.cv.style.height = h + 'px';
