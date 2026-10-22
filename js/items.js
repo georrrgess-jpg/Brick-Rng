@@ -90,11 +90,11 @@
     it('a_volcano', 'board', 'epic', 'Volcano', 'Lava glow and drifting ash.', { cls: 'board-volcano', beam: '#ff7a3d', series: 3 }),
     it('a_aurora', 'board', 'legendary', 'Aurora Sky', 'Northern lights that ripple on every Line Blast.', { cls: 'board-aurora', beam: '#7affd9', moment: 'auroraSky', series: 3 }),
     // ---- Series 4 "Moonwick": Boards ----
-    it('a_library', 'board', 'common', 'Grand Library', 'Walnut shelves, warm candlelight and drifting dust.', { cls: 'board-library', beam: '#ffcf6b', series: 4, set: 'library' }),
-    it('a_glade', 'board', 'rare', 'Moonlit Glade', 'A night forest ringed by glowing mushrooms.', { cls: 'board-glade', beam: '#7ae8d0', series: 4, set: 'glade' }),
-    it('a_alchemy', 'board', 'epic', 'Alchemy Lab', 'Copper pipes and bubbling flasks. A Line Blast boils the cauldron over.', { cls: 'board-alchemy', beam: '#6bff9e', moment: 'alchemy', series: 4, set: 'alchemy' }),
-    it('a_observatory', 'board', 'legendary', 'Observatory', 'A brass dome and orrery. Each stage turns the dial one notch.', { cls: 'board-observatory', beam: '#ffe2a0', moment: 'observatory', series: 4, set: 'vault' }),
-    it('a_isles', 'board', 'legendary', 'Floating Isles', 'Islands in a dawn sky, with waterfalls. The first light scene.', { cls: 'board-isles', beam: '#fff1c9', moment: 'isles', series: 4 }),
+    it('a_library', 'board', 'common', 'Grand Library', 'Walnut shelves, a candlelit desk, a floating book and drifting dust.', { cls: 'board-library', beam: '#ffcf6b', series: 4, set: 'library' }),
+    it('a_glade', 'board', 'rare', 'Moonlit Glade', 'A night forest clearing: a ring of glowing mushrooms, drifting fireflies and a sliver of moon.', { cls: 'board-glade', beam: '#7ae8d0', series: 4, set: 'glade' }),
+    it('a_alchemy', 'board', 'epic', 'Alchemy Lab', 'Copper pipes and glowing flasks. A Line Blast boils the cauldron over and Rush lights every flask.', { cls: 'board-alchemy', beam: '#6bff9e', moment: 'alchemy', series: 4, set: 'alchemy' }),
+    it('a_observatory', 'board', 'legendary', 'Observatory', 'A brass dome, telescope and orrery. A gold marker moves one notch on the frame at every stage.', { cls: 'board-observatory', beam: '#ffe2a0', moment: 'observatory', series: 4, set: 'vault' }),
+    it('a_isles', 'board', 'legendary', 'Floating Isles', 'Islands and waterfalls in a dawn sky, the first light scene. Line Blasts surge the falls; Rush raises a rainbow.', { cls: 'board-isles', beam: '#fff1c9', moment: 'isles', series: 4 }),
     it('a_tower', 'board', 'mythic', 'Moonwick Tower', 'A window lights every stage; the bell tolls on Line Blasts and the moon rises in Rush.', { cls: 'board-tower', beam: '#e8f0ff', moment: 'tower', series: 4, set: 'spire' }),
     // ---- Fuses ----
     it('u_rope', 'fuse', 'common', 'Rope', 'A thick braided rope fuse.', { cls: 'fuse-rope', glow: '#ffb347' }),
