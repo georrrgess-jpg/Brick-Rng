@@ -368,6 +368,7 @@
       this._onResize = () => this.layout();
       window.addEventListener('resize', this._onResize);
       this.sync();
+      if (this.hatId) this.setHat(this.hatId);     // (a new HUD host keeps the hat that is worn)
       return this;
     },
 

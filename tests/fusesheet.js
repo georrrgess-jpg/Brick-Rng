@@ -6,6 +6,8 @@
 //   --nosheet skips the states sheets; --strips=gain,relit picks frame strips (gain lineblast spark relit rushstart rushend stageup burst); --slow=0.04 sets the slow-motion factor
 //   node tests/fusesheet.js outdir --quick           states only, no strips (what the check run uses)
 //   node tests/fusesheet.js outdir --size=360x640    another phone (also 844x390 for landscape)
+//   node tests/fusesheet.js outdir --hat=h_wizard    every fuse wearing a Fizz hat (the cells are named cell-<fuse>-<hat>-<state>; a hat on a body in every state)
+//   node tests/fusesheet.js outdir --s4              the frame strips of the Series 4 moments too (Elixir, Sandglass, Runechain, Moonrise)
 const fs = require('fs');
 const path = require('path');
 const { launch } = require('./lib');
@@ -14,6 +16,7 @@ const OUT = path.resolve(process.argv[2] && !process.argv[2].startsWith('--') ? 
 const flag = (n) => (process.argv.find((a) => a.startsWith('--' + n + '=')) || '').split('=')[1];
 const ONLY = flag('only') ? flag('only').split(',') : null, QUICK = process.argv.includes('--quick'), SLOW = +(flag('slow') || 0.04);
 const [W, H] = (flag('size') || '393x852').split('x').map(Number);
+const HAT = flag('hat') || '', S4 = process.argv.includes('--s4'), TAG = HAT ? HAT + '-' : '';
 fs.mkdirSync(OUT, { recursive: true });
 
 const FUSES = ['default', 'u_rope', 'u_wire', 'u_neon', 'u_ice', 'u_plasma', 'u_candy', 'u_vine', 'u_rod', 'u_phoenix', 'u_dragon', 'u_candle', 'u_wand', 'u_elixir', 'u_sandglass', 'u_runechain', 'u_moonrise'];
@@ -55,7 +58,7 @@ const SLOWMO = () => {
     BR.Skins.apply();
     if (BR.Router.current === 'run') { BR.Run.over = true; BR.Run.token++; BR.Router.go('home', { instant: true }); }
     __app.startRun({ mode: 'rush', boosts: {} });
-  }, id);
+  }, id).then(() => page.evaluate((hat) => { if (BR.Fuse && BR.Fuse.setHat) BR.Fuse.setHat(hat || null); }, HAT));
   const ready = () => page.waitForFunction(() => BR.Run.clock && !BR.Run.busy && BR.Router.current === 'run', null, { timeout: 15000 });
   // hold the engine in a state: re-apply it every 25ms (the fuse keeps burning between writes, which is fine)
   const hold = (src) => page.evaluate((src) => {
@@ -82,7 +85,7 @@ const SLOWMO = () => {
       ok(info.z === st.z && info.z2 === st.z, id, st.id, 'state is', info.z, 'expected', st.z);
       ok(info.x2 === st.x, id, st.id, 'face is', info.x2, 'expected', st.x);
       ok(info.n <= 40, id, st.id, 'particles', info.n);
-      const file = `${OUT}/cell-${id}-${st.id}.png`;
+      const file = `${OUT}/cell-${id}-${TAG}${st.id}.png`;
       await page.screenshot({ path: file, clip: await rect() });
       (cells[id] = cells[id] || {})[st.id] = file;
     }
@@ -97,8 +100,8 @@ const SLOWMO = () => {
   for (const [name, cols] of list.length ? sheets : []) {
     const html = `<body style="margin:0;background:#120c22;color:#cfc6ee;font:600 13px sans-serif"><table style="border-collapse:collapse"><tr><td></td>${cols.map((c) => `<td style="padding:4px 6px">${c}</td>`).join('')}</tr>${list.map((id) => `<tr><td style="padding:2px 6px;white-space:nowrap">${names[id]}</td>${cols.map((c) => `<td style="padding:2px"><img src="file://${cells[id][c]}" width="${cols.length > 3 ? 450 : 590}"></td>`).join('')}</tr>`).join('')}</table></body>`;
     fs.writeFileSync(`${OUT}/${name}.html`, html); await sp.goto('file://' + `${OUT}/${name}.html`); await sp.waitForTimeout(300);
-    await sp.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); fs.unlinkSync(`${OUT}/${name}.html`);
-    console.log('wrote', `${OUT}/${name}.png`);
+    await sp.screenshot({ path: `${OUT}/${TAG}${name}.png`, fullPage: true }); fs.unlinkSync(`${OUT}/${name}.html`);
+    console.log('wrote', `${OUT}/${TAG}${name}.png`);
   }
   await sp.close();
 
@@ -182,7 +185,7 @@ const SLOWMO = () => {
         await page.waitForTimeout(400); await rate(SLOW); await popNow(); return [fr, 10, 70, 2];
       }],
     ];
-    for (const id of (ONLY || ['default', 'u_candy', 'u_dragon'])) {
+    for (const id of (ONLY || ['default', 'u_candy', 'u_dragon'].concat(S4 ? ['u_elixir', 'u_sandglass', 'u_runechain', 'u_moonrise'] : []))) {
       await equip(id); await ready(); await release();
       for (const [name, run] of scenarios) {
         if (WANT && !WANT.includes(name)) continue;

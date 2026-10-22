@@ -51,3 +51,6 @@
 .bdg-hat .hb-fizz { position: absolute; left: 50%; top: 61%; width: calc(var(--bs) * 0.64); height: calc(var(--bs) * 0.64); margin: calc(var(--bs) * -0.32) 0 0 calc(var(--bs) * -0.32); background: var(--fz-body-mini) center / 100% 100% no-repeat; }
 .bdg-hat[data-nt] .hb-fizz { background-image: var(--fz-body-mini-nt, var(--fz-body-mini)); }
 .bdg-hat .hb-hat { background: var(--hat-img) center / 100% 100% no-repeat; }
+
+/* low-end phones and Reduce Motion: the poses stay (a tilted, askew or frosted hat still tells the state) but nothing moves into them, and nothing animates */
+html.low-end .fz-hat, html.reduced .fz-hat, html.low-end .hp, html.reduced .hp, html.low-end .fz-hat::after, html.reduced .fz-hat::after, html.low-end .hp::after, html.reduced .hp::after { transition: none; animation: none !important; }
