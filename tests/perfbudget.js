@@ -15,6 +15,7 @@ const DSF = +(process.env.BUDGET_DSF || 2);
 const B = {   // ms per frame unless noted
   homeIdle: 30, shopIdle: 30, collectionIdle: 32, passIdle: 30, missionsIdle: 30, profileIdle: 30,
   tabSwitchFrame: 190, scrollCollection: 40, scrollShop: 36, sheetOpen: 55, tabSwitchJs: 50, runIdle: 24, popAvg: 55, popMax: 140,
+  runIdleS4: 30, popAvgS4: 65, popMaxS4: 170,
   reelFreeze: 250, hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 900, nodesAfterCycle: 900, longTask: 80,
 };
 const results = []; let failed = 0;
@@ -95,6 +96,23 @@ const check = (name, value, budget, unit = 'ms') => { const ok = value <= budget
   }
   check('popAvg', med(pops.map((x) => x.avg)), B.popAvg); check('popMax (worst frame)', med(pops.map((x) => x.max)), B.popMax);
   await page.evaluate(() => { BR.Run.over = true; BR.Router.go('home', { instant: true }); }); await sleep(600);
+
+  // ---- the heaviest Moonwick loadout: the full Spire set (Sigil, Constellation, Moonwick Tower, Moonrise) and a hat on Fizz
+  await page.evaluate(() => {
+    const P = BR.Progress;
+    ['f_sigil', 'b_constellation', 'a_tower', 'u_moonrise'].forEach((id) => { if (!P.owns(id)) P.keep({ itemId: id, shine: 'plain', seed: 4242 }); const inst = BR.Storage.data.profile.vault.find((i) => i.itemId === id); P.equip(inst.uid, BR.itemById[id].type); });
+    P.grantHat('h_wizard'); P.equipHat('h_wizard'); BR.Skins.apply();
+    __app.startRun({ mode: 'rush', boosts: {} });
+  });
+  await page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 20000 }); await sleep(800);
+  check('runIdle (Spire set + hat)', med((await rep(() => frames(1500))).map((r) => r.avg)), B.runIdleS4);
+  const pops4 = [];
+  for (let i = 0; i < RUNS; i++) {
+    const a = await page.evaluate(() => { const e = BR.Run.engine; let best = null; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = e.plan(r, c); if (p && (!best || p.cells.length > best.n)) best = { r, c, n: p.cells.length }; } const pt = BR.Run.view.pagePoint(best.r, best.c); return { x: pt.x, y: pt.y, n: best.n }; });
+    const pr = frames(1300); await page.touchscreen.tap(a.x, a.y); pops4.push(await pr); await sleep(900);
+  }
+  if (pops4.length) { check('popAvg (Spire set)', med(pops4.map((x) => x.avg)), B.popAvgS4); check('popMax (Spire set)', med(pops4.map((x) => x.max)), B.popMaxS4); }
+  await page.evaluate(() => { BR.Run.over = true; const P = BR.Progress; ['skin', 'pop', 'board', 'fuse'].forEach((t) => P.equip('default', t)); P.equipHat('none'); BR.Skins.apply(); BR.Router.go('home', { instant: true }); }); await sleep(600);
 
   if (!QUICK) {
     // ---- the chest reel: the longest single frame while the spin starts
