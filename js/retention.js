@@ -150,6 +150,12 @@
       const r = BR.seasonReward(t);
       if (r.kind !== 'coins') { const away = t - seas.tier; cand.push({ near: away / 6 + 0.05, text: `${away} tier${away > 1 ? 's' : ''} to ${BR.rewardLabel(r)} on the Pop Pass` }); break; }
     }
+    // a Moonwick set that is one or two items from complete
+    const own = new Set(P_.ownedIds());
+    Object.keys(BR.SETS || {}).forEach((sid) => {
+      const items = BR.setItems(sid), left = items.filter((x) => !own.has(x.id)).length;
+      if (left > 0 && left < items.length - 1) cand.push({ near: (left / items.length) * 0.5, text: `${left} item${left > 1 ? 's' : ''} to finish the ${BR.SETS[sid].name} set` });
+    });
     // the stage record
     const bs = BR.Storage.data.bestStage.rush || 0;
     if (ctx && ctx.stage >= bs - 1 && ctx.stage > 0) cand.push({ near: 0.3, text: `Stage ${ctx.stage + 1} would be a new record` });

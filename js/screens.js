@@ -759,7 +759,7 @@
       const card = (t) => {
         const state = stateOf(t);
         const mark = state === 'claimed' ? `<i class="pt-ck">${BR.icon('check')}</i>` : state === 'locked' ? `<i class="pt-lk">${BR.icon('lock')}</i>` : '<span class="pt-now">Next</span>';
-        return `${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${BR.rewardLabel(t)}</span>${mark}`;
+        return `${rewardArt(t, big(t) ? 84 : 52)}<span class="pt-label">${t.kind === 'hat' ? esc(hatOf(t.hatId).name) : BR.rewardLabel(t)}</span>${mark}`;
       };
       this._passCards = {};
       const tiers = BR.SEASON.map((t) => {
