@@ -58,6 +58,7 @@ ${ISALL} .run-active .score-box b { text-shadow: 0 1px 3px var(--s4-ink), 0 0 8p
 @keyframes s4Glow { from { opacity: 0.35; } to { opacity: 1; } }
 @keyframes s4Drift { to { transform: translate3d(-520px, 0, 0); } }
 @keyframes s4Twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes s4Wander { 0% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(34px, -260px, 0); } 100% { transform: translate3d(0, -520px, 0); } }
 
 `;
 const tail = `
