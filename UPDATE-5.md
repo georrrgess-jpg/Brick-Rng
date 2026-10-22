@@ -664,7 +664,7 @@ without it 5 to 18%.
 
 ### 9.5 How it was checked
 
-`node tests/all.js` runs 34 suites (balance bots, spin physics, lifecycle and migration, an upgrade from a real 4.1 save,
+`node tests/all.js` runs 33 suites (balance bots, spin physics, lifecycle and migration, an upgrade from a real 4.1 save,
 chest flows, touch hit-testing, UI audit at seven sizes, keyframe and class-clash checks, audio loudness, and one suite for each
 of the Moonwick skins, pops, boards, fuses, sets, Tower, the older cosmetics, the run screen, the chests and the menus).
 `node tests/all.js --perf` adds the performance budget (run it on an idle machine).
