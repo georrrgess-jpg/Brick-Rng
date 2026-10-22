@@ -52,11 +52,11 @@
     it('b_bubbles', 'pop', 'common', 'Bubbles', 'Soap bubbles that drift up and pop.', { recipe: 'bubbles', color: '#7fd8ff', series: 3 }),
     it('b_coins', 'pop', 'rare', 'Coins', 'Spinning gold coins and a cash-register chime.', { recipe: 'coins', color: '#ffc83d', series: 3 }),
     it('b_leaves', 'pop', 'rare', 'Leaves', 'Autumn leaves that tumble down.', { recipe: 'leaves', color: '#ff8a3d', series: 3 }),
-    it('b_neon', 'pop', 'epic', 'Neon', 'Bright outline bursts and a laser zap.', { recipe: 'neon', color: '#3dffd0', series: 3 }),
+    it('b_neon', 'pop', 'epic', 'Neon Burst', 'Bright outline bursts and a laser zap.', { recipe: 'neon', color: '#3dffd0', series: 3 }),
     it('b_snow', 'pop', 'epic', 'Snow', 'Snowflakes drift slowly with a soft chime.', { recipe: 'snow', color: '#bfe8ff', series: 3 }),
     it('b_thunder', 'pop', 'legendary', 'Thunder', 'A crack of lightning and a rolling boom.', { recipe: 'thunder', color: '#9fb8ff', series: 3, moment: 'thunderpop' }),
     it('b_ink', 'pop', 'legendary', 'Ink Splash', 'Ink splatters behind the group, then fades.', { recipe: 'ink', color: '#a56bff', series: 3, moment: 'ink' }),
-    it('b_nova', 'pop', 'mythic', 'Supernova', 'Every pop implodes into a flash. Big pops ripple the board.', { recipe: 'supernova', color: '#fff2a8', series: 3, moment: 'novapop' }),
+    it('b_nova', 'pop', 'mythic', 'Nova Burst', 'Every pop implodes into a flash. Big pops ripple the board.', { recipe: 'supernova', color: '#fff2a8', series: 3, moment: 'novapop' }),
     it('b_dragon', 'pop', 'mythic', 'Dragon Fire', 'Flame sweeps out of the group. Big pops roar.', { recipe: 'dragonfire', color: '#ff7a2a', series: 3, moment: 'firepop' }),
     // ---- Boards ----
     it('a_deepsea', 'board', 'common', 'Deep Sea', 'Bubbles rise through blue water.', { cls: 'board-deepsea', beam: '#7ae8ff' }),

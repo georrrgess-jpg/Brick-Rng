@@ -11,6 +11,7 @@
   /* ---------- icons (24x24, stroke) ---------- */
   const I = {
     play: '<path d="M8 5.5v13l11-6.5z"/>',
+    home: '<path d="M4 11.5L12 4.5l8 7"/><path d="M6.2 10v8.8a1 1 0 0 0 1 1h3.3v-5.3h3v5.3h3.3a1 1 0 0 0 1-1V10"/>',
     shop: '<path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
     collection: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
     missions: '<path d="M6 21V4"/><path d="M6 5h11l-2.5 4L17 13H6"/>',
@@ -195,7 +196,7 @@
 
   /* ---------- screens + tab router ---------- */
   const TAB_ORDER = ['shop', 'collection', 'home', 'missions', 'profile'];
-  const TAB_ICON = { shop: 'shop', collection: 'collection', home: 'play', missions: 'missions', profile: 'profile' };
+  const TAB_ICON = { shop: 'shop', collection: 'collection', home: 'home', missions: 'missions', profile: 'profile' };
   BR.Router = {
     screens: {}, current: null, busy: 0,
     register(id, obj) { this.screens[id] = obj; obj.el = $('s-' + id); },

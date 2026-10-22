@@ -23,6 +23,7 @@
     recent: { rush: [], daily: [], chill: [] }, // last scores per mode (for the score to beat)
     daily: { day: '', score: 0, stage: 0 },
     profile: {
+      name: 'Player',                  // shown on the Profile (stays on this device)
       level: 1, xp: 0, coins: BR.CFG ? BR.CFG.startCoins : 200,
       chests: { brick: 1, pop: 0, board: 0, fuse: 0, golden: 0 }, // one welcome chest so the opening is easy to find
       vault: [], // { uid, itemId, shine, seed }  (one entry per item: chests never give duplicates)

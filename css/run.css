@@ -293,3 +293,9 @@
 .tip-arrow.below::after { top: -5px; } .tip-arrow.above::after { bottom: -5px; }
 .tip-arrow.out { animation: tipOut 0.25s ease forwards; }
 @keyframes tipIn { from { opacity: 0; transform: translateY(8px) scale(0.94); } } @keyframes tipOut { to { opacity: 0; transform: translateY(4px); } }
+
+/* banners under the score: level-ups and trophies, never below the fold */
+.res-banner { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; border-radius: 16px; background: linear-gradient(90deg, rgba(138, 77, 255, 0.35), rgba(61, 225, 255, 0.25)); border: 1px solid rgba(160, 200, 255, 0.5); }
+.res-banner.trophy { background: linear-gradient(90deg, rgba(255, 176, 46, 0.35), rgba(255, 61, 139, 0.25)); border-color: rgba(255, 200, 61, 0.6); }
+.res-banner span { display: grid; place-items: center; width: 30px; height: 30px; } .res-banner span svg { width: 26px; height: 26px; fill: none; stroke: #ffe58a; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.res-banner b { font: 700 20px var(--f-display); } .res-banner small { font: 700 14px var(--f-ui); color: #ffe7a1; }

@@ -73,7 +73,7 @@
       ${pieces}
       ${part('straps', `<rect x="43" y="93" width="14" height="74" fill="url(#cg-steel)"/><rect x="143" y="93" width="14" height="74" fill="url(#cg-steel)"/>${[104, 130, 156].map((y) => rivet(50, y) + rivet(150, y)).join('')}
         <path d="M32 154q0 13 12 13h12v-17z M168 154q0 13-12 13h-12v-17z" fill="url(#cg-steelV)"/>
-        <rect x="21" y="116" width="12" height="20" rx="6" fill="none" stroke="#9aa8c8" stroke-width="3.4"/><rect x="167" y="116" width="12" height="20" rx="6" fill="none" stroke="#9aa8c8" stroke-width="3.4"/>
+        <rect x="19" y="112" width="15" height="28" rx="6" fill="url(#cg-steelV)" stroke="#444f6c" stroke-width="1.4"/><circle cx="26.5" cy="126" r="3.6" fill="#2a1d3c"/><rect x="166" y="112" width="15" height="28" rx="6" fill="url(#cg-steelV)" stroke="#444f6c" stroke-width="1.4"/><circle cx="173.5" cy="126" r="3.6" fill="#2a1d3c"/>
         <rect x="80" y="130" width="40" height="28" rx="6" fill="url(#cg-gold)" stroke="#8a560f" stroke-width="2"/><rect x="85" y="141" width="30" height="12" rx="3" fill="#ffe27a" stroke="#b9700d" stroke-width="1"/>${[92, 100, 108].map((x) => `<circle cx="${x}" cy="138" r="3.4" fill="#ffe27a" stroke="#b9700d" stroke-width="1"/>`).join('')}`)}
       ${part('leak', '<rect x="36" y="95" width="128" height="3.6" rx="1.8" fill="#fff6c8"/><rect x="36" y="118" width="128" height="2.6" rx="1.3" fill="#fff6c8"/><rect x="36" y="141" width="128" height="2.6" rx="1.3" fill="#fff6c8"/>')}
       ${part('lid', `<path d="M26 101V77q0-7 7-7h134q7 0 7 7v24z" fill="url(#cg-brkFront)"/><path d="M34 70L44 52q2-3 6-3h100q4 0 6 3L166 70z" fill="url(#cg-brkTop)"/>

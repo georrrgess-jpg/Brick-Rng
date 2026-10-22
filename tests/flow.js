@@ -9,7 +9,7 @@ const { launch } = require('./lib');
   let problems = 0;
   const note = (...a) => { problems++; console.log('PROBLEM', ...a); };
   const ok = (c, ...a) => { if (!c) note(...a); };
-  await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 3; BR.Storage.data.seenTutorial = true; Object.keys(BR.Coach.CARDS).forEach((k) => { BR.Storage.data.seen[k] = true; }); BR.Storage.data.seen.whatsnew3 = true; BR.Storage.data.profile.coins = 6000; BR.Progress.addChest('golden', 2); });
+  await page.evaluate(() => { BR.Storage.data.settings.sound = false; BR.Storage.data.runs = 3; BR.Storage.data.seenTutorial = true; BR.Coach.markAllSeen(); BR.Storage.data.profile.coins = 6000; BR.Progress.addChest('golden', 2); });
   const dom = (sel) => page.evaluate((s) => { const b = document.querySelector(s); if (!b) throw new Error('missing ' + s); b.click(); }, sel);
   const S = () => page.evaluate(() => ({ coins: BR.Progress.coins, vault: BR.Storage.data.profile.vault.length, opened: BR.Storage.data.profile.opened, chests: Object.assign({}, BR.Storage.data.profile.chests) }));
 

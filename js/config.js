@@ -36,6 +36,7 @@
     // ---- Chill mode (the original 20-move rounds) ----
     chill: { moves: 20, goalBase: 1200, growth: 1.3, unlockLevel: 2, sixthColor: 4, seventhColor: 8, shatterPerMove: 100 },
     power: { cap: 3, charge: 100 },
+    boostsFromRun: 3,      // the Boosts sheet appears before a Rush run once the player has finished this many runs
     // Run Boosts are bought with Coins before a run (see the Boosts sheet). Priced against a typical run's Coins
     // (about 40) so each one is a real choice and none of them pays for itself.
     boosts: {

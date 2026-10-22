@@ -28,7 +28,7 @@ const check = (name, value, budget, unit = 'ms') => { const ok = value <= budget
   const cdp = await ctx.newCDPSession(page);
   await page.evaluate(() => {
     const P = BR.Progress, st = BR.Storage.data, pr = st.profile;
-    Object.keys(BR.Coach.CARDS).forEach((k) => { st.seen[k] = true; }); st.seen.whatsnew3 = true;
+    BR.Coach.markAllSeen();
     st.settings.sound = false; st.settings.music = false; st.settings.haptics = false; st.settings.perf = 'high'; st.seenTutorial = true; st.runs = 12;
     pr.level = 9; pr.xp = 900; pr.coins = 99999; pr.chests = { brick: 6, pop: 2, board: 0, fuse: 0, golden: 1 }; pr.passTier = 8;
     st.best.rush = 184520; st.bestStage.rush = 7; st.recent.rush = [120000, 90000];

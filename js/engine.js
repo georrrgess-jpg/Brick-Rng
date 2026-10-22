@@ -14,6 +14,7 @@
       this.mode = opts.mode || 'rush';
       this.boosts = opts.boosts || {};
       this.startHammer = !!opts.startHammer;
+      this.waitFirstPop = !!opts.waitFirstPop;   // the very first run: the fuse does not burn until the player has popped once
       this.reset(opts.snapshot);
     }
 
@@ -57,7 +58,7 @@
     /* ---------- the clock ---------- */
     /** Advance real time by dt seconds. Returns events: rushEnd, fuseOut. */
     tick(dt) {
-      if (this.over || this.chill) return [];
+      if (this.over || this.chill || (this.waitFirstPop && this.stats.pops === 0)) return [];
       const C = BR.CFG, ev = [];
       this.time += dt;
       const r = this.rush;

@@ -89,7 +89,7 @@
       if (mode === 'daily') { st.daily = { day: BR.dayKey(), score: 0, stage: 0 }; BR.Storage.save(); }
       const tutorial = !st.seenTutorial && mode === 'rush';
       const seed = mode === 'daily' ? BR.dailySeed('d' + BR.dayKey()) : undefined;
-      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial });
+      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial, waitFirstPop: tutorial });
       BR.Storage.clearRun();
       return this.begin(engine, { tutorial });
     },
@@ -761,22 +761,25 @@
       const mis = r.missions.map((m) => `<div class="res-mis rev ${m.justDone ? 'done' : ''}"><div class="t"><span>${m.justDone ? BR.icon('check', 'ck') + ' ' : ''}${BR.esc(m.mission.text)}</span><b>${m.justDone ? '+' + m.mission.reward + ' Coins' : fmt(m.after) + '/' + fmt(m.mission.target)}</b></div><div class="bar ${m.weekly ? 'gold' : 'green'}"><i data-to="${(m.after / m.mission.target) * 100}" style="width:${(m.before / m.mission.target) * 100}%"></i></div></div>`).join('');
       const ups = r.xp.ups.map((u) => `<div class="lvl-up rev"><span class="lu-n">${u.level}</span><span class="lu-t"><b>Level ${u.level}!</b><small>Pass level ${u.level} reward</small></span><span class="lu-rw">${BR.rewardChip(u.paid ? { kind: 'coins', amount: u.paid } : u.reward)}</span></div>`).join('');
       const trophies = r.trophies.map((t) => `<div class="lvl-up rev"><span class="lu-n">${BR.icon('trophy')}</span><span class="lu-t"><b>${t.name}</b><small>Trophy earned · +${t.coins} Coins</small></span></div>`).join('');
+      // what the run unlocked sits right under the score, so it is never below the fold behind the buttons
+      const banners = r.xp.ups.map((u) => `<div class="res-banner lvl rev"><span>${BR.icon('star')}</span><b>Level ${u.level}!</b><small>${u.paid ? '+' + u.paid + ' Coins' : BR.rewardLabel(u.reward)}</small></div>`).join('')
+        + r.trophies.map((t) => `<div class="res-banner trophy rev"><span>${BR.icon('trophy')}</span><b>Trophy: ${BR.esc(t.name)}</b><small>+${t.coins} Coins</small></div>`).join('');
       let chase = '';
       if (r.isBest && sum.score > 0) chase = `<div class="new-best rev">New best</div>${r.prevBest > 0 ? `<div class="res-gap rev good">${fmt(sum.score - r.prevBest)} more than your old best</div>` : ''}`;
       else if (r.prevBest > 0) {
         const gap = r.prevBest - sum.score, near = sum.score >= r.prevBest * 0.85;
         chase = `<div class="res-gap rev ${near ? 'near' : ''}">${near ? `So close: ${fmt(gap)} short of your best` : `Your best is ${fmt(r.prevBest)}`}</div>`;
       }
-      if (mode === 'daily' && r.par > 0) chase += `<div class="res-gap rev ${sum.score >= r.par ? 'good' : ''}">${sum.score >= r.par ? 'Above' : 'Below'} your par of ${fmt(r.par)}</div>`;
+      if (mode === 'daily' && r.par > 0) chase += `<div class="res-gap rev ${sum.score >= r.par ? 'good' : ''}">${sum.score >= r.par ? 'Above' : 'Below'} your recent average of ${fmt(r.par)}</div>`;
       const beatIt = !r.isBest && r.prevBest > 0 && mode !== 'daily';
       const html = `<div class="results" id="results"><div class="res-scroll">
           <div class="res-title out rev">${titles[reason] || 'RUN OVER'}</div>
           <div class="res-sub rev">${mode === 'daily' ? 'Daily Rush' : mode === 'chill' ? 'Chill' : 'Rush'} · Stage ${sum.stage} · ${Math.floor(sum.time / 60)}:${String(Math.floor(sum.time % 60)).padStart(2, '0')}</div>
           <div class="res-score rev"><small>Score</small><b id="resScore">0</b></div>
-          ${chase}
+          ${chase}${banners}
           <div class="res-chips rev"><div class="res-chip"><b>${sum.stagesCleared}</b><small>Stages cleared</small></div><div class="res-chip"><b>${sum.biggest}</b><small>Biggest pop</small></div><div class="res-chip"><b>${sum.rushes}</b><small>Rush Modes</small></div></div>
           <div class="res-card rev"><h3>Coins <span class="coins-total">${BR.coin()}<b id="resCoins">0</b></span></h3>
-            <div class="res-row"><span>Points</span><b>${r.coins.points}</b></div><div class="res-row"><span>Stages cleared</span><b>${r.coins.stages}</b></div>
+            <div class="res-row"><span>Points</span><b>+${r.coins.points}</b></div><div class="res-row"><span>Stages cleared</span><b>+${r.coins.stages}</b></div>
             ${r.coins.daily ? `<div class="res-row"><span>Daily Rush</span><b>+${r.coins.daily}</b></div>` : ''}${r.coins.first ? `<div class="res-row"><span>First run of the day</span><b>+${r.coins.first}</b></div>` : ''}</div>
           ${mis ? `<div class="res-card rev"><h3>Missions</h3>${mis}</div>` : ''}
           <div class="res-card rev"><h3>XP <span class="muted num">+${fmt(r.rows.reduce((a, x) => a + x.xp, 0))}</span></h3>
@@ -786,7 +789,7 @@
         </div>
         <div class="res-actions rev">
           ${mode === 'daily' ? `<button class="btn btn-xl" data-r="share">${BR.icon('share')} Share result</button>` : `<button class="btn btn-xl" data-r="again">${BR.icon('play')} ${beatIt ? 'Beat it' : 'Play again'}</button>`}
-          <div class="row">${canShop ? `<button class="btn btn-gold" data-r="shop">${BR.icon('gift')} Open a chest</button>` : ''}<button class="btn btn-dark" data-r="home">Home</button></div>
+          <div class="row">${canShop ? `<button class="btn btn-gold" data-r="shop">${BR.icon('gift')} Chests</button>` : ''}<button class="btn btn-dark" data-r="home">Home</button></div>
         </div></div>`;
       const host = $('layer-overlays');
       const node = BR.el(html);
