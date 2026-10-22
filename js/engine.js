@@ -320,6 +320,18 @@
       return { tap, removed, moves, spawns, recolors: [], shuffle, dir: 'down', movesLeft: this.movesLeft };
     }
 
+    /** The power-up the next full charge gives: the one held least, taking turns; null when every slot is full. */
+    nextPower() {
+      const order = BR.BOOSTER_ORDER, cap = BR.CFG.power.cap;
+      let best = null;
+      for (let i = 0; i < order.length; i++) {
+        const t = order[(this.cursor + i) % order.length];
+        if (this.inv[t] >= cap) continue;
+        if (best === null || this.inv[t] < this.inv[best]) best = t;
+      }
+      return best;
+    }
+
     _addCharge(gain) {
       const gained = [];
       if (gain <= 0) return gained;
@@ -327,12 +339,7 @@
       this.charge += gain;
       const order = BR.BOOSTER_ORDER;
       while (this.charge >= P.charge) {
-        let best = null;
-        for (let i = 0; i < order.length; i++) {
-          const t = order[(this.cursor + i) % order.length];
-          if (this.inv[t] >= P.cap) continue;
-          if (best === null || this.inv[t] < this.inv[best]) best = t;
-        }
+        const best = this.nextPower();
         if (best === null) { this.charge = P.charge - 1; break; }
         this.inv[best]++;
         this.cursor = (order.indexOf(best) + 1) % order.length;

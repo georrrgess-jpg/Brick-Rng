@@ -207,10 +207,12 @@
       this.field.classList.add('has-hl');
 
       // preview chip: points, plus time / combo / Line Blast tags
-      const tags = [];
-      if (plan.timeGain > 0) tags.push(`<span class="fuel plus">+${plan.timeGain.toFixed(1)}s</span>`);
-      if (plan.line) tags.push('<span class="fuel plus">LINE BLAST</span>');
-      else if (plan.combo > 1) tags.push(`<span class="fuel plus">x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}</span>`);
+      const tags = [];   // time is green, combo is orange: they never look alike
+      let tagChars = 0;
+      const tag = (cls, text) => { tags.push(`<span class="fuel ${cls}">${text}</span>`); tagChars += text.length + 2; };
+      if (plan.timeGain > 0) tag('plus', `+${plan.timeGain.toFixed(1)}s`);
+      if (plan.line) tag('combo', 'LINE BLAST');
+      else if (plan.combo > 1) tag('combo', `Combo x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}`);
       const pts = '+' + BR.fmt(plan.points);
       this.chip.innerHTML = `<span>${pts}</span>${tags.join('')}`;
       let minR = 99, maxR = -1, sumC = 0;
@@ -218,7 +220,7 @@
       const top = this.layerPoint(minR, sumC / plan.primary.length);
       const bot = this.layerPoint(maxR, sumC / plan.primary.length);
       // the chip is centred by CSS on the point we give it, so its size is only needed to keep it on screen: estimated, not measured
-      const cw = this._chipW(pts.length + tags.length * 5), ch = 30;
+      const cw = this._chipW(pts.length + tagChars * 0.8), ch = 30;
       const ww = this._ww || (this._ww = this.wrap.clientWidth);
       let x = Math.max(cw / 2 + 4, Math.min(ww - cw / 2 - 4, top.x));
       let y = top.y - this.cell * 0.5 - ch / 2 - 6;

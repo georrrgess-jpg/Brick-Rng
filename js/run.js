@@ -46,7 +46,7 @@
     },
 
     buildSlots() {
-      $('slots').innerHTML = BR.BOOSTER_ORDER.map((id) => `<button class="bslot empty" data-b="${id}" aria-label="${BR.BOOSTERS[id].name}: ${BR.BOOSTERS[id].desc}">${BR.powerIcon(id)}<span class="bname">${BR.BOOSTERS[id].name}</span><em class="bcount">0</em></button>`).join('');
+      $('slots').innerHTML = BR.BOOSTER_ORDER.map((id) => `<button class="bslot empty" data-b="${id}" aria-label="${BR.BOOSTERS[id].name}: ${BR.BOOSTERS[id].desc}"><i class="bfill"></i>${BR.powerIcon(id)}<span class="bname">${BR.BOOSTERS[id].name}</span><span class="bsub"></span><em class="bcount">0</em></button>`).join('');
       this.slotEls = {};
       $('slots').querySelectorAll('.bslot').forEach((el) => { this.slotEls[el.dataset.b] = el; });
     },
@@ -58,6 +58,7 @@
       el.addEventListener('pointerdown', (e) => {
         if (e.button != null && e.button > 0) return;
         this.pressed = true;
+        if (this._tipDone) this._tipDone();
         try { el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
         this.markActive();
         this.updateHover(e);
@@ -106,6 +107,7 @@
       this.armed = null; this.buffered = null; this.popsThisRun = 0; this.tutorial = !!o.tutorial; this.warned = false; this.hb = 0;
       this.el.classList.toggle('chill', engine.chill);
       this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
+      if (this._tipDone) this._tipDone();
       $('bomb').getAnimations().forEach((a) => a.cancel()); $('bomb').classList.remove('gone');   // the fuse-out explosion leaves the bomb gone; every run starts with it back
       this.bestBase = S().best[this.mode] || 0; this.beatFired = false; this.chillStars = 0;
       $('warnVignette').classList.remove('on');
@@ -164,7 +166,7 @@
     sparkStart() {
       const e = this.engine;
       this.el.classList.add('sparking');
-      $('lastSpark').classList.add('on');
+      $('lastSpark').classList.add('on'); this.band();
       BR.audio.lastSpark && BR.audio.lastSpark(); BR.haptic('boom');
       this.fx.flash('#ff4d6d', 0.3, 360); this.fx.shake($('app'), 10, 360);
       if (BR.Music && BR.Music.duck) BR.Music.duck(true);
@@ -178,7 +180,7 @@
     },
     sparkEnd(saved) {
       this.el.classList.remove('sparking');
-      $('lastSpark').classList.remove('on');
+      $('lastSpark').classList.remove('on'); this.band();
       this.view.hideHint();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);
       if (saved) {
@@ -234,9 +236,9 @@
       this.setScore(e.score, false);
       $('stageNum').textContent = e.stage;
       this.setMult(false);
+      this.band();
       this.hudStageBar(false);
       this.renderPower(null);
-      $('chargeFill').style.width = (e.charge / BR.CFG.power.charge) * 100 + '%';
       $('rushFill').style.width = '0%';
       this.shownFuse = '';
       if (e.chill) this.hudChill(false);
@@ -264,14 +266,15 @@
       else { el.className = 'best-line'; $('bestText').textContent = `BEST ${fmt(base)}`; }
     },
     setMult(slam) {
-      const e = this.engine, m = e.chill ? 1 : BR.stageMult(e.stage);
-      const t = $('multTag'); t.textContent = 'x' + m.toFixed(1);
+      const e = this.engine, m = e.mult;   // the real multiplier: the stage's, times Rush's while Rush is on
+      const t = $('multTag'); t.textContent = 'x' + (Number.isInteger(m) ? m : m.toFixed(1)) + ' points';
       if (slam) BR.replay(t, 'slam');
     },
     hudStageBar(animate = true) {
       const e = this.engine, f = $('stageFill');
       if (!animate) f.style.transition = 'none';
       f.style.width = Math.max(0, Math.min(100, (e.stageScore / e.goal) * 100)).toFixed(1) + '%';
+      $('stageGoal').textContent = `${fmt(Math.min(e.stageScore, e.goal))} / ${fmt(e.goal)}`;
       if (!animate) requestAnimationFrame(() => { f.style.transition = ''; });
     },
     hudChill(animate = true) {
@@ -281,15 +284,21 @@
       if (!animate) f.style.transition = 'none';
       f.style.width = Math.min(100, (e.stageScore / e.goal) * 100) + '%';
       if (!animate) requestAnimationFrame(() => { f.style.transition = ''; });
-      $('chillText').textContent = e.stageScore >= e.goal ? 'Goal reached!' : `${fmt(e.stageScore)} / ${fmt(e.goal)}`;
+      $('chillText').textContent = e.stageScore >= e.goal ? `Stage ${e.stage} · goal reached!` : `Stage ${e.stage} · ${fmt(e.stageScore)} / ${fmt(e.goal)}`;
       $('stageNum').textContent = e.stage;
     },
     renderPower(gained) {
-      const e = this.engine;
+      const e = this.engine, next = e.nextPower(), pct = Math.round((e.charge / BR.CFG.power.charge) * 100);
       for (const id of BR.BOOSTER_ORDER) {
-        const el = this.slotEls[id];
-        el.querySelector('.bcount').textContent = e.inv[id];
-        el.classList.toggle('empty', e.inv[id] <= 0);
+        const el = this.slotEls[id], n = e.inv[id], isNext = id === next;
+        const sub = el.querySelector('.bsub'), cnt = el.querySelector('.bcount');
+        if (cnt.textContent !== String(n)) cnt.textContent = n;
+        // the next slot to fill shows the charge inside it, so there is no separate bar to decode
+        const label = isNext && n <= 0 ? pct + '%' : isNext ? '+' + pct + '%' : '';
+        if (sub.textContent !== label) sub.textContent = label;
+        el.querySelector('.bfill').style.transform = isNext ? `scaleY(${(pct / 100).toFixed(2)})` : 'scaleY(0)';
+        el.classList.toggle('empty', n <= 0);
+        el.classList.toggle('next', isNext);
         el.classList.toggle('armed', this.armed === id);
         if (gained && gained.includes(id)) BR.replay(el, 'gain');
       }
@@ -332,18 +341,26 @@
     },
     hint(html, ms = 4200) {
       const h = $('hint'); clearTimeout(this.hintT);
-      h.innerHTML = html; h.classList.add('show');
-      if (ms) this.hintT = setTimeout(() => h.classList.remove('show'), ms);
+      h.innerHTML = `<span>${html}</span>`; h.classList.add('show'); this.band();
+      if (ms) this.hintT = setTimeout(() => { h.classList.remove('show'); this.band(); }, ms);
     },
-    hideHint() { clearTimeout(this.hintT); $('hint').classList.remove('show'); },
+    hideHint() { clearTimeout(this.hintT); $('hint').classList.remove('show'); this.band(); },
     setCombo(streak, mult, popped) {
       const c = $('combo');
       if (streak >= 2) {
-        $('comboX').textContent = 'x' + (Number.isInteger(mult) ? mult : mult.toFixed(1));
+        $('comboX').textContent = 'Combo x' + (Number.isInteger(mult) ? mult : mult.toFixed(1));
+        $('comboSub').textContent = `${streak} big pops in a row`;
         c.classList.add('show'); c.classList.toggle('hot', mult >= 2.5); c.classList.toggle('max', mult >= 4);
         if (popped) BR.replay(c, 'pop');
         this.comboOn = true;
       } else if (this.comboOn) { c.classList.remove('show', 'hot', 'max', 'pop'); this.comboOn = false; }
+      this.band();
+    },
+    /** The message band shows one thing at a time: Last Spark, then a power-up being aimed, then a hint, then the combo. */
+    band() {
+      const b = $('msgBand');
+      const top = $('lastSpark').classList.contains('on') ? 'spark' : $('aimBanner').classList.contains('show') ? 'aim' : $('hint').classList.contains('show') ? 'hint' : $('combo').classList.contains('show') ? 'combo' : '';
+      if (b.dataset.top !== top) b.dataset.top = top;
     },
 
     /* ===================================================================== input */
@@ -392,7 +409,7 @@
     onSlot(type) {
       if (!this.canAct || this.busy) return;
       const e = this.engine;
-      if (e.inv[type] <= 0) { BR.audio.deny(); BR.haptic('err'); this.hint('Pops of 4+ fill the bar. Every full bar earns a power-up.', 3200); return; }
+      if (e.inv[type] <= 0) { BR.audio.deny(); BR.haptic('err'); this.hint('Pop <b>4 or more</b> bricks at once to charge a power-up', 3200); return; }
       if (this.armed === type) { this.disarm(); return; }
       this.armed = type; BR.audio.boosterArm(); BR.haptic('tap');
       this.clearHover(); this.view.hideHint(); this.hideHint();
@@ -403,7 +420,7 @@
     disarm() { this.armed = null; this.clearHover(); this.aimBanner(''); this.renderPower(null); },
     aimBanner(text, color) {
       const b = $('aimBanner'); b.textContent = text || ''; b.style.setProperty('--bc', color || '');
-      b.classList.toggle('show', !!text); $('boardWrap').classList.toggle('aiming', !!text); $('boardWrap').style.setProperty('--bc', color || '');
+      b.classList.toggle('show', !!text); $('boardWrap').classList.toggle('aiming', !!text); $('boardWrap').style.setProperty('--bc', color || ''); this.band();
     },
     async usePower(type, r, c) {
       const e = this.engine;
@@ -473,7 +490,6 @@
       this.setScore(e.score);
       this.hudStageBar();
       if (e.chill) this.hudChill();
-      $('chargeFill').style.width = (e.charge / BR.CFG.power.charge) * 100 + '%';
       this.setCombo(e.streak, BR.comboMult(e.streak), true);
       if (res.comboBefore >= 2 && e.streak < 2) this.callout('Combo lost', '#9aa8d6');
       if (res.boostersGained && res.boostersGained.length) {
@@ -517,11 +533,35 @@
       if (BR.Skins.onEvent) BR.Skins.onEvent('pop', { res, view, run: this });
       if (p.line && BR.Skins.onEvent) BR.Skins.onEvent('line', { res, view, run: this });
 
-      if (this.tutorial) {
-        if (this.popsThisRun === 1) this.hint('Every pop adds time to the <b>fuse</b>. Bigger pops add more.', 4800);
-        else if (this.popsThisRun === 4) this.hint('Chain pops of 4+ to fill the <b>Rush</b> bar below.', 5200);
-        else if (this.popsThisRun === 8) { this.hint('Pops of 4+ also charge your <b>power-ups</b>. Tap one, then the board.', 5200); S().seenTutorial = true; BR.Storage.save(); this.tutorial = false; }
+      if (this.popsThisRun === 1) this.hideHint();   // "tap a group" has done its job
+      // the first runs name each part of the HUD the first time it does something (one arrow callout at a time, once per player)
+      if (S().runs < 3 || this.tutorial) {
+        if (res.timeGain > 0) this.tip('fuse', 'fuse', 'This is your <b>time</b>. Every pop adds more.');
+        if (this.popsThisRun >= 2) this.tip('stage', 'stageStrip', 'Fill this to clear the <b>stage</b>. Each stage pays more.');
+        if (e.rush.meter > 0 && !e.rush.active) this.tip('rush', 'rushBar', 'Pops of 4+ fill <b>Rush</b>. Full: 3x points!');
+        if (e.charge > 0) this.tip('power', 'slots', 'Pops of 4+ also charge a <b>power-up</b>. Tap one, then the board.');
       }
+      if (this.tutorial && this.popsThisRun === 8) { S().seenTutorial = true; BR.Storage.save(); this.tutorial = false; }
+    },
+
+    /** An arrow callout that names a HUD part. Shown once per player; only one at a time; gone after a few seconds or the next tap. */
+    tip(key, targetId, html, ms = 4200) {
+      const seen = S().seen, flag = 'rt_' + key;
+      if (seen[flag] || this._tip) return;
+      seen[flag] = true; BR.Storage.save();
+      const t = $(targetId).getBoundingClientRect(), run = this.el.getBoundingClientRect();
+      const el = BR.el(`<div class="tip-arrow"><span>${html}</span></div>`);
+      this.el.appendChild(el);
+      const w = Math.min(280, run.width - 24), cx = t.left - run.left + t.width / 2;
+      const left = Math.max(12, Math.min(run.width - w - 12, cx - w / 2));
+      const below = t.top - run.top < run.height * 0.5;
+      el.style.cssText = `width:${w}px;left:${left}px;${below ? `top:${t.bottom - run.top + 8}px` : `bottom:${run.bottom - t.top + 8}px`}`;
+      el.style.setProperty('--ax', Math.max(18, Math.min(w - 18, cx - left)) + 'px');
+      el.classList.add(below ? 'below' : 'above');
+      this._tip = el;
+      const done = () => { clearTimeout(timer); el.classList.add('out'); setTimeout(() => el.remove(), 260); if (this._tip === el) { this._tip = null; this._tipDone = null; } };
+      const timer = setTimeout(done, ms);
+      this._tipDone = done;
     },
 
     beam(kind, idx, color) {
@@ -539,7 +579,7 @@
 
     /* ===================================================================== Rush Mode + stages */
     rushStart() {
-      this.el.classList.add('rushing');
+      this.el.classList.add('rushing'); this.setMult(true);
       BR.audio.rushStart(); BR.haptic('rush');
       BR.replay($('rushBanner'), 'go');
       this.fx.flash('#ff3d8b', 0.4, 600); this.fx.shake($('app'), 14, 600);
@@ -549,7 +589,7 @@
       this.hideHint();
     },
     rushEnd() {
-      this.el.classList.remove('rushing');
+      this.el.classList.remove('rushing'); this.setMult(true);
       BR.audio.rushEnd(); BR.haptic('tick');
       this.callout('Rush over', '#c4b5ff');
       if (BR.Music) BR.Music.setRush(false);
@@ -657,7 +697,7 @@
       const token = this.token;
       this.over = true; this.ending = true; this.clock = false; this.busy = true;
       this.clearHover(); this.view.hideHint(); this.hideHint(); this.aimBanner(''); this.armed = null;
-      $('warnVignette').classList.remove('on'); $('lastSpark').classList.remove('on');
+      $('warnVignette').classList.remove('on'); $('lastSpark').classList.remove('on'); this.band();
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);   // a missed Last Spark leaves the held duck on
       if (this.el.classList.contains('rushing') && BR.Skins.onEvent) BR.Skins.onEvent('rushEnd', { run: this });   // so Rush-only moments clean up
       this.el.classList.remove('rushing', 'sparking');

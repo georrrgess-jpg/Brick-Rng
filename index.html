@@ -48,7 +48,6 @@
       <div class="run" id="run">
         <header class="run-top">
           <button class="icon-btn" id="btnPause" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
-          <div class="stage-tag" id="stageTag"><span>Stage</span><b id="stageNum">1</b></div>
           <div class="score-box"><span class="lbl">Score</span><b id="score">0</b><div class="best-line" id="bestLine"><i id="bestFill"></i><span id="bestText">BEST 0</span></div></div>
         </header>
 
@@ -67,26 +66,26 @@
           <div class="chill-goal"><i id="chillFill"></i><span id="chillText">0 / 1,500</span></div>
         </div>
 
-        <div class="stagebar">
-          <div class="sb-track"><i id="stageFill"></i></div>
-          <span class="mult" id="multTag">x1.0</span>
+        <div class="stagestrip" id="stageStrip">
+          <div class="ss-row"><b class="ss-stage" id="stageTag">Stage <span id="stageNum">1</span></b><span class="ss-goal" id="stageGoal">0 / 1,000</span><em class="mult" id="multTag">x1.0 points</em></div>
+          <div class="ss-track"><i id="stageFill"></i></div>
         </div>
 
         <div class="board-wrap" id="boardWrap">
           <div class="board" id="board"><div class="field" id="field" data-skin-host></div></div>
           <div class="fxlayer" id="fxlayer"></div>
-          <div class="combo" id="combo" aria-live="polite"><b id="comboX">x2</b><span>COMBO</span></div>
-          <div class="aim-banner" id="aimBanner"></div>
-          <div class="hint" id="hint" role="status"></div>
-          <div class="last-spark" id="lastSpark" aria-live="assertive"><b>LAST SPARK!</b><span>Pop 4 or more to relight the fuse</span><i class="ls-bar"><u id="lsFill"></u></i></div>
           <div class="rush-glow" id="rushGlow"></div>
         </div>
 
         <div class="rushbar" id="rushBar"><i id="rushFill"></i><span id="rushLabel">RUSH</span></div>
 
-        <div class="powerups" id="powerups">
-          <div class="charge"><i id="chargeFill"></i></div>
-          <div class="slots" id="slots"></div>
+        <div class="powerups" id="powerups"><div class="slots" id="slots"></div></div>
+
+        <div class="msgband" id="msgBand" data-top="" role="status">
+          <div class="m-combo combo" id="combo" aria-live="polite"><b id="comboX">Combo x2</b><span id="comboSub">3 big pops in a row</span></div>
+          <div class="m-text hint" id="hint"></div>
+          <div class="m-aim aim-banner" id="aimBanner"></div>
+          <div class="last-spark" id="lastSpark" aria-live="assertive"><b>LAST SPARK!</b><span>Pop 4 or more to relight the fuse</span><i class="ls-bar"><u id="lsFill"></u></i></div>
         </div>
       </div>
       <div class="vignette-warn" id="warnVignette"></div>
