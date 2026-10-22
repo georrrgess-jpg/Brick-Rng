@@ -35,7 +35,7 @@
     /* ---------- XP, levels, Rush Pass ---------- */
     runXpRows(summary, opts = {}) {
       const rows = [];
-      const pts = Math.floor(summary.score / 600);
+      const pts = BR.xpForScore(summary.score);
       if (pts > 0) rows.push({ label: 'Points scored', xp: pts });
       let st = 0;
       for (let s = 1; s <= summary.stagesCleared; s++) st += 20 + 4 * s;

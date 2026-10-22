@@ -113,7 +113,8 @@ console.log('mode chill:');
   const avgPrice = need / BR.DROP_ITEMS.length;
   const trophies = BR.TROPHIES.reduce((a, t) => a + t.coins, 0);
   let passCoins = 0, passValue = 0;
-  for (const r of BR.PASS) { if (r.kind === 'coins') passCoins += r.amount; else if (r.kind === 'chest') passValue += r.chest === 'golden' ? avgPrice : BR.CHESTS[r.chest].cost; else passValue += 0; }
+  // the level track pays Coins; the season track (30 tiers of season XP) pays Coins, chests, hats and two exclusive items
+  for (const r of BR.PASS.concat(BR.SEASON)) { if (r.kind === 'coins') passCoins += r.amount; else if (r.kind === 'chest') passValue += r.chest === 'golden' ? avgPrice : BR.CHESTS[r.chest].cost; else passValue += 0; }
   const oneTime = trophies + passCoins + passValue;
   const MIS = 38 * 3, WEEK = 250 + avgPrice, RUNS_DAY = 10, MENU_MIN = 0.8;
   console.log(`economy: ${BR.DROP_ITEMS.length} chest items cost ${need} Coins; one-time free (trophies ${trophies}, Pop Pass ${passCoins} + chests ${Math.round(passValue)}) = ${Math.round(oneTime)}`);

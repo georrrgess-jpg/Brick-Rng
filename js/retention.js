@@ -68,29 +68,36 @@
   };
 
   /* ------------------------------------------------------------------ run goals */
-  // test(summary) is true once the goal is met. min* keep the early goals gentle; reward grows with the ask.
+  // test(summary) is true once the goal is met. minLevel keeps the early goals gentle and in a teaching order; minSkill and maxSkill
+  // (the tile director's rating) keep every goal a real ask for the player it is shown to; reward grows with the ask. `want` tells the
+  // tile director what is being chased, so it sets up a jackpot of that size. tests/balance.js checks the hit rates by skill.
   const GOALS = [
     { id: 'power', text: 'Use a power-up', reward: 10, test: (s) => s.powerUsed >= 1, minLevel: 1, maxLevel: 12 },
-    { id: 'big8', text: 'Pop 8 or more bricks at once', reward: 10, test: (s) => s.biggest >= 8, minLevel: 1, maxLevel: 8 },
-    { id: 'rush', text: 'Start Rush Mode', reward: 15, test: (s) => s.rushes >= 1, minLevel: 2, maxLevel: 99 },
-    { id: 'line', text: 'Make a Line Blast', reward: 15, test: (s) => s.lineBlasts >= 1, minLevel: 3, maxLevel: 99 },
-    { id: 'chain', text: 'Chain 4 big pops in a row', reward: 15, test: (s) => s.maxCombo >= 4, minLevel: 4, maxLevel: 99 },
-    { id: 'big12', text: 'Pop 12 or more bricks at once', reward: 15, test: (s) => s.biggest >= 12, minLevel: 5, maxLevel: 99 },
-    { id: 'defuse', text: 'Defuse a Fuse brick', reward: 20, test: (s) => (s.defused || 0) >= 1, minLevel: 6, maxLevel: 99, minStage: 4 },
-    { id: 'rush2', text: 'Start Rush Mode twice', reward: 20, test: (s) => s.rushes >= 2, minLevel: 7, maxLevel: 99 },
-    { id: 'stage', stage: true, reward: 20, minLevel: 3, maxLevel: 99 },
+    { id: 'big8', text: 'Pop 8 or more bricks at once', reward: 10, test: (s) => s.biggest >= 8, minLevel: 1, maxLevel: 8, want: { big: 8 } },
+    { id: 'rush', text: 'Start Rush Mode', reward: 15, test: (s) => s.rushes >= 1, minLevel: 2, maxSkill: 0.6 },
+    { id: 'rush2', text: 'Start Rush Mode twice', reward: 15, test: (s) => s.rushes >= 2, minLevel: 4, minSkill: 0.3, maxSkill: 0.85 },
+    { id: 'rush3', text: 'Start Rush Mode 3 times', reward: 20, test: (s) => s.rushes >= 3, minLevel: 6, minSkill: 0.6 },
+    { id: 'chain', text: 'Chain 5 big pops in a row', reward: 15, test: (s) => s.maxCombo >= 5, minLevel: 4 },
+    { id: 'big10', text: 'Pop 10 or more bricks at once', reward: 15, test: (s) => s.biggest >= 10, minLevel: 4, minSkill: 0.2, want: { big: 10 } },
+    { id: 'big12', text: 'Pop 12 or more bricks at once', reward: 20, test: (s) => s.biggest >= 12, minLevel: 6, minSkill: 0.5, want: { big: 12 } },
+    { id: 'defuse', text: 'Defuse a Fuse brick', reward: 20, test: (s) => (s.defused || 0) >= 1, minLevel: 6, minStage: 4 },
+    { id: 'spark', text: 'Save the run with the Last Spark', reward: 20, test: (s) => (s.sparkSaves || 0) >= 1, minLevel: 5 },
+    { id: 'stage', stage: true, reward: 20, minLevel: 3 },
   ];
   BR.GOALS = GOALS;
 
   BR.Goals = {
     /** Pick this run's goal. `rng` is any object with next() in [0,1). Avoids the last few goals; the stage goal asks for your usual stage. */
     pick(rng = { next: Math.random }) {
-      const p = P(), level = p.level, best = Math.max(BR.Storage.data.bestStage.rush || 0, 0);
+      const p = P(), level = p.level, best = Math.max(BR.Storage.data.bestStage.rush || 0, 0), skill = Number.isFinite(p.skill) ? p.skill : 0.4;
       const hist = (p.goalHist = Array.isArray(p.goalHist) ? p.goalHist : []);
-      let pool = GOALS.filter((g) => level >= g.minLevel && level <= g.maxLevel && !(g.minStage && best < g.minStage - 1) && !hist.includes(g.id));
-      if (!pool.length) pool = GOALS.filter((g) => level >= g.minLevel && level <= g.maxLevel);
+      const fits = (g) => level >= g.minLevel && level <= (g.maxLevel || 99) && skill >= (g.minSkill || 0) && skill <= (g.maxSkill || 1) && !(g.minStage && best < g.minStage - 1);
+      let pool = GOALS.filter((g) => fits(g) && !hist.includes(g.id));
+      if (!pool.length) pool = GOALS.filter(fits);
+      if (!pool.length) pool = [GOALS[0]];
       const g = pool[Math.floor(rng.next() * pool.length) % pool.length];
       const goal = { id: g.id, reward: g.reward, done: false };
+      if (g.want) goal.want = g.want;
       if (g.stage) { goal.target = Math.max(3, Math.min(best + (best >= 8 ? 0 : 1), 10)); goal.text = `Reach stage ${goal.target}`; }
       else goal.text = g.text;
       hist.push(g.id); while (hist.length > 3) hist.shift();

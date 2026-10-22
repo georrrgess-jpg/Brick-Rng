@@ -107,6 +107,9 @@ tests/              logic, balance bots, spin physics, Playwright UI tests
 node tests/logic.js     # items, live odds, no-duplicate drops, pity, completion, Coins, XP, pass, trophies, missions, v2/v3 migration
 node tests/engine.js    # fuse rules: burn cap, pop floors, Last Spark, Boosts, reshuffle refund (no browser)
 node tests/sim.js       # time-stepped bots: pacing, run length, Coin income and hours to complete the catalogue
+node tests/balance.js   # Update 5 balance targets: stage, run length, Rush share, Last Spark, combos, season pace, missions, goals (no browser)
+node tests/season.js    # Pop Pass season track, Fizz Hats ownership, trophy rewards (no browser)
+node tests/all.js       # the whole suite in order; --node for the no-browser suites, --perf to include the performance budget
 node tests/director.js  # the tile director: dry spells, pairs-only boards, big-pop rhythm, help under pressure, Daily fairness
 node tests/spin.js      # 1,000 reel landings land exactly on the winning card (no browser)
 node tests/stress.js    # a bot plays the real UI (Rush, Chill, Daily, pause, End Run); DOM must equal engine state

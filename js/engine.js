@@ -54,6 +54,9 @@
     }
 
     /* ---------- queries ---------- */
+    /** What the player is chasing ({ big: 12 }), so the tile director can set up a jackpot of that size. */
+    setWant(w) { if (this.director) this.director.want = w || null; }
+    get comboNeed() { return BR.comboNeed(this.streak); }
     get mult() { return (this.chill ? 1 : BR.stageMult(this.stage)) * (this.rush.active ? BR.CFG.rush.mult : 1); }
     get burn() { return this.chill ? 0 : BR.burnRate(this.stage) * (this.gentle && this.stage < 2 ? 0.85 : 1); }
     stageCleared() { return this.stageScore >= this.goal; }
@@ -109,8 +112,10 @@
       if (lineH) for (let cc = 0; cc < B.cols; cc++) addLine({ r, c: cc });
       if (lineV) for (let rr = 0; rr < B.rows; rr++) addLine({ r: rr, c });
       const line = lineH || lineV;
-      const streakAfter = n >= 4 ? this.streak + 1 : 0;
-      const combo = n >= 4 ? BR.comboMult(streakAfter) : 1;
+      // a pop of at least comboNeed grows the combo; a smaller pop of 4+ holds it (no multiplier, no growth); under 4 ends it
+      const need = BR.comboNeed(this.streak);
+      const streakAfter = n >= need ? this.streak + 1 : n >= 4 ? this.streak : 0;
+      const combo = n >= need ? BR.comboMult(streakAfter) : 1;
       const base = 10 * n * n + (line ? 500 : 0);
       const points = Math.round(base * combo * this.mult);
       return {
@@ -168,7 +173,8 @@
         const R = C.rush, r = this.rush;
         if (r.active) r.left = Math.min(R.maxTime, r.left + R.popExtend);
         else if (plan.n >= 4) {
-          r.meter = Math.min(100, r.meter + R.gainBase + (plan.n - 4) * R.gainPerExtra + Math.max(0, this.streak - 1) * R.gainStreak);
+          const gain = R.gainBase + (plan.n - 4) * R.gainPerExtra + Math.min(6, Math.max(0, this.streak - 1)) * R.gainStreak;   // the chain bonus stops at 6 links
+          r.meter = Math.min(100, r.meter + gain / (1 + R.escalate * this.stats.rushes));
           if (r.meter >= 100) { r.active = true; r.left = R.time; this.stats.rushes++; res.rushStart = true; }
         }
         r.lastPop = this.time;
@@ -182,13 +188,13 @@
           B.grid[s.r][s.c].fb = C.fuseBrick.count; s.fb = C.fuseBrick.count;
         }
       }
-      res.boostersGained = this._addCharge(plan.n >= 4 ? (plan.n - 2) * 4 + this.streak : 0);
+      res.boostersGained = this._addCharge(plan.n >= 4 ? (plan.n - 2) * 4 + Math.min(6, this.streak) : 0);
       this._afterScore(res);
       if (!this.chill) {
         if (this.spark > 0) {
           if (this.fuse < 0) this.fuse = 0;
           // a pop during Last Spark: 4+ bricks relight the fuse, anything else just buys the time it pays
-          if (plan.n >= 4) { this.fuse = Math.max(this.fuse, BR.CFG.fuse.sparkFuse); res.sparkSave = true; this.stats.sparkSaves = (this.stats.sparkSaves || 0) + 1; }
+          if (plan.n >= BR.sparkNeed(this.stage)) { this.fuse = Math.max(this.fuse, BR.CFG.fuse.sparkFuse); res.sparkSave = true; this.stats.sparkSaves = (this.stats.sparkSaves || 0) + 1; }
           if (this.fuse > 0) this.spark = 0;
         } else if (this.fuse <= 0) {
           this.fuse = 0;

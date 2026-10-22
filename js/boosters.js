@@ -8,12 +8,13 @@
   BR.BOOSTERS = {
     hammer: {
       id: 'hammer', name: 'Hammer', perBrick: 15,
-      desc: 'Smash a 3x3 area.',
-      aim: 'Tap a brick to smash the area around it',
+      desc: 'Smash a big diamond of 13 bricks.',
+      aim: 'Tap a brick to smash the diamond around it',
       icon: '<path d="M13.5 4.5l6 6-3 3-6-6z"/><path d="M11 9L4 16.5 7.5 20 15 13"/><path d="M15.5 3l5.5 5.5"/>',
       cells(board, r, c) {
         const out = [];
-        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (board.get(r + dr, c + dc)) out.push({ r: r + dr, c: c + dc });
+        // a diamond: every brick within two steps (13 in the middle of the board). It used to be a 3x3 (9), which was the weakest power-up.
+        for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) if (Math.abs(dr) + Math.abs(dc) <= 2 && board.get(r + dr, c + dc)) out.push({ r: r + dr, c: c + dc });
         return out;
       },
     },

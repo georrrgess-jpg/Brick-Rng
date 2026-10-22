@@ -15,12 +15,17 @@
       popPerExtra: 0.4,   // ...plus this for each brick beyond the second
       lineBonus: 5,       // Line Blast
       powerBonus: 2,      // using a power-up
-      burnGrowth: 1.2,    // burn speed multiplier per stage (1.15 before the tile director removed the droughts) ...
+      burnGrowth: 1.15,   // burn speed multiplier per stage ...
       burnCap: 8,         // ... which stops growing at this stage, so a long run is never lost to the clock alone
       floorFrom: 6,       // from this stage a pop of 3+ always pays at least floorTime seconds
       floorTime: 1.4,
       shuffleRefund: 2,   // a reshuffle (no moves left) gives a little time back
-      spark: 2.5,         // Last Spark: seconds you get to land a pop of 4+ after the fuse hits zero
+      spark: 2.5,         // Last Spark: seconds you get to land a bigger pop after the fuse hits zero ...
+      sparkNeed: 4,       // ... a pop of this many bricks ...
+      sparkNeedFrom: 3,   // ... and from this stage on it takes sparkNeedBig, so the save is earned (it used to save 3 runs in 4)
+      sparkNeedBig: 5,
+      sparkNeedFrom2: 99, // (a second step is available: from this stage on, one more brick)
+      sparkNeedBig2: 6,
       sparkFuse: 6,       // ...and the fuse you get back
       defuse: 3,          // popping a Fuse brick
       burstPenalty: 5,    // a Fuse brick that runs out
@@ -29,10 +34,11 @@
       lowFrac: 0.25,
       critical: 5,
     },
-    stage: { goal: 8000, growth: 1.5, multStep: 0.5, sixthColor: 3, seventhColor: 6 },
+    stage: { goal: 4500, growth: 1.5, multStep: 0.5, sixthColor: 3, seventhColor: 6 },
     fuseBrick: { fromStage: 4, count: 5, chance: 0.2, max: 2 },
     // ---- Rush Mode ----
-    rush: { time: 8, mult: 3, gainBase: 9, gainPerExtra: 3, gainStreak: 2, drain: 2.5, drainDelay: 1.5, popExtend: 0.5, maxTime: 14 },
+    // escalate: each Rush in a run needs this much more charge than the one before (+35%), so Rush stays a moment and not a state
+    rush: { time: 8, mult: 3, gainBase: 9, gainPerExtra: 3, gainStreak: 2, escalate: 0.35, drain: 2.5, drainDelay: 1.5, popExtend: 0.3, maxTime: 12 },
     // ---- Chill mode (the original 20-move rounds) ----
     chill: { moves: 20, goalBase: 1200, growth: 1.3, unlockLevel: 2, sixthColor: 4, seventhColor: 8, shatterPerMove: 100 },
     power: { cap: 3, charge: 100 },
@@ -48,20 +54,27 @@
     // Coins for a finished run = scale * sqrt(score / ref) + stageStep * (1 + 2 + .. + stages cleared, capped).
     // Square-root growth keeps sharp players ahead without letting them run away from everyone else.
     // ref 50000 and stageCap 8 before the tile director: players now go further and score more, so the same Coins need more
-    coin: { scale: 14, ref: 80000, stageStep: 1, stageCap: 7, firstOfDay: 20, dailyBonus: 15 },
+    coin: { scale: 14, ref: 45000, stageStep: 1, stageCap: 7, firstOfDay: 20, dailyBonus: 15 },
+    xp: { scale: 150, ref: 80000 },   // XP for points = scale * sqrt(score / ref)
     startCoins: 200,
     rerollCost: 30,
     pityEvery: 8,          // every 8th chest of a type without an Epic or better guarantees one
     goldenFallback: 600,   // a Golden Chest pays this when nothing Epic or better is left to find
     passTiers: 30,         // the level track's old Pass length (levels keep paying Coins)
     // The Pop Pass is a season: 30 tiers filled by season XP, which starts at zero each season while the player's level stays.
-    // xpPerTier is set in Update 5 Phase 4 against the bots (a season takes about 300 casual runs, 150 average).
-    season: { n: 4, name: 'Moonwick', tiers: 30, xpPerTier: 1500 },
+    // xpPerTier is set against the bots (tests/balance.js): a season takes about 250 casual runs, 150 average, 120 sharp.
+    season: { n: 4, name: 'Moonwick', tiers: 30, xpPerTier: 2400 },
   };
 
   /** Pass levels: gentle, so the 30 tiers take a few weeks of casual play. */
   BR.xpForLevel = (level) => 500 + 150 * (level - 1);
+  /** XP for the points scored in a run: a square root like Coins, so a sharp player's run is worth about twice a casual one's, not six times. */
+  BR.xpForScore = (score) => Math.round(BR.CFG.xp.scale * Math.sqrt(Math.max(0, score) / BR.CFG.xp.ref));
 
+  /** The Last Spark needs a pop of at least this many bricks at this stage. */
+  BR.sparkNeed = (stage) => { const F = BR.CFG.fuse; return stage >= F.sparkNeedFrom2 ? F.sparkNeedBig2 : stage >= F.sparkNeedFrom ? F.sparkNeedBig : F.sparkNeed; };
+  /** A pop must reach this size to grow the combo: 4 at first, one more brick every two links of the chain (cap 8). */
+  BR.comboNeed = (streak) => Math.min(8, 4 + Math.floor(Math.max(0, streak) / 2));
   BR.stageGoal = (stage) => Math.round((BR.CFG.stage.goal * Math.pow(BR.CFG.stage.growth, stage - 1)) / 50) * 50;
   BR.stageMult = (stage) => 1 + BR.CFG.stage.multStep * (stage - 1);
   BR.burnRate = (stage) => Math.pow(BR.CFG.fuse.burnGrowth, Math.min(stage, BR.CFG.fuse.burnCap) - 1);

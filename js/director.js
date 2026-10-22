@@ -24,8 +24,8 @@
     assistMin: 0, assistMax: 0.9,
     base: (skill) => 0.3 - 0.25 * skill,        // a new player (skill 0.25) starts near 0.24, a strong one (0.9) near 0.08
     stageStep: 0.02, stageCap: 0.12,              // more colors, a little more help
-    lowFuse: 0.32, lowFuseHelp: 0.3,              // below a third of the fuse, help rises up to +0.3 at empty
-    sparkHelp: 0.4,                               // the Last Spark: the board should offer a 4+
+    lowFuse: 0.32, lowFuseHelp: 0.2,              // below a third of the fuse, help rises up to +0.2 at empty
+    sparkHelp: 0,                                 // the Last Spark gets no extra help: the save is earned (it needs a pop of 5+)
     dryHelp: 0.06, dryCap: 0.24,                   // each pop in a row under 4 bricks
     slowThink: 2.2, slowHelp: 0.15,               // a long search for a move
     cruise: 0.15,                                 // big pops and a comfortable fuse: back off
@@ -89,6 +89,7 @@
       this.sinceBig = 0;     // pops since the last 8+
       this.lastPop = 0;      // engine time of the last pop
       this.think = 1;        // recent seconds between pops
+      this.want = null;      // what the player is chasing right now ({ big: 12 }: a pop of 12+), set by the run from its goal and missions
     }
 
     /** How much help the board gives right now, 0..1. */
@@ -118,6 +119,9 @@
     /** The biggest group the next refill aims for, and whether it is a jackpot (a big pop set up on purpose). */
     target(a) {
       const every = Math.round(D.jackEvery - D.jackEveryHelp * a);
+      const wantBig = this.want && this.want.big ? this.want.big : 0;
+      // chasing a big pop (a goal or mission that asks for 10+ or 12+): jackpots come twice as often and aim at that size
+      if (wantBig && this.sinceBig >= Math.max(5, Math.round(every / 2))) return { size: wantBig + 1, jackpot: true };
       if (this.sinceBig >= every) return { size: 8 + Math.round(3 * a), jackpot: true };
       return { size: 4 + Math.round(4 * a), jackpot: false };
     }

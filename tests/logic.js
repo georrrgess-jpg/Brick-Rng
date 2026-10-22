@@ -76,7 +76,7 @@ for (const [chest, type] of [['brick', 'skin'], ['pop', 'pop'], ['board', 'board
 assert.strictEqual(P.coins, 200);
 assert(P.spend(50) && P.coins === 150 && !P.spend(1000));
 const rc = P.runCoins({ score: 200000, stagesCleared: 5 }, { daily: true, firstOfDay: true });
-assert.strictEqual(rc.points, 22); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 72);
+assert.strictEqual(rc.points, 30); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 80);
 assert(P.runCoins({ score: 0, stagesCleared: 0 }).total === 0, 'an empty run pays nothing');
 assert(P.runCoins({ score: 450000, stagesCleared: 12 }).total < 4 * P.runCoins({ score: 54000, stagesCleared: 3 }).total, 'sharp players earn well under 4x a casual player');
 assert(P.runCoins({ score: 1e9, stagesCleared: 30 }).stages === 28, 'stage bonus is capped');
@@ -255,7 +255,17 @@ delete require.cache[require.resolve('../js/storage.js')]; require('../js/storag
   assert(got.has('stage') && got.has('defuse'), 'a level 10 player can get the harder goals');
   const g1 = { id: 'stage', target: 7, text: 'Reach stage 7', reward: 20 };
   assert(!BR.Goals.met(g1, { stage: 6 }) && BR.Goals.met(g1, { stage: 7 }));
-  assert(BR.Goals.met({ id: 'line' }, { lineBlasts: 1 }) && !BR.Goals.met({ id: 'line' }, { lineBlasts: 0 }));
+  assert(BR.Goals.met({ id: 'spark' }, { sparkSaves: 1 }) && !BR.Goals.met({ id: 'spark' }, { sparkSaves: 0 }));
+  assert(BR.Goals.met({ id: 'big10' }, { biggest: 10 }) && !BR.Goals.met({ id: 'big10' }, { biggest: 9 }));
+  // Update 5: goals fit the skill rating, ask the director for a jackpot when they want a big pop, and Line Blast goals are gone
+  pr.level = 12; BR.Storage.data.bestStage.rush = 8; pr.goalHist = [];
+  const byRating = (sk, lv) => { pr.skill = sk; pr.level = lv; const ids = new Set(); for (let i = 0; i < 200; i++) { pr.goalHist = []; ids.add(BR.Goals.pick({ next: Math.random }).id); } return ids; };
+  const low = byRating(0.1, 7), high = byRating(0.95, 12);
+  assert(low.has('big8') && !low.has('big12') && !low.has('rush3'), 'a new player does not get the hardest goals');
+  assert(high.has('big12') && high.has('rush3') && !high.has('rush') && !high.has('rush2'), 'a sharp player is not asked for what they do all the time');
+  assert(![...low, ...high].includes('line'), 'no Line Blast goal');
+  pr.skill = 0.7; pr.level = 12; for (let i = 0; i < 200; i++) { pr.goalHist = []; const g = BR.Goals.pick({ next: Math.random }); if (g.id === 'big12') assert.deepStrictEqual(g.want, { big: 12 }); }
+  pr.skill = 0.4;
   // records
   BR.Records.update({ score: 5000, lineBlasts: 3, rushes: 2 }, 'rush'); BR.Records.update({ score: 9000, lineBlasts: 1, rushes: 1 }, 'rush');
   const rec = BR.Records.list(); assert.strictEqual(rec.maxLines, 3); assert.deepStrictEqual(rec.history, [5000, 9000]);

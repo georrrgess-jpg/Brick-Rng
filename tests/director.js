@@ -99,11 +99,11 @@ if (has) {
     ok(o.best < 11, k, 'the board hands out giant groups all the time (too easy)', o.best);
     ok(o.allOver && o.timeMax < 900, k, 'a run that never ends', o.timeMax);
   }
-  // help rises as the fuse runs low, more in the Last Spark, after a dry spell, and less past the player's usual stage
+  // help rises as the fuse runs low (and stays up in the Last Spark), after a dry spell, and less past the player's usual stage
   {
     const e = new BR.Engine({ seed: 3, mode: 'rush', skill: 0.5 }), d = e.director;
     e.fuse = e.fuseMax; const full = d.assist(); e.fuse = e.fuseMax * 0.1; const low = d.assist(); e.spark = 1; const spark = d.assist(); e.spark = 0;
-    ok(low > full + 0.15 && spark > low, 'help does not rise with fuse pressure', full, low, spark);
+    ok(low > full + 0.1 && spark >= low - 1e-9, 'help does not rise with fuse pressure', full, low, spark);   // the Last Spark itself gets no extra help: the save is earned
     e.fuse = e.fuseMax; d.dry = 4; ok(d.assist() > full + 0.15, 'help does not rise after a dry spell'); d.dry = 0;
     e.stage = 12; ok(d.assist() < full, 'help does not taper past the usual stage');
     const weak = new BR.Engine({ seed: 3, mode: 'rush', skill: 0.1 }).director, strong = new BR.Engine({ seed: 3, mode: 'rush', skill: 0.9 }).director;
