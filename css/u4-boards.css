@@ -29,7 +29,7 @@
 /* a soft dark plate behind the score (top right of the run column), part of the run background so low-end phones get it too */
 :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) { --u4-hud: radial-gradient(ellipse 132px 60px at calc(50% + var(--bw) / 2 - 56px) calc(var(--u4-free) + 24px), var(--u4-plate) 0, var(--u4-plate) 24%, transparent 100%); }
 :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .bg { background: var(--u4-hud), var(--a-bg-run); }
-:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--u4-plate) 0, var(--u4-plate) 60%, transparent 100%); }
+:is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--u4-plate) 0, var(--u4-plate) 78%, transparent 100%); }
 :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo, .board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .msgband:is([data-top="spark"], [data-top="aim"], [data-top="hint"], [data-top="combo"], [data-top="goal"])::before { opacity: 1; }
 .board-classic { --u4-plate: rgba(20, 10, 46, 0.66); --u4-ink: rgba(20, 10, 46, 0.9); }
 .board-deepsea { --u4-plate: rgba(3, 38, 68, 0.62); --u4-ink: rgba(3, 38, 68, 0.9); }
@@ -307,18 +307,20 @@ html:is(.low-end, .reduced):is(.board-classic, .board-deepsea, .board-foundry, .
    column (the pause row, the score, the fuse and the stage strip) by setting --u5-top: it is part of the .vignette, so it sits above the moving scene
    layers and below the HUD, and costs nothing. A board never sets the colour of the fuse readout (the urgency colours always win), so a bright sky or a
    glowing sign is handled here, with a scrim, and not by recolouring the number. */
-.board-carnival { --u4-plate: rgba(26, 18, 78, 0.88); --u4-ink: rgba(26, 18, 78, 0.9); }
-.board-beach { --u4-plate: rgba(4, 38, 78, 0.68); --u4-ink: rgba(4, 38, 78, 0.9); --u5-top: rgba(4, 34, 84, 0.74); }
-.board-volcano { --u4-plate: rgba(28, 8, 6, 0.7); --u4-ink: rgba(28, 8, 6, 0.9); }
-.board-aurora { --u4-plate: rgba(4, 16, 40, 0.66); --u4-ink: rgba(4, 16, 40, 0.9); --u5-top: rgba(3, 14, 36, 0.88); }
-.board-greenhouse { --u5-top: rgba(4, 34, 18, 0.82); }
-.board-deepsea { --u5-top: rgba(2, 28, 52, 0.45); }
+.board-carnival { --u4-plate: rgba(26, 18, 78, 0.93); --u4-ink: rgba(26, 18, 78, 0.9); }
+.board-beach { --u4-plate: rgba(4, 38, 78, 0.88); --u4-ink: rgba(4, 38, 78, 0.9); --u5-top: rgba(4, 34, 84, 0.72); }
+.board-volcano { --u4-plate: rgba(28, 8, 6, 0.7); --u4-ink: rgba(28, 8, 6, 0.9); --u5-top: rgba(26, 7, 5, 0.55); }
+.board-aurora { --u4-plate: rgba(4, 16, 40, 0.66); --u4-ink: rgba(4, 16, 40, 0.9); --u5-top: rgba(3, 14, 36, 0.64); }
+.board-greenhouse { --u5-top: rgba(4, 34, 18, 0.87); }
+.board-deepsea { --u5-top: rgba(2, 28, 52, 0.62); }
 :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board-holo) .run-active .bg .vignette { opacity: 1;
-  background: linear-gradient(180deg, transparent calc(var(--u4-free) - 14px), var(--u5-top, transparent) calc(var(--u4-free) + 14px), var(--u5-top, transparent) calc(var(--u4-free) + 205px), transparent calc(var(--u4-free) + 262px)), radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 3, 12, 0.35) 100%); }
+  background: linear-gradient(180deg, transparent calc(var(--u4-free) - 34px), var(--u5-top, transparent) calc(var(--u4-free) - 4px), var(--u5-top, transparent) calc(var(--u4-free) + 72px), color-mix(in srgb, var(--u5-top, transparent) 82%, transparent) calc(var(--u4-free) + 112px), color-mix(in srgb, var(--u5-top, transparent) 82%, transparent) calc(var(--u4-free) + 205px), transparent calc(var(--u4-free) + 262px)), radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 3, 12, 0.35) 100%); }
 :is(.board-carnival, .board-beach, .board-volcano, .board-aurora) .run-active .bg .vignette {
-  background: linear-gradient(180deg, transparent calc(var(--u4-free) - 14px), var(--u5-top, transparent) calc(var(--u4-free) + 14px), var(--u5-top, transparent) calc(var(--u4-free) + 205px), transparent calc(var(--u4-free) + 262px)), radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 3, 12, 0.7) 100%); }
+  background: linear-gradient(180deg, transparent calc(var(--u4-free) - 34px), var(--u5-top, transparent) calc(var(--u4-free) - 4px), var(--u5-top, transparent) calc(var(--u4-free) + 72px), color-mix(in srgb, var(--u5-top, transparent) 82%, transparent) calc(var(--u4-free) + 112px), color-mix(in srgb, var(--u5-top, transparent) 82%, transparent) calc(var(--u4-free) + 205px), transparent calc(var(--u4-free) + 262px)), radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 3, 12, 0.7) 100%); }
 /* the bottom band: the wheel, the skyline and the volcano used to climb up behind the power-up slots; they now live in the free room under the
    message band, the same height as the older boards' bottom art (--u4-bh) */
 .board-carnival { --sc-c-wh: calc(var(--u4-bh) * 1.1); }
 .board-carnival .run-active .bg::after { height: min(var(--u4-bh), 15%); }
 .board-volcano { --sc-v-h: calc(var(--u4-bh) * 1.3); }
+/* the stage goal text is the muted grey of the HUD: over the northern lights it gets the same pale tint and soft shadow the Beach gives it */
+.board-aurora .run-active .ss-goal { color: #e4eeff; text-shadow: 0 1px 2px rgba(0, 12, 30, 0.8); }

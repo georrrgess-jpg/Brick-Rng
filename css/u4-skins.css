@@ -63,6 +63,7 @@
 .skin-candy .deco::before { left: -22%; clip-path: polygon(0 0, 100% 36%, 100% 64%, 0 100%); }
 .skin-candy .deco::after { right: -22%; clip-path: polygon(100% 0, 0 36%, 0 64%, 100% 100%); }
 .skin-candy .stud { width: 40%; height: 40%; top: 48%; background: repeating-conic-gradient(rgba(255, 255, 255, 0.96) 0 12.5%, color-mix(in srgb, var(--hi) 72%, #fff) 0 25%); box-shadow: 0 0 0 0.02em rgba(255, 255, 255, 0.9), 0 0.03em 0.05em rgba(0, 0, 0, 0.3); transform: translate(-50%, -50%) rotate(18deg); }
+.skin-candy .brick.fusebrick .face { inset: 5.5%; border-radius: 24%; }   /* a Fuse brick keeps the standard tile (and its countdown) whatever the sweet looks like */
 
 /* ---------------------------------------------------------------- Slate
    Update 5: cut stone with depth. The flat grey-lilac tile is now a block of dark slate tinted by the brick's colour: a mitred, chiselled

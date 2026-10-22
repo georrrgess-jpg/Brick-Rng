@@ -190,6 +190,10 @@
    Carnival Night keeps the turning wheel and one string of lights twinkling; Beach keeps both wave rows rolling; Volcano keeps the rising embers and the
    falling ash; Aurora Sky keeps its two ribbons. What stopped holds its pose (the static art already draws it) or, for a streak that only ever existed in
    motion (the shooting star, the volcano's smoke puff), is left out of the run. Nothing here changes a badge, a preview or the low-end scene. */
+/* the bottom layers (Carnival's skyline, Beach's foam, Volcano's lava lake) are meant to sit on the bottom edge, but the generic corner glow in css/base.css gives every
+   .bg::after `inset: 0`, and with a height and a top of 0 the bottom offset was ignored: they were drawn across the TOP of the screen, behind the pause button, the score
+   and the fuse. A top of auto puts them where the art (and the static preview) has them. */
+:is(.board-carnival, .board-beach, .board-volcano) .run-active .bg::after { top: auto; }
 .board-carnival .run-active .bg .scene-fx.b { animation: none; opacity: 0.7; }
 .board-beach .run-active .bg::after { animation: scDriftR 13s linear infinite; }
 .board-beach .run-active .bg .scene-fx { animation: none; opacity: 0.7; }

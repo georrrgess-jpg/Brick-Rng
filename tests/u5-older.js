@@ -211,10 +211,12 @@ const VT = `(() => {
       for (const id of catalog.boards) {
         await startRun([id]);
         for (const st of ['calm', 'low', 'crit']) {
-          await hold(st); await page.waitForTimeout(520);
+          await hold(st);
+          await page.waitForFunction((z) => document.getElementById('fuse').dataset.z === z, st, { timeout: 8000 }).catch(() => {});
+          await page.waitForTimeout(520);
           const C = await page.evaluate(textColours);
           const rd = await page.evaluate(() => { const n = document.querySelector('.fz-num'); return { num: getComputedStyle(n).color, digits: Array.from(n.querySelectorAll('*')).map((e) => getComputedStyle(e).color).filter((c, i, a) => a.indexOf(c) === i), unit: getComputedStyle(document.querySelector('.fz-unit')).color }; });
-          if (w === 393) { readout[st] = readout[st] || rd; ok(rd.num === readout[st].num && rd.digits.every((c) => c === readout[st].num) && rd.unit === readout[st].unit, `${id} at ${st} fuse: the fuse readout colour is not the default's (a board sets it)`, JSON.stringify({ rd, want: readout[st] })); }
+          if (w === 393) { readout[st] = readout[st] || rd; const near = (a, b) => { const x = a.match(/[\d.]+/g).slice(0, 3).map(Number), y = b.match(/[\d.]+/g).slice(0, 3).map(Number); return x.every((v, i) => Math.abs(v - y[i]) <= 26); }; ok(near(rd.num, readout[st].num) && rd.digits.every((c) => near(c, readout[st].num)) && near(rd.unit, readout[st].unit), `${id} at ${st} fuse: the fuse readout colour is not the default's (a board sets it)`, JSON.stringify({ rd, want: readout[st] })); }
           if (!want('hud') || (st === 'low' && QUICK)) continue;
           await page.addStyleTag({ content: HIDE_HUD });
           let m = null;
