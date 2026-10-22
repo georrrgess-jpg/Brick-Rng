@@ -151,7 +151,8 @@
       const extra = lv >= 4 && !o.still ? '<i class="bdg-rays"></i><i class="bdg-twinkle t1"></i><i class="bdg-twinkle t2"></i><i class="bdg-twinkle t3"></i>' : '';
       const gleam = lv >= 3 ? '<i class="bdg-gleam"></i>' : '';
       const shine = !o.locked && inst && inst.shine && inst.shine !== 'plain' ? inst.shine : '';
-      return `<div class="bdg t-${item.type} r${lv} ${o.still ? 'still' : ''} ${o.locked ? 'locked' : ''} ${o.cls || ''}" ${shine ? `data-bshine="${shine}"` : ''} style="--rc:${R.color};--bs:${size}px;--k:${(size / 118 * 0.86).toFixed(3)}">
+      const s4 = item.series === 4 && !o.locked ? (size < 52 ? 's4 s4m' : 's4') : '';   // a Moonwick item: a silver inner rim and a crescent in the corner
+      return `<div class="bdg t-${item.type} r${lv} ${o.still ? 'still' : ''} ${o.locked ? 'locked' : ''} ${s4} ${o.cls || ''}" ${shine ? `data-bshine="${shine}"` : ''} style="--rc:${R.color};--bs:${size}px;--k:${(size / 118 * 0.86).toFixed(3)}">
         <i class="bdg-bg"></i>${extra}<div class="bdg-art">${art}</div>${gleam}${shine ? '<i class="bdg-fin"></i>' : ''}${o.locked ? '<b class="bdg-q">?</b>' : ''}<i class="bdg-edge"></i></div>`;
     },
   };
