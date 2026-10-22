@@ -334,9 +334,9 @@ const ALLOWED = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale',
 
   /* ================================================================== hats: every hat on every body in every state */
   if (part('hats')) {
-    const hatIds = QUICK ? ['h_party', 'h_wizard', 'h_propeller', 'h_halo', 'h_top'] : Object.keys(HATS);
-    const states = QUICK ? STATES.filter((s) => ['calm', 'low', 'crit', 'spark', 'frozen'].includes(s.id)) : STATES;
-    const bodies = QUICK ? ['default', 'u_dragon', 'u_sandglass', 'u_elixir', 'u_moonrise'] : BODIES;
+    const hatIds = flag('hats') ? flag('hats').split(',') : QUICK ? ['h_party', 'h_wizard', 'h_propeller', 'h_halo', 'h_top'] : Object.keys(HATS);   // (--hats=, --bodies= and --states= narrow a run)
+    const states = flag('states') ? STATES.filter((s) => flag('states').split(',').includes(s.id)) : QUICK ? STATES.filter((s) => ['calm', 'low', 'crit', 'spark', 'frozen'].includes(s.id)) : STATES;
+    const bodies = flag('bodies') ? flag('bodies').split(',') : QUICK ? ['default', 'u_dragon', 'u_sandglass', 'u_elixir', 'u_moonrise'] : BODIES;
     const probe = (hatId) => page.evaluate((hatId) => {
       const F = BR.Fuse, hat = document.querySelector('#fuse .fz-hat'), bomb = document.getElementById('bomb').getBoundingClientRect();
       if (!hat) return { missing: true };
@@ -358,6 +358,8 @@ const ALLOWED = new Set(['transform', 'opacity', 'translate', 'rotate', 'scale',
         await page.evaluate((h) => BR.Fuse.setHat(h), hat);
         for (const st of states) {
           await toState(st, st.id === 'spark' ? 500 : 520);
+          // (a loaded machine can be late with the hat's slide into the pose: wait for the transitions and one-shots on the hat to finish, up to 3 s)
+          await page.evaluate(() => { const h = document.querySelector('#fuse .fz-hat'); if (!h) return null; const fin = h.getAnimations().filter((a) => a.effect && isFinite(a.effect.getTiming().iterations)).map((a) => a.finished.catch(() => 0)); return Promise.race([Promise.all(fin), new Promise((r) => setTimeout(r, 3000))]); });
           const p = await probe(hat);
           const tag = `${body}/${hat}/${st.id}`;
           if (!ok(!p.missing && p.hats === 1, tag, 'the hat element', p)) continue;
