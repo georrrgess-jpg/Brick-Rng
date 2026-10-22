@@ -257,6 +257,7 @@
 /* ---------------------------------------------------------------- shape hints (color-blind mode) keep the symbol readable */
 html.shapes :is(.skin-classic, .skin-candy, .skin-slate, .skin-marble, .skin-glass, .skin-neon, .skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) .stud { background: rgba(255, 255, 255, 0.94); border: 0; outline: 0; box-shadow: none; animation: none; }
 html.shapes .skin-heart .stud::after { display: none; }   /* the gem inside the heart would sit inside the shape hint */
+html.shapes .skin-heart :is([data-c="0"], [data-c="3"]) .stud { clip-path: none; }   /* the circle and the rounded square (colors 0 and 3) were drawn as the skin's heart, the same as each other */
 
 /* ---------------------------------------------------------------- low-end phones and reduced motion hold the pose */
 html:is(.low-end, .reduced) :is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) .deco,
