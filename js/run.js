@@ -177,7 +177,7 @@
       this.over = true; this.clock = false; this.token++; this.modal = false;
       this.hideHint(); this.clearHover(); this.view.hideHint();
       BR.Skins.apply();
-      while (BR.Back && BR.Back.depth) BR.Back.closeTop();
+      for (let i = 0; i < 10 && BR.Back && BR.Back.depth; i++) BR.Back.closeTop();
       BR.Router.go('collection');
     },
 

@@ -101,7 +101,7 @@
         if (++n > 2) return;                                   // two recoveries a minute at most, so a repeating error cannot loop
         try {
           BR.Storage.save();
-          while (BR.Back && BR.Back.depth) BR.Back.closeTop();
+          for (let i = 0; i < 10 && BR.Back && BR.Back.depth; i++) BR.Back.closeTop();
           if (BR.Openings && BR.Openings.current && !BR.Openings.current.closed) BR.Openings.current.close(true);
           if (BR.Run && BR.Run.resultsEl) BR.Run.closeResults();
           if (BR.Router.current === 'run' && BR.Run && !BR.Run.over && BR.Run.busy) { BR.Run.busy = false; }
