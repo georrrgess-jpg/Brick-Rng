@@ -38,7 +38,9 @@
       document.documentElement.classList.toggle('low-end', BR.lowEnd);
       this.fx.settings.shake = s.shake;
       this.fx.settings.reduced = s.reduced;
+      const wasLow = this.fx.settings.low;
       this.fx.settings.low = BR.lowEnd;
+      if (wasLow !== BR.lowEnd) this.fx.resize();
       if (BR.Run && BR.Run.view) { BR.Run.view.reduced = s.reduced; }
     },
 
@@ -78,7 +80,6 @@
       document.addEventListener('contextmenu', (e) => e.preventDefault());
       document.addEventListener('gesturestart', (e) => e.preventDefault());
       window.addEventListener('resize', () => { if (BR.Run && BR.Run.view) BR.Run.view.layout(); });
-      setInterval(() => document.querySelectorAll('[data-coins]').forEach((n) => { n.textContent = BR.fmt(BR.Progress.coins); }), 1200);
     },
 
     /* ---------- entry points the screens call ---------- */

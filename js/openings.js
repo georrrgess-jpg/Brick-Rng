@@ -268,7 +268,7 @@
         chestBox: q('.op-chest'), shake: q('.op-shake'), wrap: q('.op-chest-wrap'), svg: q('.chest'), holdEl: q('[data-hold]'),
         label: q('[data-label]'), sub: q('[data-sub]'), reelWrap: q('.op-reel'), reelHost: q('.reel-host'), skipEl: q('[data-skip]'), rv: q('[data-rv]'),
       });
-      document.body.classList.add('in-opening');
+      document.body.classList.add('in-opening'); BR.under(1);
       document.getElementById('layer-opening').appendChild(root);
       document.getElementById('layer-opening').style.pointerEvents = 'auto';
       this.backEntry = BR.Back.push((fromBack) => this.requestClose(true));
@@ -622,7 +622,7 @@
       if (this.demo) this.demo.stop();
       if (!fromBack && this.backEntry) BR.Back.release(this.backEntry);
       this.root.classList.remove('on');
-      document.body.classList.remove('in-opening');
+      document.body.classList.remove('in-opening'); BR.under(-1);
       setTimeout(() => { (BR._heldToasts || []).splice(0).forEach(([m, k]) => BR.toast(m, k)); }, 700);
       setTimeout(() => { this.root.remove(); const l = document.getElementById('layer-opening'); if (!l.children.length) l.style.pointerEvents = 'none'; }, 450);
       if (BR.Music && BR.Music.duck) BR.Music.duck(false);

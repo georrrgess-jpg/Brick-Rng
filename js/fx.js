@@ -21,7 +21,8 @@
     }
 
     resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // particles are small and short-lived: a lower-resolution canvas is hard to tell apart and much cheaper to present every frame
+      const dpr = Math.min(window.devicePixelRatio || 1, this.settings.low ? 1 : 1.5);
       this.scale = dpr;
       this.w = window.innerWidth;
       this.h = window.innerHeight;

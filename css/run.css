@@ -34,15 +34,17 @@
 .shapes [data-c="6"] .stud { clip-path: polygon(34% 0, 66% 0, 66% 34%, 100% 34%, 100% 66%, 66% 66%, 66% 100%, 34% 100%, 34% 66%, 0 66%, 0 34%, 34% 34%); }
 
 /* group highlight */
-.field.has-hl .brick:not(.hl):not(.hlx) .face { filter: brightness(0.7) saturate(0.8); }
-.brick.hl { z-index: 2; }
+/* the rest of the board dims under ONE veil that sits below the highlighted bricks: toggling a class on every brick (and its filter) restyled the whole board on each tap */
+.field::after { content: ''; position: absolute; inset: 0; z-index: 1; background: rgba(8, 10, 28, 0.34); opacity: 0; transition: opacity 0.16s; pointer-events: none; }
+.field.has-hl::after { opacity: 1; }
+.brick.hl { z-index: 3; }
 .brick.hl .face { transform: translateY(-5%) scale(1.045); filter: brightness(1.12) saturate(1.12); box-shadow: inset 0 0.03em 0 rgba(255, 255, 255, 0.7), inset 0 -0.07em 0 rgba(0, 0, 0, 0.2), 0 0.07em 0 color-mix(in srgb, var(--lo) 55%, #000), 0 0.2em 0.3em rgba(0, 0, 0, 0.4), 0 0 0.34em var(--glow); }
 .brick.hl .face::before {
   content: ''; position: absolute; inset: -0.025em; border-radius: inherit; border: 0.035em solid rgba(255, 255, 255, 0.92);
   box-shadow: 0 0 0.2em rgba(255, 255, 255, 0.5); animation: ringPulse 0.9s ease-in-out infinite;
 }
 @keyframes ringPulse { 50% { opacity: 0.45; } }
-.brick.hlx { z-index: 1; }
+.brick.hlx { z-index: 2; }
 .brick.hlx .face { transform: scale(0.94); filter: brightness(1.05); }
 .brick.hlx .face::before { content: ''; position: absolute; inset: -0.02em; border-radius: inherit; border: 0.03em dashed rgba(255, 255, 255, 0.85); animation: ringPulse 0.9s ease-in-out infinite; }
 
@@ -67,7 +69,7 @@
 .chip {
   position: absolute; left: 0; top: 0; z-index: 7; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 99px; white-space: nowrap;
   font-family: var(--f-display); font-weight: 700; font-size: 14px;
-  background: rgba(8, 12, 26, 0.88); border: 1px solid var(--line-strong); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px);
+  background: rgba(8, 12, 26, 0.94); border: 1px solid var(--line-strong); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   opacity: 0; transition: opacity 0.12s, transform 0.09s linear; pointer-events: none;
 }
 .chip.show { opacity: 1; }
@@ -96,7 +98,7 @@
 @keyframes comboPop { 0% { transform: scale(0.5) rotate(-12deg); } 60% { transform: scale(1.22) rotate(5deg); } 100% { transform: scale(1) rotate(0); } }
 .hint {
   position: absolute; left: 50%; bottom: 12px; z-index: 10; transform: translate(-50%, 12px); max-width: 92%; width: max-content; text-align: center; padding: 10px 16px; border-radius: 14px;
-  font-size: 14px; font-weight: 600; background: rgba(10, 16, 34, 0.94); border: 1px solid var(--line-strong); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+  font-size: 14px; font-weight: 600; background: rgba(10, 16, 34, 0.94); border: 1px solid var(--line-strong); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.4s var(--ease-out);
 }
 .hint.show { opacity: 1; transform: translate(-50%, 0); }
@@ -157,8 +159,7 @@
   background: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / var(--cell) var(--cell), linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / var(--cell) var(--cell); }
 .fxlayer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .rush-glow { position: absolute; inset: -6px; border-radius: 30px; pointer-events: none; opacity: 0; transition: opacity 0.4s; box-shadow: 0 0 0 3px rgba(255, 90, 140, 0.9), 0 0 50px 8px rgba(255, 61, 139, 0.7), inset 0 0 50px rgba(255, 61, 139, 0.35); z-index: 4; }
-.run.rushing .rush-glow { opacity: 1; animation: rushPulse 0.5s ease-in-out infinite alternate; } @keyframes rushPulse { to { box-shadow: 0 0 0 4px rgba(255, 180, 90, 1), 0 0 70px 14px rgba(255, 100, 60, 0.85), inset 0 0 70px rgba(255, 90, 60, 0.4); } }
-.run.rushing .field { filter: saturate(1.25) brightness(1.08); }
+.run.rushing .rush-glow { opacity: 1; animation: rushPulse 0.5s ease-in-out infinite alternate; } @keyframes rushPulse { from { opacity: 0.72; } to { opacity: 1; } }   /* the glow is painted once; only its opacity breathes */
 
 /* ---------- Rush meter + power-ups ---------- */
 .rushbar { position: relative; height: 30px; border-radius: 99px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--line-2); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); }
@@ -204,7 +205,7 @@
 .fuse-float { position: absolute; z-index: 6; font: 700 18px var(--f-display); pointer-events: none; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); }
 
 /* ---------- pause + results overlays ---------- */
-.dim { position: absolute; inset: 0; background: rgba(5, 3, 12, 0.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s; } .dim.on { opacity: 1; }
+.dim { position: absolute; inset: 0; background: rgba(5, 3, 12, 0.84); opacity: 0; transition: opacity 0.3s; } .dim.on { opacity: 1; }
 .panel { position: absolute; left: 50%; top: 50%; width: min(90vw, 360px); transform: translate(-50%, -46%) scale(0.92); opacity: 0; padding: 22px 20px 20px; border-radius: var(--r-xl); text-align: center; background: linear-gradient(180deg, var(--ink-3), var(--ink-1)); border: 1px solid var(--line-2); box-shadow: var(--sh-3); transition: transform 0.5s var(--ease-spring), opacity 0.25s; }
 .panel.on { transform: translate(-50%, -50%); opacity: 1; }
 .panel h2 { font: 700 30px var(--f-display); margin-bottom: 14px; }

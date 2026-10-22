@@ -50,10 +50,10 @@ h1, h2, h3, h4, p { margin: 0; }
 
 /* ---------- living background ---------- */
 .bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: var(--bg-base, linear-gradient(180deg, #120b24, var(--ink-0) 70%)); }
-.blob { position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; filter: blur(60px); opacity: 0.55; will-change: transform; }
-.blob.b1 { left: -45vmax; top: -50vmax; background: radial-gradient(circle, #ff3d8b 0%, transparent 60%); animation: drift1 26s ease-in-out infinite alternate; }
-.blob.b2 { right: -55vmax; top: 5vmax; background: radial-gradient(circle, #6a3dff 0%, transparent 60%); animation: drift2 32s ease-in-out infinite alternate; }
-.blob.b3 { left: -20vmax; bottom: -60vmax; background: radial-gradient(circle, #ff7a4d 0%, transparent 60%); opacity: 0.35; animation: drift3 38s ease-in-out infinite alternate; }
+.blob { position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; opacity: 0.55; will-change: transform; }   /* soft by gradient, not by filter: a 60px blur on three full-screen layers cost two thirds of every menu frame */
+.blob.b1 { left: -45vmax; top: -50vmax; background: radial-gradient(circle, #ff3d8b 0%, rgba(255, 61, 139, 0.55) 22%, rgba(255, 61, 139, 0.2) 42%, transparent 66%); animation: drift1 26s ease-in-out infinite alternate; }
+.blob.b2 { right: -55vmax; top: 5vmax; background: radial-gradient(circle, #6a3dff 0%, rgba(106, 61, 255, 0.55) 22%, rgba(106, 61, 255, 0.2) 42%, transparent 66%); animation: drift2 32s ease-in-out infinite alternate; }
+.blob.b3 { left: -20vmax; bottom: -60vmax; background: radial-gradient(circle, #ff7a4d 0%, rgba(255, 122, 77, 0.55) 22%, rgba(255, 122, 77, 0.2) 42%, transparent 66%); opacity: 0.35; animation: drift3 38s ease-in-out infinite alternate; }
 @keyframes drift1 { to { transform: translate3d(14vmax, 10vmax, 0) scale(1.1); } }
 @keyframes drift2 { to { transform: translate3d(-12vmax, 14vmax, 0) scale(0.92); } }
 @keyframes drift3 { to { transform: translate3d(16vmax, -8vmax, 0) scale(1.15); } }
@@ -74,13 +74,12 @@ h1, h2, h3, h4, p { margin: 0; }
 
 /* ---------- screens ---------- */
 #screens { position: absolute; inset: 0; z-index: 1; }
-.screen {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  opacity: 0; visibility: hidden; pointer-events: none; transform: translate3d(0, 14px, 0) scale(0.985);
-  transition: opacity 0.28s ease, transform 0.42s var(--ease-out), visibility 0s linear 0.42s;
-}
-.screen.on { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
-.screen.from-left { transform: translate3d(-5%, 0, 0); } .screen.from-right { transform: translate3d(5%, 0, 0); }
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+/* only the visible screen exists for the renderer: a hidden screen costs nothing, and its animations stop with it */
+.screen.on { display: flex; pointer-events: auto; animation: scrIn 0.42s var(--ease-out) backwards; }
+.screen.on.instant { animation: none; }
+.screen.from-left { --dx: -5%; } .screen.from-right { --dx: 5%; }
+@keyframes scrIn { from { opacity: 0; transform: translate3d(var(--dx, 0%), 14px, 0) scale(0.985); } }
 .topbar { flex: none; display: flex; align-items: center; gap: var(--s3); padding: calc(var(--sat) + 12px) calc(var(--sar) + 16px) 8px calc(var(--sal) + 16px); }
 .topbar h1 { font: 700 28px/1 var(--f-display); letter-spacing: 0.01em; flex: 1; }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 8px calc(var(--sar) + 16px) calc(var(--tabbar-h) + var(--sab) + 28px) calc(var(--sal) + 16px); display: flex; flex-direction: column; gap: var(--s4); scrollbar-width: none; }
@@ -139,19 +138,19 @@ h1, h2, h3, h4, p { margin: 0; }
 .bar > i::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 60%); }
 .bar.gold > i { background: var(--grad-gold); } .bar.green > i { background: linear-gradient(90deg, #1fbf7a, #5df0b0); } .bar.cyan > i { background: linear-gradient(90deg, #4a86ff, #3de1ff); }
 .bar.tall { height: 18px; }
-.seg { position: relative; display: flex; padding: 4px; gap: 2px; border-radius: 18px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--line); }
-.seg button { position: relative; z-index: 1; flex: 1; min-height: 40px; border-radius: 14px; font: 700 15px var(--f-display); color: var(--muted); transition: color 0.2s; white-space: nowrap; }
+.seg { --n: 3; --i: 0; position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); padding: 4px; gap: 2px; border-radius: 18px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--line); }
+.seg button { position: relative; z-index: 1; min-width: 0; min-height: 44px; border-radius: 14px; font: 700 15px var(--f-display); color: var(--muted); transition: color 0.2s; white-space: nowrap; }
 .seg button.on { color: #fff; }
-.seg .thumb { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; border-radius: 14px; background: var(--grad-hot); box-shadow: 0 4px 14px rgba(255, 61, 139, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform 0.4s var(--ease-spring), width 0.4s var(--ease-spring); }
+.seg .thumb { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px - (var(--n) - 1) * 2px) / var(--n)); transform: translateX(calc(var(--i) * (100% + 2px))); border-radius: 14px; background: var(--grad-hot); box-shadow: 0 4px 14px rgba(255, 61, 139, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform 0.4s var(--ease-spring); }
 .seg button small { font: 700 12px var(--f-ui); opacity: 0.75; margin-left: 4px; }
 .empty-state { text-align: center; color: var(--muted); padding: var(--s6) var(--s4); font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
 /* ---------- tab bar ---------- */
 .tabbar {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: calc(var(--tabbar-h) + var(--sab)); padding: 0 var(--sar) var(--sab) var(--sal);
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; --tb-l: var(--sal); --tb-r: var(--sar);
+  height: calc(var(--tabbar-h) + var(--sab)); padding: 0 var(--tb-r) var(--sab) var(--tb-l);
   display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
   background: linear-gradient(180deg, rgba(20, 14, 38, 0.95), rgba(10, 7, 20, 0.99)); border-top: 1px solid var(--line-2);   /* near-opaque: scrolling cards must not read through the bar */
-  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   transition: transform 0.5s var(--ease-out), opacity 0.3s;
 }
 .tabbar.hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
@@ -167,7 +166,8 @@ h1, h2, h3, h4, p { margin: 0; }
 .play-disc svg { width: 30px; height: 30px; fill: #fff; stroke: #fff; stroke-width: 1.6; transform: translateX(2px); }
 .tab-play.on .play-disc, .tab-play:active .play-disc { transform: scale(1.06); }
 .tab-play span { margin-top: 2px; }
-.tab-ind { position: absolute; z-index: 1; top: -1px; left: 0; width: 44px; height: 4px; border-radius: 0 0 6px 6px; background: var(--grad-hot); box-shadow: 0 4px 16px rgba(255, 61, 139, 0.9); transition: transform 0.45s var(--ease-spring), opacity 0.2s; }
+.tab-ind { --i: 2; position: absolute; z-index: 1; top: -1px; left: var(--tb-l); width: calc((100% - var(--tb-l) - var(--tb-r)) / 5); height: 4px; transform: translateX(calc(var(--i) * 100%)); transition: transform 0.45s var(--ease-spring), opacity 0.2s; pointer-events: none; }
+.tab-ind::after { content: ''; position: absolute; left: 50%; top: 0; width: 44px; height: 4px; margin-left: -22px; border-radius: 0 0 6px 6px; background: var(--grad-hot); box-shadow: 0 4px 16px rgba(255, 61, 139, 0.9); }
 .dot { position: absolute; top: 10px; left: calc(50% + 8px); width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink-1); display: none; animation: dotPop 1.6s ease-in-out infinite; font-style: normal; }
 .dot.show { display: block; }
 @keyframes dotPop { 50% { transform: scale(1.25); } }
@@ -176,7 +176,7 @@ h1, h2, h3, h4, p { margin: 0; }
 #layer-sheets, #layer-overlays, #layer-opening { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
 #layer-opening { z-index: 38; }
 #layer-overlays { z-index: 60; }
-.sheet-back { position: absolute; inset: 0; background: rgba(5, 3, 12, 0.66); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.3s; pointer-events: auto; }
+.sheet-back { position: absolute; inset: 0; background: rgba(5, 3, 12, 0.78); opacity: 0; transition: opacity 0.3s; pointer-events: auto; }
 .sheet-back.on { opacity: 1; }
 .sheet {
   position: absolute; left: 0; right: 0; bottom: 0; max-height: 90dvh; display: flex; flex-direction: column; pointer-events: auto;
@@ -216,7 +216,7 @@ h1, h2, h3, h4, p { margin: 0; }
 html.reduced *, html.reduced *::before, html.reduced *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 html.reduced .blob, html.reduced .bg-bricks { display: none; }
 @media (prefers-reduced-motion: reduce) { .blob, .bg-bricks { display: none; } }
-@media (min-width: 700px) { #screens .scroll, .topbar { width: min(100%, 560px); margin-inline: auto; } .tabbar { grid-template-columns: repeat(5, 1fr); padding-inline: max(var(--sal), calc((100vw - 560px) / 2)); } }
+@media (min-width: 700px) { #screens .scroll, .topbar { width: min(100%, 560px); margin-inline: auto; } .tabbar { --tb-l: max(var(--sal), calc((100vw - 560px) / 2)); --tb-r: max(var(--sal), calc((100vw - 560px) / 2)); grid-template-columns: repeat(5, 1fr); } }
 
 /* centered sheets: title in the middle, close button tucked in the corner */
 .sheet.center .sheet-head { justify-content: center; padding-top: 18px; }
@@ -227,3 +227,8 @@ html.reduced .blob, html.reduced .bg-bricks { display: none; }
 /* full-screen effect layers */
 #fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 70; pointer-events: none; }
 #flash { position: fixed; inset: 0; z-index: 80; pointer-events: none; opacity: 0; background: #fff; }
+
+/* ---------- under an overlay ---------- */
+/* A sheet, a chest opening or the results screen covers the app: everything underneath holds still (paused animations cost nothing). */
+html.under-overlay #screens *, html.under-overlay #screens *::before, html.under-overlay #screens *::after,
+html.under-overlay .bg, html.under-overlay .bg *, html.under-overlay .bg *::before, html.under-overlay .bg *::after { animation-play-state: paused !important; }

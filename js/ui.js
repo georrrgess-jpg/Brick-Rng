@@ -3,7 +3,8 @@
   const BR = (window.BR = window.BR || {});
   const $ = (id) => document.getElementById(id);
   BR.$ = $;
-  BR.fmt = (n) => Math.round(n).toLocaleString('en-US');
+  const NF = typeof Intl !== 'undefined' ? new Intl.NumberFormat('en-US') : null;   // built once: the first toLocaleString call alone cost 75 ms on a slowed phone
+  BR.fmt = (n) => (NF ? NF.format(Math.round(n)) : String(Math.round(n)));
   BR.el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
   BR.esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -52,6 +53,12 @@
     document.body.appendChild(s);
   };
   BR.coin = (cls) => `<svg viewBox="0 0 24 24" class="coin ${cls || ''}" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="url(#gCoin)" stroke="#a8620a" stroke-width="1.2"/><circle cx="12" cy="12" r="7.4" fill="url(#gCoinIn)" stroke="#c97a10" stroke-width="1"/><path d="M12 7.2l1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z" fill="#fff4c4" stroke="#b86d0c" stroke-width=".6" stroke-linejoin="round"/></svg>`;
+  /** Coin counters follow the balance when it changes (once per frame), instead of being rewritten on a timer. */
+  let coinRaf = 0;
+  BR.refreshCoins = () => {
+    if (coinRaf) return;
+    coinRaf = requestAnimationFrame(() => { coinRaf = 0; const t = BR.fmt(BR.Progress.coins); document.querySelectorAll('[data-coins]').forEach((n) => { if (n.textContent !== t) n.textContent = t; }); });
+  };
   BR.coinPill = (n) => `<span class="pill gold">${BR.coin()}<b class="num" data-coins>${BR.fmt(n)}</b></span>`;
 
   /* ---------- haptics ---------- */
@@ -65,6 +72,7 @@
   /* ---------- number count-up ---------- */
   const anims = new WeakMap();
   BR.countTo = function (el, to, dur = 700, from = null, fmt = BR.fmt) {
+    if (!el) return;   // the element can be gone when a screen closes mid-count
     const prev = anims.get(el);
     if (prev && prev.raf) cancelAnimationFrame(prev.raf);
     const start = from != null ? from : prev ? prev.value : parseInt(String(el.textContent).replace(/\D/g, ''), 10) || 0;
@@ -79,7 +87,18 @@
     st.raf = requestAnimationFrame(tick);
     anims.set(el, st);
   };
-  BR.bump = (el) => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
+  /**
+   * Play a CSS animation class again from the start without reading layout: add the class the first time, and after that
+   * restart the running animation object. (`classList.remove; void el.offsetWidth; classList.add` forces a layout every time.)
+   */
+  BR.replay = (el, cls) => {
+    if (!el) return;
+    if (!el.classList.contains(cls)) { el.classList.add(cls); return; }
+    const list = el.getAnimations ? el.getAnimations().filter((a) => a.animationName) : [];
+    if (!list.length) { el.classList.remove(cls); requestAnimationFrame(() => el.classList.add(cls)); return; }
+    list.forEach((a) => { a.cancel(); a.play(); });
+  };
+  BR.bump = (el) => BR.replay(el, 'bump');
 
   /** Give every .stg child inside root a stagger index (document order). */
   BR.stagger = function (root) { root.querySelectorAll('.stg').forEach((n, i) => n.style.setProperty('--i', i)); };
@@ -111,6 +130,10 @@
   });
   window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && BR.Back.depth) { ev.preventDefault(); BR.Back.closeTop(); } });
 
+  /** Something opaque or modal sits over the app (a sheet, a chest opening): everything under it holds its animations still. */
+  let underN = 0;
+  BR.under = (d) => { underN = Math.max(0, underN + d); document.documentElement.classList.toggle('under-overlay', underN > 0); };
+
   /* ---------- bottom sheets ---------- */
   BR.Sheet = {
     /**
@@ -130,13 +153,14 @@
       if (typeof o.body === 'string') bodyEl.innerHTML = o.body; else if (o.body) bodyEl.appendChild(o.body);
       layer.style.pointerEvents = 'auto';
       layer.append(back_, sheet);
+      BR.under(1);
       let closed = false;
       const api = { el: sheet, body: bodyEl };
       let entry;
       const close = (fromBack) => {
         if (closed) return; closed = true;
         if (!fromBack && entry) BR.Back.release(entry);
-        back_.classList.remove('on'); sheet.classList.remove('on');
+        back_.classList.remove('on'); sheet.classList.remove('on'); BR.under(-1);
         setTimeout(() => { back_.remove(); sheet.remove(); if (!layer.children.length) layer.style.pointerEvents = 'none'; }, 480);
         if (o.onClose) o.onClose();
       };
@@ -188,8 +212,7 @@
       document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b === tab));
       if (!tab) { ind.style.opacity = 0; return; }
       ind.style.opacity = id === 'home' ? 0 : 1;   // the Play disc is its own "you are here"; the line would cut across it
-      const bar = $('tabbar').getBoundingClientRect(), r = tab.getBoundingClientRect();
-      ind.style.transform = `translateX(${r.left - bar.left + r.width / 2 - 22}px)`;
+      ind.style.setProperty('--i', TAB_ORDER.indexOf(id));   // placed by CSS from the index: nothing is measured
     },
     go(id, opts = {}) {
       const next = this.screens[id];
@@ -197,30 +220,29 @@
       const prev = this.current ? this.screens[this.current] : null;
       if (prev === next) { if (next.onRetap) next.onRetap(); return; }
       const dir = prev && TAB_ORDER.includes(this.current) && TAB_ORDER.includes(id) ? (TAB_ORDER.indexOf(id) > TAB_ORDER.indexOf(this.current) ? 'fwd' : 'back') : 'none';
-      if (next.render) next.render();
-      BR.stagger(next.el);
       if (prev) {
         const el = prev.el;
-        el.classList.remove('on');
-        if (dir !== 'none') el.classList.add(dir === 'fwd' ? 'from-left' : 'from-right');
-        setTimeout(() => el.classList.remove('from-left', 'from-right'), 480);
+        const psc = el.querySelector('.scroll'); el._scrolled = !!(psc && psc.scrollTop > 0);   // (layout is clean here, so this read is free)
+        el.classList.remove('on', 'from-left', 'from-right');   // the screen being left just goes: animating it out would repaint all of it
         if (prev.onHide) prev.onHide();
       }
-      next.el.classList.remove('from-left', 'from-right');
-      if (dir !== 'none' && !opts.instant) next.el.classList.add(dir === 'fwd' ? 'from-right' : 'from-left');
-      void next.el.offsetWidth;
-      next.el.classList.add('on');
-      next.el.classList.remove('from-left', 'from-right');
+      // show first (a screen that is not displayed has no layout), then fill it
+      const nel = next.el;
+      nel.classList.remove('from-left', 'from-right');
+      nel.classList.toggle('instant', !!opts.instant);
+      if (dir !== 'none' && !opts.instant) nel.classList.add(dir === 'fwd' ? 'from-right' : 'from-left');
+      nel.classList.add('on');
+      if (next.render) next.render();
+      BR.stagger(nel);
       this.current = id;
       this.placeIndicator(TAB_ORDER.includes(id) ? id : null);
       this.setTabs(TAB_ORDER.includes(id));
       document.getElementById('app').classList.toggle('run-active', id === 'run');
       if (next.onShow) next.onShow();
-      const sc = next.el.querySelector('.scroll'); if (sc && !opts.keepScroll) sc.scrollTop = 0;
+      if (nel._scrolled && !opts.keepScroll) { const sc = nel.querySelector('.scroll'); if (sc) sc.scrollTop = 0; nel._scrolled = false; }   // writing scrollTop forces a layout, so only when it matters
       if (BR.Coach) BR.Coach.onScreen(id);
       if (id !== 'run' && BR.audioUnlocked && BR.Music && BR.Music.start) BR.Music.start('menu');   // (the browser creates the audio context only after the first tap)
     },
     rerender() { const s = this.screens[this.current]; if (s && s.render) { const sc = s.el.querySelector('.scroll'); const top = sc ? sc.scrollTop : 0; s.render(); const sc2 = s.el.querySelector('.scroll'); if (sc2) sc2.scrollTop = top; s.el.querySelectorAll('.stg').forEach((n) => { n.style.animation = 'none'; n.style.opacity = 1; n.style.transform = 'none'; }); } },
   };
-  window.addEventListener('resize', () => BR.Router.placeIndicator(BR.Router.current));
 })();

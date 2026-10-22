@@ -32,7 +32,12 @@
     },
     get active() { return BR.Router.current === 'run'; },
     get canAct() { return this.active && !this.over && !this.paused && !this.modal && this.clock; },
-    measure() { const t = $('fuseTrack'); if (t && t.clientWidth) this.trackW = t.clientWidth; },
+    measure() { const t = $('fuseTrack'); if (t && t.clientWidth) this.trackW = t.clientWidth; this._sp = null; },
+    /** Where the fuse's burning tip is on the page, worked out from where it was last measured at rest: reading it every frame would force a restyle of the board. */
+    sparkPoint() {
+      if (!this._sp) { const r = $('spark').getBoundingClientRect(), run = this.el.getBoundingClientRect(); this._sp = { x: r.left + r.width / 2 - (this._sparkX || 0), y: r.top + r.height / 2, top: r.top, rl: run.left, rt: run.top }; }
+      return { x: this._sp.x + (this._sparkX || 0), y: this._sp.y };
+    },
 
     buildSlots() {
       $('slots').innerHTML = BR.BOOSTER_ORDER.map((id) => `<button class="bslot empty" data-b="${id}" aria-label="${BR.BOOSTERS[id].name}: ${BR.BOOSTERS[id].desc}">${BR.powerIcon(id)}<span class="bname">${BR.BOOSTERS[id].name}</span><em class="bcount">0</em></button>`).join('');
@@ -172,7 +177,7 @@
       if (saved) {
         BR.audio.lastSparkSave && BR.audio.lastSparkSave(); BR.haptic('win');
         this.callout('RELIT!', '#ffd66b'); this.fx.flash('#ffd66b', 0.3, 400);
-        const r = $('spark').getBoundingClientRect(); this.fx.explosion(r.left + r.width / 2, r.top + r.height / 2, '#ffb02e', 1.2);
+        const r = this.sparkPoint(); this.fx.explosion(r.x, r.y, '#ffb02e', 1.2);
         this.fuseFloat(`+${BR.CFG.fuse.sparkFuse}s`, '#ffe58a');
       }
     },
@@ -182,6 +187,7 @@
       const f = Math.max(0, Math.min(1, e.fuse / e.fuseMax));
       $('fuseFill').style.transform = `scaleX(${f.toFixed(4)})`;
       const x = -6 + (this.trackW + 6) * f;
+      this._sparkX = x;
       $('spark').style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
       const txt = e.fuse.toFixed(1);
       if (txt !== this.shownFuse) { this.shownFuse = txt; $('fuseTime').textContent = txt; }
@@ -211,7 +217,7 @@
       // spark particles
       if (this.clock && !this.paused && !BR.lowEnd && !frozen) {
         this.sparkT -= dt;
-        if (this.sparkT <= 0) { this.sparkT = 0.05; const r = $('spark').getBoundingClientRect(); this.fx.emit({ kind: 'spark', x: r.left + r.width / 2, y: r.top + r.height / 2, vx: (Math.random() - 0.5) * 80, vy: -30 - Math.random() * 90, g: 160, drag: 1.5, size: 1.2 + Math.random() * 2, max: 0.35 + Math.random() * 0.3, color: Math.random() < 0.5 ? '#ffd24a' : '#ff8a3d' }); }
+        if (this.sparkT <= 0) { this.sparkT = 0.05; const r = this.sparkPoint(); this.fx.emit({ kind: 'spark', x: r.x, y: r.y, vx: (Math.random() - 0.5) * 80, vy: -30 - Math.random() * 90, g: 160, drag: 1.5, size: 1.2 + Math.random() * 2, max: 0.35 + Math.random() * 0.3, color: Math.random() < 0.5 ? '#ffd24a' : '#ff8a3d' }); }
       }
     },
 
@@ -253,13 +259,13 @@
     setMult(slam) {
       const e = this.engine, m = e.chill ? 1 : BR.stageMult(e.stage);
       const t = $('multTag'); t.textContent = 'x' + m.toFixed(1);
-      if (slam) { t.classList.remove('slam'); void t.offsetWidth; t.classList.add('slam'); }
+      if (slam) BR.replay(t, 'slam');
     },
     hudStageBar(animate = true) {
       const e = this.engine, f = $('stageFill');
       if (!animate) f.style.transition = 'none';
       f.style.width = Math.max(0, Math.min(100, (e.stageScore / e.goal) * 100)).toFixed(1) + '%';
-      if (!animate) { void f.offsetWidth; f.style.transition = ''; }
+      if (!animate) requestAnimationFrame(() => { f.style.transition = ''; });
     },
     hudChill(animate = true) {
       const e = this.engine;
@@ -267,7 +273,7 @@
       const f = $('chillFill');
       if (!animate) f.style.transition = 'none';
       f.style.width = Math.min(100, (e.stageScore / e.goal) * 100) + '%';
-      if (!animate) { void f.offsetWidth; f.style.transition = ''; }
+      if (!animate) requestAnimationFrame(() => { f.style.transition = ''; });
       $('chillText').textContent = e.stageScore >= e.goal ? 'Goal reached!' : `${fmt(e.stageScore)} / ${fmt(e.goal)}`;
       $('stageNum').textContent = e.stage;
     },
@@ -278,7 +284,7 @@
         el.querySelector('.bcount').textContent = e.inv[id];
         el.classList.toggle('empty', e.inv[id] <= 0);
         el.classList.toggle('armed', this.armed === id);
-        if (gained && gained.includes(id)) { el.classList.remove('gain'); void el.offsetWidth; el.classList.add('gain'); }
+        if (gained && gained.includes(id)) BR.replay(el, 'gain');
       }
     },
     callout(text, color) {
@@ -309,13 +315,13 @@
     },
     /** A floating "+1.8s" that rises from the fuse's burning tip. */
     fuseFloat(text, color) {
-      const run = this.el.getBoundingClientRect(), sp = $('spark').getBoundingClientRect();
+      const sp = this.sparkPoint(), top = this._sp.top;
       const el = BR.el(`<div class="fuse-float" style="color:${color}">${text}</div>`);
-      el.style.left = (sp.left - run.left + sp.width / 2) + 'px'; el.style.top = (sp.top - run.top) + 'px';
+      el.style.left = (sp.x - this._sp.rl) + 'px'; el.style.top = (top - this._sp.rt) + 'px';
       this.el.appendChild(el);
       const a = el.animate([{ transform: 'translate(-50%,0) scale(0.6)', opacity: 0 }, { transform: 'translate(-50%,-14px) scale(1.15)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%,-38px) scale(1)', opacity: 0 }], { duration: 900, easing: 'ease-out', fill: 'forwards' });
       a.onfinish = () => el.remove();
-      const f = $('fuse'); f.classList.remove('gain'); void f.offsetWidth; f.classList.add('gain');
+      BR.replay($('fuse'), 'gain');
     },
     hint(html, ms = 4200) {
       const h = $('hint'); clearTimeout(this.hintT);
@@ -328,7 +334,7 @@
       if (streak >= 2) {
         $('comboX').textContent = 'x' + (Number.isInteger(mult) ? mult : mult.toFixed(1));
         c.classList.add('show'); c.classList.toggle('hot', mult >= 2.5); c.classList.toggle('max', mult >= 4);
-        if (popped) { c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+        if (popped) BR.replay(c, 'pop');
         this.comboOn = true;
       } else if (this.comboOn) { c.classList.remove('show', 'hot', 'max', 'pop'); this.comboOn = false; }
     },
@@ -528,10 +534,9 @@
     rushStart() {
       this.el.classList.add('rushing');
       BR.audio.rushStart(); BR.haptic('rush');
-      const b = $('rushBanner'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+      BR.replay($('rushBanner'), 'go');
       this.fx.flash('#ff3d8b', 0.4, 600); this.fx.shake($('app'), 14, 600);
-      const run = this.el.getBoundingClientRect();
-      this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, run.top);
+      this.fx.confetti(['#ff3d8b', '#ffb23d', '#fff6c8', '#8a4dff'], 36, 0);
       if (BR.Music) BR.Music.setRush(true);
       if (BR.Skins.onEvent) BR.Skins.onEvent('rushStart', { run: this, view: this.view });
       this.hideHint();
@@ -547,10 +552,10 @@
       const e = this.engine;
       BR.audio.stageUp(); BR.haptic('stage');
       $('swNum').textContent = info.to; $('swMult').textContent = 'x' + info.mult.toFixed(1);
-      const w = $('stageWipe'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go');
+      const w = $('stageWipe'); BR.replay(w, 'go');
       setTimeout(() => w.classList.remove('go'), 1300);
       $('stageNum').textContent = info.to;
-      const t = $('stageTag'); t.classList.remove('slam'); void t.offsetWidth; t.classList.add('slam');
+      BR.replay($('stageTag'), 'slam');
       this.setMult(true);
       setTimeout(() => this.hudStageBar(), 60);
       this.fx.flash('#ffffff', 0.35, 500); this.fx.shake($('app'), 10, 420);
@@ -740,7 +745,7 @@
       const node = BR.el(html);
       host.appendChild(node);
       host.style.pointerEvents = 'auto';
-      this.resultsEl = node;
+      this.resultsEl = node; BR.under(1);
       if (BR.Music && BR.Music.resultsSting) BR.Music.resultsSting();
       requestAnimationFrame(() => node.classList.add('on'));
       BR.Router.setTabs(false);
@@ -788,6 +793,7 @@
     },
     closeResults() {
       const n = this.resultsEl; if (!n) return;
+      BR.under(-1);
       n.classList.remove('on');
       setTimeout(() => { n.remove(); $('layer-overlays').style.pointerEvents = 'none'; }, 400);
       this.resultsEl = null; this.modal = false; this.ending = false;

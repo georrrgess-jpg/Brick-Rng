@@ -25,9 +25,10 @@
 .logo-rush span { display: inline-block; font: 700 clamp(52px, 17vw, 74px)/0.95 var(--f-display); letter-spacing: 0.07em; padding-left: 0.07em; transform: skewX(-9deg); background: linear-gradient(180deg, #fff6c8 0%, #ffb23d 38%, #ff3d8b 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #4a0f3a) drop-shadow(0 0 22px rgba(255, 61, 139, 0.55)); }
 .fuse-line { position: relative; width: min(64vw, 280px); height: 8px; margin-top: 2px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); overflow: visible; }
 .fuse-line i { position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #6b4a1e, #b88a4a); transform-origin: left; animation: fuseBurn 4.6s linear infinite; }
-.fuse-line b { position: absolute; top: 50%; left: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: radial-gradient(circle, #fff 0 28%, #ffd24a 29% 55%, rgba(255, 140, 40, 0.6) 56%, transparent 72%); animation: fuseSpark 4.6s linear infinite; box-shadow: 0 0 18px 6px rgba(255, 170, 60, 0.7); }
+.fuse-line b { position: absolute; top: 50%; left: 0; width: 100%; height: 18px; margin-top: -9px; animation: fuseSpark 4.6s linear infinite; }
+.fuse-line b::before { content: ''; position: absolute; right: -9px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, #fff 0 28%, #ffd24a 29% 55%, rgba(255, 140, 40, 0.6) 56%, transparent 72%); box-shadow: 0 0 18px 6px rgba(255, 170, 60, 0.7); }
 @keyframes fuseBurn { 0% { transform: scaleX(1); } 88%, 100% { transform: scaleX(0); } }
-@keyframes fuseSpark { 0% { left: 100%; } 88% { left: 0; opacity: 1; } 92%, 100% { left: 0; opacity: 0; } }
+@keyframes fuseSpark { 0% { transform: translateX(0); opacity: 1; } 88% { transform: translateX(-100%); opacity: 1; } 92%, 100% { transform: translateX(-100%); opacity: 0; } }
 
 .hero { position: relative; display: grid; grid-template-columns: 1fr 112px; align-items: center; gap: 4px 6px; padding: 18px 16px 16px; border-radius: 30px; text-align: left; overflow: hidden; color: #fff;
   background: linear-gradient(135deg, #3f1470 0%, #6a1b78 48%, #b3245f 100%); border: 1px solid rgba(255, 255, 255, 0.22); box-shadow: 0 18px 44px rgba(138, 77, 255, 0.38), 0 6px 0 rgba(10, 4, 24, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3); transition: transform 0.15s var(--ease-out); }
@@ -190,7 +191,7 @@
 .badges { display: flex; gap: 8px; margin-top: 10px; min-height: 44px; align-items: center; } .badge-ico { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: var(--grad-gold); } .badge-ico svg { width: 24px; height: 24px; fill: none; stroke: #4a2a00; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .sec-title.in { padding: 0; } .card-pad > .sec-title { margin-bottom: 4px; }
 .perf { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); } .perf b { display: block; font: 700 17px var(--f-display); } .perf small { color: var(--muted); font: 600 13px var(--f-ui); } .perf > div:first-child { flex: 1; }
-.seg.mini { flex: none; } .seg.mini button { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.seg.mini { --n: 3; flex: none; width: 216px; } .seg.mini button { min-height: 44px; padding: 0 6px; font-size: 14px; }
 .install { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: linear-gradient(135deg, rgba(61, 225, 255, 0.18), var(--ink-2)); border-color: rgba(61, 225, 255, 0.4); } .install b { display: block; font-size: 18px; } .install small { color: var(--muted); font: 600 13px var(--f-ui); }
 .danger { color: #ff8b99; margin-top: 8px; } .version { padding: 4px 0 8px; }
 
@@ -297,3 +298,11 @@
 .vol b { width: 30px; text-align: right; font: 700 15px var(--f-display); }
 .vol.off { opacity: 0.4; }
 .help-card .btn { margin-top: 10px; }
+
+/* Collection: a still badge per card, and cards that are off screen are not laid out or painted until they scroll near */
+.icard { content-visibility: auto; contain-intrinsic-size: auto 160px; }
+
+/* placeholders while a long list fills in after the first frames */
+.icard.ph { min-height: 168px; background: var(--ink-2); border: 1px solid var(--line-2); animation: none; }
+.icard.late { animation: none; }
+.pt-card.ph { opacity: 0.5; }

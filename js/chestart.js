@@ -189,7 +189,22 @@
   }
 
   BR.ChestArt = { brick, pop, board, fuse, golden };
-  /** The chest as markup. Callers size a wrapper; the chest fills it (200 x 180 aspect). */
-  BR.chestSVG = (id) => { ensureDefs(); return BR.ChestArt[id](); };
+  /** A chest drawn as one flat SVG, in its resting pose: no per-part layers, so a screen full of them stays cheap. */
+  const liteCache = {};
+  const lite = (id) => {
+    if (liteCache[id]) return liteCache[id];
+    const html = BR.ChestArt[id]();
+    const hidden = { glow: 1, leak: 1, frost: 1, cracks: 1 };
+    let body = '';
+    html.replace(/<div class="cp [^"]*" data-p="([\w-]+)"[^>]*><svg[^>]*>([\s\S]*?)<\/svg><\/div>/g, (m, name, inner) => {
+      if (hidden[name]) return m;
+      inner = inner.replace(/<g class="tw[^"]*">[\s\S]*?<\/g>/g, '');
+      body += name === 'needle' ? `<g transform="rotate(-120 100 120)">${inner}</g>` : inner;
+      return m;
+    });
+    return (liteCache[id] = `<div class="chest chest-${id} lite">${shadow}<svg viewBox="0 0 200 180" aria-hidden="true">${body}</svg></div>`);
+  };
+  /** The chest as markup. Callers size a wrapper; the chest fills it (200 x 180 aspect). { lite: true } gives the flat resting pose. */
+  BR.chestSVG = (id, o) => { ensureDefs(); return o && o.lite ? lite(id) : BR.ChestArt[id](); };
   BR.ensureChestDefs = ensureDefs;
 })();

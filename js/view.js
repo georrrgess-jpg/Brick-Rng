@@ -42,12 +42,15 @@
       this.layout();
       if (window.ResizeObserver) new ResizeObserver(() => this.layout()).observe(this.field);
       window.addEventListener('resize', () => this.layout());
+      window.addEventListener('scroll', () => { this._rc = null; }, true);
     }
 
     /* ---------- geometry ---------- */
     layout() {
+      this._rc = null;
       const w = this.field.clientWidth;
       if (!w) return;
+      this._ww = this.wrap.clientWidth;
       this.cell = w / this.cols;
       this.field.style.setProperty('--cell', this.cell + 'px');
       this.bricks.forEach((rec) => this._place(rec));
@@ -55,22 +58,28 @@
     }
     _place(rec) { rec.el.style.transform = `translate3d(${rec.c * this.cell}px,${rec.r * this.cell}px,0)`; }
 
+    /** Where the board sits on the page. Measured once and kept (it only moves when the layout does), because reading
+        it in the middle of a pop forces the browser to restyle the whole board. */
+    _rects() {
+      if (!this._rc) { const f = this.field.getBoundingClientRect(), w = this.wrap.getBoundingClientRect(); this._rc = { fl: f.left, ft: f.top, wl: w.left, wt: w.top }; }
+      return this._rc;
+    }
     cellAt(clientX, clientY) {
-      const rect = this.field.getBoundingClientRect();
-      const x = clientX - rect.left, y = clientY - rect.top;
+      const rc = this._rects();
+      const x = clientX - rc.fl, y = clientY - rc.ft;
       const c = Math.floor(x / this.cell), r = Math.floor(y / this.cell);
       if (r < 0 || c < 0 || r >= this.rows || c >= this.cols) return null;
       return { r, c };
     }
     /** Center of cell r,c in page coordinates (for canvas particles). */
     pagePoint(r, c) {
-      const rect = this.field.getBoundingClientRect();
-      return { x: rect.left + (c + 0.5) * this.cell, y: rect.top + (r + 0.5) * this.cell };
+      const rc = this._rects();
+      return { x: rc.fl + (c + 0.5) * this.cell, y: rc.ft + (r + 0.5) * this.cell };
     }
     /** Center of cell r,c relative to the fx layer (for DOM floaters). */
     layerPoint(r, c) {
-      const f = this.field.getBoundingClientRect(), w = this.wrap.getBoundingClientRect();
-      return { x: f.left - w.left + (c + 0.5) * this.cell, y: f.top - w.top + (r + 0.5) * this.cell };
+      const rc = this._rects();
+      return { x: rc.fl - rc.wl + (c + 0.5) * this.cell, y: rc.ft - rc.wt + (r + 0.5) * this.cell };
     }
 
     /* ---------- brick lifecycle ---------- */
@@ -202,20 +211,23 @@
       if (plan.timeGain > 0) tags.push(`<span class="fuel plus">+${plan.timeGain.toFixed(1)}s</span>`);
       if (plan.line) tags.push('<span class="fuel plus">LINE BLAST</span>');
       else if (plan.combo > 1) tags.push(`<span class="fuel plus">x${plan.combo % 1 ? plan.combo.toFixed(1) : plan.combo}</span>`);
-      this.chip.innerHTML = `<span>+${plan.points.toLocaleString()}</span>${tags.join('')}`;
+      const pts = '+' + BR.fmt(plan.points);
+      this.chip.innerHTML = `<span>${pts}</span>${tags.join('')}`;
       let minR = 99, maxR = -1, sumC = 0;
       plan.primary.forEach((p) => { minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r); sumC += p.c; });
       const top = this.layerPoint(minR, sumC / plan.primary.length);
       const bot = this.layerPoint(maxR, sumC / plan.primary.length);
-      const cw = this.chip.offsetWidth || 120, ch = this.chip.offsetHeight || 28;
-      const ww = this.wrap.clientWidth;
+      // the chip is centred by CSS on the point we give it, so its size is only needed to keep it on screen: estimated, not measured
+      const cw = this._chipW(pts.length + tags.length * 5), ch = 30;
+      const ww = this._ww || (this._ww = this.wrap.clientWidth);
       let x = Math.max(cw / 2 + 4, Math.min(ww - cw / 2 - 4, top.x));
       let y = top.y - this.cell * 0.5 - ch / 2 - 6;
       if (y < ch / 2 + 2) y = bot.y + this.cell * 0.5 + ch / 2 + 6;
-      this.chip.style.transform = `translate(${x - cw / 2}px, ${y - ch / 2}px)`;
+      this.chip.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
       this.chip.classList.add('show');
     }
 
+    _chipW(chars) { return 26 + chars * 9.5; }
     /** Highlight an arbitrary cell set (Booster aim preview). */
     setCellHighlight(cells, label) {
       if (this._hl) this._hl.forEach((el) => el.classList.remove('hl', 'hlx'));
@@ -228,9 +240,9 @@
       cells.forEach((p) => { sr += p.r; sc += p.c; });
       const mid = this.layerPoint(sr / cells.length, sc / cells.length);
       this.chip.innerHTML = `<span>${label}</span>`;
-      const cw = this.chip.offsetWidth || 90, ch = this.chip.offsetHeight || 28, ww = this.wrap.clientWidth;
+      const cw = this._chipW(label.length), ch = 30, ww = this._ww || (this._ww = this.wrap.clientWidth);
       const x = Math.max(cw / 2 + 4, Math.min(ww - cw / 2 - 4, mid.x));
-      this.chip.style.transform = `translate(${x - cw / 2}px, ${Math.max(2, mid.y - ch - this.cell * 0.9)}px)`;
+      this.chip.style.transform = `translate(${x}px, ${Math.max(ch / 2 + 2, mid.y - ch / 2 - this.cell * 0.9)}px) translate(-50%, -50%)`;
       this.chip.classList.add('show');
     }
 
@@ -342,7 +354,7 @@
       if (!rec) return;
       rec.b.fb = n;
       const em = rec.el.querySelector('.fcount');
-      if (em) { em.textContent = n; em.classList.remove('tick'); void em.offsetWidth; em.classList.add('tick'); }
+      if (em) { em.textContent = n; BR.replay(em, 'tick'); }
       rec.el.classList.toggle('danger', n <= 2);
     }
 
