@@ -71,21 +71,30 @@
       const n = Math.max(1, Math.round(count * this.budget));
       switch (recipe) {
         case 'ember': {
+          const u4 = BR.U4 && BR.U4.recipe('ember');   // Update 4 version (js/u4-cosmetics.js); the code below is the original, kept for reduced motion and low-end
+          if (u4) { u4.call(this, { x, y, glow, hi, n, power }); break; }
           const cols = ['#ff9a3d', '#ffcf3f', '#ff5468', glow];
           for (let i = 0; i < Math.ceil(n * 1.4); i++) this.emit({ kind: 'spark', x: x + rnd(-8, 8), y, vx: rnd(-90, 90), vy: rnd(-260, -60), g: -90, drag: 1.1, size: rnd(1.8, 4.2), max: rnd(0.8, 1.5), color: cols[(Math.random() * cols.length) | 0] });
           this.shards(x, y, glow, Math.ceil(n / 3), 0.55);
           break;
         }
         case 'petal': {
+          const u4 = BR.U4 && BR.U4.recipe('petal');
+          if (u4) { u4.call(this, { x, y, glow, hi, n, power }); break; }
           const cols = [glow, '#ffd1e6', '#ffffff', hi];
           for (let i = 0; i < Math.ceil(n * 0.9); i++) this.emit({ kind: 'shard', shape: 'petal', x, y, vx: rnd(-150, 150), vy: rnd(-220, -40), g: 150, drag: 1.3, rot: rnd(0, 6.28), vr: rnd(-6, 6), size: rnd(5, 9), max: rnd(1.2, 2), color: cols[(Math.random() * cols.length) | 0], sway: rnd(0, 6.28) });
           break;
         }
-        case 'glass':
+        case 'glass': {
+          const u4 = BR.U4 && BR.U4.recipe('glass');
+          if (u4) { u4.call(this, { x, y, glow, hi, n, power }); break; }
           this.shards(x, y, '#dff7ff', Math.ceil(n * 1.4), 1.05, { shape: 'tri', size: 5, spread: 8, life: 0.6, g: 1300 });
           this.sparks(x, y, '#ffffff', Math.ceil(n / 2), 1.2, 0.4);
           break;
+        }
         case 'pixel': {
+          const u4 = BR.U4 && BR.U4.recipe('pixel');
+          if (u4) { u4.call(this, { x, y, glow, hi, n, power }); break; }
           const cols = [glow, hi, '#ffffff'];
           for (let i = 0; i < Math.ceil(n * 1.6); i++) {
             const a = ((Math.random() * 4) | 0) * 1.5708 + (Math.random() < 0.5 ? 0 : 0.785);
@@ -95,16 +104,21 @@
           break;
         }
         case 'fireworks': {
+          const u4 = BR.U4 && BR.U4.recipe('fireworks');
+          if (u4) { u4.call(this, { x, y, glow, hi, n, power }); break; }
           const cols = [glow, '#ff6b9a', '#6bffb2', '#6bb8ff', '#ffd36b'];
           this.sparks(x, y, cols[(Math.random() * cols.length) | 0], Math.ceil(n * 1.1), 1.35, 0.55);
           this.shards(x, y, glow, Math.ceil(n / 3), 0.6);
           if (power >= 1.4 && Math.random() < 0.7) this.firework(x, y, x + rnd(-60, 60), Math.max(80, y - rnd(150, 260)), cols[(Math.random() * cols.length) | 0], ['peony', 'ring', 'willow', 'star'][(Math.random() * 4) | 0]);
           break;
         }
-        case 'lightning':
+        case 'lightning': {
+          const u4 = BR.U4 && BR.U4.recipe('lightning');
+          if (u4) { u4.call(this, { x, y, glow, hi, n, power }); break; }
           this.sparks(x, y, '#d6e8ff', Math.ceil(n * 1.1), 1.3, 0.35);
           this.shards(x, y, glow, Math.ceil(n / 2), 0.7);
           break;
+        }
         default: {
           // Series 3 recipes register themselves: BR.PopRecipes[name] = function ({ x, y, glow, hi, n, power, rnd, R }) { ... } (this = the FX)
           const custom = BR.PopRecipes && BR.PopRecipes[recipe];
