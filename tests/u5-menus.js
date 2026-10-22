@@ -9,6 +9,8 @@ const { launch } = require('./lib');
 let problems = 0;
 const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } };
 const wait = (page, ms) => page.waitForTimeout(ms);
+// ONLY=portrait,hero,landscape node tests/u5-menus.js runs just those sections (static, portrait, hero, large, reduced, landscape, desktop, smooth)
+const want = (n) => !process.env.ONLY || process.env.ONLY.split(',').includes(n);
 
 /** A returning player: 12 runs, level 6, 900 Coins, five items of each type, two Brick Chests and a Golden Chest waiting. */
 async function player(page, o = {}) {
@@ -32,7 +34,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
 
 (async () => {
   // ---------------------------------------------------------------- static: one type scale, nothing styled twice
-  {
+  if (want('static')) {
     const r = spawnSync('python3', [path.resolve(__dirname, '..', 'tools', 'typescale.py'), '--check'], { encoding: 'utf8' });
     ok(r.status === 0, 'a menu text size is written as bare px (it would not grow with Larger text); run tools/typescale.py', r.stdout.trim().split('\n').slice(0, 4).join(' | '));
     const k = spawnSync('node', [path.resolve(__dirname, 'keyframes.js')], { encoding: 'utf8' });
@@ -40,7 +42,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- portrait phone, returning player
-  {
+  if (want('portrait')) {
     const { browser, page, errors } = await launch({ width: 393, height: 852, dsf: 1, mobile: true });
     await player(page, { resume: true });
 
@@ -115,9 +117,9 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(await page.evaluate(() => BR.Storage.data.settings.sound === false), 'the sound switch in Settings did not turn sound off');
     ok(await page.evaluate(() => document.querySelector('.sheet.settings [data-vol="sfxVol"]').closest('.vol').classList.contains('off')), 'the volume row did not dim when the sound went off');
     // Graphics: the thumb slides from where it was (the segment is not rebuilt)
-    const seg0 = await page.evaluate(() => { const s = document.getElementById('perfSeg'); window.__seg = s; return s.style.getPropertyValue('--i'); });
+    const seg0 = await page.evaluate(() => { const s = document.getElementById('perfSeg'); window.__seg = s; return s.style.getPropertyValue('--si'); });
     await page.click('[data-perf="high"]'); await wait(page, 100);
-    ok(await page.evaluate((s0) => window.__seg.isConnected && window.__seg.style.getPropertyValue('--i') === '2' && s0 === '0', seg0), 'the Graphics control was rebuilt instead of sliding', seg0);
+    ok(await page.evaluate((s0) => window.__seg.isConnected && window.__seg.style.getPropertyValue('--si') === '2' && s0 === '0', seg0), 'the Graphics control was rebuilt instead of sliding', seg0);
     await page.keyboard.press('Escape'); await wait(page, 700);
 
     // focus: into the sheet, trapped there, the page behind inert, back to the opener on Escape
@@ -166,7 +168,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     // the rarity filter has an All chip, and the type switch keeps the segment (the thumb slides)
     ok(await page.evaluate(() => !!document.querySelector('.chip-btn[data-rar=""]') && document.querySelector('.chip-btn[data-rar=""]').classList.contains('on')), 'no All chip');
     await page.evaluate(() => { window.__seg = document.getElementById('colSeg'); document.querySelector('#colSeg [data-type="pop"]').click(); }); await wait(page, 100);
-    ok(await page.evaluate(() => window.__seg.isConnected && window.__seg.style.getPropertyValue('--i') === '1'), 'the Collection type control was rebuilt instead of sliding');
+    ok(await page.evaluate(() => window.__seg.isConnected && window.__seg.style.getPropertyValue('--si') === '1'), 'the Collection type control was rebuilt instead of sliding');
     ok(await page.evaluate(() => !/\d\/\d/.test(document.getElementById('colSeg').textContent)), 'the count is still in the type control (it is in the ring)');
     // locked tiles are dark shapes, not a "?" box
     ok(await page.evaluate(() => { const q = document.querySelector('.lk .bdg-q'); return !q || getComputedStyle(q).display === 'none'; }), 'locked tiles still show a ? box');
@@ -211,6 +213,15 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     // a finished weekly challenge looks finished
     await page.evaluate(() => { const w = BR.Missions.ensure().weekly; w.done = true; w.progress = w.target; BR.Router.rerender(); }); await wait(page, 300);
     ok(await page.evaluate(() => { const w = document.querySelector('.mission.weekly'); return w.classList.contains('done') && /Paid/.test(w.textContent) && !!w.querySelector('.m-ico svg') && /Golden Chest/.test(w.textContent); }), 'a finished weekly challenge has no Done look');
+    // a segment opens with its thumb under the active tab (the stagger's --i once overwrote the segment's index, so the thumb sat on the first tab)
+    for (const tab of ['pass', 'trophies', 'daily']) {
+      await page.evaluate((tab) => { BR.Router.go('home'); BR.Router.screens.missions.tab = tab; BR.Router.go('missions'); }, tab); await wait(page, 900);
+      const th = await page.evaluate(() => { const seg = document.getElementById('misSeg'), t = seg.querySelector('.thumb').getBoundingClientRect(), on = seg.querySelector('button.on').getBoundingClientRect(); return { dx: Math.abs((t.left + t.right) / 2 - (on.left + on.right) / 2) }; });
+      ok(th.dx < 3, 'the Missions thumb is not under the active tab on arrival', tab, JSON.stringify(th));
+    }
+    await page.evaluate(() => { BR.Router.go('collection'); BR.Router.screens.collection.type = 'board'; BR.Router.rerender(); }); await wait(page, 900);
+    ok(await page.evaluate(() => { const seg = document.getElementById('colSeg'), t = seg.querySelector('.thumb').getBoundingClientRect(), on = seg.querySelector('button.on').getBoundingClientRect(); return Math.abs((t.left + t.right) / 2 - (on.left + on.right) / 2) < 3; }), 'the Collection thumb is not under the active type on arrival');
+    await page.evaluate(() => { BR.Router.screens.collection.type = 'skin'; });
     // the Pass: a claimed Coins tier says when it was paid
     await page.evaluate(() => { BR.rewardSheet(1); }); await wait(page, 700);
     ok(await page.evaluate(() => /Paid when you reached level/.test(document.querySelector('.sheet.on .detail-desc').textContent) && !/right away/.test(document.querySelector('.sheet.on').textContent)), 'a claimed Coins tier says the Coins come right away');
@@ -228,11 +239,11 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- the hero never overflows, at the small sizes and with Larger text; Play stays above the tab bar
-  for (const [w, h] of [[360, 640], [375, 667], [393, 852], [430, 932]]) {
+  if (want('hero')) for (const [w, h] of [[360, 640], [375, 667], [393, 852], [430, 932]]) {
     for (const large of [false, true]) {
       const { browser, page } = await launch({ width: w, height: h, dsf: 1, mobile: true });
       await player(page, { large, resume: w < 400, runs: 12 });
-      await page.evaluate(() => { BR.Storage.data.boostsLast = ['longFuse', 'headStart']; BR.Router.rerender(); }); await wait(page, 500);
+      await page.evaluate(() => { BR.Storage.data.boostsLast = ['longFuse', 'headStart', 'rushStart']; BR.Router.rerender(); }); await wait(page, 500);
       // every piece of content (the glow that is cut off on purpose aside) lies inside the card; a text column may not push the art or Play out of it
       const r = await page.evaluate(() => { const H = document.querySelector('.hero'), p = document.querySelector('.hero-play').getBoundingClientRect(), hb = H.getBoundingClientRect(), a = document.querySelector('.hero-art').getBoundingClientRect(), tb = document.getElementById('tabbar').getBoundingClientRect(), c = document.querySelector('.chip-boost').getBoundingClientRect(); let out = 0; H.querySelectorAll('*').forEach((e) => { if (e.closest('.hero-glow') || e.closest('svg') || e.classList.contains('hero-glow')) return; const b = e.getBoundingClientRect(); if (!b.width) return; if (b.right > hb.right + 0.5 || b.left < hb.left - 0.5) out++; }); const cx = (p.left + p.right) / 2 - (hb.left + hb.right) / 2; return { over: Math.round(p.right - hb.right), under: Math.round(hb.left - p.left), artOver: Math.round(a.right - hb.right), out, playOffCentre: Math.round(cx), playBottom: Math.round(p.bottom), tabTop: Math.round(tb.top), chipOver: Math.round(c.right - hb.right) }; });
       ok(r.over <= 0 && r.under <= 0 && r.artOver <= 0 && r.out === 0 && Math.abs(r.playOffCentre) <= 1 && r.chipOver <= 0, `the hero overflows or Play is off centre at ${w}x${h}${large ? ' with Larger text' : ''}`, JSON.stringify(r));
@@ -242,7 +253,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- Larger text is one type scale; no zoom
-  {
+  if (want('large')) {
     const sizes = {};
     for (const large of [false, true]) {
       const { browser, page } = await launch({ width: 393, height: 852, dsf: 1, mobile: true });
@@ -258,7 +269,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     ok(a.zoomScroll === '1' && b.zoomScroll === '1' && b.zoomSheet === '1', 'Larger text still uses zoom', JSON.stringify(b));
   }
   // Larger text at the narrowest phone: no label runs into another, the chips wrap inside the screen
-  {
+  if (want('large')) {
     const { browser, page } = await launch({ width: 360, height: 640, dsf: 1, mobile: true });
     await player(page, { large: true });
     await page.evaluate(() => BR.Router.go('collection')); await wait(page, 1600);
@@ -268,7 +279,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- Reduce Motion: no stagger delays
-  {
+  if (want('reduced')) {
     const { browser, page } = await launch({ width: 393, height: 852, dsf: 1, mobile: true });
     await player(page, { reduced: true });
     await page.evaluate(() => BR.Router.go('shop')); await wait(page, 40);
@@ -278,7 +289,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
     await browser.close();
   }
   // normal motion: the stagger is capped (the last block starts within 250 ms)
-  {
+  if (want('reduced')) {
     const { browser, page } = await launch({ width: 393, height: 852, dsf: 1, mobile: true });
     await player(page, {});
     await page.evaluate(() => BR.Router.go('shop')); await wait(page, 40);
@@ -288,11 +299,11 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- landscape: Play above the fold, a two-column hero, sheets that show their body
-  for (const [w, h] of [[844, 390], [932, 430], [667, 375]]) {
+  if (want('landscape')) for (const [w, h] of [[844, 390], [932, 430], [667, 375]]) {
     for (const resume of [false, true]) {
       const { browser, page } = await launch({ width: w, height: h, dsf: 1, mobile: true });
       await player(page, { resume });
-      await page.evaluate(() => { BR.Storage.data.boostsLast = ['longFuse']; BR.Router.rerender(); }); await wait(page, 600);
+      await page.evaluate(() => { BR.Storage.data.boostsLast = ['longFuse', 'headStart', 'rushStart']; BR.Router.rerender(); }); await wait(page, 600);
       const r = await page.evaluate(() => { const p = document.querySelector('.hero-play').getBoundingClientRect(), t = document.getElementById('topbar').getBoundingClientRect(), hero = document.querySelector('.hero').getBoundingClientRect(), r = document.querySelector('.resume'), rb = r && r.getBoundingClientRect(), c = document.querySelector('.chip-boost').getBoundingClientRect(); return { playTop: p.top, playBottom: p.bottom, vh: innerHeight, topbar: t.bottom, heroRight: hero.right, vw: innerWidth, resumeVisible: r ? rb.bottom <= innerHeight : null, chipBottom: c.bottom, chipRight: c.right, heroR: hero.right }; });
       ok(r.playBottom <= r.vh - 4 && r.playTop >= r.topbar - 2, `Play is not above the fold in landscape ${w}x${h}${resume ? ' with Resume' : ''}`, JSON.stringify(r));
       ok(r.resumeVisible !== false, `the Resume card is below the fold in landscape ${w}x${h}`, JSON.stringify(r));
@@ -301,7 +312,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
       await browser.close();
     }
   }
-  {
+  if (want('landscape')) {
     const { browser, page, errors } = await launch({ width: 844, height: 390, dsf: 1, mobile: true });
     await player(page, {});
     const sheets = [['coins', () => BR.coinSheet()], ['ready', () => BR.readySheet('rush')], ['settings', () => BR.settingsSheet()], ['odds', () => BR.showOdds('brick')], ['item', () => { const v = BR.Storage.data.profile.vault.find((x) => BR.itemById[x.itemId].type === 'skin'); BR.itemSheet(v.uid, 'skin'); }]];
@@ -322,7 +333,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- desktop: sheets and screens at most 560px, the Pass track answers the wheel and has arrows
-  {
+  if (want('desktop')) {
     const { browser, page, errors } = await launch({ width: 1280, height: 800, dsf: 1, mobile: false });
     await player(page, {});
     const w0 = await rect(page, '#topbar'); ok(w0.w <= 560.5, 'the status bar spans the desktop', w0.w);
@@ -349,7 +360,7 @@ const rect = (page, sel) => page.evaluate((sel) => { const e = document.querySel
   }
 
   // ---------------------------------------------------------------- Graphics: Smooth still lays out the menus
-  {
+  if (want('smooth')) {
     const { browser, page, errors } = await launch({ width: 393, height: 852, dsf: 1, mobile: true });
     await player(page, {});
     await page.evaluate(() => { BR.Storage.data.settings.perf = 'low'; BR.App.applySettings(); });

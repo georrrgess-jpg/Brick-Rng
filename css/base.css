@@ -160,10 +160,10 @@ h1, h2, h3, h4, p { margin: 0; }
 .bar > i::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 60%); }
 .bar.gold > i { background: var(--grad-gold); } .bar.green > i { background: linear-gradient(90deg, #1fbf7a, #5df0b0); } .bar.cyan > i { background: linear-gradient(90deg, #4a86ff, #3de1ff); }
 .bar.tall { height: 18px; }
-.seg { --n: 3; --i: 0; position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); padding: 4px; gap: 2px; border-radius: 18px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--line); }
+.seg { --n: 3; --si: 0; position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); padding: 4px; gap: 2px; border-radius: 18px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--line); }
 .seg button { position: relative; z-index: 1; min-width: 0; min-height: 44px; border-radius: 14px; font: 700 calc(15px * var(--ts)) var(--f-display); color: var(--muted); transition: color 0.2s; white-space: nowrap; }
 .seg button.on { color: #fff; }
-.seg .thumb { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px - (var(--n) - 1) * 2px) / var(--n)); transform: translateX(calc(var(--i) * (100% + 2px))); border-radius: 14px; background: var(--grad-hot); box-shadow: 0 4px 14px rgba(255, 61, 139, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform 0.4s var(--ease-spring); }
+.seg .thumb { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px - (var(--n) - 1) * 2px) / var(--n)); transform: translateX(calc(var(--si) * (100% + 2px))); border-radius: 14px; background: var(--grad-hot); box-shadow: 0 4px 14px rgba(255, 61, 139, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform 0.4s var(--ease-spring); }
 .empty-state { text-align: center; color: var(--muted); padding: var(--s6) var(--s4); font-size: calc(15px * var(--ts)); display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
 /* ---------- tab bar ---------- */

@@ -29,7 +29,7 @@ async function audit_one(width, height, large) {
       const hasText = Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim().length > 0);
       if (hasText) { const fs = parseFloat(getComputedStyle(el).fontSize); if (fs < MIN_TEXT - 0.01) { const k = 'T ' + sel(el) + ' ' + fs; if (!seen.has(k)) { seen.add(k); out.push([label, 'text ' + fs + 'px', sel(el), (el.textContent || '').trim().slice(0, 24)]); } } }
       if (el.matches('button, a[href], [role="button"], input:not([type="hidden"]), [data-act], [data-tab]') && !SKIP_HIT.some((s) => el.matches(s))) {
-        const r = el.getBoundingClientRect();
+        const r0 = el.getBoundingClientRect(), r = el.offsetWidth ? { width: el.offsetWidth, height: el.offsetHeight } : r0;   // layout size: a card still scaling in (its entrance animation) is not a small target
         if (r.width < MIN_HIT - 0.5 || r.height < MIN_HIT - 0.5) { const k = 'H ' + sel(el) + Math.round(r.width) + 'x' + Math.round(r.height); if (!seen.has(k)) { seen.add(k); out.push([label, 'hit ' + Math.round(r.width) + 'x' + Math.round(r.height), sel(el), (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 24)]); } }
       }
     }

@@ -391,7 +391,7 @@
       this.arrive = !!arrive;
       this.el.innerHTML = `<div class="scroll">
         ${BR.Coach.banner('collection')}
-        <div class="seg stg" id="colSeg" style="--n:${BR.TYPE_ORDER.length};--i:${BR.TYPE_ORDER.indexOf(type)}">${segs}<i class="thumb"></i></div>
+        <div class="seg stg" id="colSeg" style="--n:${BR.TYPE_ORDER.length};--si:${BR.TYPE_ORDER.indexOf(type)}">${segs}<i class="thumb"></i></div>
         <div class="col-body" id="colBody">${this.bodyHTML()}</div>
         <p class="tiny center">Tap an item to see it. Tap the circle to wear it. Every chest gives something new.</p>
       </div>`;
@@ -416,7 +416,7 @@
       if (from === to) return;
       this.type = t; this.filter = null; this.arrive = false;
       const seg = this.el.querySelector('#colSeg');
-      seg.style.setProperty('--i', to);
+      seg.style.setProperty('--si', to);
       seg.querySelectorAll('button').forEach((b) => { const on = b.dataset.type === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
       const body = this.el.querySelector('#colBody');
       body.innerHTML = this.bodyHTML();
@@ -571,7 +571,7 @@
     tab: 'daily',
     render() {
       const seg = MIS_TABS.map((t) => `<button data-tab="${t}" class="${t === this.tab ? 'on' : ''}" type="button" aria-pressed="${t === this.tab}">${{ daily: 'Daily', pass: 'Pop Pass', trophies: 'Trophies' }[t]}</button>`).join('');
-      this.el.innerHTML = `<div class="scroll">${this.tab === 'daily' ? BR.Coach.banner('missions') : ''}<div class="seg stg" id="misSeg" style="--n:3;--i:${MIS_TABS.indexOf(this.tab)}">${seg}<i class="thumb"></i></div><div class="mis-body" id="misBody">${this.bodyHTML()}</div></div>`;
+      this.el.innerHTML = `<div class="scroll">${this.tab === 'daily' ? BR.Coach.banner('missions') : ''}<div class="seg stg" id="misSeg" style="--n:3;--si:${MIS_TABS.indexOf(this.tab)}">${seg}<i class="thumb"></i></div><div class="mis-body" id="misBody">${this.bodyHTML()}</div></div>`;
       this.afterBody();
     },
     bodyHTML() {
@@ -596,7 +596,7 @@
       if (from === to) return;
       this.tab = t;
       const seg = this.el.querySelector('#misSeg');
-      seg.style.setProperty('--i', to);
+      seg.style.setProperty('--si', to);
       seg.querySelectorAll('button').forEach((b) => { const on = b.dataset.tab === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
       const body = this.el.querySelector('#misBody');
       body.innerHTML = this.bodyHTML();
@@ -762,7 +762,7 @@
     const idx = ['auto', 'low', 'high'].indexOf(set.perf);
     return `<section class="set-grp" aria-label="Sound">${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}</section>
       <section class="set-grp" aria-label="Play and display">${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
-        <div class="perf"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--i:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}">${l}</button>`).join('')}<i class="thumb"></i></div></div></section>`;
+        <div class="perf"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--si:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}">${l}</button>`).join('')}<i class="thumb"></i></div></div></section>`;
   };
   /** Settings change as they are touched and are saved at once; the Graphics thumb slides from where it was. */
   function bindSettings(root) {
@@ -782,7 +782,7 @@
     root.addEventListener('click', (e) => {
       const b = e.target.closest('[data-perf]'); if (!b) return;
       S().settings.perf = b.dataset.perf; BR.Storage.save(); BR.App.applySettings(); BR.audio.ui();
-      const seg = b.closest('.seg'); seg.style.setProperty('--i', ['auto', 'low', 'high'].indexOf(b.dataset.perf));
+      const seg = b.closest('.seg'); seg.style.setProperty('--si', ['auto', 'low', 'high'].indexOf(b.dataset.perf));
       seg.querySelectorAll('button').forEach((x) => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
     });
   }
