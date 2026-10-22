@@ -74,7 +74,7 @@
     it('b_runes', 'pop', 'rare', 'Rune Burst', 'The popped colour\'s sigil flies out of the pop.', { recipe: 'runes', color: '#cfe0ff', series: 4 }),
     it('b_goldleaf', 'pop', 'epic', 'Gold Leaf', 'Bricks turn to gold and crumble into flickering leaf.', { recipe: 'goldleaf', color: '#ffcf6b', moment: 'goldleaf', series: 4, set: 'alchemy' }),
     it('b_sandfall', 'pop', 'epic', 'Sandfall', 'Bricks pour away as sand. In Rush the sand hangs in the air.', { recipe: 'sandfall', color: '#f0cf8c', moment: 'sandfall', series: 4, set: 'vault' }),
-    it('b_whirlgate', 'pop', 'legendary', 'Whirlgate', 'A spiral vortex. Big pops open a portal with an eye inside.', { recipe: 'whirlgate', color: '#a8d4ff', moment: 'whirlgate', series: 4 }),
+    it('b_whirlgate', 'pop', 'legendary', 'Whirlgate', 'A spiral vortex. Big pops open a portal with an eye inside.', { recipe: 'whirlgate', color: '#27dcc6', moment: 'whirlgate', series: 4 }),
     it('b_constellation', 'pop', 'mythic', 'Constellation', 'Every pop is drawn in star lines. Big pops summon a star creature.', { recipe: 'constellation', color: '#e8f0ff', moment: 'constellation', series: 4, set: 'spire' }),
     // ---- Boards ----
     it('a_deepsea', 'board', 'common', 'Deep Sea', 'Bubbles rise through blue water.', { cls: 'board-deepsea', beam: '#7ae8ff' }),
