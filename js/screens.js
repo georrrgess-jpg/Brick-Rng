@@ -22,6 +22,9 @@
     el.animate([{ opacity: 0.2, transform: `translate3d(${dir * 16}px, 0, 0)` }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
   };
 
+  /** A region that was redrawn inside a screen that has already arrived: its blocks are simply there (the screen's entrance is not played again). */
+  const settle = (root) => root.querySelectorAll('.stg').forEach((n) => { n.style.animation = 'none'; n.style.opacity = 1; n.style.transform = 'none'; });
+
   /** Fill a list in after the screen's first frames, a few at a time: a long grid or track opens on its first screenful instead of
       building everything in one frame. `fill(el, i)` finishes one placeholder; hydration stops when the list is replaced. */
   function hydrate(root, sel, fill, order) {
@@ -50,6 +53,7 @@
     setTitle(id) {
       const h = $('tbTitle'), t = this.titles[id] || '';
       if (h.textContent !== t) { h.textContent = t; if (t) BR.replay(h, 'swap'); }
+      h.setAttribute('aria-label', t || 'Home');   // (Home shows no title, but the page still has a heading)
     },
     /** The Coin pill shows the balance. A change that happens while the bar is on screen counts up (js/ui.js refreshCoins); one made behind
         the player's back (a screen re-rendered after a restore, the first paint) is written straight in. */
@@ -402,7 +406,7 @@
       const f = this.filter;
       const filters = `<button class="chip-btn ${f ? '' : 'on'}" data-rar="" type="button" aria-pressed="${!f}">All</button>` + BR.RARITIES.map((r) => `<button class="chip-btn ${f === r.id ? 'on' : ''}" data-rar="${r.id}" style="--rc:${r.color}" type="button" aria-pressed="${f === r.id}">${r.name}</button>`).join('');
       return `<div class="col-head stg"><div class="eq-now" style="--rc:${R(eq.item.rarity).color}"><span class="eq-prev">${BR.Skins.previewHTML(eq.item, eq.inst)}</span><span class="eq-txt"><small>Wearing</small><b class="display">${esc(eq.item.name)}</b></span></div>
-          <div class="col-prog" role="img" aria-label="${have} of ${total} found">${ringSVG(have / total, 52, 6)}<b>${have}<small>/${total}</small></b></div></div>
+          <div class="col-prog" role="img" aria-label="${have} of ${total} found">${ringSVG(have / total, 60, 6)}<b>${have}<small>/${total}</small></b></div></div>
         <div class="filters stg" role="group" aria-label="Rarity">${filters}</div>
         <div class="col-grid stg ${this.arrive ? 'enter' : ''}" id="colGrid">${this.gridHTML()}</div>`;
     },
@@ -416,6 +420,7 @@
       seg.querySelectorAll('button').forEach((b) => { const on = b.dataset.type === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
       const body = this.el.querySelector('#colBody');
       body.innerHTML = this.bodyHTML();
+      settle(body);
       this.hydrateGrid();
       swapIn(body, to > from ? 1 : -1);
     },
@@ -595,7 +600,7 @@
       seg.querySelectorAll('button').forEach((b) => { const on = b.dataset.tab === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
       const body = this.el.querySelector('#misBody');
       body.innerHTML = this.bodyHTML();
-      body.querySelectorAll('.stg').forEach((n) => { n.style.animation = 'none'; n.style.opacity = 1; n.style.transform = 'none'; });
+      settle(body);
       this.afterBody();
       swapIn(body, to > from ? 1 : -1);
       const sc = this.el.querySelector('.scroll'); if (sc && sc.scrollTop > 0) sc.scrollTop = 0;
@@ -631,9 +636,9 @@
     refreshDaily(flip) {
       const body = this.el.querySelector('#misBody'); if (!body) return;
       body.innerHTML = this.bodyHTML();
-      body.querySelectorAll('.stg').forEach((n) => { n.style.animation = 'none'; n.style.opacity = 1; n.style.transform = 'none'; });
+      settle(body);
       const c = body.querySelector(`.mission[data-mi="${flip}"]`);
-      if (c && c.animate && !BR.reducedMotion) c.animate([{ transform: 'perspective(700px) rotateX(-85deg)', opacity: 0 }, { transform: 'perspective(700px) rotateX(0)', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+      if (c && c.animate && !BR.reducedMotion) c.animate([{ transform: 'perspective(700px) rotateX(-85deg)', opacity: 0.35 }, { transform: 'perspective(700px) rotateX(0)', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
     },
     passHTML() {
       const L = P.level, need = P.need, next = BR.passReward(L), S3 = BR.PASS_SEASON;
@@ -859,7 +864,7 @@
       else if (a === 'play-last') repeatBoosts();
       else if (a === 'open-boosts') BR.readySheet('rush');
       else if (a === 'open-chest') { const id = BR.nextChest(); if (id) BR.App.openChest(id); }
-      else if (a === 'play-daily') { if (S().daily.day === BR.dayKey()) { BR.toast('You already played today. Come back tomorrow!'); return; } BR.readySheet('daily'); }
+      else if (a === 'play-daily') { if (S().daily.day === BR.dayKey()) { BR.toast('Daily Rush is done. Back tomorrow!'); return; } BR.readySheet('daily'); }
       else if (a === 'play-chill') { if (P.level < BR.CFG.chill.unlockLevel) { BR.toast(`Chill unlocks at level ${BR.CFG.chill.unlockLevel}`); BR.haptic('err'); return; } BR.readySheet('chill'); }
       else if (a === 'resume') BR.App.resume();
     });
@@ -902,7 +907,7 @@
       if (a === 'install') BR.App.install();
       if (a === 'save-code') BR.saveCodeSheet();
       if (a === 'restore-code') BR.restoreSheet();
-      if (a === 'tips') { BR.Coach.reset(); BR.audio.ui(); BR.toast('Tips will show again as you visit each screen', 'good'); }
+      if (a === 'tips') { BR.Coach.reset(); BR.audio.ui(); BR.toast('Tips will show again', 'good'); }
       if (a === 'reset') {
         if (t.dataset.armed !== '1') { t.dataset.armed = '1'; t.textContent = 'Tap again to erase everything'; setTimeout(() => { t.dataset.armed = ''; t.textContent = 'Reset all progress'; }, 3500); return; }
         BR.Storage.reset(); BR.App.applySettings(); BR.Skins.apply(); BR.toast('Progress reset'); BR.Router.rerender();

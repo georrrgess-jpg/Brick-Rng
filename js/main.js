@@ -17,7 +17,7 @@
       else if (was && avg < 0.0125 && this.st.flips < 3) { this.st.low = false; this.st.flips++; this._upCount = (this._upCount || 0) + 1; }
       if (this.st.low === was) return;
       BR.autoLow = this.st.low; this.save(); BR.App.applySettings();
-      BR.toast(this.st.low ? 'Effects lowered to keep the game smooth' : 'Effects are back to full', this.st.low ? '' : 'good');
+      BR.toast(this.st.low ? 'Effects lowered to keep it smooth' : 'Effects are back to full', this.st.low ? '' : 'good');
     },
   };
 
@@ -39,7 +39,7 @@
       this.bindGlobal();
       BR.Router.go('home', { instant: true });
       const cashed = BR.Progress.cashStranded();   // older saves can hold chests of a type that is already complete
-      if (cashed) setTimeout(() => BR.toast(`Your spare chests of a finished set became ${BR.fmt(cashed)} Coins`, 'good'), 1800);
+      if (cashed) setTimeout(() => BR.toast(`Spare chests became ${BR.fmt(cashed)} Coins`, 'good'), 1800);
       this.registerSW();
       if (BR.Run && BR.Run.init) BR.Run.init(this);
     },
@@ -106,7 +106,7 @@
           if (BR.Run && BR.Run.resultsEl) BR.Run.closeResults();
           if (BR.Router.current === 'run' && BR.Run && !BR.Run.over && BR.Run.busy) { BR.Run.busy = false; }
           else if (BR.Router.current !== 'run') BR.Router.go('home');
-          BR.toast('Something went wrong. Your progress is safe.', 'bad');
+          BR.toast('Something went wrong. Progress is safe.', 'bad');
         } catch (e) { /* the recovery must never throw */ }
       };
       window.addEventListener('error', (e) => { if (e && e.message && /ResizeObserver/.test(e.message)) return; recover(e && e.message); });

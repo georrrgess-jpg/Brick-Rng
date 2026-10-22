@@ -165,6 +165,9 @@
 .eq-prev { width: 56px; height: 44px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: rgba(0, 0, 0, 0.3); }
 .eq-prev .mini-bricks { font-size: calc(15px * var(--ts)); } .eq-prev .mini-board { transform: scale(0.55); } .eq-prev .mini-burst { transform: scale(0.55); } .eq-prev .mini-fuse { transform: scale(0.55); }
 .eq-txt { display: flex; flex-direction: column; min-width: 0; } .eq-txt small { font: 800 calc(12px * var(--ts)) var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); } .eq-txt b { font-size: calc(17px * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the count of what you have found: a ring with the number inside (the only place the count is shown) */
+.col-prog { position: relative; flex: none; width: 60px; height: 60px; } .col-prog .ring { position: absolute; inset: 0; width: 60px; height: 60px; }
+.col-prog b { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 700 calc(16px * var(--ts))/1 var(--f-display); } .col-prog b small { font: 700 calc(12px * var(--ts))/1.1 var(--f-ui); color: var(--muted); }
 .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; }   /* chips wrap into even rows (they used to run off the edge with Larger text) */
 .chip-btn { --rc: #9fb0d6; min-width: 0; min-height: 44px; padding: 0 8px; text-align: center; border-radius: 99px; font: 700 calc(13px * var(--ts)) var(--f-ui); color: var(--muted); border: 1px solid var(--line); background: rgba(255, 255, 255, 0.05); transition: all 0.2s; }
 .chip-btn.on { color: #fff; border-color: var(--rc); background: color-mix(in srgb, var(--rc) 30%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--rc) 40%, transparent); }
@@ -185,6 +188,7 @@
 .eq-btn { position: absolute; right: 0; top: 0; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; }
 .eq-btn i { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.5); background: rgba(0, 0, 0, 0.3); transition: background 0.15s, border-color 0.15s, transform 0.15s var(--ease-spring); }
 .eq-btn svg { width: 14px; height: 14px; fill: none; stroke: rgba(255, 255, 255, 0.5); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.eq-btn:focus-visible { outline-offset: -6px; }
 .eq-btn:active i { background: var(--green); border-color: var(--green); transform: scale(1.15); } .eq-btn:active svg { stroke: #06301f; }
 .eq-flag svg, .sel-flag svg { width: 15px; height: 15px; fill: none; stroke: #06301f; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .ic-prev { height: 76px; width: 100%; display: grid; place-items: center; }
@@ -408,7 +412,7 @@ button.trophy { width: 100%; text-align: left; color: inherit; cursor: pointer; 
   .logo-pop { font-size: calc(32px * var(--ts)); gap: 6px; } .logo-rush { margin: 0; } .logo-rush span { font-size: calc(42px * var(--ts)); } .fuse-line { display: none; }
   .hero { grid-template-columns: minmax(0, 1fr) 84px; padding: 12px 14px 12px; gap: 4px 6px; }
   .hero-sub { display: none; } .hero-title { font-size: calc(40px * var(--ts)); } .hero-art { margin-top: 0; } .bomb-art { width: 84px; height: 84px; }
-  .hero-cta { flex-direction: row; align-items: center; margin-top: 6px; } .hero-play { flex: 1; min-height: 56px; font-size: calc(22px * var(--ts)); } .hero-cta .chip-boost { flex: 0 1 auto; max-width: 46%; }
+  .hero-cta { flex-direction: row; align-items: center; margin-top: 6px; } .hero-play { flex: 1 1 0; min-height: 56px; font-size: calc(22px * var(--ts)); } .hero-cta .chip-boost { flex: 1 1 0; padding: 0 10px; } .hero-cta .cb-ico { display: none; }
   .mode-card { min-height: 120px; }
 }
 

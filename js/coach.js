@@ -14,7 +14,7 @@
         ['fire', 'Chain big pops to charge Rush Mode, where points count triple.'],
         ['trophy', 'Beat your best score. Every run earns Coins and XP.'],
       ],
-      cta: "Let's pop",
+      cta: "Let's pop", go: () => (BR.Storage.data.runs === 0 ? BR.App.startRun({ mode: 'rush', boosts: {} }) : null),   // the first run starts from the card (a player who only asked to see the tips again just closes it)
     },
     opening: {
       icon: 'gift', title: 'Opening a chest',
@@ -23,7 +23,7 @@
         ['arrow', 'The reel spins and lands on your item. Tap it to skip ahead.'],
         ['check', 'Your item is saved the moment the chest bursts open.'],
       ],
-      cta: 'Open it',
+      cta: 'Open it', hint: true,   // a line on the opening screen, not a card over the chest and its hold button
     },
     pass: {
       icon: 'flag', title: 'The Pop Pass',
@@ -47,6 +47,10 @@
   let showing = false;
   const seen = () => { const d = BR.Storage.data; if (!d.seen) d.seen = {}; return d.seen; };
 
+  // every chest opening gets the "keep holding" watcher, whichever file mounts it
+  const layer = document.getElementById('layer-opening');
+  if (layer && window.MutationObserver) new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((n) => { if (n.classList && n.classList.contains('opening') && BR.Coach) BR.Coach.watchHold(n); }))).observe(layer, { childList: true });
+
   BR.Coach = {
     CARDS,
     has(id) { return !!seen()[id]; },
@@ -64,14 +68,43 @@
       if (!o.force && seen()[id]) return false;
       if (BR.Router.current === 'run') return false;
       if (id !== 'opening' && id !== 'boosts' && BR.Openings && BR.Openings.current && !BR.Openings.current.closed) return false;
+      if (c.hint) { seen()[id] = true; BR.Storage.save(); return this.hint(id); }
       showing = true;
       seen()[id] = true; BR.Storage.save();
       const body = `<div class="coach-hero"><span class="ch-glow"></span><span class="ch-ico">${BR.icon(c.icon)}</span></div>
         <h2 class="coach-title display">${c.title}</h2>
         <ul class="coach-list">${c.lines.map(([ic, t]) => `<li><span class="cl-ico">${BR.icon(ic)}</span><span>${t}</span></li>`).join('')}</ul>`;
       BR.audio && BR.audio.ui && BR.audio.ui();
-      BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: c.cta, cls: 'btn-xl' }], onClose: () => { showing = false; } });
+      const cta = id === 'home' && BR.Storage.data.runs > 0 ? 'Got it' : c.cta;
+      BR.Sheet.open({ center: true, cls: 'coach', body, actions: [{ label: cta, cls: 'btn-xl', onClick: () => { if (c.go) setTimeout(c.go, 60); } }], onClose: () => { showing = false; } });
       return true;
+    },
+    /** A one-line hint on the chest-opening screen: it sits under the title, never over the chest or the hold button, and goes when the player starts to hold. */
+    hint(id, text, ms) {
+      const o = BR.Openings && BR.Openings.current, root = o && !o.closed && o.root;
+      if (!root) return false;
+      const c = CARDS[id];
+      const line = text || 'Press and hold the big button until the ring fills.';
+      let el = root.querySelector('.coach-hint');
+      if (!el) { el = BR.el(`<div class="coach-hint" role="status"><span class="tb-ico">${BR.icon(c ? 'bolt' : 'info')}</span><p></p><button class="tb-x" type="button" aria-label="Close this tip">${BR.icon('close')}</button></div>`); root.appendChild(el); el.querySelector('.tb-x').addEventListener('click', () => this.hideHint(root)); }
+      el.querySelector('p').textContent = line;
+      clearTimeout(el._rm);   // (a hint asked for while the last one is still fading out stays)
+      requestAnimationFrame(() => el.classList.add('on'));
+      clearTimeout(el._t); el._t = setTimeout(() => this.hideHint(root), ms || 7000);
+      return true;
+    },
+    hideHint(root) { const el = root && root.querySelector('.coach-hint'); if (el) { clearTimeout(el._t); el.classList.remove('on'); clearTimeout(el._rm); el._rm = setTimeout(() => el.remove(), 320); } },
+    /** Watch a chest opening for an early release: a press that lets go before the ring fills gets a line saying to keep holding. */
+    watchHold(root) {
+      if (root._watched) return; root._watched = true;
+      let t0 = 0, down = false;
+      root.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('[data-hold], .op-chest-wrap')) { t0 = performance.now(); down = true; this.hideHint(root); } }, true);
+      const up = () => {
+        if (!down) return; down = false;
+        const dt = performance.now() - t0;
+        setTimeout(() => { const o = BR.Openings && BR.Openings.current; if (o && !o.closed && o.root === root && o.state === 'ready' && dt < 900) this.hint(null, 'Keep holding until the ring fills.', 2400); }, 140);
+      };
+      root.addEventListener('pointerup', up, true); root.addEventListener('pointercancel', up, true);
     },
     /** Called by the router when a tab opens. Waits a beat so the screen has settled. */
     onScreen(id) {

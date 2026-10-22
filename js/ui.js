@@ -175,9 +175,10 @@
   /** A selector that finds the same control again after its screen re-rendered (Equip redraws the grid): data attributes first. */
   const keyOf = (el) => {
     if (!el || !el.getAttribute) return '';
-    for (const a of ['data-uid', 'data-locked', 'data-tier', 'data-trophy', 'data-chest', 'data-tab', 'data-type', 'data-rar', 'data-act', 'data-boost', 'id']) {
+    const tag = el.tagName.toLowerCase();
+    for (const a of ['data-equip', 'data-uid', 'data-locked', 'data-tier', 'data-trophy', 'data-chest', 'data-tab', 'data-type', 'data-rar', 'data-act', 'data-boost', 'id']) {
       const v = el.getAttribute(a);
-      if (v) return a === 'id' ? '#' + v : `[${a}="${v}"]` + (a === 'data-chest' && el.dataset.act ? `[data-act="${el.dataset.act}"]` : '');
+      if (v) return a === 'id' ? '#' + v : `${tag}[${a}="${v}"]` + (a === 'data-chest' && el.dataset.act ? `[data-act="${el.dataset.act}"]` : '');
     }
     return '';
   };
@@ -301,8 +302,17 @@
   /* ---------- screens + tab router ---------- */
   const TAB_ORDER = ['shop', 'collection', 'home', 'missions', 'profile'];
   const TAB_ICON = { shop: 'shop', collection: 'collection', home: 'home', missions: 'missions', profile: 'profile' };
-  const LEAVE_MS = 170;   // the screen being left fades out while the new one fades in: no frame of bare background in between
-  const hideScreen = (el) => { el.classList.remove('leaving'); el.inert = false; };
+  const hideScreen = (el) => { el._leaveTok = null; el.classList.remove('leaving'); el.inert = false; };
+  /** The screen being left fades out under the new one and is hidden when that fade has really finished on screen (animationend), not
+      after a timer: a slow frame (a long render) must never remove it before the new screen has been seen, which was a blank frame. */
+  const leaveScreen = (el) => {
+    const tok = {}; el._leaveTok = tok;
+    el.classList.add('leaving'); el.inert = true;
+    const fin = () => { if (el._leaveTok !== tok) return; el.removeEventListener('animationend', onEnd); clearTimeout(el._leave); hideScreen(el); };
+    const onEnd = (e) => { if (e.target === el && e.animationName === 'scrOut') fin(); };
+    el.addEventListener('animationend', onEnd);
+    el._leave = setTimeout(fin, 1600);   // an animation that is paused (a sheet opened on top) or never starts cannot leave a screen stuck
+  };
   BR.Router = {
     screens: {}, current: null, busy: 0, _arrive: null,
     register(id, obj) { this.screens[id] = obj; obj.el = $('s-' + id); },
@@ -356,7 +366,7 @@
         el.classList.remove('on', 'from-left', 'from-right');
         clearTimeout(el._leave);
         if (quick || !prev.render) hideScreen(el);
-        else { el.classList.add('leaving'); el.inert = true; el._leave = setTimeout(() => hideScreen(el), LEAVE_MS); }   // pointer-events are off and the screen is inert while it fades
+        else leaveScreen(el);   // pointer-events are off and the screen is inert while it fades
         // a tab that is not showing keeps no content (every visit renders it again), so its nodes and memory are freed
         if (prev.render) { clearTimeout(el._purge); el._purge = setTimeout(() => { if (!el.classList.contains('on') && !el.classList.contains('leaving')) el.textContent = ''; }, 800); }
         if (prev.onHide) prev.onHide();
