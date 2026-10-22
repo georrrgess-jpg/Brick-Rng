@@ -18,3 +18,6 @@ html.reduced .ch-glow, html.reduced .ch-ico { animation: none; }
 .coach-hint .tb-ico { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); } .coach-hint .tb-ico svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .coach-hint p { flex: 1; min-width: 0; font: 700 calc(14px * var(--ts))/1.25 var(--f-ui); color: #efe7ff; }
 .coach-hint .tb-x { pointer-events: auto; flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; } .coach-hint .tb-x svg { width: 18px; height: 18px; fill: none; stroke: #efe7ff; stroke-width: 2.6; stroke-linecap: round; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .sheet.coach .coach-list { gap: 6px; } .sheet.coach .coach-list li { padding: 6px 10px; font-size: calc(14px * var(--ts)); }
+}
