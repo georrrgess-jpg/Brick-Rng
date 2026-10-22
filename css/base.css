@@ -267,3 +267,6 @@ html.large-text .scroll, html.large-text .sheet-body { zoom: 1.14; }
 #splash .sp-bar u { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--grad-hot, #ff3d8b); animation: spSlide 1s ease-in-out infinite; }
 @keyframes spShow { to { opacity: 1; } } @keyframes spSlide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
 body.ready #splash { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* a menu nobody has touched for 20 seconds holds still; the first touch wakes it */
+html.idle .bg, html.idle .bg *, html.idle .bg *::before, html.idle .bg *::after, html.idle #screens *, html.idle #screens *::before, html.idle #screens *::after, html.idle .tabbar * { animation-play-state: paused !important; }

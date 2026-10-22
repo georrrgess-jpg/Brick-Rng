@@ -237,7 +237,6 @@
       setTimeout(() => BR.App.startRun({ mode, boosts: chosen }), 250);
     });
     refresh();
-    if (BR.Coach) BR.Coach.show('boosts');
   };
 
   const live0 = (odds) => { const l = odds.filter((r) => r.pct > 0); if (!l.length) return 'Complete'; const a = l[0], b = l[l.length - 1]; if (a === b) return `${a.rarity.name} 100%`; return `${a.rarity.name} ${Math.round(a.pct)}% · ${b.rarity.name} ${Math.round(b.pct)}%`; };

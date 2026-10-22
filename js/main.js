@@ -113,8 +113,16 @@
       window.addEventListener('unhandledrejection', (e) => recover(e && e.reason && (e.reason.message || e.reason)));
     },
 
+    /** Menus stop animating after 20 seconds without a touch (saves battery); any touch brings them back. */
+    watchIdle() {
+      let t = 0;
+      const wake = () => { clearTimeout(t); document.documentElement.classList.remove('idle'); t = setTimeout(() => { if (BR.Router.current !== 'run') document.documentElement.classList.add('idle'); }, 20000); };
+      ['pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach((ev) => window.addEventListener(ev, wake, { passive: true, capture: true }));
+      wake();
+    },
+
     bindGlobal() {
-      this.guardErrors();
+      this.guardErrors(); this.watchIdle();
       // first touch unlocks audio
       // (the browser only lets sound start after a tap, so the menu music starts on the first one)
       ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { BR.audioUnlocked = true; BR.audio.unlock(); if (BR.Router.current !== 'run' && BR.Music) BR.Music.start('menu'); }, { once: true, passive: true }));
