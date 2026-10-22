@@ -32,6 +32,9 @@
       seq: 0, opened: 0, passTier: 0, passClaimed: 0,
       missions: { day: '', list: [], rerolls: 0, week: '', weekly: null },
       trophies: {},
+      streak: { ring: 0, weeks: 0, last: '', shield: 1, best: 0 },   // the daily ring (js/retention.js)
+      goalHist: [],                                                // the last run goals, so they do not repeat
+      records: { maxLines: 0, maxRushes: 0, history: [] },         // extra personal records and the last 20 Rush scores
       stats: { runs: 0, bricks: 0, rushes: 0, bigPops: 0, powerups: 0, lineBlasts: 0, stages: 0, coinsEarned: 0, chests: 0, dailyRuns: 0, bestCombo: 0, maxGroup: 0, defused: 0 },
     },
   });

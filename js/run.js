@@ -89,15 +89,15 @@
       if (mode === 'daily') { st.daily = { day: BR.dayKey(), score: 0, stage: 0 }; BR.Storage.save(); }
       const tutorial = !st.seenTutorial && mode === 'rush';
       const seed = mode === 'daily' ? BR.dailySeed('d' + BR.dayKey()) : undefined;
-      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial, waitFirstPop: tutorial });
+      const engine = new BR.Engine({ mode, seed, boosts, startHammer: tutorial, waitFirstPop: tutorial, gentle: tutorial });
       BR.Storage.clearRun();
-      return this.begin(engine, { tutorial });
+      return this.begin(engine, { tutorial, goal: mode === 'rush' ? BR.Goals.pick() : null });
     },
     resume() {
       const snap = BR.Storage.loadRun();
       if (!snap) return;
       const engine = new BR.Engine({ mode: snap.mode, seed: snap.seed, boosts: snap.boosts || {}, snapshot: snap });
-      return this.begin(engine, { resumed: true });
+      return this.begin(engine, { resumed: true, goal: snap.goal || null });
     },
 
     async begin(engine, o = {}) {
@@ -105,6 +105,7 @@
       this.engine = engine; this.mode = engine.mode; this.boosts = engine.boosts;
       this.clock = false; this.busy = true; this.paused = false; this.modal = false; this.over = false; this.leaving = false;
       this.armed = null; this.buffered = null; this.popsThisRun = 0; this.tutorial = !!o.tutorial; this.warned = false; this.hb = 0;
+      this.goal = o.goal || null; this.renderGoal();
       this.el.classList.toggle('chill', engine.chill);
       this.el.classList.remove('rushing', 'sparking'); $('lastSpark').classList.remove('on');
       if (this._tipDone) this._tipDone();
@@ -136,7 +137,22 @@
       this.saveSnap();
     },
 
-    saveSnap() { if (this.engine && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(this.engine.snapshot()); },
+    saveSnap() { if (this.engine && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(Object.assign(this.engine.snapshot(), { goal: this.goal })); },
+
+    /** The run goal sits in the message band when nothing more urgent is showing. */
+    renderGoal() {
+      const g = this.goal, el = $('goalLine');
+      el.innerHTML = g ? `<span class="gl-ico">${g.done ? BR.icon('check') : BR.icon('flag')}</span><span class="gl-txt">${g.done ? 'Goal reached' : 'Goal'}: <b>${BR.esc(g.text)}</b></span><span class="gl-rw">+${g.reward}</span>` : '';
+      el.classList.toggle('show', !!g); el.classList.toggle('done', !!(g && g.done));
+      this.band();
+    },
+    /** After every action: is the run goal met? Pays at the end of the run, celebrates now. */
+    checkGoal() {
+      const g = this.goal;
+      if (!g || g.done || !BR.Goals.met(g, this.engine.summary())) return;
+      g.done = true; this.renderGoal();
+      BR.audio.boosterGain(); BR.haptic('win'); this.callout(`GOAL! +${g.reward} Coins`, '#7ee8ff');
+    },
 
     /* ===================================================================== per-frame loop */
     frame(now) {
@@ -359,7 +375,7 @@
     /** The message band shows one thing at a time: Last Spark, then a power-up being aimed, then a hint, then the combo. */
     band() {
       const b = $('msgBand');
-      const top = $('lastSpark').classList.contains('on') ? 'spark' : $('aimBanner').classList.contains('show') ? 'aim' : $('hint').classList.contains('show') ? 'hint' : $('combo').classList.contains('show') ? 'combo' : '';
+      const top = $('lastSpark').classList.contains('on') ? 'spark' : $('aimBanner').classList.contains('show') ? 'aim' : $('hint').classList.contains('show') ? 'hint' : $('combo').classList.contains('show') ? 'combo' : $('goalLine').classList.contains('show') ? 'goal' : '';
       if (b.dataset.top !== top) b.dataset.top = top;
     },
 
@@ -447,11 +463,12 @@
       this.callout(BR.BOOSTERS[res.type].name.toUpperCase() + '!', PCOL[res.type]);
       const pt = view.pagePoint(res.tap.r, res.tap.c);
       this.fx.flash(PCOL[res.type], 0.28, 380);
-      this.fx.shake($('app'), res.type === 'hammer' ? 13 : 9, 420);
+      this.fx.shake($('boardWrap'), res.type === 'hammer' ? 9 : 6, 380);
       if (res.type === 'hammer') this.fx.explosion(pt.x, pt.y, '#ffb347', 1.1);
       else if (res.type === 'beam') { this.beam('row', res.tap.r, '#7ae8ff'); this.beam('col', res.tap.c, '#7ae8ff'); }
       else { this.fx.ring(pt.x, pt.y, '#d27aff', 160, 0.7, 6); res.removed.slice(0, 14).forEach((q, i) => { const t = view.pagePoint(q.r, q.c); setTimeout(() => this.fx.bolt(pt.x, pt.y, t.x, t.y, BR.PALETTE[q.color].hi), i * 22); }); }
       if (res.timeGain) { this.fuseFloat(`+${res.timeGain.toFixed(1)}s`, '#7ee8ff'); }
+      this.checkGoal();
     },
 
     /* ===================================================================== one turn */
@@ -511,10 +528,11 @@
 
       const pt = view.pagePoint(sr, sc);
       if (n >= 5) this.fx.ring(pt.x, pt.y, '#ffffff', 60 + n * 9, 0.5, 4);
-      if (n >= 6) this.fx.shake($('app'), Math.min(11, 2 + n * 0.7), 300 + Math.min(300, n * 20));
+      if (n >= 6) this.fx.shake($('boardWrap'), Math.min(7, 1.5 + n * 0.45), 260 + Math.min(240, n * 16));   // the board shakes, not the whole screen, and never much
       if (n >= 10) this.fx.flash('#ffffff', Math.min(0.28, n * 0.014), 280);
       if (p.line) {
-        BR.audio.line(); BR.haptic('boom'); this.fx.flash('#9ff0ff', 0.3, 520); this.fx.shake($('app'), 12, 480);
+        BR.audio.line(); BR.haptic('boom'); this.fx.flash('#9ff0ff', 0.3, 520); this.fx.shake($('boardWrap'), 7, 420);
+        if (!BR.reducedMotion) $('board').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.02)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 170, easing: 'ease-out' });   // a small camera punch
         if (p.lineH) this.beam('row', p.r); if (p.lineV) this.beam('col', p.c);
       }
       if (res.shuffle.length) setTimeout(() => this.callout('Reshuffle', '#c4b5ff'), 700);
@@ -530,6 +548,7 @@
         else if (this.el.classList.contains('sparking') && e.spark <= 0) this.sparkEnd(!!res.sparkSave);
         if (res.shuffleRefund) this.fuseFloat(`+${res.shuffleRefund}s`, '#c4b5ff');
       }
+      this.checkGoal();
       if (BR.Skins.onEvent) BR.Skins.onEvent('pop', { res, view, run: this });
       if (p.line && BR.Skins.onEvent) BR.Skins.onEvent('line', { res, view, run: this });
 
@@ -747,10 +766,15 @@
       const xp = P.addXp(rows.reduce((a, r) => a + r.xp, 0));
       P.trackRun(sum, mode);
       const missions = BR.Missions.applyRun(sum, mode);
+      const goal = this.goal && mode === 'rush' ? { text: this.goal.text, reward: this.goal.reward, done: !!(this.goal.done || BR.Goals.met(this.goal, sum)) } : null;
+      if (goal && goal.done) P.earn(goal.reward);
+      this.goal = null;
+      const streak = BR.Streak.advance();
+      BR.Records.update(sum, mode);
       const trophies = P.checkTrophies();
       BR.Storage.save();
       void e; void reason; void silent;
-      return { coins, isBest, rows, xp, missions, trophies, daily, prevBest, par };
+      return { coins, isBest, rows, xp, missions, trophies, daily, prevBest, par, goal, streak };
     },
 
     showResults(sum, r, reason) {
@@ -763,7 +787,10 @@
       const trophies = r.trophies.map((t) => `<div class="lvl-up rev"><span class="lu-n">${BR.icon('trophy')}</span><span class="lu-t"><b>${t.name}</b><small>Trophy earned · +${t.coins} Coins</small></span></div>`).join('');
       // what the run unlocked sits right under the score, so it is never below the fold behind the buttons
       const banners = r.xp.ups.map((u) => `<div class="res-banner lvl rev"><span>${BR.icon('star')}</span><b>Level ${u.level}!</b><small>${u.paid ? '+' + u.paid + ' Coins' : BR.rewardLabel(u.reward)}</small></div>`).join('')
-        + r.trophies.map((t) => `<div class="res-banner trophy rev"><span>${BR.icon('trophy')}</span><b>Trophy: ${BR.esc(t.name)}</b><small>+${t.coins} Coins</small></div>`).join('');
+        + r.trophies.map((t) => `<div class="res-banner trophy rev"><span>${BR.icon('trophy')}</span><b>Trophy: ${BR.esc(t.name)}</b><small>+${t.coins} Coins</small></div>`).join('')
+        + (r.streak ? `<div class="res-banner streak rev"><span>${BR.icon('sun')}</span><b>${r.streak.ring >= 7 ? 'Streak: week complete!' : `Streak: day ${r.streak.ring}`}</b><small>${[r.streak.coins ? '+' + r.streak.coins + ' Coins' : '', r.streak.chest ? 'a Golden Chest' : '', r.streak.shielded ? 'a missed day was forgiven' : '', r.streak.broken ? 'a new week starts' : ''].filter(Boolean).join(' and ') || 'Come back tomorrow'}</small></div>` : '');
+      const goalLine = r.goal ? `<div class="res-goal rev ${r.goal.done ? 'done' : ''}"><span>${BR.icon(r.goal.done ? 'check' : 'flag')}</span><b>${r.goal.done ? 'Goal reached' : 'Goal missed'}: ${BR.esc(r.goal.text)}</b>${r.goal.done ? `<em>+${r.goal.reward} Coins</em>` : ''}</div>` : '';
+      const nextLine = BR.nextGoal({ stage: sum.stage });
       let chase = '';
       if (r.isBest && sum.score > 0) chase = `<div class="new-best rev">New best</div>${r.prevBest > 0 ? `<div class="res-gap rev good">${fmt(sum.score - r.prevBest)} more than your old best</div>` : ''}`;
       else if (r.prevBest > 0) {
@@ -776,11 +803,11 @@
           <div class="res-title out rev">${titles[reason] || 'RUN OVER'}</div>
           <div class="res-sub rev">${mode === 'daily' ? 'Daily Rush' : mode === 'chill' ? 'Chill' : 'Rush'} · Stage ${sum.stage} · ${Math.floor(sum.time / 60)}:${String(Math.floor(sum.time % 60)).padStart(2, '0')}</div>
           <div class="res-score rev"><small>Score</small><b id="resScore">0</b></div>
-          ${chase}${banners}
+          ${chase}${banners}${goalLine}${nextLine ? `<div class="res-next rev">Next: ${BR.esc(nextLine)}</div>` : ''}
           <div class="res-chips rev"><div class="res-chip"><b>${sum.stagesCleared}</b><small>Stages cleared</small></div><div class="res-chip"><b>${sum.biggest}</b><small>Biggest pop</small></div><div class="res-chip"><b>${sum.rushes}</b><small>Rush Modes</small></div></div>
           <div class="res-card rev"><h3>Coins <span class="coins-total">${BR.coin()}<b id="resCoins">0</b></span></h3>
             <div class="res-row"><span>Points</span><b>+${r.coins.points}</b></div><div class="res-row"><span>Stages cleared</span><b>+${r.coins.stages}</b></div>
-            ${r.coins.daily ? `<div class="res-row"><span>Daily Rush</span><b>+${r.coins.daily}</b></div>` : ''}${r.coins.first ? `<div class="res-row"><span>First run of the day</span><b>+${r.coins.first}</b></div>` : ''}</div>
+            ${r.coins.daily ? `<div class="res-row"><span>Daily Rush</span><b>+${r.coins.daily}</b></div>` : ''}${r.coins.first ? `<div class="res-row"><span>First run of the day</span><b>+${r.coins.first}</b></div>` : ''}${r.goal && r.goal.done ? `<div class="res-row"><span>Run goal</span><b>+${r.goal.reward}</b></div>` : ''}</div>
           ${mis ? `<div class="res-card rev"><h3>Missions</h3>${mis}</div>` : ''}
           <div class="res-card rev"><h3>XP <span class="muted num">+${fmt(r.rows.reduce((a, x) => a + x.xp, 0))}</span></h3>
             ${r.rows.map((x) => `<div class="res-row"><span>${BR.esc(x.label)}</span><b>+${fmt(x.xp)}</b></div>`).join('')}
@@ -804,7 +831,7 @@
       const step = BR.reducedMotion ? 0 : 140;
       revs.forEach((n, i) => setTimeout(() => n.classList.add('in'), 250 + i * step));
       setTimeout(() => { BR.countTo($('resScore'), sum.score, BR.reducedMotion ? 10 : 1300, 0); BR.audio.xpTick(0); }, 400);
-      setTimeout(() => { BR.countTo($('resCoins'), r.coins.total, BR.reducedMotion ? 10 : 1100, 0); for (let i = 0; i < 6 && !BR.reducedMotion; i++) setTimeout(() => BR.audio.coin(i), i * 120); }, 900 + step * 3);
+      setTimeout(() => { BR.countTo($('resCoins'), r.coins.total + (r.goal && r.goal.done ? r.goal.reward : 0), BR.reducedMotion ? 10 : 1100, 0); for (let i = 0; i < 6 && !BR.reducedMotion; i++) setTimeout(() => BR.audio.coin(i), i * 120); }, 900 + step * 3);
       setTimeout(() => node.querySelectorAll('.bar i[data-to]').forEach((b) => { b.style.width = b.dataset.to + '%'; }), 1500);
       if (r.isBest && sum.score > 0) setTimeout(() => BR.audio.newBest(), 1000);
       this.animateXp(r.xp, r.xp.ups.length);

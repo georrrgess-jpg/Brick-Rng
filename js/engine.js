@@ -15,6 +15,7 @@
       this.boosts = opts.boosts || {};
       this.startHammer = !!opts.startHammer;
       this.waitFirstPop = !!opts.waitFirstPop;   // the very first run: the fuse does not burn until the player has popped once
+      this.gentle = !!opts.gentle;               // ... and burns 15% slower until stage 2, so the first minute is for learning
       this.reset(opts.snapshot);
     }
 
@@ -50,7 +51,7 @@
 
     /* ---------- queries ---------- */
     get mult() { return (this.chill ? 1 : BR.stageMult(this.stage)) * (this.rush.active ? BR.CFG.rush.mult : 1); }
-    get burn() { return this.chill ? 0 : BR.burnRate(this.stage); }
+    get burn() { return this.chill ? 0 : BR.burnRate(this.stage) * (this.gentle && this.stage < 2 ? 0.85 : 1); }
     stageCleared() { return this.stageScore >= this.goal; }
     outOfMoves() { return this.chill && this.movesLeft <= 0 && !this.stageCleared(); }
     bestGroup() { return this.board.bestGroup(null); }

@@ -70,4 +70,14 @@ for (let seed = 1; seed < 30; seed++) {
   e.fuse = 1.2; const r2 = new BR.Engine({ seed: 6, mode: 'rush', snapshot: e.snapshot() }); assert.strictEqual(r2.fuse, BR.CFG.fuse.resumeGrace, 'a nearly empty fuse resumes with a short grace');
   e.rush.meter = 33; const r3 = new BR.Engine({ seed: 6, mode: 'rush', boosts: { rushStart: true }, snapshot: e.snapshot() }); assert.strictEqual(r3.rush.meter, 33, 'Rush Start does not top the meter up again on resume');
 }
+// ---- Update 4: the first run is kind: the fuse waits for the first pop and burns 15% slower until stage 2
+{
+  const e = new BR.Engine({ seed: 11, mode: 'rush', waitFirstPop: true, gentle: true });
+  const f0 = e.fuse; e.tick(5); assert.strictEqual(e.fuse, f0, 'the fuse waits for the first pop');
+  let tap = null; for (let r = 0; r < 8 && !tap; r++) for (let c = 0; c < 8 && !tap; c++) { const p = e.plan(r, c); if (p) tap = p; }
+  e.commit(tap); const f1 = e.fuse; e.tick(2);
+  const plain = new BR.Engine({ seed: 11, mode: 'rush' }); plain.fuse = f1; const fp = plain.fuse; plain.tick(2);
+  assert(f1 - e.fuse < fp - plain.fuse - 1e-9, 'a gentle first run burns slower');
+  assert(Math.abs((f1 - e.fuse) / (fp - plain.fuse) - 0.85) < 0.02, 'about 85%');
+}
 console.log('engine rules ok');

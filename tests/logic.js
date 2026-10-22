@@ -2,7 +2,7 @@
 global.window = global;
 const mem = {};
 global.localStorage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } };
-for (const f of ['rng', 'config', 'boosters', 'items', 'chests', 'storage', 'pass', 'progress', 'missions']) require('../js/' + f + '.js');
+for (const f of ['rng', 'config', 'boosters', 'items', 'chests', 'storage', 'pass', 'progress', 'missions', 'retention']) require('../js/' + f + '.js');
 const BR = global.BR;
 const assert = require('assert');
 const P = BR.Progress;
@@ -203,5 +203,47 @@ delete require.cache[require.resolve('../js/storage.js')]; require('../js/storag
   assert.strictEqual(P.grant({ kind: 'item', itemId: 'f_candy', shine: 'plain' }), BR.CFG.goldenFallback / 2, 'an owned Pass item pays Coins and says so');
   BR.DROP_ITEMS.filter((i) => BR.rarityById[i.rarity].level >= 3).forEach((i) => { if (!P.owns(i.id)) P.keep({ itemId: i.id, shine: 'plain', seed: 1 }); });
   const c2 = P.cashStranded(); assert.strictEqual(c2, 2 * BR.CFG.goldenFallback, 'Golden stock converts once nothing Epic or better is left'); assert.strictEqual(P.chestCount('golden'), 0);
+}
+
+// ---- Update 4: streak, run goals, records, the next goal
+for (const k of Object.keys(mem)) delete mem[k];
+delete require.cache[require.resolve('../js/storage.js')]; require('../js/storage.js');
+{
+  const P = BR.Progress, pr = BR.Storage.data.profile, S = BR.Streak;
+  assert.strictEqual(BR.dayDiff('2026-10-21', '2026-10-23'), 2); assert.strictEqual(BR.dayDiff('2026-12-31', '2027-01-01'), 1); assert.strictEqual(BR.dayDiff('2026-03-07', '2026-03-09'), 2, 'across a clock change');
+  pr.coins = 0; pr.chests.golden = 0;
+  const day = (n) => BR.dayKey(new Date(2026, 9, 1 + n));      // 2026-10-01 + n
+  // a perfect week: day 3 pays 120, day 7 pays 200 and a Golden Chest
+  let r = S.advance(day(0)); assert.strictEqual(r.ring, 1); assert.strictEqual(r.coins, 0);
+  assert.strictEqual(S.advance(day(0)), null, 'one count per day');
+  S.advance(day(1)); r = S.advance(day(2)); assert.strictEqual(r.ring, 3); assert.strictEqual(r.coins, BR.CFG.streak.day3); assert.strictEqual(pr.coins, 120);
+  S.advance(day(3)); S.advance(day(4)); S.advance(day(5)); r = S.advance(day(6));
+  assert.strictEqual(r.ring, 7); assert.strictEqual(r.coins, BR.CFG.streak.day7Coins); assert.strictEqual(r.chest, 'golden'); assert.strictEqual(pr.coins, 320); assert.strictEqual(P.chestCount('golden'), 1);
+  // the next day starts a new week and refills the shield
+  r = S.advance(day(7)); assert.strictEqual(r.ring, 1); assert.strictEqual(pr.streak.weeks, 1);
+  // one missed day is forgiven, once
+  r = S.advance(day(9)); assert.strictEqual(r.shielded, true); assert.strictEqual(r.ring, 2); assert.strictEqual(pr.streak.shield, 0);
+  // a second missed day in the same week breaks the week, but the finished week stays and nothing is taken away
+  const coinsBefore = pr.coins;
+  r = S.advance(day(11)); assert.strictEqual(r.broken, true); assert.strictEqual(r.ring, 1); assert.strictEqual(pr.streak.weeks, 1); assert.strictEqual(pr.coins, coinsBefore);
+  // status of a ring nobody continued
+  let st = S.status(day(11)); assert.strictEqual(st.ring, 1); assert(st.playedToday);
+  st = S.status(day(15)); assert.strictEqual(st.alive, false); assert.strictEqual(st.ring, 0);
+  // goals: never the same as the last three, harder with level, the stage goal asks for your usual stage
+  pr.level = 1; BR.Storage.data.bestStage.rush = 0;
+  const seenG = []; for (let i = 0; i < 12; i++) { const g = BR.Goals.pick({ next: Math.random }); seenG.push(g.id); assert(g.reward >= 10 && g.reward <= 20); }
+  for (let i = 3; i < seenG.length; i++) assert(!seenG.slice(i - 3, i).includes(seenG[i]) || new Set(seenG.slice(i - 3, i + 1)).size < 4, 'goals repeat too soon');
+  assert(!seenG.includes('defuse') && !seenG.includes('rush2') && !seenG.includes('big12'), 'a level 1 player gets gentle goals');
+  pr.level = 10; BR.Storage.data.bestStage.rush = 6; pr.goalHist = [];
+  const got = new Set(); for (let i = 0; i < 80; i++) got.add(BR.Goals.pick({ next: Math.random }).id);
+  assert(got.has('stage') && got.has('defuse'), 'a level 10 player can get the harder goals');
+  const g1 = { id: 'stage', target: 7, text: 'Reach stage 7', reward: 20 };
+  assert(!BR.Goals.met(g1, { stage: 6 }) && BR.Goals.met(g1, { stage: 7 }));
+  assert(BR.Goals.met({ id: 'line' }, { lineBlasts: 1 }) && !BR.Goals.met({ id: 'line' }, { lineBlasts: 0 }));
+  // records
+  BR.Records.update({ score: 5000, lineBlasts: 3, rushes: 2 }, 'rush'); BR.Records.update({ score: 9000, lineBlasts: 1, rushes: 1 }, 'rush');
+  const rec = BR.Records.list(); assert.strictEqual(rec.maxLines, 3); assert.deepStrictEqual(rec.history, [5000, 9000]);
+  for (let i = 0; i < 30; i++) BR.Records.update({ score: i, lineBlasts: 0, rushes: 0 }, 'rush'); assert.strictEqual(BR.Records.list().history.length, 20);
+  assert(typeof BR.nextGoal({ stage: 5 }) === 'string');
 }
 console.log('logic tests passed');

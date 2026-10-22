@@ -106,7 +106,7 @@
     }
 
     /** Move a brick with constant-acceleration fall, a tiny rebound and a squash on landing. */
-    _fall(rec, fromR, toR, delay, dir, T = 172) {
+    _fall(rec, fromR, toR, delay, dir, T = 172, calm = false) {
       const d = Math.abs(toR - fromR);
       if (d === 0) return { land: 0, end: 0 };
       const cell = this.cell, x = rec.c * cell;
@@ -114,7 +114,7 @@
       const fall = (this.reduced ? T * 0.6 : T * this.tune.fall) * Math.sqrt(d);
       const total = fall / 0.8;
       const sgn = dir === 'down' ? 1 : -1;
-      const bounce = Math.min(0.11, 0.025 * d + 0.02) * cell;
+      const bounce = calm ? 0 : Math.min(0.11, 0.025 * d + 0.02) * cell;
       rec.el.style.transform = `translate3d(${x}px,${y1}px,0)`;
       if (!rec.el.animate) return { land: delay + fall, end: delay + total };
       rec.el.animate([
@@ -123,7 +123,7 @@
         { transform: `translate3d(${x}px,${y1 - sgn * bounce}px,0)`, easing: 'cubic-bezier(0.6,0,0.8,0.4)', offset: 0.9 },
         { transform: `translate3d(${x}px,${y1}px,0)`, offset: 1 },
       ], { duration: total, delay, fill: 'backwards' });
-      if (!this.reduced) {
+      if (!this.reduced && !calm) {
         const s = Math.min(1, 0.45 + d * 0.16);
         rec.face.style.transformOrigin = dir === 'down' ? '50% 100%' : '50% 0%';
         rec.face.animate([
@@ -290,14 +290,15 @@
       const originPt = this.pagePoint(tap.r, tap.c);
       let maxDelay = 0;
       const perBrick = total > 28 ? 3 : total > 14 ? 5 : total > 6 ? 7 : 9;
+      const hitStop = total >= 8 && !this.reduced ? Math.min(70, 40 + total) : 0;   // a big group holds for a beat (the lifted bricks, then the burst) so the hit has weight
       for (const p of res.removed) {
         const rec = this.bricks.get(p.id);
         if (!rec) continue;
         this.bricks.delete(p.id);
         const dist = Math.abs(p.r - tap.r) + Math.abs(p.c - tap.c);
-        const delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop;
+        const delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop + hitStop;
         maxDelay = Math.max(maxDelay, delay);
-        this._pop(rec, delay, p, perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null);
+        this._pop(rec, delay, p, perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null, hitStop > 0);
       }
       await sleep(this.reduced ? 100 : (maxDelay + 90) * this.tune.pop);
       if (!alive()) return false;
@@ -305,16 +306,17 @@
       // 2) gravity + refill
       let land = 0, end = 0, landedCount = 0;
       const colDelay = (c) => (this.reduced ? 0 : c * 7);
+      const calm = res.moves.length + res.spawns.length > 24;   // a big refill drops without the bounce, so the next move is readable sooner
       for (const m of res.moves) {
         const rec = this.bricks.get(m.id);
         if (!rec) continue;
-        const t = this._fall(rec, rec.r, m.toR, colDelay(m.c), res.dir);
+        const t = this._fall(rec, rec.r, m.toR, colDelay(m.c), res.dir, 172, calm);
         rec.r = m.toR;
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
       for (const s of res.spawns) {
         const rec = this._make({ id: s.id, color: s.color, fb: s.fb || 0 }, s.r, s.c, s.fromR);
-        const t = this._fall(rec, s.fromR, s.r, colDelay(s.c), res.dir);
+        const t = this._fall(rec, s.fromR, s.r, colDelay(s.c), res.dir, 172, calm);
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
       if (landedCount) setTimeout(() => alive() && this.audio.land(Math.min(1, landedCount / 10)), 160);
@@ -327,12 +329,13 @@
       return true;
     }
 
-    _pop(rec, delay, p, shardCount, origin, fuseKind) {
+    _pop(rec, delay, p, shardCount, origin, fuseKind, held) {
       const pal = BR.PALETTE[p.color];
       const sgn = Math.random() < 0.5 ? -1 : 1;
       if (rec.face.animate) {
         const a = rec.face.animate([
-          { transform: 'scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)', offset: 0 },
+          // a big pop starts where the press left the bricks (lifted and bright), holds for the hit-stop, then bursts
+          held ? { transform: 'translateY(-5%) scale(1.045) rotate(0deg)', opacity: 1, filter: 'brightness(1.12) saturate(1.12)', offset: 0 } : { transform: 'scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)', offset: 0 },
           { transform: `scale(1.24) rotate(${sgn * 6}deg)`, opacity: 1, filter: 'brightness(1.7)', offset: 0.34, easing: 'ease-in' },
           { transform: `scale(0.05) rotate(${sgn * 22}deg)`, opacity: 0, filter: 'brightness(2)', offset: 1 },
         ], { duration: this.reduced ? 160 : 270, delay, fill: 'both', easing: 'ease-out' });
@@ -343,7 +346,7 @@
       setTimeout(() => {
         const pt = this.pagePoint(p.r, p.c);
         const sk = BR.Skins;
-        if (fuseKind === 'burst') { this.fx.explosion(pt.x, pt.y, '#ff4d6d', 0.9); this.fx.flash('#ff4d6d', 0.25, 400); this.fx.shake(document.getElementById('app'), 9, 380); BR.haptic('boom'); }
+        if (fuseKind === 'burst') { this.fx.explosion(pt.x, pt.y, '#ff4d6d', 0.9); this.fx.flash('#ff4d6d', 0.25, 400); this.fx.shake(document.getElementById('boardWrap'), 7, 380); BR.haptic('boom'); }
         else if (fuseKind === 'defuse') { this.fx.sparks(pt.x, pt.y, '#3ddc97', 18, 1.4, 0.7); this.fx.ring(pt.x, pt.y, '#3ddc97', 80, 0.5, 4); }
         this.fx.pop(sk.pop, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.popShine);
         if (sk.pop === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);

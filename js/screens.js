@@ -130,6 +130,17 @@
       const resume = BR.Storage.loadRun();
       const owned = P.openableChests();
       const logo = ['P', 'O', 'P'].map((ch, i) => `<div class="brick lb" data-c="${[0, 3, 1][i]}" style="--i:${i}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b><span class="ltr">${ch}</span></div></div>`).join('');
+      const sk = BR.Streak.status();
+      const dots = Array.from({ length: BR.Streak.LEN }, (_, i) => {
+        const day = i + 1, lit = day <= sk.ring, today = sk.playedToday && day === sk.ring;
+        const prize = day === 3 ? `<small>${BR.coin()}${BR.CFG.streak.day3}</small>` : day === 7 ? `<small>${BR.icon('gift')}</small>` : '<small>&nbsp;</small>';
+        return `<span class="sk-day ${lit ? 'on' : ''} ${today ? 'today' : ''} ${day === 3 || day === 7 ? 'prize' : ''}"><i>${lit ? BR.icon('check') : day}</i>${prize}</span>`;
+      }).join('');
+      const skNote = sk.playedToday ? (sk.ring >= BR.Streak.LEN ? 'Week complete! A new one starts tomorrow.' : `Day ${sk.ring} done. Come back tomorrow for day ${sk.ring + 1}.`)
+        : !sk.alive ? 'Play today to start a new week. The weeks you finished stay.'
+        : sk.ring === 0 ? 'Finish a run today to light the first day.'
+        : `Finish a run today for day ${sk.ring + 1}${sk.ring + 1 === 3 ? `: ${BR.CFG.streak.day3} Coins` : sk.ring + 1 === 7 ? `: ${BR.CFG.streak.day7Coins} Coins and a Golden Chest` : ''}.`;
+      const streakCard = `<article class="card streak-card stg"><div class="pc-head"><span class="pc-title display">Daily streak</span><span class="tag ${sk.playedToday ? '' : 'gold'}">${sk.playedToday ? BR.icon('check') + ' Today done' : 'Play today'}</span></div><div class="sk-row" role="img" aria-label="Streak: ${sk.ring} of 7 days">${dots}</div><p class="sk-note">${skNote}${sk.shield && sk.ring > 0 && sk.alive ? ' One missed day is forgiven.' : ''}</p></article>`;
       this.el.innerHTML = `${topbar()}<div class="scroll">
         <div class="logo stg" aria-label="Pop Rush">
           <div class="logo-pop" data-skin-host>${logo}</div>
@@ -162,6 +173,7 @@
             ${chillOpen ? `<span class="tag">${st.best.chill > 0 ? 'Best ' + fmt(st.best.chill) : 'New'}</span>` : `<span class="lock-badge">${BR.icon('lock')} Level ${BR.CFG.chill.unlockLevel}</span>`}
           </button>
         </div>
+        ${streakCard}
         ${owned ? `<button class="banner stg" data-act="go-shop"><span class="bn-ico">${BR.icon('gift')}</span><span class="bn-txt"><b>You have ${owned} chest${owned > 1 ? 's' : ''} to open</b><small>Free to open. Tap to see.</small></span><span class="bn-go">${BR.icon('arrow')}</span></button>` : ''}
         <button class="card pass-card stg" data-act="go-pass">
           <div class="pc-head"><span class="pc-title display">Pop Pass</span><span class="tag">Level ${P.level}</span></div>
@@ -474,6 +486,15 @@
     },
   };
 
+  /** Records: the numbers worth beating, and the last 20 Rush runs so progress shows even when no run beat the best. */
+  function recordsCard() {
+    const r = BR.Records.list();
+    const stat = (label, val) => `<div class="rec"><b class="num">${val}</b><small>${label}</small></div>`;
+    const h = r.history, top = Math.max(1, ...h, r.bestScore);
+    const bars = h.length >= 2 ? `<div class="rec-chart" role="img" aria-label="Your last ${h.length} Rush scores">${h.map((v) => `<i class="${v >= r.bestScore && v > 0 ? 'best' : ''}" style="height:${Math.max(6, Math.round((v / top) * 100))}%"></i>`).join('')}</div><small class="rec-cap">Your last ${h.length} Rush runs</small>` : '<small class="rec-cap">Play a few Rush runs to see your progress here.</small>';
+    return `<article class="card card-pad stg"><div class="sec-title">Records</div><div class="rec-grid">${stat('Best score', fmt(r.bestScore))}${stat('Best stage', r.bestStage || '-')}${stat('Biggest pop', r.biggestPop || '-')}${stat('Best combo', r.bestCombo ? 'x' + r.bestCombo : '-')}${stat('Line Blasts in a run', r.maxLines || '-')}${stat('Rush Modes in a run', r.maxRushes || '-')}</div>${bars}</article>`;
+  }
+
   /* ------------------------------------------------------------------ Profile */
   const Profile = {
     render() {
@@ -488,6 +509,7 @@
         <article class="card prof-hero stg"><div class="ph-ring">${ringSVG(P.xp / P.need, 96, 8)}<b class="display">${P.level}</b></div>
           <div class="ph-info"><label class="ph-name"><span class="sr-only">Your name</span><input class="display" type="text" maxlength="14" value="${esc(pr.name || 'Player')}" data-name autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Your name"></label><small>Level ${P.level}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.need - P.xp)} XP to level ${P.level + 1}</small></div></article>
         <div class="stats-grid stg">${stat('Best Rush', fmt(st.best.rush))}${stat('Best stage', st.bestStage.rush || '-')}${stat('Best Daily', fmt(st.best.daily))}${stat('Runs played', fmt(st.runs))}${stat('Bricks popped', fmt(pr.stats.bricks))}${stat('Biggest pop', pr.stats.maxGroup || '-')}</div>
+        ${recordsCard()}
         <article class="card card-pad stg"><div class="sec-title">Trophies <small>${earned.length}/${BR.TROPHIES.length}</small></div><div class="badges">${earned.length ? earned.slice(-6).map((t) => `<span class="badge-ico" title="${t.name}">${BR.icon('trophy')}</span>`).join('') : '<small class="muted">Finish runs to earn trophies.</small>'}</div></article>
         ${installRow}
         <article class="card card-pad stg"><div class="sec-title">Settings</div>
