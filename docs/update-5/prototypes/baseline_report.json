@@ -1,0 +1,100 @@
+{
+ "classic": {
+  "normal": {
+   "min": 27.6,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 3.5,
+   "pair": "Amethyst/Sapphire"
+  },
+  "protan": {
+   "min": 4.2,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "f_galaxy": {
+  "normal": {
+   "min": 22.7,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 1.7,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 1.3,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "f_phoenix": {
+  "normal": {
+   "min": 23,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 5.2,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 1,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "f_neon": {
+  "normal": {
+   "min": 14.9,
+   "pair": "Amethyst/Sapphire"
+  },
+  "deutan": {
+   "min": 1.8,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 2.9,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "f_glass": {
+  "normal": {
+   "min": 18.3,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 2.6,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 2.6,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "f_heart": {
+  "normal": {
+   "min": 18.5,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 1.7,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 3.3,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "f_lantern": {
+  "normal": {
+   "min": 14.8,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 2.6,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 0.9,
+   "pair": "Sapphire/Amethyst"
+  }
+ }
+}

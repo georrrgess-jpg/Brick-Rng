@@ -1,0 +1,30 @@
+{
+ "idle": {
+  "normal": {
+   "min": 20,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 3.5,
+   "pair": "Emerald/Ruby"
+  },
+  "protan": {
+   "min": 1,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "rush": {
+  "normal": {
+   "min": 14.1,
+   "pair": "Sapphire/Amethyst"
+  },
+  "deutan": {
+   "min": 0.6,
+   "pair": "Amethyst/Sapphire"
+  },
+  "protan": {
+   "min": 0.3,
+   "pair": "Sapphire/Amethyst"
+  }
+ }
+}

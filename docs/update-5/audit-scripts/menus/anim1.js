@@ -1,0 +1,30 @@
+// Tab switches, segmented tabs, sheets opening and closing.
+const { launch, returning, wait } = require('./u5lib');
+const { capture } = require('./frames');
+(async () => {
+  const { browser, page, errors } = await launch({ width: 393, height: 852, dsf: 1 });
+  await returning(page, { chests: { brick: 2, golden: 1 } });
+  await wait(page, 1200);
+  const go = (s) => `(() => { const t = Date.now(); BR.Router.go('${s}'); return t; })`;
+  const log = (n, r) => console.log(n, r.n, 'frames', JSON.stringify(r.gaps));
+  log('tab-home-shop', await capture(page, 'tab-home-shop', eval(go('shop')), { ms: 960, every: 60, cols: 6, scale: 0.4 }));
+  log('tab-shop-col', await capture(page, 'tab-shop-col', eval(go('collection')), { ms: 960, every: 60, cols: 6, scale: 0.4 }));
+  log('tab-col-home', await capture(page, 'tab-col-home', eval(go('home')), { ms: 960, every: 60, cols: 6, scale: 0.4 }));
+  await page.evaluate(() => BR.Router.go('collection')); await wait(page, 1500);
+  log('seg-skins-pops', await capture(page, 'seg-skins-pops', () => { const t = Date.now(); document.querySelector('#colSeg [data-type="pop"]').click(); return t; }, { ms: 600, every: 50, cols: 7, scale: 0.4, clip: { x: 0, y: 60, width: 393, height: 520 } }));
+  log('chip-epic', await capture(page, 'chip-epic', () => { const t = Date.now(); document.querySelector('.chip-btn[data-rar="epic"]').click(); return t; }, { ms: 500, every: 50, cols: 6, scale: 0.4, clip: { x: 0, y: 60, width: 393, height: 520 } }));
+  await page.evaluate(() => { BR.Router.screens.missions.tab = 'daily'; BR.Router.go('missions'); }); await wait(page, 1500);
+  log('seg-daily-pass', await capture(page, 'seg-daily-pass', () => { const t = Date.now(); document.querySelector('#misSeg [data-tab="pass"]').click(); return t; }, { ms: 960, every: 60, cols: 6, scale: 0.4 }));
+  await page.evaluate(() => BR.Router.go('home')); await wait(page, 1500);
+  log('sheet-coins-open', await capture(page, 'sheet-coins-open', () => { const t = Date.now(); document.querySelector('.coin-btn').click(); return t; }, { ms: 720, every: 60, cols: 7, scale: 0.4 }));
+  log('sheet-coins-close', await capture(page, 'sheet-coins-close', () => { const t = Date.now(); document.querySelector('.sheet.on [data-close]').click(); return t; }, { ms: 600, every: 50, cols: 7, scale: 0.4 }));
+  await page.evaluate(() => BR.Router.go('collection')); await wait(page, 1500);
+  log('sheet-item-open', await capture(page, 'sheet-item-open', () => { const t = Date.now(); document.querySelector('.icard[data-uid]:not([data-uid="default"])').click(); return t; }, { ms: 1200, every: 80, cols: 8, scale: 0.4 }));
+  log('sheet-item-equip', await capture(page, 'sheet-item-equip', () => { const t = Date.now(); [...document.querySelectorAll('.sheet.on .btn')].find((b) => b.textContent.trim() === 'Equip').click(); return t; }, { ms: 900, every: 60, cols: 8, scale: 0.4 }));
+  await page.evaluate(() => BR.Router.go('home')); await wait(page, 1500);
+  log('coach-open', await capture(page, 'coach-open', () => { const t = Date.now(); BR.Coach.show('pass', { force: true }); return t; }, { ms: 720, every: 60, cols: 7, scale: 0.4 }));
+  log('coach-close', await capture(page, 'coach-close', () => { const t = Date.now(); document.querySelector('.sheet.on .btn').click(); return t; }, { ms: 600, every: 50, cols: 7, scale: 0.4 }));
+  log('toast', await capture(page, 'toast', () => { const t = Date.now(); BR.toast('Marble equipped', 'good'); return t; }, { ms: 3000, every: 100, cols: 8, scale: 0.4, clip: { x: 0, y: 0, width: 393, height: 200 } }));
+  console.log('errors', JSON.stringify(errors));
+  await browser.close();
+})();

@@ -1,0 +1,52 @@
+/* PROTOTYPE (scratch only): Series 4 Pop Pass Mythic skin "Moonglass".
+   Idle: each brick is a pane of leaded glass in its colour with a frosted sigil (the shape-hint shape) etched in the middle; a faint
+   moon sits behind the whole board and only shows in the gaps between bricks.
+   Rush (.mg-full on the run): the moon comes up full behind the board. Every pane shows its own slice of the same moon (one radial
+   gradient per brick, positioned from the brick's row and column: --r / --c), so the whole board reads as one leaded window with the
+   full moon behind it. Static paint, no blend mode, nothing animates on the bricks. */
+.skin-moonglass::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 4%;
+  background:
+    radial-gradient(circle 3.42em at 4em 4em, rgba(250, 252, 255, 1) 0, rgba(222, 232, 255, 0.95) 92%, rgba(255, 255, 255, 1) 96%, rgba(150, 175, 255, 0.0) 100%),
+    radial-gradient(circle 5.2em at 4em 4em, rgba(160, 185, 255, 0.35), rgba(160, 185, 255, 0) 70%);
+  opacity: 0.18; transition: opacity 0.6s;
+}
+.run.mg-full .skin-moonglass::before { opacity: 1; }
+.skin-moonglass .face {
+  border-radius: 12%;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 0.205em, rgba(24, 26, 44, 0.62) 0.205em 0.225em),
+    repeating-linear-gradient(-45deg, transparent 0 0.205em, rgba(24, 26, 44, 0.62) 0.205em 0.225em),
+    radial-gradient(ellipse 70% 50% at 28% 18%, rgba(255, 255, 255, 0.4), transparent 70%),
+    linear-gradient(var(--ang, 160deg), color-mix(in srgb, var(--hi) 88%, #fff), var(--lo) 95%);
+  box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #b9c4dc, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7),
+    0 0.055em 0 color-mix(in srgb, var(--lo) 40%, #000), 0 0.12em 0.14em rgba(0, 0, 0, 0.42);
+}
+/* the etched sigil: frosted glass in the shape-hint shape of the colour */
+.skin-moonglass .brick:not(.fusebrick) .stud { width: 34%; height: 34%; top: 50%; border-radius: 0; box-shadow: none;
+  background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.95), rgba(235, 242, 255, 0.72) 70%); }
+.skin-moonglass .brick[data-c="0"]:not(.fusebrick) .stud { border-radius: 50%; }
+.skin-moonglass [data-c="1"] .stud { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.skin-moonglass [data-c="2"] .stud { clip-path: polygon(50% 6%, 100% 94%, 0 94%); }
+.skin-moonglass .brick[data-c="3"]:not(.fusebrick) .stud { border-radius: 14%; width: 30%; height: 30%; }
+.skin-moonglass [data-c="4"] .stud { clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); }
+.skin-moonglass .brick[data-c="5"]:not(.fusebrick) .stud { clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); width: 42%; height: 42%; }
+.skin-moonglass [data-c="6"] .stud { clip-path: polygon(34% 0, 66% 0, 66% 34%, 100% 34%, 100% 66%, 66% 66%, 66% 100%, 34% 100%, 34% 66%, 0 66%, 0 34%, 34% 34%); }
+/* Rush: each pane carries its slice of one moon (centre at board 4em,4em; radius 3.3em) plus four craters, as light over the glass */
+.run.mg-full .skin-moonglass .brick:not(.fusebrick) .deco {
+  opacity: 1;
+  --x: calc((3.945 - var(--c, 0)) * 1em); --y: calc((3.945 - var(--r, 0)) * 1em);
+  background:
+    /* the limb: a crisp bright rim, so the disc reads as a body and not as fog */
+    radial-gradient(circle 3.34em at var(--x) var(--y), rgba(255, 255, 255, 0) 0 3.12em, rgba(255, 255, 255, 0.55) 3.24em, rgba(255, 255, 255, 0.0) 3.34em),
+    /* maria: three dark seas and two small craters */
+    radial-gradient(ellipse 1.25em 0.95em at calc(var(--x) - 0.9em) calc(var(--y) - 0.75em), rgba(48, 58, 108, 0.36) 0, rgba(48, 58, 108, 0.22) 60%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(ellipse 1.05em 1.3em at calc(var(--x) + 0.95em) calc(var(--y) + 0.35em), rgba(48, 58, 108, 0.32) 0, rgba(48, 58, 108, 0.18) 62%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(ellipse 0.85em 0.6em at calc(var(--x) - 0.35em) calc(var(--y) + 1.5em), rgba(48, 58, 108, 0.3), rgba(48, 58, 108, 0) 100%),
+    radial-gradient(circle 0.32em at calc(var(--x) - 1.85em) calc(var(--y) + 0.6em), rgba(255, 255, 255, 0.45) 0 40%, rgba(48, 58, 108, 0.3) 55%, rgba(48, 58, 108, 0) 100%),
+    radial-gradient(circle 0.26em at calc(var(--x) + 1.6em) calc(var(--y) - 1.55em), rgba(255, 255, 255, 0.45) 0 40%, rgba(48, 58, 108, 0.3) 55%, rgba(48, 58, 108, 0) 100%),
+    /* the moonlight itself, lit from the upper left */
+    radial-gradient(circle 3.3em at calc(var(--x) - 0.6em) calc(var(--y) - 0.7em), rgba(255, 255, 255, 0.2) 0, rgba(240, 245, 255, 0.13) 70%, rgba(225, 233, 255, 0.08) 100%),
+    radial-gradient(circle 3.3em at var(--x) var(--y), rgba(220, 230, 255, 0.06) 0 99%, rgba(10, 12, 30, 0) 100%);
+}
+.run.mg-full .skin-moonglass .face { box-shadow: inset 0 0 0 0.045em #262838, inset 0 0 0 0.07em #e6eeff, inset 0 0 0 0.085em rgba(30, 32, 50, 0.7), 0 0 0.18em rgba(200, 220, 255, 0.35), 0 0.12em 0.14em rgba(0, 0, 0, 0.42); }

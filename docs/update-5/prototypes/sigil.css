@@ -1,0 +1,36 @@
+/* PROTOTYPE (scratch only): Series 4 Mythic skin "Sigil".
+   Idle: a jewel-dark brick in its colour, a gold inlay rim, the colour's sigil glowing in the middle (the shape-hint shape with an
+   inner mark) and a thin ring of rune ticks that turns slowly (every third brick: one transform animation). */
+.skin-sigil {
+  --sg-ring: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23ffe6a0'%3E%3Ccircle cx='50' cy='50' r='41' stroke-width='2.4' stroke-opacity='.9'/%3E%3Ccircle cx='50' cy='50' r='35' stroke-width='1.2' stroke-opacity='.55'/%3E%3Cg stroke-width='2.6' stroke-linecap='round' stroke-opacity='.85'%3E%3Cpath d='M50 9v6M50 85v6M9 50h6M85 50h6M21 21l4 4M75 75l4 4M79 21l-4 4M25 75l-4 4'/%3E%3C/g%3E%3Cg stroke-width='1.6' stroke-linecap='round' stroke-opacity='.7'%3E%3Cpath d='M34 12.5l2 3M66 12.5l-2 3M87.5 34l-3 2M87.5 66l-3-2M66 87.5l-2-3M34 87.5l2-3M12.5 66l3-2M12.5 34l3 2'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%23ffe6a0' fill-opacity='.95'%3E%3Ccircle cx='50' cy='5.5' r='2.6'/%3E%3Ccircle cx='94.5' cy='50' r='2.6'/%3E%3Ccircle cx='50' cy='94.5' r='2.6'/%3E%3Ccircle cx='5.5' cy='50' r='2.6'/%3E%3C/g%3E%3C/svg%3E");
+}
+.skin-sigil .face {
+  border-radius: 18%;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--hi) 75%, #fff) 0, color-mix(in srgb, var(--glow) 85%, transparent) 22%, transparent 46%),
+    radial-gradient(circle at 50% 46%, var(--glow) 0, var(--lo) 62%, color-mix(in srgb, var(--lo) 62%, #0b0820) 100%);
+  box-shadow: inset 0 0 0 0.032em #e8c66a, inset 0 0 0 0.052em rgba(60, 34, 4, 0.7), inset 0 0.08em 0.1em rgba(255, 255, 255, 0.18),
+    0 0.055em 0 color-mix(in srgb, var(--lo) 45%, #000), 0 0.12em 0.14em rgba(0, 0, 0, 0.45);
+}
+.skin-sigil .brick:not(.fusebrick) .deco { opacity: 1; inset: 6%; background: var(--sg-ring) 0 0 / 100% 100% no-repeat; }
+.skin-sigil > .brick:nth-child(3n):not(.fusebrick) .deco { animation: sgTurn 18s linear infinite; animation-delay: calc(var(--ph) * -2.6s); }
+@keyframes sgTurn { to { transform: rotate(360deg); } }
+/* the sigil: the shape-hint shape in white gold */
+.skin-sigil .brick:not(.fusebrick) .stud { z-index: 1; width: 36%; height: 36%; top: 50%; border-radius: 0; box-shadow: none;
+  background: radial-gradient(circle at 50% 40%, #ffffff 0 30%, #fff6d6 60%, #ffe08a 100%); }
+.skin-sigil .brick[data-c="0"]:not(.fusebrick) .stud { border-radius: 50%; background: radial-gradient(circle, transparent 0 28%, #fff 30% 100%); }
+.skin-sigil .brick[data-c="1"]:not(.fusebrick) .stud { clip-path: polygon(evenodd, 50% 0, 100% 50%, 50% 100%, 0 50%, 50% 0, 50% 30%, 30% 50%, 50% 70%, 70% 50%, 50% 30%); }
+.skin-sigil .brick[data-c="2"]:not(.fusebrick) .stud { clip-path: polygon(evenodd, 50% 4%, 100% 94%, 0 94%, 50% 4%, 50% 40%, 30% 80%, 70% 80%, 50% 40%); }
+.skin-sigil .brick[data-c="3"]:not(.fusebrick) .stud { width: 32%; height: 32%; clip-path: polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, 30% 30%, 30% 70%, 70% 70%, 70% 30%, 30% 30%); }
+.skin-sigil .brick[data-c="4"]:not(.fusebrick) .stud { clip-path: polygon(evenodd, 25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%, 25% 4%, 38% 30%, 26% 50%, 38% 70%, 62% 70%, 74% 50%, 62% 30%, 38% 30%); }
+.skin-sigil .brick[data-c="5"]:not(.fusebrick) .stud { width: 44%; height: 44%; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.skin-sigil .brick[data-c="6"]:not(.fusebrick) .stud { clip-path: polygon(34% 0, 66% 0, 66% 34%, 100% 34%, 100% 66%, 66% 66%, 66% 100%, 34% 100%, 34% 66%, 0 66%, 0 34%, 34% 34%); }
+
+/* the cast (a big pop): one DOM sprite, an SVG circle; in the build it scales and turns in, holds, fires a pillar and fades (transform + opacity only) */
+.pz-cast { position: fixed; z-index: 66; pointer-events: none; transform-origin: 50% 50%; }
+.pz-cast svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.pz-pillar { position: fixed; z-index: 65; pointer-events: none; border-radius: 50% 50% 0 0 / 12% 12% 0 0;
+  background: linear-gradient(0deg, rgba(255, 240, 190, 0.0), rgba(255, 240, 190, 0.55) 8%, rgba(255, 250, 230, 0.35) 55%, rgba(255, 240, 190, 0)); }
+/* Rush: a slow great circle under the bricks (it shows in the gaps) and eight runes set in the board frame, one going dark each second */
+.pz-great { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.9; }
+.pz-runes { position: absolute; inset: -3px; z-index: 7; pointer-events: none; }

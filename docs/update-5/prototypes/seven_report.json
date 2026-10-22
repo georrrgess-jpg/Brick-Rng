@@ -1,0 +1,142 @@
+{
+ "classic": {
+  "normal": {
+   "min": 27,
+   "pair": "Topaz/Amber"
+  },
+  "deutan": {
+   "min": 3.5,
+   "pair": "Amethyst/Sapphire"
+  },
+  "protan": {
+   "min": 4.5,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "f_lantern": {
+  "normal": {
+   "min": 11.9,
+   "pair": "Amber/Topaz"
+  },
+  "deutan": {
+   "min": 0.3,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 4.3,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "f_neon": {
+  "normal": {
+   "min": 14.9,
+   "pair": "Amethyst/Sapphire"
+  },
+  "deutan": {
+   "min": 1.8,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 3.1,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "f_galaxy": {
+  "normal": {
+   "min": 22.6,
+   "pair": "Amber/Topaz"
+  },
+  "deutan": {
+   "min": 1,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 1.7,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "skin-hourglass": {
+  "normal": {
+   "min": 16.1,
+   "pair": "Topaz/Amber"
+  },
+  "deutan": {
+   "min": 2.5,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 2.5,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "skin-hourglass rush": {
+  "normal": {
+   "min": 13,
+   "pair": "Topaz/Amber"
+  },
+  "deutan": {
+   "min": 2.1,
+   "pair": "Sapphire/Amethyst"
+  },
+  "protan": {
+   "min": 1.7,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "skin-moonglass": {
+  "normal": {
+   "min": 16.7,
+   "pair": "Topaz/Amber"
+  },
+  "deutan": {
+   "min": 3.3,
+   "pair": "Ruby/Emerald"
+  },
+  "protan": {
+   "min": 1.1,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "skin-moonglass rush": {
+  "normal": {
+   "min": 12.9,
+   "pair": "Amethyst/Sapphire"
+  },
+  "deutan": {
+   "min": 1,
+   "pair": "Ruby/Emerald"
+  },
+  "protan": {
+   "min": 0.7,
+   "pair": "Amethyst/Sapphire"
+  }
+ },
+ "skin-sigil": {
+  "normal": {
+   "min": 19.5,
+   "pair": "Topaz/Amber"
+  },
+  "deutan": {
+   "min": 1.8,
+   "pair": "Ruby/Emerald"
+  },
+  "protan": {
+   "min": 0.2,
+   "pair": "Sapphire/Amethyst"
+  }
+ },
+ "skin-sigil rush": {
+  "normal": {
+   "min": 19.1,
+   "pair": "Topaz/Amber"
+  },
+  "deutan": {
+   "min": 1.5,
+   "pair": "Ruby/Emerald"
+  },
+  "protan": {
+   "min": 0.3,
+   "pair": "Sapphire/Amethyst"
+  }
+ }
+}
