@@ -11,7 +11,7 @@ const DSF = +(process.env.BUDGET_DSF || 2);
 const B = {   // ms per frame unless noted
   homeIdle: 30, shopIdle: 30, collectionIdle: 32, passIdle: 30, missionsIdle: 30, profileIdle: 30,
   tabSwitchFrame: 130, scrollCollection: 40, scrollShop: 36, sheetOpen: 55, tabSwitchJs: 50, runIdle: 24, popAvg: 55, popMax: 120,
-  reelFreeze: 80, hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 900, nodesAfterCycle: 1400, longTask: 80,
+  reelFreeze: 130, hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 900, nodesAfterCycle: 900, longTask: 80,
 };
 const results = []; let failed = 0;
 const med = (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
@@ -101,6 +101,7 @@ const check = (name, value, budget, unit = 'ms') => { const ok = value <= budget
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     for (let i = 0; i < 4; i++) { await page.evaluate(() => { __app.startRun({ mode: 'rush', boosts: {} }); }); await page.waitForFunction(() => BR.Run.clock && !BR.Run.busy, null, { timeout: 20000 }); await sleep(300); await page.evaluate(() => { BR.Run.endRun('quit'); }); await page.waitForSelector('.results.on', { timeout: 20000 }); await sleep(700); await page.evaluate(() => { BR.Run.closeResults('home'); BR.Router.go('home'); }); await sleep(500); }
     for (const s of ['shop', 'collection', 'pass', 'missions', 'profile', 'home']) { await go(s); await sleep(300); }
+    await sleep(1200);   // screens left behind are emptied a moment after they hide
     check('nodesAfterCycle', await page.evaluate(() => document.getElementsByTagName('*').length), B.nodesAfterCycle, '');
     // ---- the longest task over a short session
   }

@@ -224,10 +224,13 @@
         const el = prev.el;
         const psc = el.querySelector('.scroll'); el._scrolled = !!(psc && psc.scrollTop > 0);   // (layout is clean here, so this read is free)
         el.classList.remove('on', 'from-left', 'from-right');   // the screen being left just goes: animating it out would repaint all of it
+        // a tab that is not showing keeps no content (every visit renders it again), so its nodes and memory are freed
+        if (prev.render) { clearTimeout(el._purge); el._purge = setTimeout(() => { if (!el.classList.contains('on')) el.textContent = ''; }, 800); }
         if (prev.onHide) prev.onHide();
       }
       // show first (a screen that is not displayed has no layout), then fill it
       const nel = next.el;
+      clearTimeout(nel._purge);
       nel.classList.remove('from-left', 'from-right');
       nel.classList.toggle('instant', !!opts.instant);
       if (dir !== 'none' && !opts.instant) nel.classList.add(dir === 'fwd' ? 'from-right' : 'from-left');

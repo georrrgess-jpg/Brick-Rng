@@ -139,6 +139,7 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 .rc { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 6px 12px; border-radius: 18px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 20%, #1d1438), #110a24); border: 2px solid color-mix(in srgb, var(--rc) 70%, #000); }
 .reel-h .rc { width: clamp(118px, 32vw, 140px); height: 196px; }
 .reel-v .rc { width: 100%; height: 108px; flex-direction: row; justify-content: flex-start; gap: 14px; padding: 8px 14px 8px 12px; }
+.rc-art { flex: none; display: grid; place-items: center; }
 .rc .bdg { box-shadow: 0 0.3em 0.6em rgba(0, 0, 0, 0.4); }
 .rc-txt { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
 .reel-v .rc-txt { align-items: flex-start; flex: 1; }

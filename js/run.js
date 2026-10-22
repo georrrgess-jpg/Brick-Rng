@@ -22,14 +22,20 @@
       this.app = app;
       this.fx = app.fx;
       this.view = new BR.BoardView({ boardEl: $('board'), field: $('field'), wrap: $('boardWrap'), layer: $('fxlayer'), fx: this.fx, audio: BR.audio });
-      BR.Router.register('run', { onShow: () => { BR.Skins.apply(); this.view.layout(); this.measure(); } });
+      BR.Router.register('run', {
+        onShow: () => { BR.Skins.apply(); this.view.layout(); this.measure(); this.kick(); },
+        // leaving the run empties the board (a new run builds it again), so a menu session does not carry 300 hidden nodes
+        onHide: () => setTimeout(() => { if (BR.Router.current !== 'run') this.view.reset(); }, 700),
+      });
       this.el = $('run');
       this.buildSlots();
       this.bind();
       document.addEventListener('visibilitychange', () => { if (document.hidden && this.active && !this.over && !this.paused && !this.modal && this.clock) this.pause(true); });
       window.addEventListener('resize', () => this.measure());
-      requestAnimationFrame((t) => { this.last = t; this.frame(t); });
+      this.kick();
     },
+    /** The frame loop only runs while the run screen is showing: menus do not wake the page every frame for nothing. */
+    kick() { if (this._looping) return; this._looping = true; requestAnimationFrame((t) => { this.last = t; this.frame(t); }); },
     get active() { return BR.Router.current === 'run'; },
     get canAct() { return this.active && !this.over && !this.paused && !this.modal && this.clock; },
     measure() { const t = $('fuseTrack'); if (t && t.clientWidth) this.trackW = t.clientWidth; this._sp = null; },
@@ -132,9 +138,10 @@
 
     /* ===================================================================== per-frame loop */
     frame(now) {
+      if (!this.active) { this._looping = false; return; }
       requestAnimationFrame((t) => this.frame(t));
       const dt = Math.min(0.1, Math.max(0, (now - this.last) / 1000)); this.last = now;
-      if (!this.active || !this.engine) return;
+      if (!this.engine) return;
       // performance probe: lower effects automatically if the phone is struggling
       if (this.clock && !this.paused && BR.Storage.data.settings.perf === 'auto' && !BR.autoLow) {
         this.perfSum += dt; this.perfN++;

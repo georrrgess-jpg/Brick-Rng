@@ -268,6 +268,8 @@
         chestBox: q('.op-chest'), shake: q('.op-shake'), wrap: q('.op-chest-wrap'), svg: q('.chest'), holdEl: q('[data-hold]'),
         label: q('[data-label]'), sub: q('[data-sub]'), reelWrap: q('.op-reel'), reelHost: q('.reel-host'), skipEl: q('[data-skip]'), rv: q('[data-rv]'),
       });
+      // the few elements that read --hold; setting it on each of them (not on the root) keeps the rest of the scene out of every frame's restyle
+      this.holdUsers = [q('.op-glow'), q('.op-rays'), q('.op-pedestal'), this.chestBox, this.holdEl].filter(Boolean);
       document.body.classList.add('in-opening'); BR.under(1);
       document.getElementById('layer-opening').appendChild(root);
       document.getElementById('layer-opening').style.pointerEvents = 'auto';
@@ -368,7 +370,7 @@
         if (this.state !== 'ready' || !this.canOpen) { if (this.state === 'ready' && !this.canOpen) { BR.audio.deny(); BR.haptic('err'); this.holdEl.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], { duration: 220 }); } return; }
         BR.audio.unlock();
         this.pressed = true; this.state = 'holding'; this.holdEl.classList.add('down'); this.chestBox.classList.remove('idle');
-        this.lastT = performance.now(); this.pulse = 0;
+        this.lastT = performance.now(); this.pulse = 0; this._hctx = this.ctx();   // measured once: reading it every frame of the hold forces a layout each time
         if (reduced()) { this.hold = 1; this.commit(); return; }
         this.raf = requestAnimationFrame((n) => this.holdLoop(n));
       } else {
@@ -377,8 +379,8 @@
     }
 
     setHold(p) {
-      this.root.style.setProperty('--hold', p.toFixed(3));
-      this.holdEl.style.setProperty('--hold', p.toFixed(3));
+      const v = p.toFixed(3);
+      for (const el of this.holdUsers) el.style.setProperty('--hold', v);
     }
 
     holdLoop(now) {
@@ -386,19 +388,19 @@
       const dt = clamp((now - this.lastT) / 1000, 0, 0.12); this.lastT = now;
       this.time = (this.time || 0) + dt;
       this.hold = this.pressed ? this.hold + dt / HOLD_TIME : this.hold - dt * 2.4;
-      if (!this.pressed && this.hold <= 0) { this.hold = 0; this.state = 'ready'; this.setHold(0); this.shake.style.transform = ''; this.ritual.hold(this.svg, 0, 0, this.ctx()); this.chestBox.classList.add('idle'); return; }
+      if (!this.pressed && this.hold <= 0) { this.hold = 0; this.state = 'ready'; this.setHold(0); this.shake.style.transform = ''; this.ritual.hold(this.svg, 0, 0, this._hctx); this.chestBox.classList.add('idle'); return; }
       const p = clamp(this.hold, 0, 1);
       this.setHold(p);
       const a = p * p;
       this.shake.style.transform = `translate(${(Math.sin(this.time * 47) * a * 6 + Math.sin(this.time * 83) * a * 3).toFixed(2)}px, ${(Math.cos(this.time * 41) * a * 4).toFixed(2)}px) rotate(${(Math.sin(this.time * 59) * a * 2.2).toFixed(2)}deg)`;
-      this.ritual.hold(this.svg, p, this.time, this.ctx());
+      this.ritual.hold(this.svg, p, this.time, this._hctx);
       // sound + haptics rise with pressure
       this.pulse -= dt;
       if (this.pulse <= 0 && this.pressed) {
         this.pulse = 0.34 - 0.26 * p;
         BR.audio.holdTick(p);
         BR.haptic(6 + Math.round(p * 20));
-        if (p > 0.15) { const r = this.wrap.getBoundingClientRect(); fx().sparks(r.left + r.width / 2 + rnd(-40, 40), r.top + r.height * 0.5, this.chest.accent, 3 + Math.round(p * 5), 0.6 + p, 0.35); }
+        if (p > 0.15) { const r = this._hctx.rect; fx().sparks(r.x + rnd(-40, 40), r.y, this.chest.accent, 3 + Math.round(p * 5), 0.6 + p, 0.35); }
       }
       if (this.hold >= 1) { this.commit(); return; }
       this.raf = requestAnimationFrame((n) => this.holdLoop(n));
@@ -480,7 +482,7 @@
       this.reel = reel;
       reel.measure(); reel.park(3);
       BR.audio.whoosh();
-      await sleep(reduced() ? 120 : 520);
+      await Promise.all([sleep(reduced() ? 120 : 520), reel.ready]);   // the cards draw themselves in while the strip slides in
       if (this.closed) return;
       const dur = reel.start(3);
       setTimeout(() => { if (this.state === 'spin') this.skipEl.classList.add('on'); }, 1500);
