@@ -505,7 +505,7 @@ An empty page is 16.7ms per frame here, so 16.7 means "as fast as an empty page"
 | Startup to ready, no slowdown | not measured | 200ms | | |
 | Running animations on a screen | about 178 | 17 to 30, none on hidden screens | 40 or fewer | met |
 | Page elements after runs and chests | 3,261 and growing | 679, flat | under 1,200 | met |
-| Fuse cost per frame | not measured | FUSE_COST | 1.5ms on a phone | FUSE_RESULT |
+| Fuse cost per frame (`tests/fuseperf.js --fast`, Classic fuse and Dragon fuse, five situations) | not measured | worst 5.3ms, mean 3.6ms, its script 0.7ms (all at 4x) | 1.5ms on a phone, 6ms at 4x | met |
 
 Why the three frame numbers that are not met stay where they are. The script part of each is small: a pop runs 10 to 30ms of script
 at 4x slowdown (3 to 8ms on a real phone), a tab switch 5 to 25ms. What remains is the machine drawing a new screen or a burst of
