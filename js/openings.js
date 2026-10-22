@@ -80,7 +80,7 @@
     const seed = skin.inst ? skin.inst.seed || 0 : 0, sh = skin.inst ? skin.inst.shine : 'plain', ash = board.inst ? board.inst.shine : 'plain';
     const bricks = LOOK.join('').split('').map((c) => BR.Skins.brickHTML(+c)).join('');
     const fuse = item.type === 'fuse' ? `<div class="lk-fuse"><div class="mini-fuse ${item.cls}" data-shine="${inst ? inst.shine : 'plain'}"><span class="mf-bomb"></span><span class="mf-track"><i class="mf-fill"></i><b class="mf-spark"></b></span></div></div>` : '';
-    return `<div class="lk ${board.item.cls}" data-ashine="${ash}"><div class="lk-scene"><b class="scene-fx"></b><b class="scene-fx b"></b></div>${fuse}<div class="lk-board"><div class="lk-field ${skin.item.cls}" data-shine="${sh}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">${bricks}</div></div></div>`;
+    return `<div class="rvlk ${board.item.cls}" data-ashine="${ash}"><div class="lk-scene"><b class="scene-fx"></b><b class="scene-fx b"></b></div>${fuse}<div class="lk-board"><div class="lk-field ${skin.item.cls}" data-shine="${sh}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">${bricks}</div></div></div>`;
   }
   /* the Seven Sigils (Series 4 rule 1): each colour's symbol is its Shape hint; the spell circle of the Midnight reveal carries the item's */
   const SIGILS = [

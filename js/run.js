@@ -178,8 +178,18 @@
       if (type !== 'fuse' && type !== 'hat') engine.tick = () => [];   // the fuse does not burn: this is a look, not a run (a fuse and a hat are looked at while it burns)
       return this.begin(engine, { practice: this.practice, goal: null });
     },
+    /** Try the set: the four items of a set you own, together, on the same ten-second board, with the set's flourish played twice. */
+    practiceSet(setId) {
+      const pr = BR.Storage.data.profile, items = BR.setItems(setId), prevs = {};
+      items.forEach((it) => { const inst = pr.vault.find((i) => i.itemId === it.id); prevs[it.type] = pr.loadout[it.type]; pr.loadout[it.type] = inst ? inst.uid : 'default'; });
+      this.practice = { item: { name: `${BR.SETS[setId].name} set` }, type: 'set', prevs, set: setId, iv: 0 };
+      const engine = new BR.Engine({ mode: 'rush', seed: (Date.now() ^ 0x5bd1e995) >>> 0, boosts: {} });
+      engine.tick = () => [];
+      return this.begin(engine, { practice: this.practice, goal: null });
+    },
     practiceTimer() {
       const pz = this.practice, end = performance.now() + 10000;
+      if (pz.set && BR.Sets) [900, 5200].forEach((ms) => setTimeout(() => { if (this.practice === pz && !this.paused) BR.Sets.flourish(pz.set, { fx: this.fx, view: this.view }); }, ms));
       const tick = () => {
         if (this.practice !== pz) return;
         const left = Math.max(0, Math.ceil((end - performance.now()) / 1000));
@@ -191,7 +201,8 @@
     endPractice() {
       const pz = this.practice; if (!pz) return;
       clearInterval(pz.iv); this.practice = null;
-      BR.Storage.data.profile.loadout[pz.type] = pz.prev;   // the real loadout comes back before anything can save it
+      const lo = BR.Storage.data.profile.loadout;   // the real loadout comes back before anything can save it
+      if (pz.prevs) Object.keys(pz.prevs).forEach((t) => { lo[t] = pz.prevs[t]; }); else lo[pz.type] = pz.prev;
       this.over = true; this.clock = false; this.token++; this.modal = false;
       this.hideHint(); this.clearHover(); this.view.hideHint();
       BR.Skins.apply();

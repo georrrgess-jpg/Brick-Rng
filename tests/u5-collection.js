@@ -54,6 +54,16 @@ const ok = (c, m, ...x) => { if (!c) { bad++; console.log('FAIL', m, ...x); } };
     await page.evaluate(() => document.querySelector('.sheet [data-close]').click()); await page.waitForTimeout(700);
     await page.evaluate(() => document.querySelector('[data-act="close-tower"]').click()); await page.waitForTimeout(600);
     ok(await page.evaluate(() => !!document.querySelector('#colSeg') && !document.querySelector('.tw')), 'the back button returns to the Collection');
+    // ---- a set: the item sheet names it, and with all four items Try the set wears them together and plays the flourish
+    await page.evaluate(() => { BR.Router.go('collection'); ['f_spellbook', 'b_birds', 'a_library', 'u_candle'].forEach((id) => { if (!BR.Progress.owns(id)) BR.Progress.keep({ itemId: id, shine: 'plain', seed: 5 }); }); });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => { const v = BR.Storage.data.profile.vault.find((i) => i.itemId === 'f_spellbook'); BR.itemSheet(v.uid, 'skin'); }); await page.waitForTimeout(900);
+    ok(await page.evaluate(() => /Library set/.test(document.querySelector('.sheet').textContent) && /4 of 4/.test(document.querySelector('.sheet').textContent) && [...document.querySelectorAll('.sheet button')].some((b) => /Try the set/.test(b.textContent))), 'the item sheet names the set and offers Try the set with all four items');
+    await page.evaluate(() => [...document.querySelectorAll('.sheet button')].find((b) => /Try the set/.test(b.textContent)).click()); await page.waitForTimeout(2200);
+    ok(await page.evaluate(() => BR.Router.current === 'run' && BR.Run.practice && BR.Sets.worn() === 'library' && !!document.getElementById('setCrest')), 'Try the set wears all four items and shows the crest');
+    await page.evaluate(() => BR.Run.endPractice()); await page.waitForTimeout(900);
+    ok(await page.evaluate(() => BR.Router.current === 'collection' && BR.Sets.worn() === null && ['skin', 'pop', 'board', 'fuse'].every((t) => BR.Storage.data.profile.loadout[t] === 'default')), 'after Try the set the real loadout is back');
+    await page.evaluate(() => { const c = document.querySelector('.sheet [data-close]'); if (c) c.click(); }); await page.waitForTimeout(500);
     ok(errors.length === 0, 'console errors', errors.join(' | '));
     await browser.close();
   }

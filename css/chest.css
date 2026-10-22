@@ -295,7 +295,8 @@ html.reduced .chest .tw { opacity: 0.8; transform: none; }
 .rv-look { position: absolute; inset: 0; overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.7s; }
 .rv.look-on .rv-look { opacity: 0.42; }
 .rv-look::after { content: ''; position: absolute; inset: 0; z-index: 4; background: linear-gradient(180deg, transparent 52%, rgba(5, 3, 12, 0.85) 78%), radial-gradient(ellipse 72% 52% at 50% 40%, rgba(5, 3, 12, 0.05), rgba(5, 3, 12, 0.7) 100%); }
-.lk { position: absolute; inset: 0; display: grid; place-items: center; }
+/* (the first look behind a reveal card; `.lk` is the Collection's locked tile in screens.css) */
+.rvlk { position: absolute; inset: 0; display: grid; place-items: center; }
 .lk-scene { position: absolute; inset: 0; overflow: hidden; background: var(--a-bg); }
 .lk-scene .scene-fx { display: block; height: 1800px; transform-origin: 0 0; }
 .lk-board { position: relative; z-index: 2; width: min(108vw, 500px); aspect-ratio: 1; padding: 2.2%; border-radius: 28px; background: var(--a-board); border: 2px solid var(--a-frame); box-shadow: 0 0 40px var(--a-glow), 0 24px 60px rgba(0, 0, 0, 0.5); transform: translateY(-4%); }

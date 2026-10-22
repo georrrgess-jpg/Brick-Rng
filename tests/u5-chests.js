@@ -124,7 +124,7 @@ const forceReveal = (page, id, shine = 'glossy') => page.evaluate(({ id, shine }
     ok(night === samples[samples.length - 1].cls.includes('night'), `${id}: ${night ? 'should use' : 'should not use'} the Midnight reveal`, samples[samples.length - 1].cls);
     // the first look behind the card: a whole board, wearing the item when it is a skin or a board
     await page.waitForFunction(() => document.querySelector('.rv.look-on'), null, { timeout: 8000 }).catch(() => ok(false, `${id}: the look never switched on`));
-    const look = await page.evaluate(() => { const f = document.querySelector('.rv-look .lk-field'); return f && { n: f.querySelectorAll('.brick').length, cls: f.className, scene: document.querySelector('.rv-look .lk').className, op: +getComputedStyle(document.querySelector('.rv-look')).opacity }; });
+    const look = await page.evaluate(() => { const f = document.querySelector('.rv-look .lk-field'); return f && { n: f.querySelectorAll('.brick').length, cls: f.className, scene: document.querySelector('.rv-look .rvlk').className, op: +getComputedStyle(document.querySelector('.rv-look')).opacity }; });
     ok(look && look.n === 64, `${id}: the first look is not a whole board`, JSON.stringify(look));
     if (id === 'f_lava') ok(look && /skin-lava/.test(look.cls), 'the first look does not wear the new skin', look && look.cls);
     if (id === 'a_orbit') ok(look && /board-orbit/.test(look.scene), 'the first look does not show the new board', look && look.scene);

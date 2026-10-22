@@ -8,7 +8,7 @@ const FILES = [
   'js/progress.js', 'js/missions.js', 'js/retention.js', 'js/audio.js', 'js/music.js', 'js/fx.js', 'js/skins.js', 'js/s3-skins.js', 'js/s3-pops.js', 'js/s3-scenes.js', 'js/fuse-art.js', 'js/fuse.js', 'js/badges.js', 'js/coach.js', 'js/view.js', 'js/ui.js', 'js/chestart.js',
   'js/spin.js', 'js/openings.js', 'js/screens.js', 'js/run.js', 'js/main.js',
   'css/u4-boards.css', 'css/u4-skins.css', 'js/u4-cosmetics.js',
-  'css/s4-skins.css', 'css/s4-scenes.css', 'css/hats.css', 'js/hats.js', 'js/s4-skins.js', 'js/s4-pops.js', 'js/s4-scenes.js', 'js/s4-fuses.js', 'css/tower.css', 'js/tower.js',
+  'css/s4-skins.css', 'css/s4-scenes.css', 'css/hats.css', 'js/hats.js', 'js/s4-skins.js', 'js/s4-pops.js', 'js/s4-scenes.js', 'js/s4-fuses.js', 'css/tower.css', 'js/tower.js', 'css/sets.css', 'js/sets.js',
   'fonts/fredoka.woff2', 'fonts/nunito.woff2',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
 ];

@@ -642,11 +642,15 @@
     const r = R(item.rarity);
     const equipped = preview ? false : inst ? P.isEquipped(inst.uid) : P.equipped(item.type).inst === null;
     const where = item.pass ? 'Pop Pass reward' : item.isDefault ? 'Always yours' : BR.CHESTS[BR.ITEM_TYPES[item.type].chest].name;
+    // a Moonwick set: which one, how many of its four you have, and (with all four) the set's flourish and Try the set
+    const SET = BR.Sets && item.set && BR.Sets.get(item.set), setSt = SET ? BR.Sets.statusOf(item.set, BR.Sets.ownedIds()) : null;
+    const fullSet = !!(SET && !preview && setSt.have === setSt.total);
+    const setLine = SET ? `<div class="detail-set"><span class="ds-crest">${BR.Sets.crest(item.set, 30)}</span><span class="ds-txt"><b>${esc(SET.name)} set</b><small>${setSt.have} of ${setSt.total} found${fullSet ? ` · wear all four for ${esc(SET.flourish)}` : ''}</small></span></div>` : '';
     const body = `<div class="detail" style="--rc:${r.color}">
         <div class="detail-prev"><span class="dp-glow"></span><div class="hero-host"></div></div>
         <div class="detail-tags"><span class="tag rar" style="--rc:${r.color}">${r.name}</span><span class="tag">${BR.ITEM_TYPES[item.type].name}</span>${inst && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : ''}</div>
         <p class="detail-desc">${esc(item.desc)}</p>
-        <div class="detail-where"><small>Comes from</small><b>${where}</b></div></div>`;
+        <div class="detail-where"><small>Comes from</small><b>${where}</b></div>${setLine}</div>`;
     const fxEl = $('fx');
     let demo = null, clipT = 0, sheet = null;
     // the demo's sparks are drawn on the page-wide canvas: keep them inside the preview well, never over the text and buttons below it
@@ -659,7 +663,12 @@
         const sc = Collection.el.querySelector('.scroll'), top = sc ? sc.scrollTop : 0, back = BR.Router.current === 'collection';
         if (back) BR.Router.onArrive('collection', () => { const s2 = Collection.el.querySelector('.scroll'); if (s2) s2.scrollTop = top; setTimeout(() => BR.itemSheet(uid, type), 120); });
         BR.Run.practiceItem(item, inst);
-      } }];
+      } }].concat(fullSet ? [{ label: 'Try the set', cls: 'btn-dark', onClick: () => {
+        BR.audio.ui();
+        const sc = Collection.el.querySelector('.scroll'), top = sc ? sc.scrollTop : 0, back = BR.Router.current === 'collection';
+        if (back) BR.Router.onArrive('collection', () => { const s2 = Collection.el.querySelector('.scroll'); if (s2) s2.scrollTop = top; setTimeout(() => BR.itemSheet(uid, type), 120); });
+        BR.Run.practiceSet(item.set);
+      } }] : []);
     sheet = BR.Sheet.open({ title: esc(item.name), cls: 'detail-sheet', body, actions, onClose: () => { if (demo) demo.stop(); clearTimeout(clipT); window.removeEventListener('resize', clip); setTimeout(() => { if (fxEl) fxEl.style.clipPath = ''; }, 700); } });
     demo = BR.Openings.demo(sheet.body.querySelector('.hero-host'), item, inst || { shine: 'plain', seed: 0 }, { silent: true, power: 1.2 });
     clipT = setTimeout(clip, 560); window.addEventListener('resize', clip); sheet.body.addEventListener('scroll', clip, { passive: true });
