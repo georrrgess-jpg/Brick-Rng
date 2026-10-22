@@ -95,7 +95,7 @@
     style.id = 'fuseTokens';
     // the Basic Cord doubles as the default for anything that has no fuse class yet
     const t0 = A.TOKENS['fuse-classic'];
-    style.textContent = ['base', 'body', 'mini', 'nt'].map((p) => tokenCSS('fuse', t0, p)).join('').replace(/^\.fuse\{/gm, '.fuse,.mini-fuse{');
+    style.textContent = ['base', 'body', 'mini', 'nt'].map((p) => tokenCSS('fuse', t0, p)).join('').replace(/^\.fuse\{/gm, '.fuse,.mini-fuse,.bdg-hat{');
     document.head.appendChild(style);
     ['base', 'body', 'mini', 'nt'].forEach((p) => { have['fuse-classic/' + p] = 1; });
     // the rest of the catalogue is built in the quiet after the first paint (previews that need one sooner ask for it with bake())

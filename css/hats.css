@@ -1,1 +1,53 @@
-/* Fizz Hats: the hat element and its poses for each state of the bomb (see docs/update-5/series-4-moonwick.md, section 4). */
+/* ===================================================================
+   Fizz Hats (Update 5, Series 4 "Moonwick", spec section 4): the hat element on the bomb and its poses for each state.
+   js/hats.js draws the pictures (a rule per hat, baked on first use: [data-hat="id"] { --hat-img ... }) and js/fuse.js puts the element in
+   (<i class="fz-hat"> inside .fz-pulse after the face) and sets its anchor (--hx, --hy, --hs: a move and a scale about the head line, per body).
+   One element. Only transform and opacity animate; nothing runs at rest (the sway, bow, drop and bounce are one-shots from js/fuse.js on the
+   individual rotate / translate / scale properties, so they add to the pose below instead of replacing it). The propeller spins only in Rush.
+   The hat never covers Fizz's eyes: every hat's lowest edge is above y = 20 of the bomb's 64-unit design space and the eyes start at 26 (tests/u5-fuses.js).
+   =================================================================== */
+/* the box every hat picture is drawn in is 96 x 80 bomb units with the head line (y = 16) at 48, 56 from its corner */
+.fz-hat, .mini-fuse[data-hat] .mf-bomb::after, .bdg-hat .hb-hat {
+  position: absolute; pointer-events: none;
+  left: calc((32 - 48 * var(--hs, 1) + var(--hx, 0)) * var(--b)); top: calc((16 - 56 * var(--hs, 1) + var(--hy, 0)) * var(--b));
+  width: calc(96 * var(--hs, 1) * var(--b)); height: calc(80 * var(--hs, 1) * var(--b));
+  transform-origin: calc(48 * var(--hs, 1) * var(--b)) calc(56 * var(--hs, 1) * var(--b));
+}
+.fz-hat { background: var(--hat-live, var(--hat-img)) center / 100% 100% no-repeat; transition: transform 0.45s var(--ease-spring); }
+.fz-hat.fh-drop { transition: transform 0.28s cubic-bezier(0.5, 0, 1, 0.6); }
+.hp { position: absolute; background: var(--hat-pn) center / 100% 100% no-repeat; transition: transform 0.5s var(--ease-spring); }
+.mini-fuse[data-hat] .mf-bomb::after { content: ''; display: block; border-radius: 0; right: auto; bottom: auto; background: var(--hat-img) center / 100% 100% no-repeat; }
+
+/* ---- poses: the bomb's urgency state (data-z on the fuse) */
+.fuse[data-z="watch"] .fz-hat { transform: rotate(5deg) translate(calc(0.8 * var(--b)), 0); }                                           /* tilts toward the flame */
+.fuse[data-z="low"] .fz-hat { transform: rotate(-13deg) translate(calc(-2.4 * var(--b)), calc(1.4 * var(--b))); }                      /* slides askew */
+.fuse[data-z="crit"] .fz-hat { transform: rotate(-17deg) translate(calc(-3 * var(--b)), calc(1.2 * var(--b))); }                       /* askew, and the heartbeat bounces it (js/fuse.js beat) */
+.fuse[data-z="spark"] .fz-hat { transform: translate(0, calc(-17 * var(--b))) rotate(-5deg); }                                          /* pops up and hovers above the head */
+
+/* ---- the parts that move on their own */
+.fz-hat .hp[data-part="tip"] { transform: rotate(16deg); }                                                                              /* the Wizard Hat's tip: bent a little when calm ... */
+.fuse[data-z="watch"] .fz-hat .hp[data-part="tip"] { transform: rotate(24deg); }
+.fuse[data-z="low"] .fz-hat .hp[data-part="tip"] { transform: rotate(42deg); }
+.fuse[data-z="crit"] .fz-hat .hp[data-part="tip"] { transform: rotate(76deg); animation: hatFlop 0.42s ease-in-out infinite alternate; }  /* ... and flops when Fizz panics */
+.bomb[data-x="panic"] .fz-hat .hp[data-part="tip"] { transform: rotate(76deg); }
+.fuse[data-z="spark"] .fz-hat .hp[data-part="tip"] { transform: rotate(-4deg); }
+.fuse[data-z="frozen"] .fz-hat .hp[data-part="tip"] { transform: rotate(10deg); }
+@keyframes hatFlop { from { transform: rotate(66deg); } to { transform: rotate(86deg); } }
+.fuse[data-z="frozen"] .fz-hat .hp[data-part="blades"] { animation: hatSpin 0.14s ease-in-out infinite alternate; }                    /* the Propeller Cap's propeller spins in Rush */
+@keyframes hatSpin { from { transform: scaleX(1); } to { transform: scaleX(-1); } }
+
+/* ---- Rush: the hat is frosted (a static overlay cut to the hat's own shape) */
+.fz-hat::after, .hp::after { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s;
+  background: radial-gradient(circle at 30% 22%, #fff 0 1.1px, transparent 2px), radial-gradient(circle at 70% 34%, #fff 0 1px, transparent 1.8px), linear-gradient(180deg, rgba(244, 251, 255, 0.86), rgba(204, 232, 255, 0.46) 55%, rgba(204, 232, 255, 0.14));
+  -webkit-mask: var(--hat-live, var(--hat-img)) center / 100% 100% no-repeat; mask: var(--hat-live, var(--hat-img)) center / 100% 100% no-repeat; }
+.hp::after { -webkit-mask-image: var(--hat-pn); mask-image: var(--hat-pn); }
+.fuse[data-z="frozen"] .fz-hat::after, .fuse[data-z="frozen"] .fz-hat .hp::after { opacity: 1; }
+/* a fuse that is over: the bomb is gone, so is the hat (js/fuse.js flies it off) */
+.bomb.gone .fz-hat { opacity: 0; }
+
+/* ---- the hat's badge: a plain Fizz wearing it, on the rarity plate (css/badges.css draws the plate) */
+.bdg-hat { position: absolute; inset: 0; --b: calc(var(--bs) * 0.64 / 64); }
+.bdg-hat .hb-glow { position: absolute; left: 50%; top: 56%; width: 8em; height: 8em; margin: -4em 0 0 -4em; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 66%); }
+.bdg-hat .hb-fizz { position: absolute; left: 50%; top: 61%; width: calc(var(--bs) * 0.64); height: calc(var(--bs) * 0.64); margin: calc(var(--bs) * -0.32) 0 0 calc(var(--bs) * -0.32); background: var(--fz-body-mini) center / 100% 100% no-repeat; }
+.bdg-hat[data-nt] .hb-fizz { background-image: var(--fz-body-mini-nt, var(--fz-body-mini)); }
+.bdg-hat .hb-hat { background: var(--hat-img) center / 100% 100% no-repeat; }
