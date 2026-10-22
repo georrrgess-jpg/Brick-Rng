@@ -151,6 +151,16 @@
       let best = null, bestScore = -Infinity, floorMet = false;
       // paint `tries` candidates, and keep going until one meets the floor (harder the longer a dry spell has run)
       const limit = 10 + 4 * Math.min(this.dry, 4);
+      // a colour that joins the board (stage 3 or 5) arrives with the refill that pop deals: three of it (the fullest column first), so the
+      // player sees it when the stage band passes and can pop it at once (left to chance it came in on about one refill in three).
+      // They are part of every candidate, so the rest of the refill is painted around them.
+      const joined = this.colors && nColors > this.colors; this.colors = nColors;
+      const seeds = new Set();
+      if (joined) {
+        const byCol = new Map();
+        for (const h of order) { if (!byCol.has(h.c)) byCol.set(h.c, []); byCol.get(h.c).push(h); }
+        [].concat(...Array.from(byCol.values()).sort((p, q) => q.length - p.length)).slice(0, 3).forEach((h) => seeds.add(h.r * cols + h.c));
+      }
       for (let t = 0; t < tries || (!floorMet && t < limit); t++) {
         const g = grid.map((row) => row.slice());
         const fresh = new Uint8Array(rows * cols);
@@ -166,6 +176,7 @@
           let total = 0; for (let k = 0; k < nColors; k++) total += w[k];
           let roll = rng.next() * total, pick = nColors - 1;
           for (let k = 0; k < nColors; k++) { roll -= w[k]; if (roll < 0) { pick = k; break; } }
+          if (seeds.has(h.r * cols + h.c)) pick = nColors - 1;
           g[h.r][h.c] = pick; fresh[h.r * cols + h.c] = 1;
         }
         const m = measure(g, rows, cols);
@@ -184,16 +195,6 @@
         if ((floor || !floorMet) && s > bestScore) { bestScore = s; best = g; }
       }
       this.lastAssist = a; this.lastTarget = tgt;
-      // a colour that joins the board (stage 3 or 5) arrives with the refill that pop deals: three of it (the fullest column first), so the player sees it
-      // when the stage band passes and can pop it at once (left to chance it came in on about one refill in three)
-      const fresh = this.colors && nColors > this.colors;
-      this.colors = nColors;
-      if (fresh) {
-        const byCol = new Map();
-        for (const h of order) { if (!byCol.has(h.c)) byCol.set(h.c, []); byCol.get(h.c).push(h); }
-        const seeds = [].concat(...Array.from(byCol.values()).sort((p, q) => q.length - p.length));   // the fullest column first, then the next
-        seeds.slice(0, 3).forEach((h) => { best[h.r][h.c] = nColors - 1; });
-      }
       return order.map((h) => ({ r: h.r, c: h.c, color: best[h.r][h.c] }));
     }
 
