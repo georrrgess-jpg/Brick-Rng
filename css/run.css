@@ -396,3 +396,8 @@
   .run > :not(.board-wrap) { width: auto; }
   .run.chill { --bw: min(calc(100dvh - var(--sat) - var(--sab) - 16px), 520px); }
 }
+/* U-3: the landscape results make room for the notch insets (two columns need more than 520px) and never wrap a number */
+.res-row b, .coins-total, .res-coins h3, .res-actions .btn { white-space: nowrap; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .results .res-scroll, .res-actions { width: min(100%, calc(640px + var(--sal) + var(--sar))); margin-inline: auto; }
+}

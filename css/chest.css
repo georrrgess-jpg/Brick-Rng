@@ -360,3 +360,36 @@ html.low-end .rv-stars { animation: none; } html.reduced .rv.night .rv-stars { a
 .opening.revealing .op-rays, .opening.revealing .op-dust, .opening.revealing .op-glow, .opening.revealing .op-stage, .opening.revealing .op-reel { animation: opHide 0s linear 0.6s forwards; }
 @keyframes opHide { to { visibility: hidden; } }
 .opening.spinning .op-rays, .opening.spinning .op-dust { will-change: auto; }
+
+/* ===================================================================
+   Update 7: phones
+   =================================================================== */
+/* U-2: the live demo on the reveal card never covers the item's name. The demo is drawn at a fixed size (156px), so on a short
+   phone, where the art box is shorter than that, it scales down to the box (container query on the box's real height). */
+@supports (container-type: size) {
+  .rv-art { container: rvart / size; }
+  @container rvart (max-height: 154px) { .rv-demo > * { scale: 0.84; } }
+  @container rvart (max-height: 134px) { .rv-demo > * { scale: 0.74; } }
+  @container rvart (max-height: 116px) { .rv-demo > * { scale: 0.64; } }
+}
+/* U-12: on a 320 phone the five odds chips use short rarity names (Com, Rare, Epic, Leg, Myth) so none runs into the next */
+@media (max-width: 359px) {
+  .odds-chips { gap: 4px; } .oc { padding: 6px 3px 5px; }
+  .oc span[data-s] { font-size: 0; letter-spacing: 0; } .oc span[data-s]::after { content: attr(data-s); font-size: 12px; }
+}
+/* U-20: "See everything inside" is a full 44px target */
+.op-odds .op-see { min-height: 44px; margin-top: 2px; }
+/* U-11: the Golden Chest stays the hero before a type is picked on short screens: a one-line header (the hint under the hold
+   button already says what to do), and the odds sentence waits for a pick (the chips stay) */
+@media (max-height: 620px) and (orientation: portrait), (orientation: landscape) and (max-height: 560px) {
+  .opening[data-chest="golden"] .op-title span { display: none; }
+  .opening[data-chest="golden"] .op-title b { font-size: 22px; white-space: nowrap; }
+}
+@media (max-height: 620px) and (orientation: portrait) {
+  .opening[data-chest="golden"] .op-odds .odds-sentence { display: none; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .op-picker button { min-height: 44px; }
+  /* U-23: the reel would cover its own caption's second line: the caption keeps only "Opening" */
+  .op-reel-caption small { display: none; }
+}

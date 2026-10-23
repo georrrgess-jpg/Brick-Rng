@@ -143,7 +143,7 @@
         <i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>${r.missing === 0 ? `You own all ${r.total}` : `${r.missing} of ${r.total} left to find`}</small></div>
         <div class="od-pct"><b>${fmtPct(r.pct)}</b>${oneIn(r)}</div></div>`).join('') + done.map((r) => `<div class="odds-row done" style="--rc:${r.rarity.color}"><i class="od-chip"></i><div class="od-name"><b>${r.rarity.name}</b><small>You own all ${r.total}</small></div><div class="od-pct"><b>${BR.icon('check')}</b></div></div>`).join('');
     const inside = rows.filter((r) => r.total > 0).map((r) => `<div class="inside-grp" style="--rc:${r.rarity.color}"><h4>${r.rarity.name}</h4><div class="inside-items">${r.items.map((x) => `<div class="inside-item ${P.owns(x.id) ? 'own' : ''}">${P.owns(x.id) ? BR.icon('check') : ''}<span>${x.name}</span></div>`).join('')}</div></div>`).join('');
-    const chips = opts.compact ? `<div class="odds-chips">${live.map((r) => `<div class="oc" style="--rc:${r.rarity.color}"><b>${fmtPct(r.pct)}</b><span>${r.rarity.name}</span>${oneIn(r, true)}</div>`).join('')}</div>` : '';
+    const chips = opts.compact ? `<div class="odds-chips">${live.map((r) => `<div class="oc" style="--rc:${r.rarity.color}"><b>${fmtPct(r.pct)}</b><span data-s="${({ Common: 'Com', Legendary: 'Leg', Mythic: 'Myth' })[r.rarity.name] || r.rarity.name}">${r.rarity.name}</span>${oneIn(r, true)}</div>`).join('')}</div>` : '';
     return `<div class="odds ${opts.compact ? 'compact' : ''}">
       <p class="odds-sentence">${BR.oddsSentence(chestId, type, P.ownedIds(), opts.pityIn)}</p>
       <div class="odds-bar" role="img" aria-label="Odds bar">${bar}</div>${chips}
