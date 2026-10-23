@@ -46,7 +46,7 @@
     titles: { home: '', shop: 'Shop', collection: 'Collection', missions: 'Missions', profile: 'Profile' },
     init() {
       $('tbGear').innerHTML = BR.icon('gear');
-      $('tbCoins').innerHTML = `${BR.coin()}<b class="num" data-coins>${fmt(P.coins)}</b>`;
+      $('tbCoins').innerHTML = `${BR.coin()}<b class="num" data-coins>${BR.fmtBar(P.coins)}</b>`;
       this.coins = P.coins;
       this.refresh();
     },
@@ -63,7 +63,7 @@
         the player's back (a screen re-rendered after a restore, the first paint) is written straight in. */
     syncCoins() {
       const n = document.querySelector('#tbCoins [data-coins]');
-      if (n && this.coins !== P.coins) { this.coins = P.coins; n.textContent = fmt(P.coins); }
+      if (n && this.coins !== P.coins) { this.coins = P.coins; n.textContent = BR.fmtBar(P.coins); }
     },
     refresh() {
       this.syncCoins();

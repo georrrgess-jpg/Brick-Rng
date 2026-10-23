@@ -59,17 +59,19 @@
   /** Coin counters follow the balance when it changes (once per frame), instead of being rewritten on a timer.
       The top bar's pill counts up (or down) to the new balance with a small bump; the others just show it. */
   let coinRaf = 0;
+  /** U-9: on a 320-wide phone the status bar's pill shows big balances short (12.3k), so the screen title keeps its room. */
+  BR.fmtBar = (v) => (innerWidth < 340 && v >= 1e4 ? (v >= 1e6 ? (v / 1e6).toFixed(v < 1e7 ? 1 : 0) + 'M' : (v / 1e3).toFixed(v < 1e5 ? 1 : 0) + 'k') : BR.fmt(v));
   BR.refreshCoins = () => {
     if (coinRaf) return;
     coinRaf = requestAnimationFrame(() => {
       coinRaf = 0;
-      const bal = BR.Progress.coins, t = BR.fmt(bal);
+      const bal = BR.Progress.coins;
       document.querySelectorAll('[data-coins]').forEach((n) => {
-        const bar = n.closest('#topbar');
+        const bar = n.closest('#topbar'), t = bar ? BR.fmtBar(bal) : BR.fmt(bal);
         if (bar && BR.Chrome) BR.Chrome.coins = bal;
         if (n.textContent === t) return;
-        if (bar && !bar.classList.contains('hidden') && !BR.reducedMotion && BR.Router.current !== 'run') { BR.countTo(n, bal, 600); BR.bump(n.closest('.pill')); }
-        else n.textContent = t;
+        if (bar && t === BR.fmt(bal) && !bar.classList.contains('hidden') && !BR.reducedMotion && BR.Router.current !== 'run') { BR.countTo(n, bal, 600); BR.bump(n.closest('.pill')); }
+        else { n.textContent = t; if (bar) BR.bump(n.closest('.pill')); }
       });
       if (BR.Chrome) BR.Chrome.refresh();
     });
