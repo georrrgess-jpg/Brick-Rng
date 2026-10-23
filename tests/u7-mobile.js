@@ -48,9 +48,14 @@ async function startRun(page, mode) {
 const BROKEN = (root) => [...document.querySelectorAll(root + ' *')].filter((e) => {
   const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || !e.getClientRects().length || +cs.opacity < 0.05) return false;
   let a = e; while (a && a !== document.body) { const s = getComputedStyle(a); if (+s.opacity < 0.05 || s.display === 'none') return false; a = a.parentElement; }
-  if (![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) return false;
-  const lines = getComputedStyle(e).display.startsWith('inline') ? e.getClientRects().length : 1;
-  return lines > 1 || (e.scrollWidth > e.clientWidth + 1 && cs.overflow !== 'visible') || (cs.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1);
+  const texts = [...e.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim());
+  if (!texts.length || e.closest('.gl-txt, .hint, .combo span, .last-spark span, .aim-banner')) return false;   // (texts that may take two lines by design)
+  // the line boxes of the element's own text: more than one line means it wrapped; past the edge of a clipping ancestor means it is cut
+  const rg = document.createRange(), tops = new Set(); let lft = Infinity, rgt = -Infinity;
+  for (const t of texts) { rg.selectNodeContents(t); for (const q of rg.getClientRects()) { if (q.width < 1) continue; tops.add(Math.round(q.top / 6)); lft = Math.min(lft, q.left); rgt = Math.max(rgt, q.right); } }
+  if (tops.size > 1) return true;
+  for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) { const s = getComputedStyle(a); if (s.overflowX !== 'visible') { const ar = a.getBoundingClientRect(); if (rgt > ar.right + 1 || lft < ar.left - 1) return true; break; } }
+  return (e.scrollWidth > e.clientWidth + 1 && cs.overflow !== 'visible') || (cs.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1);
 }).map((e) => (e.id || e.className) + ' "' + e.textContent.trim().slice(0, 24) + '"');
 
 async function runChecks(key, insets) {
@@ -76,9 +81,15 @@ async function runChecks(key, insets) {
   }
   // results: end a Rush run
   await startRun(page, 'rush');
+  // (one real pop first: a run with nothing popped shows a short "Nothing popped" card instead of the Coins)
+  await page.evaluate(() => { const e = BR.Run.engine, B = e.board; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const b = B.grid[r][c]; b.color = r < 2 && c < 4 ? 0 : ((r * 3 + c) % 4) + 1; delete b.fb; } B.version++; BR.Run.view.syncTo(B); BR.Run.clearHover(); });
+  const pt = await page.evaluate(() => { BR.Run.view._rc = null; return BR.Run.view.pagePoint(0, 0); });
+  await touch(r, 'touchStart', pt.x, pt.y); await touch(r, 'touchEnd', pt.x, pt.y);
+  await wait(page, 400); await page.waitForFunction(() => !BR.Run.busy, null, { timeout: 10000 }); await wait(page, 600);
   await page.evaluate(() => { const e = BR.Run.engine; e.score = 168000; BR.Run.setScore(e.score, false); e.fuse = 0.01; e.sparkUsed = true; });
   await page.waitForFunction(() => BR.Run.resultsEl, null, { timeout: 15000 }).catch(() => {});
   await wait(page, 4200);
+  ok(await page.evaluate(() => !!document.querySelector('.results.on .coins-total')), tag, 'the results show no Coins total');
   const res = await page.evaluate(BROKEN, '.results.on :is(.res-coins, .res-actions, .res-score)');
   ok(!res.length, tag, 'results text wraps or is clipped:', res.join(', '));
   if (r.errors.length) ok(false, tag, 'console errors', r.errors.slice(0, 3).join(' | '));
@@ -141,8 +152,14 @@ async function sheetSwipe() {
   await page.evaluate(() => { while (BR.Back.depth) BR.Back.closeTop(); }); await wait(page, 600);
   // a quick flick on the head
   await page.evaluate(() => BR.coinSheet()); await wait(page, 900);
-  const h = await page.locator('.sheet.on .sheet-head h2').boundingBox();
-  await drag(r, h.x + 10, h.y + h.height / 2, 0, 130, 4, 0); await wait(page, 800);
+  // (dispatched in the page with exact spacing: real touch events through CDP arrive too irregularly on a loaded machine to time a flick)
+  await page.evaluate(() => {
+    const h = document.querySelector('.sheet.on .sheet-head h2'), b = h.getBoundingClientRect(), x = b.left + 10, y = b.top + b.height / 2;
+    const ev = (t, dy) => h.dispatchEvent(new PointerEvent(t, { pointerId: 7, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, clientX: x, clientY: y + dy }));
+    const pause = (ms) => { const t = performance.now(); while (performance.now() - t < ms); };
+    ev('pointerdown', 0); for (let i = 1; i <= 5; i++) { pause(12); ev('pointermove', i * 12); } ev('pointerup', 60);   // (60px: well under 30% of the sheet, so only the speed closes it)
+  });
+  await wait(page, 800);
   ok(await page.evaluate(() => !document.querySelector('.sheet.on')), 'a quick flick down on the sheet head left the sheet open');
   // the body still scrolls: a long sheet (Settings) scrolls on a drag inside its body
   await page.evaluate(() => { while (BR.Back.depth) BR.Back.closeTop(); }); await wait(page, 500);
