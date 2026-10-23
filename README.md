@@ -87,6 +87,11 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   centred dialogs of at most 560px in two columns that fade where they scroll. Larger text is one type scale (`--ts`), not zoom.
   Colours mean one thing: green is free, gold spends Coins, red cannot be undone, hot pink is the one main action.
 
+- **Smoother on phones (Update 6)**: popping and chest openings do far less work per frame (Holo and Prism finishes were the
+  worst case: about half the frame time they had). Settings has **Performance mode** for older phones: it keeps the bricks, pops,
+  falls, fuse and hints, and drops the floating menu bricks, finish sheens, light rays, dust, stars, menu staggers and looping
+  decoration, with fewer sparks. Graphics (Auto, Smooth, Pretty) is greyed out while it is on. Runs pay about 10% more Coins.
+
 ## Layout
 ```
 index.html          screens + layers
@@ -103,6 +108,7 @@ css/hats.css css/sets.css css/tower.css    Fizz Hat poses, set crests and flouri
 css/fuse.css        the fuse: Fizz, rope, flame, readout, chips, the urgency states (every fuse cosmetic is drawn from tokens)
 css/badges.css      item badges (rarity frame and art, the still version used in the reel)
 css/coach.css       the first-time tip cards
+css/perf.css        Performance mode (html.perf-mode): what it switches off on top of Smooth; loaded last
 js/rng.js board.js config.js boosters.js items.js chests.js director.js engine.js storage.js pass.js progress.js missions.js retention.js
                     pure logic, runs in Node (tests use it); retention.js is the streak, run goals, records and next goal
 js/audio.js         every sound effect, synthesized: pentatonic pops, a quiet low-passed SFX bus, loudness-tested
@@ -165,6 +171,7 @@ node tests/u5-chests.js # chest openings: re-press, badge on every reveal card, 
 node tests/u5-skins.js u5-boards.js u5-fuses.js u5-older.js   # the Moonwick skins, boards and fuses (and hats), and the repainted older cosmetics: budgets, colour distances, contrast, bounds
 node tests/u5-collection.js   # the Hats tab, Try it and Try the set, the Shop's new chips and spotlight, the Tower, the what's-new card
 node tests/u5-sets.js u5-tower.js   # set crests and flourishes (particle and time caps, Reduce Motion), the Tower's counting, tap targets and bell
+node tests/u6-perf.js   # Update 6: Performance mode, animation restarts without style reads, no brick rule by sibling position, the reel leaves at the reveal, menus skipped behind a chest, golden picker, Coins
 node tests/u5-menus.js  # menus: focus in sheets, tab badges, the fixed status bar, keyboard reach, hero overflow, landscape Play, sheet widths, Larger text, Reduce Motion, toasts, swaps, Boosts memory, the Pass track
 ```
 UI tests use Playwright's Chromium (paths in `tests/lib.js`). Progress is stored in `localStorage` under
