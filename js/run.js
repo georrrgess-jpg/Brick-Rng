@@ -1170,7 +1170,8 @@
       }
       this.whenShown(node.querySelector('.res-mc'), () => node.querySelectorAll('.bar i[data-to]').forEach((b) => { b.style.width = b.dataset.to + '%'; }));
       };
-      if (restEl && restKids.firstChild) requestAnimationFrame(choreo); else choreo();
+      // (two animation frames: the first one's callbacks still run before that frame's style, which would style both parts together)
+      if (restEl && restKids.firstChild) requestAnimationFrame(() => requestAnimationFrame(choreo)); else choreo();
       node.addEventListener('click', (e) => {
         const b = e.target.closest('[data-r]'); if (!b) return;
         BR.audio.ui(); BR.haptic('tap');
