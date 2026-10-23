@@ -539,6 +539,8 @@
         this.reelHost.insertBefore(ring, this.reelHost.firstChild);
         ring.animate([{ transform: 'translate(-50%,-50%) scale(0.5)', opacity: 0.95 }, { transform: 'translate(-50%,-50%) scale(2.8)', opacity: 0 }], { duration: 800, easing: 'cubic-bezier(0.2,0.7,0.3,1)' }).onfinish = () => ring.remove();
       }
+      // (two frames on, so the landing ring is already running on its own)
+      requestAnimationFrame(() => requestAnimationFrame(() => { if (!this.closed && this.state === 'spin' && this.drop === drop) this.prepReveal(drop); }));
       await sleep(reduced() ? 250 : 800);
       if (this._spinDone) this._spinDone();
       if (this.closed) return;
@@ -557,23 +559,20 @@
       return done;
     }
 
-    async reveal(drop) {
-      this.state = 'reveal';
+    /** The reveal card, its words, its actions and its badge are built while the reel rings in its winner (the reveal layer is still
+        transparent then), so the reveal's first frame only turns it on instead of building, styling and measuring the card. */
+    prepReveal(drop) {
+      if (this._prep && this._prep.drop === drop) return this._prep;
       if (this._tl) this._tl.cancel();   // (a reveal that is still playing never runs on under the next one)
       const item = BR.itemById[drop.itemId], R = BR.rarityById[drop.rarity];
       const level = BR.RARITIES.findIndex((r) => r.id === drop.rarity);
       const inst = drop.inst || { shine: drop.shine, seed: drop.seed, counter: drop.counter, uid: null };
       const rv = this.rv, still = reduced();
-      // the spent reel (44 cards, about 1300 nodes) leaves the page as the card comes in (the card covers it within a few frames):
-      // left in place it went through the reveal's style passes and doubled the cost of its first frame. The next spin builds a new one.
-      if (this.reel) this.reel.stop();
-      this.reel = null; this.reelHost.textContent = '';
       // Series 4's Legendary and Mythic items get the "Midnight" reveal (the Mythic in full, the Legendary as moon and corona)
       const night = item.series === 4 && level >= 3, fullNight = night && level >= 4;
       rv.style.setProperty('--rc', R.color);
       rv.className = 'rv' + (level >= 3 ? ' has-banner' : '') + (night ? ' night' : '');   // the banner already names a Legendary or Mythic, so the card does not repeat it
-      this.root.classList.remove('spinning'); this.root.classList.add('revealing');
-      if (this.demo) this.demo.stop();
+      if (this.demo) { this.demo.stop(); this.demo = null; }
       const shineTag = inst.shine && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';
       const card = rv.querySelector('.rv-card');
       card.innerHTML = `<div class="rv-face"><div class="rv-rar">${R.name}</div><div class="rv-art" data-type="${item.type}"><div class="rv-badge-big"></div></div><div class="rv-name">${item.name}</div><div class="rv-type">${BR.ITEM_TYPES[item.type].name}</div></div>`;
@@ -583,8 +582,7 @@
       rv.querySelector('.rv-info').classList.remove('on');
       rv.querySelector('.rv-actions').classList.remove('on');
       const banner = rv.querySelector('.rv-banner'); banner.className = 'rv-banner'; banner.textContent = level >= 3 ? R.name : '';
-      const rings = () => rv.querySelectorAll('.rv-ring');
-      rings().forEach((x) => x.classList.remove('go'));
+      rv.querySelectorAll('.rv-ring').forEach((x) => x.classList.remove('go'));
       const flare = rv.querySelector('.rv-flare'), black = rv.querySelector('.rv-black'), seed = rv.querySelector('.rv-seed');
       flare.classList.remove('go'); black.classList.remove('go');
       const art = card.querySelector('.rv-art');
@@ -592,12 +590,28 @@
       const cr = card.getBoundingClientRect(), bs = Math.round(Math.max(96, Math.min(196, cr.width - 70, cr.height - 150)));
       art.querySelector('.rv-badge-big').innerHTML = BR.Badge.html(item, inst, { size: bs, still: still });
       rv.style.setProperty('--cx', (cr.left + cr.width / 2).toFixed(1) + 'px'); rv.style.setProperty('--cy', (cr.top + cr.height / 2).toFixed(1) + 'px');
+      seed.innerHTML = night ? BR.Badge.html(item, inst, { size: 112, still: true }) : '';
+      if (night) rv.querySelector('.rc-sig .sg').innerHTML = sigilOf(item);
+      return (this._prep = { drop, item, R, level, inst, night, fullNight, card, banner, flare, black, seed, art });
+    }
+
+    async reveal(drop) {
+      this.state = 'reveal';
+      if (this._tl) this._tl.cancel();   // (a reveal that is still playing never runs on under the next one)
+      const { item, R, level, inst, night, fullNight, card, banner, flare, black, seed, art } = this.prepReveal(drop);
+      this._prep = null;
+      const rv = this.rv, still = reduced();
+      // the spent reel (44 cards, about 1300 nodes) leaves the page as the card comes in (the card covers it within a few frames):
+      // left in place it went through the reveal's style passes and doubled the cost of its first frame. The next spin builds a new one.
+      if (this.reel) this.reel.stop();
+      this.reel = null; this.reelHost.textContent = '';
+      this.root.classList.remove('spinning'); this.root.classList.add('revealing');
+      if (this.demo) this.demo.stop();
+      const rings = () => rv.querySelectorAll('.rv-ring');
       // (the board behind is built a moment later, so the first frames of the reveal never wait for 64 bricks)
       const look = rv.querySelector('.rv-look'), rid = this._rid = (this._rid || 0) + 1;
       look.innerHTML = '';
       if (!BR.lowEnd) setTimeout(() => { if (!this.closed && this._rid === rid) look.innerHTML = lookHTML(item, inst); }, 140);
-      seed.innerHTML = night ? BR.Badge.html(item, inst, { size: 112, still: true }) : '';
-      if (night) rv.querySelector('.rc-sig .sg').innerHTML = sigilOf(item);
       const cardCenter = () => { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       const lvl = level + 1;
       void rv.offsetWidth;

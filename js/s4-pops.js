@@ -783,7 +783,7 @@
         const S = b.width * 1.62, el = document.createElement('div');
         el.className = 's4-swirl';
         el.style.cssText = `left:${(cx - S / 2).toFixed(1)}px;top:${(cy - S / 2).toFixed(1)}px;width:${S.toFixed(1)}px;height:${S.toFixed(1)}px;opacity:.5`;
-        el.innerHTML = '<i>' + swirlSvg() + '</i>';
+        el.innerHTML = '<i class="an">' + swirlSvg() + '</i>';
         bg.insertBefore(el, bg.querySelector('.vignette'));
         if (el.animate) el.animate([{ transform: 'scale(0.3)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 0.9, offset: 0.55 }, { transform: 'scale(1)', opacity: 0.5 }], { duration: 640, easing: 'cubic-bezier(0.2,0.7,0.3,1)' });
         RUSH.swirl = el; watchRush();

@@ -51,7 +51,23 @@
     /* ------------------------------------------------------------------ signature moments
        Each one is short (under 600ms) and only draws on the effects layer, so it never slows a tap. */
     popCount: 0,
+    /* The decorative side of a Rush start (skies, rune rings, set flourishes...) starts two frames after the tap, under the flash: the tap frame keeps only what the player must feel at once (the pop, the Rush class and banner).
+       Those hooks read the board's size, and in the tap frame that forced the Rush restyle of the whole run screen in the middle of the
+       handler. A later moment (a Rush end, a stage clear, the results...) first plays what is still waiting, so their order never
+       changes; the pop of the same tap does not wait for them. (Deferring the stage clear and the Last Spark the same way made the
+       Spire set's pop frames longer in tests/perfbudget.js, so those still run at once.) */
+    later(fn) {
+      (this._later = this._later || []).push(fn);
+      // (two frames: a tap is handled at the start of a frame, before its animation callbacks, so one would still run before its style)
+      if (!this._laterRaf) this._laterRaf = requestAnimationFrame(() => { this._laterRaf = requestAnimationFrame(() => { this._laterRaf = 0; this.flushLater(); }); });
+    },
+    flushLater() {
+      const q = this._later; this._later = null;
+      if (this._laterRaf) { cancelAnimationFrame(this._laterRaf); this._laterRaf = 0; }
+      if (q) q.forEach((f) => f());
+    },
     onEvent(type, d) {
+      if (this._later && type !== 'pop' && type !== 'line' && type !== 'demo') this.flushLater();
       const M = this.moments || {};
       if (BR.reducedMotion) return;
       if (!Object.keys(M).length && !this.handlers.length) return;   // moment-less loadouts still reach the Series 3 handlers (demos, skins without a moment)
@@ -100,7 +116,7 @@
         if (M.scan) this.scan(d.view.boardEl);
         if (M.thunder) this.lightning(d.view.boardEl, null);
       } else if (type === 'rushStart') {
-        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
+        this.later(() => this.handlers.forEach((h) => h(type, d, { M, fx, rnd })));
         const run = d.run.el;
         run.classList.toggle('tint-plasma', !!M.plasma);
         if (M.dragon) this.roar(d.run);
@@ -162,7 +178,7 @@
         return `<div class="mini-bricks ${item.cls}" data-shine="${shine}" style="${style}">${[0, 1, 3].map((c, i) => this.brickHTML(c, i)).join('')}</div>`;
       }
       if (item.type === 'pop') {
-        const dots = Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg"></i>`).join('');
+        const dots = Array.from({ length: 10 }, (_, i) => `<i class="an" style="--a:${i * 36}deg"></i>`).join('');
         return `<div class="mini-burst" style="--c:${item.color}">${dots}</div>`;
       }
       if (item.type === 'board') return `<div class="mini-board ${item.cls} ${o.live ? 'live' : ''}" data-ashine="${shine}">${o.live ? '<b class="scene-fx"></b><b class="scene-fx b"></b>' : ''}<i></i></div>`;

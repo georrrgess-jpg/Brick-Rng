@@ -190,7 +190,17 @@
     return '';
   };
   const visible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
-  const setBehind = (on) => BEHIND.forEach((id) => { const el = $(id); if (el) { if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert'); } });
+  // `inert` restyles everything under it (about 1,000 elements, the whole tap frame on a slow phone). Opening: screen readers lose the
+  // page at once (aria-hidden, no restyle; Tab is already trapped and the backdrop takes every touch) and inert follows once the sheet
+  // has slid in. Closing: both go at once, so focus can return to the opener.
+  let behindT = 0;
+  const setBehind = (on) => {
+    clearTimeout(behindT); behindT = 0;
+    const each = (fn) => BEHIND.forEach((id) => { const el = $(id); if (el) fn(el); });
+    if (!on) { each((el) => { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); }); return; }
+    each((el) => el.setAttribute('aria-hidden', 'true'));
+    behindT = setTimeout(() => { behindT = 0; if (openSheets.length) each((el) => el.setAttribute('inert', '')); }, 450);
+  };
   /** Tab cycles inside the top sheet (the page behind is inert, so the cycle is the only place focus can go). */
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Tab' || !openSheets.length) return;
