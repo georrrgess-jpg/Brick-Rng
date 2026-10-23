@@ -245,13 +245,11 @@
     frame(now) {
       if (!this.active) { this._looping = false; return; }
       requestAnimationFrame((t) => this.frame(t));
-      const dt = Math.min(0.1, Math.max(0, (now - this.last) / 1000)); this.last = now;
+      const raw = Math.max(0, (now - this.last) / 1000), dt = Math.min(0.1, raw); this.last = now;
       if (!this.engine) return;
-      // performance probe: lower effects automatically if the phone is struggling
-      if (this.clock && !this.paused && !this.modal && BR.Storage.data.settings.perf === 'auto') {
-        this.perfSum += dt; this.perfN++;
-        if (this.perfN >= 180) { const avg = this.perfSum / this.perfN; this.perfN = 0; this.perfSum = 0; BR.Gfx.sample(avg); }
-      }
+      // performance probe: lower effects automatically if the phone is struggling (BR.Gfx: raw frame times, against the screen's refresh)
+      if (this.clock && !this.paused && !this.modal && BR.Storage.data.settings.perf === 'auto') BR.Gfx.frame(raw);
+      else if (BR.Gfx.buf.length) BR.Gfx.reset();
       const e = this.engine;
       if (this.clock && !this.paused && !this.modal && !this.over) {
         const events = e.tick(dt);

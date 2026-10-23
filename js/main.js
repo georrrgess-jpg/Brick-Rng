@@ -6,15 +6,42 @@
   /** Graphics quality that looks after itself: Auto watches the frame time during runs, steps effects down one level when the
    *  phone struggles (with a short toast), and steps back up if it later runs with room to spare. The result is remembered per
    *  device, apart from the save. Smooth and Pretty in Profile pin it. */
+  //  Every judgement is relative to the screen's own refresh interval, read from the fastest frames of each window and snapped to a
+  //  real rate (144/120/90/60/30 Hz): a 60 Hz phone can come back up, and a 30 fps cap (iOS Low Power Mode) is "on budget", never
+  //  "slow". A hidden tab, a pause or any stall over 250 ms starts the window again. Down after one slow 3-second window; back up
+  //  after 7 good windows in a row (about 20 s), and twice as long each time it had to come down again within a minute of going up.
+  const RATES = [1 / 144, 1 / 120, 1 / 90, 1 / 60, 1 / 30];
   BR.Gfx = {
-    KEY: 'poprush.gfx', st: { low: false, flips: 0 },
+    KEY: 'poprush.gfx', st: { low: false, flips: 0, upNeed: 7 }, buf: [], good: 0, refresh: 1 / 60, lastUp: -1e9, WINDOW: 180,
     load() { try { const o = JSON.parse(localStorage.getItem(this.KEY)); if (o && typeof o === 'object') this.st = Object.assign(this.st, o); } catch (e) { /* ignore */ } BR.autoLow = !!this.st.low; },
     save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.st)); } catch (e) { /* ignore */ } },
-    /** avg = seconds per frame over the last 3 seconds of a run. */
-    sample(avg) {
-      const was = !!this.st.low;
-      if (!was && avg > 0.026) { this.st.low = true; this.st.flips++; }
-      else if (was && avg < 0.0125 && this.st.flips < 3) { this.st.low = false; this.st.flips++; this._upCount = (this._upCount || 0) + 1; }
+    /** One run frame on Auto: dt = raw seconds since the previous frame. */
+    frame(dt) {
+      if (!(dt > 0)) return;
+      if (dt > 0.25 || document.hidden) { this.buf.length = 0; return; }
+      this.buf.push(dt);
+      if (this.buf.length >= this.WINDOW) { const b = this.buf; this.buf = []; this.window(b); }
+    },
+    reset() { this.buf.length = 0; },
+    /** A full window of frame times: the refresh interval from its fastest tenth, then the average against it. */
+    window(b) {
+      const s = b.slice().sort((x, y) => x - y), p10 = s[Math.floor(s.length * 0.1)];
+      let r = RATES[0]; for (const x of RATES) if (Math.abs(x - p10) < Math.abs(r - p10)) r = x;
+      this.refresh = r;
+      this.sample(b.reduce((a, x) => a + x, 0) / b.length, r);
+    },
+    /** avg = seconds per frame over the last 3 seconds of a run; refresh = the screen's frame interval (default: the last detected). */
+    sample(avg, refresh) {
+      const r = refresh || this.refresh || 1 / 60, was = !!this.st.low;
+      if (r > 0.025) { this.good = 0; return; }                    // a 30 fps cap: on budget, and no reason to step up either
+      const slow = avg > Math.max(0.026, r * 1.55), good = avg < r * 1.2, now = (window.performance && performance.now()) || Date.now();
+      if (!this.st.upNeed) this.st.upNeed = 7;
+      if (!was) {
+        if (slow) { this.st.low = true; this.st.flips++; this.good = 0; if (now - this.lastUp < 60000) this.st.upNeed = Math.min(56, this.st.upNeed * 2); }
+      } else {
+        this.good = good ? this.good + 1 : 0;
+        if (this.good >= this.st.upNeed) { this.st.low = false; this.st.flips++; this.good = 0; this.lastUp = now; }
+      }
       if (this.st.low === was) return;
       BR.autoLow = this.st.low; this.save(); BR.App.applySettings();
       BR.toast(this.st.low ? 'Effects lowered to keep it smooth' : 'Effects are back to full', this.st.low ? '' : 'good');

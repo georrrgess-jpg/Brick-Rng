@@ -18,7 +18,7 @@ const BROWSER = [
   ['moments', ['tests/moments.js']], ['u4cosmetics', ['tests/u4cosmetics.js']], ['audio', ['tests/audio.js']],
   ['u5-menus', ['tests/u5-menus.js'], true], ['u5-run', ['tests/u5-run.js'], true], ['u5-chests', ['tests/u5-chests.js'], true],
   ['u5-skins', ['tests/u5-skins.js'], true], ['u5-pops', ['tests/u5-pops.js'], true], ['u5-boards', ['tests/u5-boards.js'], true], ['u5-older', ['tests/u5-older.js'], true, 40], ['u5-fuses', ['tests/u5-fuses.js'], true, 60],
-  ['u5-collection', ['tests/u5-collection.js'], true], ['upgrade', ['tests/upgrade.js'], true], ['u5-sets', ['tests/u5-sets.js'], true], ['u5-tower', ['tests/u5-tower.js'], true], ['u6-perf', ['tests/u6-perf.js'], true],
+  ['u5-collection', ['tests/u5-collection.js'], true], ['upgrade', ['tests/upgrade.js'], true], ['u5-sets', ['tests/u5-sets.js'], true], ['u5-tower', ['tests/u5-tower.js'], true], ['u6-perf', ['tests/u6-perf.js'], true], ['u7-gfx', ['tests/u7-gfx.js'], true],
 ];
 const PERF = [['perfbudget', ['tests/perfbudget.js']]];
 
