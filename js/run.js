@@ -334,8 +334,11 @@
       } else if (e.fuse > BR.CFG.fuse.critical + 1) this.warned = false;
       // rush meter
       const R = BR.CFG.rush, bar = $('rushBar');
-      if (e.rush.active) { $('rushFill').style.width = Math.min(100, (e.rush.left / R.time) * 100).toFixed(1) + '%'; $('rushLabel').textContent = `RUSH x${R.mult}  ${e.rush.left.toFixed(1)}s`; }
-      else { $('rushFill').style.width = e.rush.meter.toFixed(1) + '%'; if ($('rushLabel').textContent !== 'RUSH') $('rushLabel').textContent = 'RUSH'; }
+      // (written only when the text changes: setting textContent every frame replaced the text node and re-laid out the bar 60 times a second)
+      const rw = (e.rush.active ? Math.min(100, (e.rush.left / R.time) * 100) : e.rush.meter).toFixed(1) + '%';
+      const rt = e.rush.active ? `RUSH x${R.mult}  ${e.rush.left.toFixed(1)}s` : 'RUSH';
+      if (rw !== this._rushW) { this._rushW = rw; $('rushFill').style.width = rw; }
+      if (rt !== this._rushT) { this._rushT = rt; $('rushLabel').textContent = rt; }
       bar.classList.toggle('hot', e.rush.meter >= 70 && !e.rush.active);
     },
 
@@ -348,7 +351,7 @@
       this.band();
       this.hudStageBar(false);
       this.renderPower(null);
-      $('rushFill').style.width = '0%';
+      $('rushFill').style.width = '0%'; this._rushW = this._rushT = null;
       if (e.chill) this.hudChill(false);
       else this.hudFuse(0);
       void animate;
@@ -1111,9 +1114,15 @@
         </div></div>`;
       const host = $('layer-overlays');
       const node = BR.el(html);
+      // built in two parts: the head (title, score, the chase line) and the action bar go in now; the cards below them (Coins, XP,
+      // trophies, missions...) join in the next frame, so the first frame styles half the screen (none of them is revealed before 80 ms)
+      const restEl = node.querySelector('.res-rest'), restKids = document.createDocumentFragment();
+      if (restEl) while (restEl.firstChild) restKids.appendChild(restEl.firstChild);
       host.appendChild(node);
       host.style.pointerEvents = 'auto';
-      this.resultsEl = node; BR.under(1);
+      // (the page under the results holds still from the moment the board is cleared, below: pausing the full board first restyled every
+      // brick in the results' first frame, under an overlay that is opaque 0.26 s later)
+      this.resultsEl = node;
       // a sheet (the Boosts for "Play again") or a chest opening (the "Chests" button) opened from the results belongs ABOVE them
       $('layer-sheets').style.zIndex = '70'; $('layer-opening').style.zIndex = '65';
       // Back and Escape leave the results for Home, like Home does
@@ -1121,18 +1130,35 @@
       if (BR.Music && BR.Music.resultsSting) BR.Music.resultsSting();
       requestAnimationFrame(() => node.classList.add('on'));
       BR.Router.setTabs(false);
+      const t0 = performance.now();
+      const choreo = () => {
+      if (this.resultsEl !== node) return;
+      if (restEl) restEl.appendChild(restKids);
       // ---- choreography. The action bar belongs to the screen (it fades in on its own, well inside 0.6 s). Rows that are on screen reveal
       // one after another in a fast stagger; rows below the fold are simply there. Each count starts when its own row is in view.
-      const scroll = node.querySelector('.res-scroll'), sr = scroll.getBoundingClientRect();
+      // Which rows are on the fold is read by an IntersectionObserver after the first frame has laid the results out: measuring
+      // every row here forced the style and layout of the whole new screen inside this task (~190 ms at 4x), then styled it again.
+      // The stagger keeps its schedule from this moment; rows below the fold are revealed (unseen) one frame later.
+      const scroll = node.querySelector('.res-scroll');
       const revs = Array.from(node.querySelectorAll('.rev')).filter((n) => !n.classList.contains("rwait"));
-      const onFold = revs.map((n) => n.getBoundingClientRect().top - sr.top < sr.height - 8);
-      const nOn = onFold.filter(Boolean).length, step = rm ? 0 : Math.min(70, 400 / Math.max(1, nOn));
-      let k = 0;
-      revs.forEach((n, i) => {
-        const at = rm ? 0 : onFold[i] ? 80 + k++ * step : 0;
-        const show = () => { n.classList.add('in'); if (n._onIn) n._onIn(); };
-        if (at) setTimeout(() => { if (this.resultsEl === node) show(); }, at); else show();
-      });
+      const reveal = (onFold) => {
+        const nOn = onFold.filter(Boolean).length, step = rm ? 0 : Math.min(70, 400 / Math.max(1, nOn)), late = performance.now() - t0;
+        let k = 0;
+        revs.forEach((n, i) => {
+          const at = rm ? 0 : onFold[i] ? 80 + k++ * step : 0;
+          const show = () => { n.classList.add('in'); if (n._onIn) n._onIn(); };
+          if (at && at - late > 0) setTimeout(() => { if (this.resultsEl === node) show(); }, at - late); else show();
+        });
+      };
+      if (rm) reveal(revs.map(() => false));
+      else if (window.IntersectionObserver && scroll) {
+        const io = new IntersectionObserver((es) => {
+          io.disconnect(); if (this.resultsEl !== node) return;
+          const on = new Map(es.map((e) => [e.target, e.isIntersecting]));
+          reveal(revs.map((n) => !!on.get(n)));
+        }, { root: scroll, rootMargin: '0px 0px -8px 0px' });
+        revs.forEach((n) => io.observe(n));
+      } else { const sr = scroll.getBoundingClientRect(); reveal(revs.map((n) => n.getBoundingClientRect().top - sr.top < sr.height - 8)); }
       this.whenShown(node.querySelector('.res-score'), () => { BR.countTo($('resScore'), sum.score, rm ? 10 : 1200, 0); BR.audio.xpTick(0); if (r.isBest && sum.score > 0) setTimeout(() => BR.audio.newBest(), 700); });
       if (!empty) {
         this.whenShown(node.querySelector('.res-coins'), () => {
@@ -1145,6 +1171,8 @@
         setTimeout(() => holds.forEach((n) => n.classList.add('in')), 3200);   // (a level-up is never left hidden if the XP row stays below the fold)
       }
       this.whenShown(node.querySelector('.res-mc'), () => node.querySelectorAll('.bar i[data-to]').forEach((b) => { b.style.width = b.dataset.to + '%'; }));
+      };
+      if (restEl && restKids.firstChild) requestAnimationFrame(choreo); else choreo();
       node.addEventListener('click', (e) => {
         const b = e.target.closest('[data-r]'); if (!b) return;
         BR.audio.ui(); BR.haptic('tap');
@@ -1156,7 +1184,7 @@
         else { this.closeResults(); BR.Router.go('home'); }
       });
       // the finished board has no reason to stay behind the results: it is cleared once they are fully on, so no stale board shows when they leave
-      setTimeout(() => { if (this.resultsEl === node && this.over) this.view.reset(); }, 520);
+      setTimeout(() => { if (this.resultsEl !== node) return; if (this.over) this.view.reset(); BR.under(1); node._under = true; }, 520);
       if (BR.Skins.onEvent) BR.Skins.onEvent('results', { run: this });
     },
     /** "Play again" / "Beat it": Rush offers the Boosts used last time (the results stay up behind the sheet, and go when the run begins);
@@ -1217,7 +1245,7 @@
         const be = this.backEntry; this.backEntry = null;
         if (!fromBack) { if (o.silent) be.noHist = true; BR.Back.release(be); }   // (silent: another screen has already pushed its own entry on top)
       }
-      BR.under(-1);
+      if (n._under) { n._under = false; BR.under(-1); }
       this.resultsEl = null; this.modal = false; this.ending = false;
       const host = $('layer-overlays');
       host.style.pointerEvents = 'none'; n.style.pointerEvents = 'none';
