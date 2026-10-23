@@ -57,7 +57,7 @@
       this.hintEl.style.fontSize = this.cell + 'px';
     }
     _place(rec) {
-      rec.el.style.transform = `translate3d(${rec.c * this.cell}px,${rec.r * this.cell}px,0)`;
+      rec.el.style.transform = `translate(${rec.c * this.cell}px,${rec.r * this.cell}px)`;
       this._rowcol(rec);
     }
     /** The brick's row and column as custom properties, for skins that draw one picture across the whole board (Moonglass). Called wherever
@@ -125,13 +125,13 @@
       const total = fall / 0.8;
       const sgn = dir === 'down' ? 1 : -1;
       const bounce = calm ? 0 : Math.min(0.11, 0.025 * d + 0.02) * cell;
-      rec.el.style.transform = `translate3d(${x}px,${y1}px,0)`;
+      rec.el.style.transform = `translate(${x}px,${y1}px)`;
       if (!rec.el.animate) return { land: delay + fall, end: delay + total };
       rec.el.animate([
-        { transform: `translate3d(${x}px,${y0}px,0)`, easing: QUAD, offset: 0 },
-        { transform: `translate3d(${x}px,${y1}px,0)`, easing: 'cubic-bezier(0.2,0.7,0.4,1)', offset: 0.8 },
-        { transform: `translate3d(${x}px,${y1 - sgn * bounce}px,0)`, easing: 'cubic-bezier(0.6,0,0.8,0.4)', offset: 0.9 },
-        { transform: `translate3d(${x}px,${y1}px,0)`, offset: 1 },
+        { transform: `translate(${x}px,${y0}px)`, easing: QUAD, offset: 0 },
+        { transform: `translate(${x}px,${y1}px)`, easing: 'cubic-bezier(0.2,0.7,0.4,1)', offset: 0.8 },
+        { transform: `translate(${x}px,${y1 - sgn * bounce}px)`, easing: 'cubic-bezier(0.6,0,0.8,0.4)', offset: 0.9 },
+        { transform: `translate(${x}px,${y1}px)`, offset: 1 },
       ], { duration: total, delay, fill: 'backwards' });
       if (!this.reduced && !calm) {
         const s = Math.min(1, 0.45 + d * 0.16);
@@ -182,8 +182,8 @@
         const dur = 520 + Math.random() * 240;
         const x = rec.c * this.cell, y = rec.r * this.cell;
         rec.el.animate([
-          { transform: `translate3d(${x}px,${y}px,0) rotate(0deg)`, easing: 'cubic-bezier(0.5,0,0.9,0.6)' },
-          { transform: `translate3d(${x + (Math.random() - 0.5) * this.cell}px,${y + dy}px,0) rotate(${(Math.random() - 0.5) * 80}deg)` },
+          { transform: `translate(${x}px,${y}px) rotate(0deg)`, easing: 'cubic-bezier(0.5,0,0.9,0.6)' },
+          { transform: `translate(${x + (Math.random() - 0.5) * this.cell}px,${y + dy}px) rotate(${(Math.random() - 0.5) * 80}deg)` },
         ], { duration: dur, delay, fill: 'forwards' });
         end = Math.max(end, delay + dur);
       });

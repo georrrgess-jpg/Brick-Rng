@@ -1,7 +1,9 @@
 /* ===================================================================
    Board + bricks + run screen
    =================================================================== */
-.brick { position: absolute; left: 0; top: 0; width: 1em; height: 1em; will-change: transform; pointer-events: none; }
+/* (no will-change and a 2D translate: a brick at rest is painted with the board, not given a GPU layer of its own. 64 bricks with two layers each
+   made every frame of a run composite 130 layers on a phone; a brick that moves is promoted by its animation while it moves.) */
+.brick { position: absolute; left: 0; top: 0; width: 1em; height: 1em; pointer-events: none; }
 .face {
   position: absolute; inset: 5.5%; border-radius: 24%;
   background:
@@ -13,7 +15,6 @@
     0 0.055em 0 color-mix(in srgb, var(--lo) 55%, #000),
     0 0.12em 0.14em rgba(0, 0, 0, 0.4);
   transition: filter 0.16s, transform 0.18s var(--ease-out), box-shadow 0.18s;
-  will-change: transform;
 }
 .stud {
   position: absolute; left: 50%; top: 47%; width: 46%; height: 46%; transform: translate(-50%, -50%); border-radius: 50%;

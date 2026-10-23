@@ -381,7 +381,7 @@
       const complete = this.golden ? goldOk.length === 0 : P().chestStatus(this.id).complete;
       let sub = '', can = true;
       if (complete) { sub = this.golden ? 'You own every Epic or better' : 'You own everything in this chest'; can = false; }
-      else if (this.golden && !this.type) { sub = 'Pick a type first'; can = false; }
+      else if (this.golden && !this.type) { sub = 'Skins, Pops, Boards or Fuses: choose above'; can = false; }
       else if (owned > 0) sub = `You have <b>${owned}</b> to open`;
       else if (cost != null) {
         if (coins >= cost) sub = `${BR.coin()}<b>${BR.fmt(cost)}</b> Coins`;
