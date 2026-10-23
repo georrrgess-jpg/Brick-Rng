@@ -67,7 +67,29 @@ for (let seed = 1; seed < 30; seed++) {
 {
   const e = new BR.Engine({ seed: 6, mode: 'rush' }); e.fuse = 12;
   const r1 = new BR.Engine({ seed: 6, mode: 'rush', snapshot: e.snapshot() }); assert.strictEqual(r1.fuse, 12, 'resumed fuse is the saved fuse');
-  e.fuse = 1.2; const r2 = new BR.Engine({ seed: 6, mode: 'rush', snapshot: e.snapshot() }); assert.strictEqual(r2.fuse, BR.CFG.fuse.resumeGrace, 'a nearly empty fuse resumes with a short grace');
+  e.fuse = 1.2; const r2 = new BR.Engine({ seed: 6, mode: 'rush', snapshot: e.snapshot() }); assert.strictEqual(r2.fuse, 1.2, 'a nearly empty fuse resumes as it was (no top-up)');
+  // Update 7: the clock waits for the first pop after a resume, then burns as usual
+  r2.tick(5); assert.strictEqual(r2.fuse, 1.2, 'the fuse holds until the first pop after a resume');
+  { const g = r2.bestGroup(); r2.commit(r2.plan(g[0].r, g[0].c)); const f = r2.fuse; r2.tick(0.5); assert(r2.fuse < f, 'after a pop the fuse burns again'); }
+  // Update 7: Save and leave during the Last Spark comes back in the Last Spark, not with a relit fuse
+  { const ls = new BR.Engine({ seed: 9, mode: 'rush' }); ls.fuse = 0.05; let ev = []; for (let i = 0; i < 5 && !ls.spark; i++) ev = ev.concat(ls.tick(0.1));
+    assert(ls.spark > 0 && ls.fuse === 0, 'in the Last Spark');
+    const rs = new BR.Engine({ seed: 9, mode: 'rush', snapshot: JSON.parse(JSON.stringify(ls.snapshot())) });
+    assert.strictEqual(rs.fuse, 0, 'no free fuse after resuming in the Last Spark'); assert(rs.spark > 0 && rs.sparkUsed, 'still in the Last Spark');
+    const old = JSON.parse(JSON.stringify(ls.snapshot())); delete old.spark; old.v = 2;
+    const ro = new BR.Engine({ seed: 9, mode: 'rush', snapshot: old }); assert(ro.fuse === 0 && ro.spark > 0, 'an Update 6 save made in the Last Spark resumes in it'); }
+  // Update 7: a resumed Daily continues the same board sequence as an unbroken one
+  { const mk = () => new BR.Engine({ seed: 77, mode: 'daily' }); const a = mk(), b = mk();
+    const step = (e) => { const g = e.bestGroup(); e.commit(e.plan(g[0].r, g[0].c)); };
+    for (let i = 0; i < 6; i++) { step(a); step(b); }
+    const rb = new BR.Engine({ seed: 77, mode: 'daily', snapshot: JSON.parse(JSON.stringify(b.snapshot())) });
+    for (let i = 0; i < 6; i++) { step(a); step(rb); }
+    assert.strictEqual(JSON.stringify(rb.board.grid.map((r) => r.map((x) => x.color))), JSON.stringify(a.board.grid.map((r) => r.map((x) => x.color))), 'a resumed Daily is still the same board as everyone else'); }
+  // Update 7: Chill counts the run's length (the results showed 0:00)
+  { const ch = new BR.Engine({ seed: 4, mode: 'chill' }); const g = ch.bestGroup(); ch.commit(ch.plan(g[0].r, g[0].c)); const left = ch.movesLeft;
+    const rc = new BR.Engine({ seed: 4, mode: 'chill', snapshot: JSON.parse(JSON.stringify(ch.snapshot())) });
+    assert.strictEqual(rc.movesLeft, left, 'a saved Chill run comes back with its moves'); assert.strictEqual(rc.score, ch.score); }
+  { const ch = new BR.Engine({ seed: 4, mode: 'chill' }); ch.tick(2); ch.tick(1.5); assert(Math.abs(ch.time - 3.5) < 1e-9, 'Chill counts time'); assert.strictEqual(ch.movesLeft, BR.CFG.chill.moves, 'and no moves are spent by the clock'); }
   e.rush.meter = 33; const r3 = new BR.Engine({ seed: 6, mode: 'rush', boosts: { rushStart: true }, snapshot: e.snapshot() }); assert.strictEqual(r3.rush.meter, 33, 'Rush Start does not top the meter up again on resume');
 }
 // ---- Update 4: the first run is kind: the fuse waits for the first pop and burns 15% slower until stage 2
@@ -107,7 +129,7 @@ console.log('engine rules ok');
     assert.strictEqual(grid(r, (b) => b.color), grid(e, (b) => b.color), 'the board colors come back');
     assert.strictEqual(grid(r, (b) => b.fb || 0), grid(e, (b) => b.fb || 0), 'the Fuse bricks and their countdowns come back');
     assert.strictEqual(r.goal, e.goal); assert.strictEqual(r.sparkUsed, e.sparkUsed);
-    assert(r.fuse >= Math.min(e.fuse, BR.CFG.fuse.resumeGrace) - 1e-9 && r.fuse <= e.fuse + BR.CFG.fuse.resumeGrace, 'the fuse is the saved fuse (or the short grace)');
+    assert.strictEqual(r.fuse, e.fuse, 'the fuse is the saved fuse');
     if (fbs) checked++;
   }
   assert(checked >= 3, 'the round trip was checked with Fuse bricks on the board (' + checked + ' of 12 runs)');

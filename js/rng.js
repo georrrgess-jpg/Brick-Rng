@@ -13,6 +13,9 @@
     };
     const rng = {
       next,
+      // the generator's position, so a saved run continues the same sequence (a resumed Daily stays everyone's board)
+      state: () => a,
+      setState: (s) => { a = s | 0; },
       int: (n) => Math.floor(next() * n),
       range: (lo, hi) => lo + next() * (hi - lo),
       chance: (p) => next() < p,

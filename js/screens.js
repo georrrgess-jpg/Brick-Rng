@@ -258,7 +258,7 @@
           <div class="hero-cta"><button class="btn btn-xl hero-play" data-act="play-rush" type="button" aria-label="Play Rush">Play</button>${chip}</div>
         </article>
       </div><div class="hcol b">
-        ${resume ? `<button class="resume stg" data-i="1" data-act="resume" type="button"><span class="rs-ico">${BR.icon('bolt')}</span><span class="rs-txt"><b>Resume your run</b><small>Stage ${resume.stage} · ${fmt(resume.score)} points</small></span><span class="rs-go">${BR.icon('arrow')}</span></button>` : ''}
+        ${resume ? `<button class="resume stg" data-i="1" data-act="resume" type="button"><span class="rs-ico">${BR.icon('bolt')}</span><span class="rs-txt"><b>Resume your ${resume.mode === 'chill' ? 'Chill run' : 'run'}</b><small>${resume.mode === 'chill' ? 'Round' : 'Stage'} ${resume.stage} · ${fmt(resume.score)} points</small></span><span class="rs-go">${BR.icon('arrow')}</span></button>` : ''}
         ${owned ? `<button class="banner stg" data-i="3" data-act="open-chest" type="button"><span class="bn-ico">${BR.icon('gift')}</span><span class="bn-txt"><b>You have ${owned} chest${owned > 1 ? 's' : ''} to open</b><small>Free. Tap to open ${owned > 1 ? 'one' : 'it'}.</small></span><span class="bn-go">${BR.icon('arrow')}</span></button>` : ''}
         <div class="row2 stg" data-i="4">
           <button class="mode-card daily ${dailyDone ? 'done' : ''}" data-act="play-daily" type="button">

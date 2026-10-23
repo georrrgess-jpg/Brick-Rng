@@ -66,7 +66,10 @@
     /* ---------- the clock ---------- */
     /** Advance real time by dt seconds. Returns events: rushEnd, fuseOut. */
     tick(dt) {
-      if (this.over || this.chill || (this.waitFirstPop && this.stats.pops === 0)) return [];
+      if (this.over || (this.waitFirstPop && this.stats.pops === 0)) return [];
+      // a resumed run waits for its first pop: the player gets time to look at the board, but no free seconds of fuse
+      if (this.resumeHold != null) { if (this.stats.pops === this.resumeHold) return []; this.resumeHold = null; }
+      if (this.chill) { this.time += dt; return []; }   // Chill has no clock, but the run's length is still counted for the results
       const C = BR.CFG, ev = [];
       this.time += dt;
       const r = this.rush;
@@ -260,24 +263,30 @@
     /* ---------- save / resume ---------- */
     snapshot() {
       return {
-        v: 2, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
+        v: 3, mode: this.mode, seed: this.seed, boosts: this.boosts, stage: this.stage, score: this.score,
         inv: Object.assign({}, this.inv), charge: this.charge, cursor: this.cursor, stats: JSON.parse(JSON.stringify(this.stats)),
-        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, fuse: this.fuse, rushMeter: this.rush.active ? 0 : this.rush.meter, director: this.director ? this.director.snapshot() : null, colors: this.board.grid.map((row) => row.map((b) => b.color)),
+        maxCombo: this.maxCombo, sparkUsed: this.sparkUsed, spark: this.spark, fuse: this.fuse, rushMeter: this.rush.active ? 0 : this.rush.meter, director: this.director ? this.director.snapshot() : null, colors: this.board.grid.map((row) => row.map((b) => b.color)),
         // everything else a run is made of, so Save and leave then Resume gives back the same run
-        stageScore: this.stageScore, time: this.time, streak: this.streak, fuseBricks: this.board.grid.map((row) => row.map((b) => b.fb || 0)),
+        stageScore: this.stageScore, time: this.time, streak: this.streak, movesLeft: this.chill ? this.movesLeft : undefined, rng: this.rng.state ? this.rng.state() : undefined, rushLeft: this.rush.active ? this.rush.left : 0, fuseBricks: this.board.grid.map((row) => row.map((b) => b.fb || 0)),
       };
     }
     _restore(s) {
       this.stage = s.stage; this.score = s.score; this.inv = Object.assign({}, s.inv); this.charge = s.charge || 0;
       this.stats = Object.assign(this.stats, s.stats); this.maxCombo = s.maxCombo || 0; this.sparkUsed = !!s.sparkUsed;
-      // resuming must not refill the fuse (Save and leave would be a free refill), but a few seconds of grace keep it from ending at once
-      if (!this.chill && s.fuse != null) this.fuse = Math.min(this.fuseMax, Math.max(+s.fuse || 0, BR.CFG.fuse.resumeGrace));
+      // the fuse comes back exactly as it was (Update 6 and older topped it up to 6 s, which made Save and leave during the
+      // Last Spark a free save); instead the clock waits for the first pop after a resume (`resumeHold`, see tick)
+      if (!this.chill && s.fuse != null) this.fuse = Math.min(this.fuseMax, Math.max(0, +s.fuse || 0));
+      if (!this.chill && this.sparkUsed && this.fuse <= 0) this.spark = s.spark > 0 ? Math.min(BR.CFG.fuse.spark, +s.spark) : BR.CFG.fuse.spark;   // saved during the Last Spark (a v2 save has no spark field: the full spark)
+      this.resumeHold = this.stats.pops;
       if (s.rushMeter != null) this.rush.meter = s.rushMeter;
+      if (!this.chill && s.rushLeft > 0) { this.rush.active = true; this.rush.left = +s.rushLeft; this.rush.meter = 0; }   // saved in Rush Mode: it comes back with the seconds it had
       // v2 snapshots carry the stage's progress, the run clock, the combo and the Fuse bricks' countdowns
       if (Number.isFinite(s.stageScore)) this.stageScore = Math.max(0, s.stageScore);
       if (Number.isFinite(s.time)) this.time = Math.max(0, s.time);
       if (Number.isFinite(s.streak)) this.streak = Math.max(0, s.streak);
       if (Number.isFinite(s.cursor)) this.cursor = s.cursor;
+      if (Number.isFinite(s.rng) && this.rng.setState) this.rng.setState(s.rng);   // (older saves reseed from the stage, as before)
+      if (this.chill && Number.isFinite(s.movesLeft)) this.movesLeft = Math.max(0, Math.min(BR.CFG.chill.moves, s.movesLeft));
       this.rush.lastPop = this.time;
       if (this.director) this.director.restore(s.director);
       this.goal = this.chill ? BR.chillGoal(this.stage) : BR.stageGoal(this.stage);

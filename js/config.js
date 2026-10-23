@@ -29,7 +29,7 @@
       sparkFuse: 6,       // ...and the fuse you get back
       defuse: 3,          // popping a Fuse brick
       burstPenalty: 5,    // a Fuse brick that runs out
-      resumeGrace: 6,     // a resumed run starts with at least this much fuse
+      resumeGrace: 6,     // (unused since Update 7: a resumed run keeps its fuse and the clock waits for the first pop)
       stageFreeze: 1.4,   // fuse holds still during the stage-up wipe
       lowFrac: 0.25,
       critical: 5,

@@ -158,13 +158,14 @@
       BR.audio.go(); BR.haptic('tap');
       this.callout('GO!', '#ffd66b', { pri: PRI.system });
       this.busy = false; this.clock = true;
+      if (o.resumed && engine.rush.active) { this.rushStart(); if (BR.Fuse.rushStart) BR.Fuse.rushStart(); }   // saved in Rush Mode: the board comes back pink, without the start show
       if (this.practice) this.practiceTimer();
       if (this.tutorial) { this.hint('<b>Tap</b> a group of 2 or more matching bricks', 0); this.view.showHint(engine.bestGroup()); }
       this.armIdle(this.tutorial ? 1800 : 5000);
       this.saveSnap();
     },
 
-    saveSnap() { if (this.engine && !this.practice && !this.engine.over && !this.engine.chill) BR.Storage.saveRun(Object.assign(this.engine.snapshot(), { goal: this.goal })); },
+    saveSnap() { if (this.engine && !this.practice && !this.engine.over) BR.Storage.saveRun(Object.assign(this.engine.snapshot(), { goal: this.goal })); },
 
     /**
      * Try it: ten seconds on a practice board that wears the item you were looking at. Nothing is saved or paid, a run in
