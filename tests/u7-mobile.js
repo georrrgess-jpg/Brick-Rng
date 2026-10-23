@@ -86,9 +86,15 @@ async function runChecks(key, insets) {
   const pt = await page.evaluate(() => { BR.Run.view._rc = null; return BR.Run.view.pagePoint(0, 0); });
   await touch(r, 'touchStart', pt.x, pt.y); await touch(r, 'touchEnd', pt.x, pt.y);
   await wait(page, 400); await page.waitForFunction(() => !BR.Run.busy, null, { timeout: 10000 }); await wait(page, 600);
+  // U-14: a message during a live run waits for the results (it would sit on the score and Pause)
+  await page.evaluate(() => BR.toast('Effects lowered to keep it smooth'));
+  await wait(page, 300);
+  ok(await page.evaluate(() => !document.querySelector('#toasts .toast')), tag, 'a toast covered the run');
   await page.evaluate(() => { const e = BR.Run.engine; e.score = 168000; BR.Run.setScore(e.score, false); e.fuse = 0.01; e.sparkUsed = true; });
   await page.waitForFunction(() => BR.Run.resultsEl, null, { timeout: 15000 }).catch(() => {});
-  await wait(page, 4200);
+  const held = await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast')].some((t) => /Effects lowered/.test(t.textContent)), null, { timeout: 4000 }).then(() => true, () => false);
+  ok(held, tag, 'the message held during the run never showed on the results');
+  await wait(page, 2500);
   ok(await page.evaluate(() => !!document.querySelector('.results.on .coins-total')), tag, 'the results show no Coins total');
   const res = await page.evaluate(BROKEN, '.results.on :is(.res-coins, .res-actions, .res-score)');
   ok(!res.length, tag, 'results text wraps or is clipped:', res.join(', '));
