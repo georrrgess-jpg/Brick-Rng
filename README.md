@@ -91,6 +91,11 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   worst case: about half the frame time they had). Settings has **Performance mode** for older phones: it keeps the bricks, pops,
   falls, fuse and hints, and drops the floating menu bricks, finish sheens, light rays, dust, stars, menu staggers and looping
   decoration, with fewer sparks. Graphics (Auto, Smooth, Pretty) is greyed out while it is on. Runs in every mode pay twice as many Coins as before (and 10% on top of that).
+- **Built for phones (Update 7)**: the run screen, Chill, the chest reveal, the results and the menus fit every phone from 320x568
+  up, in portrait and landscape, around the notch. Sheets close with a swipe down, every control presses in, and the keyboard never
+  covers the save-code box. Opening sheets, the Rush start, the results and the chest reveal do much less work, and Auto graphics
+  brings effects back once the phone keeps up. Resuming a run keeps its fuse exactly (the clock waits for your first pop), and Chill
+  runs can be saved. Chill climbs more gently and banks half your spare moves into the next round.
 
 ## Layout
 ```
@@ -171,6 +176,9 @@ node tests/u5-chests.js # chest openings: re-press, badge on every reveal card, 
 node tests/u5-skins.js u5-boards.js u5-fuses.js u5-older.js   # the Moonwick skins, boards and fuses (and hats), and the repainted older cosmetics: budgets, colour distances, contrast, bounds
 node tests/u5-collection.js   # the Hats tab, Try it and Try the set, the Shop's new chips and spotlight, the Tower, the what's-new card
 node tests/u5-sets.js u5-tower.js   # set crests and flourishes (particle and time caps, Reduce Motion), the Tower's counting, tap targets and bell
+node tests/u7-mobile.js # Update 7: run HUD, Pause, bricks, results, reveal and menus at 320x568 to landscape with insets, sheet swipe, press states
+node tests/u7-perf.js   # every animated rule is covered by the pause rules; no rule keyed on <html> ends in a bare *
+node tests/u7-gfx.js    # Auto graphics: refresh-rate detection, Low Power Mode, recovery, borderline phones
 node tests/u6-perf.js   # Update 6: Performance mode, animation restarts without style reads, no brick rule by sibling position, the reel leaves at the reveal, menus skipped behind a chest, golden picker, Coins
 node tests/u5-menus.js  # menus: focus in sheets, tab badges, the fixed status bar, keyboard reach, hero overflow, landscape Play, sheet widths, Larger text, Reduce Motion, toasts, swaps, Boosts memory, the Pass track
 ```

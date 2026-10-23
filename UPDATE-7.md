@@ -1,6 +1,8 @@
-# Pop Rush Update 7: built for phones (plan)
+# Pop Rush Update 7: built for phones
 
-**Status: plan. Nothing in the game has changed yet.** The plan is built from three audits of the Update 6 build (version 11 of the
+**Status: built and published (section 7, "What shipped"). The owner asked for it to be finished within 3 hours, so the scope was
+trimmed to the phone layout, touch feel, the biggest smoothness wins and the bugs, plus a small Chill boost; section 7 lists what was
+left for later. The plan below is kept as it was written.** The plan is built from three audits of the Update 6 build (version 11 of the
 game page), each grounded in screenshots, measurements or bot play. The detail is in `docs/update-7/`.
 
 **What the owner asked for, in order of weight.**
@@ -216,3 +218,82 @@ The plan proceeds with the recommendation in each case unless the owner says oth
 Phase 1 is the largest (mostly CSS, a sheet-drag helper and a new test), then Phase 2 (each fix is small, but each is measured before and
 after), then Phase 3 (engine rules plus four small pieces of UI). Phases 0 and 4 are small. The estimate is several hours of build time
 in total, about half of it on Phases 1 and 2, with a commit and push at the end of every phase.
+
+---
+
+## 7. What shipped
+
+Built in about two and a half hours: two workers in parallel (phone layout and touch, smoothness), with the bug fixes and the Chill
+boost done alongside, then merged and tested together.
+
+### 7.1 Phone layout and touch feel (23 of the 26 audit findings)
+- **Run screen on small phones:** the HUD rows take the full width and only the board follows the height. Bricks at 320x568 went from
+  27px to 37px (36 to 37.5 at 360x640, 39 to 41 at 375x667), Pause is 44px everywhere, and no HUD pill wraps. Under 620px tall the score
+  sits on the Pause row and the power-up slots slim down. 393x852 and landscape measure exactly as before.
+- **Chill** has its own larger board: bricks 27 to 37px at 320x568, 36 to 42 at 360x640.
+- **Chest reveal card:** the item's demo scales to its box, so the name is never covered on short phones.
+- **Results in landscape on notched phones:** the Coins total and every row show in full.
+- **Small-phone menus:** Play fully above the tab bar with the Resume card at 320x568 (32 of 56px showed before; 16 with Larger text),
+  a status bar title that fits with a short Coins balance ("123k") at 320 wide, compact Shop cards, odds chips with short names, the
+  Golden Chest at 128px before a pick (was 27px) and side by side in landscape, the Pass track clear of the notch in landscape, tip cards
+  and What's new without scrolling, Performance mode and Graphics at the top of Settings.
+- **Touch:** sheets close with a swipe or a flick down on their handle or title (a small drag springs back, the body still scrolls); every
+  control presses in, also with Reduce Motion (21 controls had no press feedback); `touch-action` and `overscroll-behavior` on every
+  scroller (no double-tap zoom or pull-to-refresh paths); messages during a run wait for the results instead of covering the score.
+- **Keyboard:** the save-code field and its button stay above the keyboard, the field is 16px so iOS does not zoom, and the name field
+  has a Done key.
+- **Details:** 44px "See everything inside", lighter text for small dim labels, a soft glow behind the reveal text, the reel caption in
+  landscape.
+- Not done: folding the volume sliders into their toggles, and the item preview's particles while its sheet scrolls (U-26).
+- `tests/u7-mobile.js` checks all of this at 320x568, 360x640, 393x852 with insets and 844x390 with insets: 25 problems on the Update 6
+  build, 0 now.
+
+### 7.2 Smoother, same look
+| Fix | Measure (4x, main-thread) | Before | After |
+|---|---|---|---|
+| Opening a sheet no longer restyles the whole app | elements restyled: item / Settings / odds sheet | 1,347 / 564 / 932 | 794 / 209 / 229 |
+| | odds sheet first frame | 110 to 219 ms | 77 to 90 ms |
+| The idle menu wake-up | elements restyled, style time | 474, 59 to 90 ms | 118, 21 to 31 ms |
+| Results screen built without measuring every card | worst results frame | 146 to 229 ms | 60 to 101 ms |
+| Big moments: the Rush start's decoration starts two frames after the tap | Spire set Rush start: tap handler | 214 to 434 ms | 35 to 50 ms |
+| | tap to next paint | 1,248 to 1,648 ms | 584 to 616 ms |
+| Chest reveal card prepared while the reel lands | average reveal frame | 80 ms | 48 to 62 ms |
+| Run HUD writes the Rush label only when it changes | idle run frame | 12.8 to 14.0 ms | 12.1 to 13.0 ms |
+
+Results look pixel-identical to Update 6, and the chest reveal and the Rush start keep every layer (side-by-side screenshots).
+`tests/u7-perf.js` makes sure every animated rule is covered by the pause rules and no rule keyed on `<html>` ends in a bare `*` again;
+`tests/perfbudget.js` gains two element-count budgets for sheets and the idle wake-up.
+
+**Auto graphics now recovers.** It reads the screen's refresh rate (30, 60, 90, 120 or 144 Hz), so iOS Low Power Mode never lowers
+effects; a hidden tab, a pause or a stall never counts; there is no lifetime limit; effects come back after about 20 seconds of good
+frames (the wait doubles if they had to drop again soon after). `tests/u7-gfx.js` simulates a smooth phone, one slow moment, Low Power
+Mode, a 120 Hz phone and a borderline phone.
+
+Left for later from the smoothness list: the first frame of the chest spin (the strip needs the drop, which is rolled when the hold
+ends), rendering menus only when their data changes and `content-visibility` on offscreen cards, the menu blobs as small canvases, the
+compositor-driven fuse burn, folding the landing squash into the fall, and adaptive particle counts. The `inert` restyle of the page
+behind a sheet still happens, now 450 ms after it opens instead of on the tap.
+
+### 7.3 Bugs fixed
+- **Resume no longer relights the fuse.** The fuse comes back exactly as it was, and the clock waits for the first pop after a resume.
+  A run saved in the Last Spark comes back in the Last Spark; a run saved in Rush Mode comes back pink with the seconds it had.
+- **Chill runs are saved by Save and leave** (with their moves) and the Home card offers "Resume your Chill run".
+- **Chill results show the run's real length** (they always showed 0:00).
+- **A resumed Daily continues everyone's board** (the board generator's position is saved).
+- Tests for each in `tests/engine.js`.
+
+### 7.4 Chill, a small boost
+- **A longer, gentler ladder:** goals 2400, 2700, 3050, 3450, 3900, 4400, ... (2400 x 1.13 a round, was 1200 x 1.3).
+- **Banked moves:** half the moves left at a clear, at most 5, carry into the next round ("Move bonus +800 · 4 moves banked"); the rest
+  still shatter for points.
+- **No "Out of moves" while you hold a power-up** (they cost no move in Chill): "Out of moves: use your power-ups!"
+- Chill rounds no longer earn the stage trophies (Hot Streak, Fuse Master).
+- Bots reach rounds 8.2 / 9.9 / 9.9 (casual / average / sharp), up from 7.1 / 8.5 / 8.7.
+- Left for later: the Lucky brick, Second Wind, stars that count and the Star Road, the Daily Chill mission.
+
+### 7.5 Left for a later update
+The economy pass (a Coin sink, mission pay, the stage Coin cap, Boosts), combo tuning, and the rest of the Chill design.
+
+### 7.6 The owner's step
+Play on a real iPhone and a real Android phone, small and large: swipe a sheet closed, type a save code, open a chest, start a Rush with
+a heavy loadout, and leave and resume a run.

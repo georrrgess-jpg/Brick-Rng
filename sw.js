@@ -1,6 +1,6 @@
 /* Pop Rush service worker: caches the whole game so it opens instantly and works offline.
    Bump VERSION whenever a file changes. Classic scripts only, no build step, so the file list is the build. */
-const VERSION = 'poprush-v6.0.1';
+const VERSION = 'poprush-v7.0.0';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/base.css', 'css/screens.css', 'css/run.css', 'css/chest.css', 'css/skins.css', 'css/s3-skins.css', 'css/s3-scenes.css', 'css/fuse.css', 'css/badges.css', 'css/coach.css', 'css/perf.css',
