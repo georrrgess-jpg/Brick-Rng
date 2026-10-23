@@ -478,3 +478,37 @@ button.trophy { width: 100%; text-align: left; color: inherit; cursor: pointer; 
 .claim-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--r-l); background: var(--ink-2); border: 1px solid var(--line-2); }
 .claim-row .rw-txt { flex: 1; min-width: 0; }
 .claim-note { flex-basis: 100%; color: var(--dim); font-size: calc(12px * var(--ts)); }
+
+/* ===================================================================
+   Update 7: phones
+   =================================================================== */
+/* U-4: the shortest portrait phones (320x568): the logo becomes one row (as in landscape) and the Resume card a slim row,
+   so Play stays above the tab bar even with the Resume card and Larger text */
+@media (max-height: 600px) and (orientation: portrait) {
+  .logo { flex-direction: row; justify-content: center; align-items: center; gap: 12px; padding: 0; }
+  .logo-pop { font-size: calc(30px * var(--ts)); gap: 5px; } .logo-rush { margin: 0; } .logo-rush span { font-size: calc(38px * var(--ts)); } .fuse-line { display: none; }
+  .resume { padding: 6px 12px; gap: 10px; } .resume .rs-ico { width: 34px; height: 34px; border-radius: 11px; } .resume .rs-ico svg { width: 20px; height: 20px; }
+  .resume .rs-txt b { font-size: calc(15px * var(--ts)); } .resume .rs-txt small { display: none; }
+  .hero { padding: 12px 14px; } .hero-title { font-size: calc(36px * var(--ts)); } .bomb-art { width: 76px; height: 76px; }
+}
+/* U-8: the Pass track bleeds into the left inset on the left and the right inset on the right (the two were swapped) */
+.track-wrap { margin: 0 calc(var(--sar) * -1 - 16px) 0 calc(var(--sal) * -1 - 16px); }
+/* U-9: a 320 phone: the status bar title fits beside the level, the gear and a big Coins balance */
+@media (max-width: 339px) {
+  .topbar { gap: 6px; } .topbar h1 { font-size: calc(clamp(17px, 5.6vw, 28px) * var(--ts)); }
+  .topbar .coin-btn { padding-left: 6px; padding-right: 8px; gap: 4px; }
+}
+/* U-10: Shop chest cards under 360px: a smaller chest column, so the text column is not squeezed */
+@media (max-width: 359px) {
+  .chest-card { grid-template-columns: 84px 1fr; gap: 10px; padding: 12px; } .cc-art .chest { width: 84px; }
+  .cc-act .btn { white-space: nowrap; }
+}
+/* U-5: 16px in the save-code box, so iOS does not zoom the page when it takes focus */
+.code-box { font-size: max(16px, calc(13px * var(--ts))); }
+/* U-16: a Collection card plays its own entrance animation, which holds transform: its press uses the scale property */
+.icard:active { transform: none; scale: 0.96; }
+/* U-18, U-19: no double-tap zoom on the cards and tiles, and the Pass track and the filters never chain into back navigation */
+.track, .filters, .icard, .pt { touch-action: manipulation; }
+.track, .filters { overscroll-behavior-x: contain; }
+/* U-22: the lighter dim for small text (css/base.css --dim-text) */
+.claim-note, .ic-hint { color: var(--dim-text); }

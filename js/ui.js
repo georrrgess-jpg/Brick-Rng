@@ -59,17 +59,19 @@
   /** Coin counters follow the balance when it changes (once per frame), instead of being rewritten on a timer.
       The top bar's pill counts up (or down) to the new balance with a small bump; the others just show it. */
   let coinRaf = 0;
+  /** U-9: on a 320-wide phone the status bar's pill shows big balances short (12.3k), so the screen title keeps its room. */
+  BR.fmtBar = (v) => (innerWidth < 340 && v >= 1e4 ? (v >= 1e6 ? (v / 1e6).toFixed(v < 1e7 ? 1 : 0) + 'M' : (v / 1e3).toFixed(v < 1e5 ? 1 : 0) + 'k') : BR.fmt(v));
   BR.refreshCoins = () => {
     if (coinRaf) return;
     coinRaf = requestAnimationFrame(() => {
       coinRaf = 0;
-      const bal = BR.Progress.coins, t = BR.fmt(bal);
+      const bal = BR.Progress.coins;
       document.querySelectorAll('[data-coins]').forEach((n) => {
-        const bar = n.closest('#topbar');
+        const bar = n.closest('#topbar'), t = bar ? BR.fmtBar(bal) : BR.fmt(bal);
         if (bar && BR.Chrome) BR.Chrome.coins = bal;
         if (n.textContent === t) return;
-        if (bar && !bar.classList.contains('hidden') && !BR.reducedMotion && BR.Router.current !== 'run') { BR.countTo(n, bal, 600); BR.bump(n.closest('.pill')); }
-        else n.textContent = t;
+        if (bar && t === BR.fmt(bal) && !bar.classList.contains('hidden') && !BR.reducedMotion && BR.Router.current !== 'run') { BR.countTo(n, bal, 600); BR.bump(n.closest('.pill')); }
+        else { n.textContent = t; if (bar) BR.bump(n.closest('.pill')); }
       });
       if (BR.Chrome) BR.Chrome.refresh();
     });
@@ -201,6 +203,13 @@
     else if (!ev.shiftKey && a === last) { ev.preventDefault(); first.focus({ preventScroll: true }); }
   }, true);
 
+  // U-5: an on-screen keyboard that covers the page instead of resizing it (iOS): --kb is the covered height, and a sheet lifts above it
+  if (window.visualViewport) {
+    const vv = window.visualViewport, de = document.documentElement;
+    const kb = () => { const h = Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)); de.style.setProperty('--kb', h + 'px'); de.classList.toggle('kb', h > 80); };
+    vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb);
+  }
+
   BR.Sheet = {
     /**
      * open({ title, body, actions:[{label, cls, onClick, close:true}], center, onClose })
@@ -263,6 +272,34 @@
       }
       sheet.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => api.close()));
       back_.addEventListener('click', () => { if (o.dismissable !== false) api.close(); });
+      // U-15: a bottom sheet follows a finger dragged down on its handle or its head, and closes past 30% of its height or on a
+      // quick flick (otherwise it springs back). The body keeps its own scrolling; the centred dialogs (landscape, wide screens) do not drag.
+      if (!o.center && o.dismissable !== false) {
+        let pid = null, y0 = 0, dy = 0, hgt = 1, trail = [];
+        const down = (ev) => {
+          if (pid !== null || closed || ev.button > 0 || ev.target.closest('button, a, input, textarea')) return;
+          const r = sheet.getBoundingClientRect(); if (r.bottom < innerHeight - 4) return;   // (a centred dialog)
+          pid = ev.pointerId; y0 = ev.clientY; dy = 0; hgt = Math.max(1, r.height); trail = [[performance.now(), 0]];
+          try { ev.currentTarget.setPointerCapture(pid); } catch (e) { /* ignore */ }
+          sheet.style.transition = 'none';
+        };
+        const move = (ev) => {
+          if (ev.pointerId !== pid) return;
+          dy = Math.max(0, ev.clientY - y0); sheet.style.transform = dy ? `translateY(${dy}px)` : '';
+          const now = performance.now(); trail.push([now, dy]); while (trail.length > 2 && now - trail[0][0] > 120) trail.shift();
+        };
+        const up = (ev) => {
+          if (ev.pointerId !== pid) return; pid = null;
+          const [t1, d1] = trail[0], v = (dy - d1) / Math.max(16, performance.now() - t1);   // px/ms over the last ~120ms: a flick
+          sheet.style.transition = ''; sheet.style.transform = '';
+          if (ev.type !== 'pointercancel' && (dy > hgt * 0.3 || (v > 0.4 && dy > 24))) api.close();
+        };
+        sheet.querySelectorAll('.sheet-handle, .sheet-head').forEach((g) => {
+          g.style.touchAction = 'none';
+          g.addEventListener('pointerdown', down); g.addEventListener('pointermove', move);
+          g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up);
+        });
+      }
       // where the body scrolls, its edge fades: a cue that there is more (and none where the list ends)
       const edge = () => { const t = bodyEl.scrollTop > 2, b = bodyEl.scrollHeight - bodyEl.clientHeight - bodyEl.scrollTop > 2; const v = (t ? 't' : '') + (b ? 'b' : ''); if (v) bodyEl.dataset.fade = v; else delete bodyEl.dataset.fade; };
       api.edge = edge;
@@ -284,6 +321,14 @@
     if (BR.Router.current === 'run' || (sheets && sheets._open > 0) || $('layer-overlays').childElementCount || document.body.classList.contains('in-opening')) return 'toastsTop';
     return 'toastsBottom';
   };
+  const liveRun = () => BR.Router && BR.Router.current === 'run' && BR.Run && !BR.Run.resultsEl;
+  const runHeld = [];
+  let runTimer = 0;
+  const holdForRun = () => {
+    if (runTimer) return;
+    const check = () => { if (liveRun()) { runTimer = setTimeout(check, 600); return; } runTimer = 0; setTimeout(() => runHeld.splice(0).forEach(([m, k]) => BR.toast(m, k)), 900); };
+    runTimer = setTimeout(check, 600);
+  };
   /**
    * One line, two at most per slot. opts.action = { label, onClick } adds a button (an Undo); opts.ms sets how long it stays.
    * Returns { close() }.
@@ -291,6 +336,8 @@
   BR.toast = function (msg, kind = '', opts = {}) {
     // a chest opening owns the screen: toasts wait until it closes instead of covering its title
     if (document.body.classList.contains('in-opening')) { (BR._heldToasts = BR._heldToasts || []).push([msg, kind]); return { close() {} }; }
+    // U-14: a run in play owns the top of the screen (the score and Pause): a message waits for the results or for the player to leave
+    if (!opts.action && liveRun()) { runHeld.push([msg, kind]); holdForRun(); return { close() {} }; }
     const act = opts.action;
     const t = BR.el(`<div class="toast ${kind} ${act ? 'has-act' : ''}"><span class="t-msg">${msg}</span>${act ? `<button class="t-act" type="button">${act.label}</button>` : ''}</div>`);
     const box = $(toastSlot());
