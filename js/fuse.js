@@ -337,7 +337,7 @@
 
   const Fuse = {
     host: null, ok: false, z: '', cls: '', tok: null,
-    d: 30, fmax: 30, lastT: 30, floor: 0, pend: 0, spring: 0, v: 0, flying: [], resp: null, fast: false,
+    d: 30, fmax: 30, lastT: 30, floor: 0, pend: 0, spring: 0, v: 0, flying: [], resp: null, drawAcc: 0, fast: false,
     tw: 240, L: 249, x0: -9, tx0: 0, tyH: 32, ty: 13, bx: 31, by: 32, bs: 62, wx: 0, wy: -40, rx: 200, ry: 32, cvH: 92, cvTop: 40, rushPeak: 0, tipKey: '',
     sp: 0, fshown: -1, mood: '', moodT: 0, moodNext: '', moodNext2: 0, prevZ: '', savedFlag: false, dgs: null, hatId: null, hat: null, xKind: '', bpx: 0.97, ls: {}, hooks: {}, dropT: 0,
     acc: { spark: 0, ember: 0, smoke: 0, ash: 0, special: 0, glint: 0 }, clock: 0, rushMax: 8, lastTick: -1, key: 0, hostRect: null, laid: false,
@@ -589,7 +589,14 @@
       /* ---- particles ---- */
       const P = this.parts;
       if (still) { if (P.live || P.dirty) P.kill(); }
-      else if (running) { this.emit(z, s, dt, f, tx, ty); if (P.live) P.step(dt); if (P.live || P.dirty) P.draw(); }
+      else if (running) {
+        this.emit(z, s, dt, f, tx, ty);
+        if (P.live) P.step(dt);
+        // the sparks are drawn at about 30 frames a second, not every frame: each redraw uploads the canvas and
+        // re-composites the HUD, which on a phone cost more than the rest of the frame. Pretty draws every frame.
+        this.drawAcc += dt;
+        if ((P.live || P.dirty) && (this.drawAcc >= (BR.gfxFull ? 0 : 0.03) || !P.live)) { this.drawAcc = 0; P.draw(); }
+      }
       this.prevZ = z;
     },
 

@@ -1,0 +1,37 @@
+/* ===================================================================
+   Performance mode (Settings): html.perf-mode, always together with html.low-end, so everything Smooth already holds still
+   holds still here too. On top of that it drops what costs a phone the most to draw and keeps what the game needs to read:
+   the bricks, their colours, pops, falls, the fuse and the hint. Loaded last so it wins over the effect rules.
+   =================================================================== */
+
+/* the menu backdrop: no floating bricks, and the colour blobs hold still (painted once instead of moving layers) */
+html.perf-mode #bgBricks { display: none; }
+html.perf-mode .blob { animation: none; will-change: auto; }
+
+/* menus: content is there at once, nothing loops */
+html.perf-mode .stg { opacity: 1; transform: none; animation: none !important; }
+html.perf-mode :is(.logo .lb, .fuse-line i, .fuse-line b, .hero-glow, .hero-art, .ba-spark, .hero-play, .resume, .cc-halo, .cc-art .chest, .dp-glow, .ch-glow, .ch-ico, .mb),
+html.perf-mode .pt.next .pt-n b::after { animation: none !important; }
+
+/* bricks: the finish sheen (blended over every brick) and the skin decoration's motion go */
+html.perf-mode .sheen::before { display: none; }
+html.perf-mode .sheen { mix-blend-mode: normal; }
+html.perf-mode .deco, html.perf-mode .deco::before, html.perf-mode .deco::after, html.perf-mode .stud::before, html.perf-mode .stud::after { animation: none !important; transition: none !important; }
+html.perf-mode .brick.wild .face { animation: none; }
+html.perf-mode .brick.hl .face::before, html.perf-mode .brick.hlx .face::before { animation: none; }
+
+/* the run: the board scene and the rush glow hold still, and the HUD bars stop flaring */
+html.perf-mode .board::before, html.perf-mode .board::after, html.perf-mode .run-active .bg::before, html.perf-mode .run-active .bg::after { animation: none !important; }
+html.perf-mode .run-active .bg .scene-fx { display: none; }
+html.perf-mode .rushbar.hot i, html.perf-mode .best-line.close i { animation: none; }
+html.perf-mode .rush-glow { animation: none !important; }
+
+/* chests: no light rays, dust, spotlight or stars; the chest, the shake, the burst and the card stay */
+html.perf-mode :is(.op-rays, .op-dust, .rv-rays, .rv-spot, .rv-stars) { display: none !important; }
+html.perf-mode .rv-face::before { display: none; }
+html.perf-mode .op-chest.idle, html.perf-mode .op-chest.idle * { animation: none !important; }
+
+/* badges and the tower hold still (already true on Smooth); the Graphics choice is greyed out while this is on */
+html.perf-mode .bdg *, html.perf-mode .bdg::before { animation: none !important; }
+.perf.off { opacity: 0.45; }
+.perf.off button { pointer-events: none; }

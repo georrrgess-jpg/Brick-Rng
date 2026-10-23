@@ -52,7 +52,7 @@
 .hero-stats .hero-first { font: 700 calc(14px * var(--ts))/1.3 var(--f-ui); color: #ffd9ec; }
 .hero-cta { grid-area: cta; position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .hero-play { width: 100%; animation: playPulse 2.4s ease-in-out infinite; }
-@keyframes playPulse { 50% { box-shadow: 0 5px 0 #7f1c52, 0 16px 42px rgba(255, 61, 139, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.5); transform: scale(1.015); } }   /* the pulse keeps the button's own colours: it used to flash gold on pink */
+@keyframes playPulse { 50% { transform: scale(1.015); } }   /* transform only: a pulsing box-shadow repainted the button every frame on the home screen; the pulse keeps the button's own colours */
 /* the chip under Play: what the last start chose (or a way to choose) */
 .chip-boost { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 44px; padding: 0 16px; border-radius: 99px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.24); font: 700 calc(14px * var(--ts)) var(--f-ui); color: #fff; transition: transform 0.15s var(--ease-out); }
 .chip-boost:active { transform: scale(0.97); }
@@ -342,8 +342,9 @@
 .pt.claimed .pt-n::before { background: var(--green); } .pt.next .pt-n::before { background: linear-gradient(90deg, var(--green), rgba(255, 255, 255, 0.14) 60%); }
 .pt-n b { position: relative; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--ink-3); border: 2px solid var(--line-2); font: 700 calc(15px * var(--ts)) var(--f-display); }
 .pt.claimed .pt-n b { background: var(--green); border-color: #2ab57a; color: #06301f; }
-.pt.next .pt-n b { width: 38px; height: 38px; background: var(--grad-hot); border-color: #fff; box-shadow: 0 0 0 4px rgba(255, 61, 139, 0.3), 0 0 22px rgba(255, 61, 139, 0.7); animation: nextPulse 1.6s ease-in-out infinite; }
-@keyframes nextPulse { 50% { box-shadow: 0 0 0 7px rgba(255, 61, 139, 0.18), 0 0 30px rgba(255, 61, 139, 0.9); } }
+.pt.next .pt-n b { width: 38px; height: 38px; background: var(--grad-hot); border-color: #fff; box-shadow: 0 0 0 4px rgba(255, 61, 139, 0.3), 0 0 22px rgba(255, 61, 139, 0.7); }
+.pt.next .pt-n b::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; box-shadow: 0 0 0 7px rgba(255, 61, 139, 0.18), 0 0 30px rgba(255, 61, 139, 0.9); opacity: 0; animation: nextPulse 1.6s ease-in-out infinite; pointer-events: none; }
+@keyframes nextPulse { 50% { opacity: 1; } }   /* the stronger glow fades in and out on its own layer instead of repainting the node */
 .pt-card { position: relative; width: 100%; min-height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 6px 10px; border-radius: var(--r-l); background: var(--grad-card); border: 1.5px solid var(--line-2); }
 .pt.big .pt-card { min-height: 150px; border-color: rgba(255, 200, 61, 0.65); background: linear-gradient(180deg, #3a2a63, #20163d); box-shadow: 0 0 22px rgba(255, 200, 61, 0.22); }
 .pt.next .pt-card { border-color: #fff; box-shadow: 0 0 0 3px rgba(255, 61, 139, 0.4), 0 0 28px rgba(255, 61, 139, 0.55); transform: translateY(-4px); }

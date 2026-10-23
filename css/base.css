@@ -196,6 +196,7 @@ h1, h2, h3, h4, p { margin: 0; }
 @keyframes tbadgePop { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
 .dot { position: absolute; top: 10px; left: calc(50% + 8px); width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink-1); display: none; animation: dotPop 1.6s ease-in-out infinite; font-style: normal; }
 .dot.show { display: block; }
+.tabbar.hidden .dot { animation: none; }   /* hidden during a run: its pulse still cost a style pass every frame */
 @keyframes dotPop { 50% { transform: scale(1.25); } }
 
 /* ---------- sheets, overlays, toasts ---------- */

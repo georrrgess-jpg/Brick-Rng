@@ -57,6 +57,9 @@
 .board { background: var(--a-board); border-color: var(--a-frame); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 46px var(--a-glow), inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 0 40px rgba(0, 0, 0, 0.45); }
 [data-ashine="glossy"] .board { border-color: rgba(255, 255, 255, 0.5); }
 [data-ashine="holo"] .board, [data-ashine="prism"] .board { border-color: transparent; background: linear-gradient(var(--a-board), var(--a-board)) padding-box, linear-gradient(120deg, #ff6bd6, #6bf0ff, #fff36b, #a56bff, #ff6bd6) border-box; background-size: auto, 300% 300%; animation: holoShift 6s linear infinite; }
+/* on the play board the sheens hold still: a moving Holo or Prism sheen on every brick, blended over it (and a moving board rim), repaints or re-layers the
+   whole board every frame on a phone. Menus, previews and the reveal keep them moving. */
+#board .sheen::before, [data-ashine="holo"] #board, [data-ashine="prism"] #board { animation: none; }
 [data-ashine="prism"] .board { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 60px rgba(180, 140, 255, 0.35), inset 0 0 40px rgba(0, 0, 0, 0.45); }
 
 

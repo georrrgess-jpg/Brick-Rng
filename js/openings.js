@@ -35,7 +35,7 @@
 
     {
       let gridHTML;
-      const bricks = colors.map((c) => BR.Skins.brickHTML(c)).join('');
+      const bricks = colors.map((c, i) => BR.Skins.brickHTML(c, i)).join('');
       if (item.type === 'skin') {
         const seed = inst ? inst.seed : 0;
         host.innerHTML = `<div class="hero-bricks ${item.cls}" data-shine="${shine}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">${bricks}</div>`;
@@ -78,7 +78,7 @@
     const sk = P().equipped('skin'), bo = P().equipped('board');
     const skin = item.type === 'skin' ? { item, inst } : sk, board = item.type === 'board' ? { item, inst } : bo;
     const seed = skin.inst ? skin.inst.seed || 0 : 0, sh = skin.inst ? skin.inst.shine : 'plain', ash = board.inst ? board.inst.shine : 'plain';
-    const bricks = LOOK.join('').split('').map((c) => BR.Skins.brickHTML(+c)).join('');
+    const bricks = LOOK.join('').split('').map((c, i) => BR.Skins.brickHTML(+c, i)).join('');
     const fuse = item.type === 'fuse' ? `<div class="lk-fuse"><div class="mini-fuse ${item.cls}" data-shine="${inst ? inst.shine : 'plain'}"><span class="mf-bomb"></span><span class="mf-track"><i class="mf-fill"></i><b class="mf-spark"></b></span></div></div>` : '';
     return `<div class="rvlk ${board.item.cls}" data-ashine="${ash}"><div class="lk-scene"><b class="scene-fx"></b><b class="scene-fx b"></b></div>${fuse}<div class="lk-board"><div class="lk-field ${skin.item.cls}" data-shine="${sh}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">${bricks}</div></div></div>`;
   }
@@ -564,6 +564,10 @@
       const level = BR.RARITIES.findIndex((r) => r.id === drop.rarity);
       const inst = drop.inst || { shine: drop.shine, seed: drop.seed, counter: drop.counter, uid: null };
       const rv = this.rv, still = reduced();
+      // the spent reel (44 cards, about 1300 nodes) leaves the page as the card comes in (the card covers it within a few frames):
+      // left in place it went through the reveal's style passes and doubled the cost of its first frame. The next spin builds a new one.
+      if (this.reel) this.reel.stop();
+      this.reel = null; this.reelHost.textContent = '';
       // Series 4's Legendary and Mythic items get the "Midnight" reveal (the Mythic in full, the Legendary as moon and corona)
       const night = item.series === 4 && level >= 3, fullNight = night && level >= 4;
       rv.style.setProperty('--rc', R.color);

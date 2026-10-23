@@ -94,7 +94,9 @@
     /* ---------- brick lifecycle ---------- */
     _make(b, r, c, atR) {
       const el = document.createElement('div');
-      el.className = 'brick';
+      // every third brick (by its id, so it never changes) wears the skin's idle animation: skins used to pick them with
+      // :nth-child(3n), which made each pop (bricks leave, new ones drop in) restyle every brick on the board
+      el.className = b.id % 3 === 2 ? 'brick b3' : 'brick';
       el.dataset.c = b.color;
       el.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
       const rec = { b: { id: b.id, color: b.color, fb: b.fb || 0 }, el, face: el.firstChild, r: atR, c };

@@ -215,7 +215,7 @@
       const m = BR.Missions.ensure();
       const resume = BR.Storage.loadRun();
       const owned = P.openableChests();
-      const logo = ['P', 'O', 'P'].map((ch, i) => `<div class="brick lb" data-c="${[0, 3, 1][i]}" style="--i:${i}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b><span class="ltr">${ch}</span></div></div>`).join('');
+      const logo = ['P', 'O', 'P'].map((ch, i) => `<div class="brick lb${i === 2 ? ' b3' : ''}" data-c="${[0, 3, 1][i]}" style="--i:${i}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b><span class="ltr">${ch}</span></div></div>`).join('');
       const sk = BR.Streak.status();
       const dots = Array.from({ length: BR.Streak.LEN }, (_, i) => {
         const day = i + 1, lit = day <= sk.ring, today = sk.playedToday && day === sk.ring;
@@ -926,7 +926,8 @@
     const idx = ['auto', 'low', 'high'].indexOf(set.perf);
     return `<section class="set-grp" aria-label="Sound">${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}</section>
       <section class="set-grp" aria-label="Play and display">${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
-        <div class="perf"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--si:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}">${l}</button>`).join('')}<i class="thumb"></i></div></div></section>`;
+        ${tog('perfMode', 'Performance mode', 'The fewest effects for the smoothest play on older phones')}
+        <div class="perf${set.perfMode ? ' off' : ''}"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--si:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}"${set.perfMode ? ' disabled' : ''}>${l}</button>`).join('')}<i class="thumb"></i></div></div></section>`;
   };
   /** Settings change as they are touched and are saved at once; the Graphics thumb slides from where it was. */
   function bindSettings(root) {
@@ -941,6 +942,7 @@
       if (!k) return;
       if (k === 'music' && e.target.checked && BR.Music) setTimeout(() => BR.Music.start('menu'), 50);
       S().settings[k] = e.target.checked; BR.Storage.save(); BR.App.applySettings(); BR.audio.ui(); BR.haptic('tap');
+      if (k === 'perfMode') { const row = root.querySelector('.perf'); row.classList.toggle('off', e.target.checked); row.querySelectorAll('button').forEach((x) => { x.disabled = e.target.checked; }); }   // Performance mode overrides Graphics
       if (k === 'sound' || k === 'music') { const row = root.querySelector(`[data-vol="${k === 'sound' ? 'sfxVol' : 'musicVol'}"]`); if (row) row.closest('.vol').classList.toggle('off', !e.target.checked); }
     });
     root.addEventListener('click', (e) => {

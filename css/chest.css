@@ -7,7 +7,7 @@
 
 /* ---------- backdrop ---------- */
 /* While a chest is open the game behind it is hidden outright: no blurred blobs or drifting bricks to repaint under the reel */
-body.in-opening #screens, body.in-opening #tabbar, body.in-opening .bg { visibility: hidden; }
+body.in-opening #screens, body.in-opening #tabbar, body.in-opening .bg { visibility: hidden; content-visibility: hidden; }   /* content-visibility: the menus behind are skipped by style, layout and paint (hidden alone, they were restyled on every change of the reveal) */
 body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .op-dust { animation-play-state: paused; }
 .op-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #170c2e, #07040f 78%); overflow: hidden; }
 .op-glow { position: absolute; inset: 0; background: radial-gradient(ellipse 85% 52% at 50% 40%, color-mix(in srgb, var(--ac) 62%, transparent), transparent 70%); opacity: calc(0.24 + var(--hold) * 0.66); transition: opacity 0.12s linear; }
@@ -192,8 +192,8 @@ body.in-opening .opening.spinning .op-rays, body.in-opening .opening.spinning .o
 @keyframes cardPop { 0% { opacity: 0; transform: scale(0.2) rotateY(100deg); } 60% { opacity: 1; transform: scale(1.14) rotateY(-6deg); } 100% { opacity: 1; transform: none; } }
 @keyframes cardRise { 0% { opacity: 0; transform: translateY(160px) scale(0.55) rotateX(24deg); filter: brightness(3); } 55% { opacity: 1; filter: brightness(1.8); } 100% { opacity: 1; transform: none; filter: none; } }
 .rv-face { position: absolute; inset: 0; border-radius: 26px; display: flex; flex-direction: column; align-items: center; padding: 14px 14px 16px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 34%, #2a1d4a), #120a26 70%); border: 3px solid var(--rc); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 0 50px color-mix(in srgb, var(--rc) 70%, transparent), 0 24px 50px rgba(0, 0, 0, 0.6), inset 0 0 40px color-mix(in srgb, var(--rc) 25%, transparent); overflow: hidden; }
-.rv-face::before { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 45%, transparent 60%); background-size: 260% 100%; animation: cardShine 3.2s ease-in-out infinite; pointer-events: none; }
-@keyframes cardShine { 0% { background-position: 140% 0; } 50%, 100% { background-position: -40% 0; } }
+.rv-face::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 100%; background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.28) 50%, transparent 80%); transform: translateX(-110%); animation: cardShine 3.2s ease-in-out infinite; pointer-events: none; }
+@keyframes cardShine { 0% { transform: translateX(-110%); } 50%, 100% { transform: translateX(110%); } }   /* moved, not repainted (background-position repainted the whole card every frame) */
 .rv-rar { align-self: stretch; text-align: center; font: 700 15px var(--f-display); letter-spacing: 0.22em; text-transform: uppercase; color: #fff; padding: 5px 0; border-radius: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 85%, #fff), color-mix(in srgb, var(--rc) 70%, #000)); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); box-shadow: 0 0 18px color-mix(in srgb, var(--rc) 60%, transparent); }
 .rv-art { flex: 1; width: 100%; min-height: 0; display: grid; place-items: center; position: relative; }
 .rv-name { font: 700 26px/1.1 var(--f-display); text-align: center; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4); }

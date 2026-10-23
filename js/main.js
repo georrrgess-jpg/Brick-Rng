@@ -54,24 +54,32 @@
       document.documentElement.classList.toggle('reduced', s.reduced);
       document.documentElement.classList.toggle('large-text', !!s.large);
       BR.reducedMotion = s.reduced;
-      BR.lowEnd = s.perf === 'low' || (s.perf === 'auto' && !!BR.autoLow);
+      // Performance mode is Smooth and then some (css/perf.css): no moving backgrounds, sheens, rays or stars, fewer sparks
+      const wasPerf = !!BR.perfMode;
+      BR.perfMode = !!s.perfMode;
+      BR.lowEnd = BR.perfMode || s.perf === 'low' || (s.perf === 'auto' && !!BR.autoLow);
+      BR.gfxFull = !BR.lowEnd && s.perf === 'high';
       document.documentElement.classList.toggle('low-end', BR.lowEnd);
+      document.documentElement.classList.toggle('perf-mode', BR.perfMode);
       this.fx.settings.shake = s.shake;
+      this.fx.settings.perf = BR.perfMode;
       this.fx.settings.reduced = s.reduced;
       const wasLow = this.fx.settings.low;
       this.fx.settings.low = BR.lowEnd;
-      if (wasLow !== BR.lowEnd) this.fx.resize();
+      if (wasLow !== BR.lowEnd || wasPerf !== BR.perfMode) this.fx.resize();
+      if (wasPerf !== BR.perfMode && $('bgBricks') && $('bgBricks').childElementCount !== this.bgCount()) this.spawnBgBricks();
       if (BR.Run && BR.Run.view) { BR.Run.view.reduced = s.reduced; }
     },
 
     /* ---------- background bricks (wear the equipped Skin) ---------- */
+    bgCount() { return BR.perfMode ? 0 : BR.lowEnd ? 8 : 14; },
     spawnBgBricks() {
       const host = $('bgBricks');
       host.setAttribute('data-skin-host', '');
       host.innerHTML = '';
-      const n = BR.lowEnd ? 8 : 14;
+      const n = this.bgCount();
       for (let i = 0; i < n; i++) {
-        const d = BR.el(BR.Skins.brickHTML(i % 7));
+        const d = BR.el(BR.Skins.brickHTML(i % 7, i));
         d.classList.add('mb');
         const s = 24 + Math.random() * 44;
         d.style.cssText = `left:${Math.random() * 100}%;top:${30 + Math.random() * 80}%;--s:${s}px;--d:${10 + Math.random() * 9}s;--delay:${-Math.random() * 16}s;--r0:${(Math.random() - 0.5) * 50}deg;--r1:${(Math.random() - 0.5) * 160}deg`;

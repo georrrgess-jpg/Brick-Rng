@@ -308,6 +308,6 @@ html.low-end .skin-galaxy::before, html.reduced .skin-galaxy::before,
 
 /* Motion budget on the board: the skins with animated layers on every brick (Clockwork, Slime, Galaxy, Phoenix, and since Update 5 Bubble, Lantern and Ice Cube) animate on every third brick only (the rest hold their pose),
    which cuts a full board's animated layers from 128 to about 43. Measured: a third of the animation cost for no visible loss. */
-:is(.skin-clock, .skin-slime, .skin-galaxy, .skin-phoenix, .skin-bubble, .skin-lantern, .skin-icecube) > .brick:not(:nth-child(3n)) :is(.deco, .stud),
-:is(.skin-clock, .skin-slime, .skin-galaxy, .skin-phoenix, .skin-bubble, .skin-lantern, .skin-icecube) > .brick:not(:nth-child(3n)) :is(.deco, .stud)::before,
-:is(.skin-clock, .skin-slime, .skin-galaxy, .skin-phoenix, .skin-bubble, .skin-lantern, .skin-icecube) > .brick:not(:nth-child(3n)) :is(.deco, .stud)::after { animation: none; }
+:is(.skin-clock, .skin-slime, .skin-galaxy, .skin-phoenix, .skin-bubble, .skin-lantern, .skin-icecube) > .brick:not(.b3) :is(.deco, .stud),
+:is(.skin-clock, .skin-slime, .skin-galaxy, .skin-phoenix, .skin-bubble, .skin-lantern, .skin-icecube) > .brick:not(.b3) :is(.deco, .stud)::before,
+:is(.skin-clock, .skin-slime, .skin-galaxy, .skin-phoenix, .skin-bubble, .skin-lantern, .skin-icecube) > .brick:not(.b3) :is(.deco, .stud)::after { animation: none; }

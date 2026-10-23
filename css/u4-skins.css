@@ -19,8 +19,8 @@
   --u4-spec: radial-gradient(ellipse 56% 34% at 27% 19%, rgba(255, 255, 255, var(--u4-pa, 0.5)), rgba(255, 255, 255, 0) 72%);
 }
 /* the move budget: a skin that animates every brick animates one in three on the board (colors are phased by --ph, see css/s3-skins.css) */
-:is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) > .brick:not(:nth-child(3n)) .deco,
-:is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) > .brick:not(:nth-child(3n)) .deco::before { animation: none; }
+:is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) > .brick:not(.b3) .deco,
+:is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) > .brick:not(.b3) .deco::before { animation: none; }
 
 /* ---------------------------------------------------------------- Classic
    The brick every new player sees, lit like the Series 3 skins: a soft highlight on the top-left shoulder, a rim on the top and left

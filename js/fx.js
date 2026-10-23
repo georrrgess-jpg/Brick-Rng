@@ -31,7 +31,7 @@
       this.canvas.height = Math.round(this.h * dpr);
     }
 
-    get budget() { return this.settings.reduced ? 0.35 : this.settings.low ? 0.6 : 1; }
+    get budget() { return this.settings.reduced ? 0.35 : this.settings.perf ? 0.4 : this.settings.low ? 0.6 : 1; }   // Performance mode keeps a few sparks so a pop still reads
 
     _kick() {
       if (this.running) return;

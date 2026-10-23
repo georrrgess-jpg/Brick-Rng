@@ -2,6 +2,7 @@
 (function () {
   const BR = (window.BR = window.BR || {});
 
+  let brickN = 0;
   const clampX = (x, b) => Math.max(b.left + 20, Math.min(b.right - 20, x));
   BR.Skins = {
     pop: 'classic',
@@ -147,8 +148,9 @@
       for (let i = 0; i < 22; i++) fx.emit({ kind: 'spark', x: bomb.left + bomb.width / 2, y: bomb.top + bomb.height / 2, vx: Math.random() * 640 + 80, vy: (Math.random() - 0.5) * 220, g: -60, drag: 1.5, size: 3 + Math.random() * 4, max: 0.5 + Math.random() * 0.5, color: ['#ff4d2e', '#ff9a3d', '#ffd24a'][i % 3] });
     },
 
-    brickHTML(color) {
-      return `<div class="brick" data-c="${color}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div></div>`;
+    brickHTML(color, i) {
+      const n = i == null ? ++brickN : i + 1;      // (the third, sixth... brick of a row of previews wears the skin's idle animation)
+      return `<div class="brick${n % 3 === 0 ? ' b3' : ''}" data-c="${color}"><div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div></div>`;
     },
 
     /** Small live preview of an item: used on cards, sheets, the reel and the result. */
@@ -157,7 +159,7 @@
       if (item.type === 'skin') {
         const seed = inst ? inst.seed : 0;
         const style = `--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px`;
-        return `<div class="mini-bricks ${item.cls}" data-shine="${shine}" style="${style}">${[0, 1, 3].map((c) => this.brickHTML(c)).join('')}</div>`;
+        return `<div class="mini-bricks ${item.cls}" data-shine="${shine}" style="${style}">${[0, 1, 3].map((c, i) => this.brickHTML(c, i)).join('')}</div>`;
       }
       if (item.type === 'pop') {
         const dots = Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg"></i>`).join('');

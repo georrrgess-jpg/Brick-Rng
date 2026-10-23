@@ -750,7 +750,7 @@
   function skinBadge(item, inst, isStill) {
     ensure(keyOf(item.cls));
     const h = item.hero != null ? item.hero : 0, seed = inst ? inst.seed || 0 : 0, shine = inst ? inst.shine : 'plain';
-    const b = (c) => Skins.brickHTML(c);
+    const b = (c) => Skins.brickHTML(c, 0);
     const mark = `<svg viewBox='-6 -6 112 112'><path d='${sigPath(h, false)}' fill='#e8f0ff' stroke='#e8f0ff' stroke-width='6' stroke-linejoin='round' transform='translate(50 50) scale(${EXT[h]}) translate(-50 -50)'/></svg>`;
     return `<div class="s4b ${item.cls}" data-shine="${shine}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">`
       + `<i class="s4b-rim"></i><i class="s4b-back"></i>`

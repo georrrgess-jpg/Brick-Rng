@@ -112,14 +112,14 @@
   function skinArt(item, inst) {
     const h = item.hero != null ? item.hero : 0, seed = inst ? inst.seed || 0 : 0;
     const shine = inst ? inst.shine : 'plain';
-    const b = (c) => BR.Skins.brickHTML(c);
+    const b = (c) => BR.Skins.brickHTML(c, 0);   // (one brick per span: none of them is a third)
     return `<div class="bdg-bricks ${item.cls || ''}" data-shine="${shine}" style="--ang:${160 + ((seed % 41) - 20)}deg;--sx:${seed % 97}px">
       <span class="bk b2">${b((h + 4) % 7)}</span><span class="bk b1">${b((h + 2) % 7)}</span><span class="bk b3">${b(h)}</span></div>`;
   }
   /* ---------- Board art: the scene with a small framed board of bricks in it ---------- */
   function boardArt(item, inst, still) {
     const shine = inst ? inst.shine : 'plain';
-    const cells = [0, 3, 1, 2, 0, 4, 1, 3, 2].map((c) => BR.Skins.brickHTML(c)).join('');
+    const cells = [0, 3, 1, 2, 0, 4, 1, 3, 2].map((c, i) => BR.Skins.brickHTML(c, i)).join('');
     // Update 5 (K-4): the board's own scene is the picture, and the small framed board sits in the open middle of it (the older boards' scenes keep their
     // art in the top and bottom bands, see css/u4-boards.css), so no two board badges are the same picture. Series 4 boards keep their own layout.
     const older = !item.series || item.series <= 3;

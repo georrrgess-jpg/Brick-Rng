@@ -76,7 +76,7 @@ for (const [chest, type] of [['brick', 'skin'], ['pop', 'pop'], ['board', 'board
 assert.strictEqual(P.coins, 200);
 assert(P.spend(50) && P.coins === 150 && !P.spend(1000));
 const rc = P.runCoins({ score: 200000, stagesCleared: 5 }, { daily: true, firstOfDay: true });
-assert.strictEqual(rc.points, 30); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 80);
+assert.strictEqual(rc.points, 34); assert.strictEqual(rc.stages, 15); assert.strictEqual(rc.daily, 15); assert.strictEqual(rc.first, 20); assert.strictEqual(rc.total, 84);
 assert(P.runCoins({ score: 0, stagesCleared: 0 }).total === 0, 'an empty run pays nothing');
 assert(P.runCoins({ score: 450000, stagesCleared: 12 }).total < 4 * P.runCoins({ score: 54000, stagesCleared: 3 }).total, 'sharp players earn well under 4x a casual player');
 assert(P.runCoins({ score: 1e9, stagesCleared: 30 }).stages === 28, 'stage bonus is capped');

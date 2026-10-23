@@ -121,15 +121,20 @@
     anims.set(el, st);
   };
   /**
-   * Play a CSS animation class again from the start without reading layout: add the class the first time, and after that
-   * restart the running animation object. (`classList.remove; void el.offsetWidth; classList.add` forces a layout every time.)
+   * Play a CSS animation class again from the start without reading layout or style: add the class the first time; after
+   * that take it off and put it back two frames later, so one style pass runs without it. (`void el.offsetWidth` forces a
+   * layout and `getAnimations()` forces a style pass, each on every pop, which is what made popping stutter on phones.)
    */
+  const replaying = new WeakMap();
   BR.replay = (el, cls) => {
     if (!el) return;
+    let wait = replaying.get(el);
+    if (wait && wait.has(cls)) return;                     // a restart is already on its way
     if (!el.classList.contains(cls)) { el.classList.add(cls); return; }
-    const list = el.getAnimations ? el.getAnimations().filter((a) => a.animationName) : [];
-    if (!list.length) { el.classList.remove(cls); requestAnimationFrame(() => el.classList.add(cls)); return; }
-    list.forEach((a) => { a.cancel(); a.play(); });
+    el.classList.remove(cls);
+    if (!wait) replaying.set(el, (wait = new Set()));
+    wait.add(cls);
+    requestAnimationFrame(() => requestAnimationFrame(() => { wait.delete(cls); el.classList.add(cls); }));
   };
   BR.bump = (el) => BR.replay(el, 'bump');
 

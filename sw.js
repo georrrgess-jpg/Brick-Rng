@@ -3,7 +3,7 @@
 const VERSION = 'poprush-v5.0.0';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/fonts.css', 'css/base.css', 'css/screens.css', 'css/run.css', 'css/chest.css', 'css/skins.css', 'css/s3-skins.css', 'css/s3-scenes.css', 'css/fuse.css', 'css/badges.css', 'css/coach.css',
+  'css/fonts.css', 'css/base.css', 'css/screens.css', 'css/run.css', 'css/chest.css', 'css/skins.css', 'css/s3-skins.css', 'css/s3-scenes.css', 'css/fuse.css', 'css/badges.css', 'css/coach.css', 'css/perf.css',
   'js/rng.js', 'js/board.js', 'js/config.js', 'js/boosters.js', 'js/items.js', 'js/chests.js', 'js/director.js', 'js/engine.js', 'js/storage.js', 'js/pass.js',
   'js/progress.js', 'js/missions.js', 'js/retention.js', 'js/audio.js', 'js/music.js', 'js/fx.js', 'js/skins.js', 'js/s3-skins.js', 'js/s3-pops.js', 'js/s3-scenes.js', 'js/fuse-art.js', 'js/fuse.js', 'js/badges.js', 'js/coach.js', 'js/view.js', 'js/ui.js', 'js/chestart.js',
   'js/spin.js', 'js/openings.js', 'js/screens.js', 'js/run.js', 'js/main.js',
