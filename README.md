@@ -90,7 +90,7 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
 - **Smoother on phones (Update 6)**: popping and chest openings do far less work per frame (Holo and Prism finishes were the
   worst case: about half the frame time they had). Settings has **Performance mode** for older phones: it keeps the bricks, pops,
   falls, fuse and hints, and drops the floating menu bricks, finish sheens, light rays, dust, stars, menu staggers and looping
-  decoration, with fewer sparks. Graphics (Auto, Smooth, Pretty) is greyed out while it is on. Runs pay about 10% more Coins.
+  decoration, with fewer sparks. Graphics (Auto, Smooth, Pretty) is greyed out while it is on. Runs in every mode pay twice as many Coins as before (and 10% on top of that).
 
 ## Layout
 ```

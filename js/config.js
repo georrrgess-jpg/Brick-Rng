@@ -45,7 +45,7 @@
     streak: { day3: 120, day7Coins: 200, day7Chest: 'golden' },   // the 7-day ring: day 3 pays Coins, day 7 pays Coins and a Golden Chest
     boostsFromRun: 3,      // the Boosts sheet appears before a Rush run once the player has finished this many runs
     // Run Boosts are bought with Coins before a run (see the Boosts sheet). Priced against a typical run's Coins
-    // (about 45) so each one is a real choice and none of them pays for itself.
+    // (about 45 before run Coins were doubled in Update 6, about 90 now) so each one is a real choice and none of them pays for itself.
     boosts: {
       longFuse: { id: 'longFuse', name: 'Long Fuse', desc: '+10 seconds on every fuse', cost: 25 },
       headStart: { id: 'headStart', name: 'Head Start', desc: 'Start with a Hammer ready', cost: 15 },
@@ -54,8 +54,8 @@
     // Coins for a finished run = scale * sqrt(score / ref) + stageStep * (1 + 2 + .. + stages cleared, capped).
     // Square-root growth keeps sharp players ahead without letting them run away from everyone else.
     // ref 50000 and stageCap 8 before the tile director: players now go further and score more, so the same Coins need more.
-    // Update 6: scale 14 -> 16, a typical run pays about 10% more (about 45 instead of 40)
-    coin: { scale: 16, ref: 45000, stageStep: 1, stageCap: 7, firstOfDay: 20, dailyBonus: 15 },
+    // Update 6: scale 14 -> 16 (about 10% more), then every part doubled (scale 32, stage step 2, first run 40, Daily 30): a typical run pays about 90
+    coin: { scale: 32, ref: 45000, stageStep: 2, stageCap: 7, firstOfDay: 40, dailyBonus: 30 },
     xp: { scale: 150, ref: 80000 },   // XP for points = scale * sqrt(score / ref)
     startCoins: 200,
     rerollCost: 30,

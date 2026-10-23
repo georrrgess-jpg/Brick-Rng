@@ -24,10 +24,10 @@ for (const f of fs.readdirSync(cssDir).filter((x) => x.endsWith('.css'))) {
   await page.waitForTimeout(900);
   await page.evaluate(() => { BR.Coach.markAllSeen(); for (let i = 0; i < 5 && BR.Back.depth; i++) BR.Back.closeTop(); });
 
-  // the Coin payout (Update 6: about 10% more)
+  // the Coin payout (Update 6: about 10% more, then every part doubled)
   const coins = await page.evaluate(() => ({ scale: BR.CFG.coin.scale, typical: BR.Progress.runCoins({ score: 54000, stagesCleared: 3 }).total }));
-  ok(coins.scale === 16, 'coin scale', coins.scale);
-  ok(coins.typical >= 23 && coins.typical <= 26, 'a casual run pays a little more than before (was 21)', coins.typical);
+  ok(coins.scale === 32, 'coin scale', coins.scale);
+  ok(coins.typical >= 45 && coins.typical <= 50, 'a casual run pays about double Update 5 plus 10% (was 21)', coins.typical);
 
   // BR.replay: the first call adds the class, a repeat takes it off and puts it back two frames later, never reading styles
   const rp = await page.evaluate(async () => {

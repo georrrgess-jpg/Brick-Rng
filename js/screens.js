@@ -265,7 +265,7 @@
             <span class="mc-ico"><span class="cal"><small>${new Date().toLocaleString('en-US', { month: 'short' })}</small><b>${new Date().getDate()}</b></span></span>
             <span class="mc-title display">Daily Rush</span>
             <span class="mc-sub">${dailyDone ? `Done · ${fmt(st.daily.score)}` : par(st.recent.daily) ? `Recent average: ${fmt(par(st.recent.daily))}` : 'Same board for everyone. Bonus Coins.'}</span>
-            <span class="tag ${dailyDone ? '' : 'gold'}">${dailyDone ? BR.icon('check') + ' Come back tomorrow' : '+15 Coins'}</span>
+            <span class="tag ${dailyDone ? '' : 'gold'}">${dailyDone ? BR.icon('check') + ' Come back tomorrow' : `+${BR.CFG.coin.dailyBonus} Coins`}</span>
           </button>
           <button class="mode-card chill ${chillOpen ? '' : 'locked'}" data-act="play-chill" type="button">
             <span class="mc-ico">${BR.icon('leaf')}</span>

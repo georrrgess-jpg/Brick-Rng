@@ -69,9 +69,11 @@ and in landscape it grew over the type picker and covered some of its buttons.
 The bricks, pops, falls, the fuse, the hint and Screen shake (still its own switch) are unchanged. The Graphics choice is greyed
 out while Performance mode is on. The rules live in `css/perf.css`, loaded last.
 
-**Rush payout.** The score part of a run's Coins goes from `14 x sqrt(score / 45000)` to `16 x sqrt(score / 45000)`. The stage
-bonus is unchanged, so a run pays about 10% more: a casual run 21 to 24 Coins, the bot averages 29, 53 and 66 for casual, average
-and sharp players.
+**Payout.** First the score part of a run's Coins went from `14 x sqrt(score / 45000)` to `16 x sqrt(score / 45000)` (about 10%
+more). Then, at the owner's request, every part of a run's Coins was doubled in every mode: `32 x sqrt(score / 45000)`, 2 Coins
+per cleared stage (was 1), 40 for the first run of the day (was 20) and 30 for a Daily Rush (was 15; the Home card reads the
+number from the config). A casual run that paid 21 Coins in Update 5 now pays 47. Missions, run goals, the streak, levels, the
+Pop Pass and trophies are unchanged, and so are chest and Boost prices.
 
 ## 3. Measured results
 
