@@ -9,7 +9,8 @@ for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.css')).sort()) {
   const t = fs.readFileSync(path.join(dir, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   let depth = 0, buf = '';
   for (const ch of t) {
-    if (ch === '{') { if (depth === 0) for (const s of buf.split(',')) { const m = /^\s*\.([\w-]+)\s*$/.exec(s); if (m) { if (!seen.has(m[1])) seen.set(m[1], new Set()); seen.get(m[1]).add(f); } } depth++; buf = ''; }
+    // (commas inside an :is() or :where() list do not separate selectors)
+    if (ch === '{') { if (depth === 0) for (const s of buf.split(/,(?![^(]*\))/)) { const m = /^\s*\.([\w-]+)\s*$/.exec(s); if (m) { if (!seen.has(m[1])) seen.set(m[1], new Set()); seen.get(m[1]).add(f); } } depth++; buf = ''; }
     else if (ch === '}') { depth--; buf = ''; }
     else if (depth === 0) buf += ch;
   }
