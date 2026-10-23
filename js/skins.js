@@ -51,11 +51,11 @@
     /* ------------------------------------------------------------------ signature moments
        Each one is short (under 600ms) and only draws on the effects layer, so it never slows a tap. */
     popCount: 0,
-    /* The decorative side of a big moment (a Rush start, a stage clear, the Last Spark: skies, rune rings, set flourishes...) starts in
-       the next frame, under the flash: the tap frame keeps only what the player must feel at once (the pop, the Rush class and banner).
+    /* The decorative side of a Rush start (skies, rune rings, set flourishes...) starts two frames after the tap, under the flash: the tap frame keeps only what the player must feel at once (the pop, the Rush class and banner).
        Those hooks read the board's size, and in the tap frame that forced the Rush restyle of the whole run screen in the middle of the
-       handler. A later moment (a Rush end, the Last Spark ending, the results...) first plays what is still waiting, so their order never
-       changes; the pop of the same tap does not wait for them. */
+       handler. A later moment (a Rush end, a stage clear, the results...) first plays what is still waiting, so their order never
+       changes; the pop of the same tap does not wait for them. (Deferring the stage clear and the Last Spark the same way made the
+       Spire set's pop frames longer in tests/perfbudget.js, so those still run at once.) */
     later(fn) {
       (this._later = this._later || []).push(fn);
       // (two frames: a tap is handled at the start of a frame, before its animation callbacks, so one would still run before its style)
@@ -130,12 +130,11 @@
           BR.audio.glassBreak();
         }
       } else if (type === 'stageUp') {
-        this.later(() => this.handlers.forEach((h) => h(type, d, { M, fx, rnd })));
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
         if (M.dragon) fx.flash('#ff7a2a', 0.2, 320);
       } else if (type === 'spark' || type === 'sparkEnd' || type === 'results') {
         // the Last Spark starting and ending, and the results opening (Moonwick fuses, boards and sets react to them)
-        if (type === 'spark') this.later(() => this.handlers.forEach((h) => h(type, d, { M, fx, rnd })));
-        else this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
+        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
       }
     },
     lightning(boardEl, at) {
