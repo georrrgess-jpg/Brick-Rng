@@ -276,9 +276,14 @@ html.reduced .screen.on, html.reduced .screen.leaving { animation: none !importa
 #flash { position: fixed; inset: 0; z-index: 80; pointer-events: none; opacity: 0; background: #fff; }
 
 /* ---------- under an overlay ---------- */
-/* A sheet, a chest opening or the results screen covers the app: everything underneath holds still (paused animations cost nothing). */
-html.under-overlay #screens *, html.under-overlay #screens *::before, html.under-overlay #screens *::after,
-html.under-overlay .bg, html.under-overlay .bg *, html.under-overlay .bg *::before, html.under-overlay .bg *::after { animation-play-state: paused !important; }
+/* A sheet, a chest opening or the results screen covers the app: everything underneath holds still (paused animations cost nothing).
+   Only the elements that can animate are named (a `*` under a class on <html> made the browser restyle all ~1,300 elements on every
+   open and close). The list holds the class of every rule that sets an animation (an animated element with no class of its own carries .an); tests/u7-perf.js
+   checks the list still covers every animated selector in css/ and the style sheets the scripts inject. */
+html.under-overlay :is(#screens, .bg) :is(.ba-spark, .bdg, .bdg-art, .bdg-gleam, .bdg-rays, .bdg-twinkle, .blob, .board, .bolt-flash, .bomb, .hp, .bslot, .loading, .bump, .c-spark, .cc-halo, .cf, .ch-glow, .ch-ico, .chest, .pulse, .cp-glow, .cp-leak, .cp-lid, .cp-needle, .deco, .dot, .dp-glow, .draw, .eq-flag, .face, .fcount, .fring, .fx-corona, .fx-lq, .fx-stream, .fz-ball, .fz-core, .fz-flow, .fz-glow, .fz-halo, .fz-pupil, .fz-ringfx, .fz-shim, .fz-sweat, .fz-tongue, .gl-streak, .hero-art, .hero-glow, .hero-play, .hold, .hp-brick, .icard, .inside, .lb, .lvl-up, .m-goal, .mb, .mf-fill, .mf-spark, .mini-burst, .mult, .new-best, .op-chest, .op-dust, .op-glow, .op-rays, .op-reel, .op-skip, .op-stage, .pa-core, .pa-r1, .pa-r2, .pw, .rc-i, .rc-m, .rc-o, .resume, .rev, .rush-banner, .rush-glow, .rv-badge, .rv-banner, .rv-black, .rv-card, .rv-corona, .rv-face, .rv-flare, .rv-moon, .rv-rays, .rv-ring, .rv-spot, .rv-stars, .s4b-fx, .s4x, .sc-bird, .sc-crack, .sc-egg, .sc-flash, .sc-half, .scene-fx, .screen, .sheen, .skin-galaxy, .sp-bar, .ss-stage, .stg, .stud, .sw-band, .sw-text, .swap, .tbadge, .tile, .tip-arrow, .toast, .trade-bar, .tw, .tw-bell, .tw-flash, .vp, .s4-swirl, .s4b-bl, .s4b-fl, .s4b-sp, .s4b-tw, .s4b-wv, .an),
+html.under-overlay :is(#screens, .bg) :is(.bdg, .board, .bg, .deco, .face, .fx-lq, .fx-stream, .hold, .loading, .mini-burst, .pulse, .rv-black, .rv-face, .sheen, .skin-galaxy, .stud, .tw-bell, .an)::before,
+html.under-overlay :is(#screens, .bg) :is(.bdg, .board, .bg, .deco, .face, .fx-lq, .fx-stream, .hold, .loading, .mini-burst, .pulse, .rv-black, .rv-face, .sheen, .skin-galaxy, .stud, .tw-bell, .an)::after,
+html.under-overlay .bg, html.under-overlay .bg::before, html.under-overlay .bg::after { animation-play-state: paused !important; }
 
 /* ---------- landscape phones: the tab bar becomes a slim rail on the left, so the content keeps its height ---------- */
 @media (orientation: landscape) and (max-height: 560px) {
@@ -310,7 +315,11 @@ html.under-overlay .bg, html.under-overlay .bg *, html.under-overlay .bg *::befo
 body.ready #splash { opacity: 0; visibility: hidden; pointer-events: none; }
 
 /* a menu nobody has touched for 20 seconds holds still; the first touch wakes it */
-html.idle .bg, html.idle .bg *, html.idle .bg *::before, html.idle .bg *::after, html.idle #screens *, html.idle #screens *::before, html.idle #screens *::after, html.idle .tabbar * { animation-play-state: paused !important; }
+/* (the same list as under an overlay, plus the tab bar) */
+html.menu-idle :is(#screens, .bg, .tabbar) :is(.ba-spark, .bdg, .bdg-art, .bdg-gleam, .bdg-rays, .bdg-twinkle, .blob, .board, .bolt-flash, .bomb, .hp, .bslot, .loading, .bump, .c-spark, .cc-halo, .cf, .ch-glow, .ch-ico, .chest, .pulse, .cp-glow, .cp-leak, .cp-lid, .cp-needle, .deco, .dot, .dp-glow, .draw, .eq-flag, .face, .fcount, .fring, .fx-corona, .fx-lq, .fx-stream, .fz-ball, .fz-core, .fz-flow, .fz-glow, .fz-halo, .fz-pupil, .fz-ringfx, .fz-shim, .fz-sweat, .fz-tongue, .gl-streak, .hero-art, .hero-glow, .hero-play, .hold, .hp-brick, .icard, .inside, .lb, .lvl-up, .m-goal, .mb, .mf-fill, .mf-spark, .mini-burst, .mult, .new-best, .op-chest, .op-dust, .op-glow, .op-rays, .op-reel, .op-skip, .op-stage, .pa-core, .pa-r1, .pa-r2, .pw, .rc-i, .rc-m, .rc-o, .resume, .rev, .rush-banner, .rush-glow, .rv-badge, .rv-banner, .rv-black, .rv-card, .rv-corona, .rv-face, .rv-flare, .rv-moon, .rv-rays, .rv-ring, .rv-spot, .rv-stars, .s4b-fx, .s4x, .sc-bird, .sc-crack, .sc-egg, .sc-flash, .sc-half, .scene-fx, .screen, .sheen, .skin-galaxy, .sp-bar, .ss-stage, .stg, .stud, .sw-band, .sw-text, .swap, .tbadge, .tile, .tip-arrow, .toast, .trade-bar, .tw, .tw-bell, .tw-flash, .vp, .s4-swirl, .s4b-bl, .s4b-fl, .s4b-sp, .s4b-tw, .s4b-wv, .an),
+html.menu-idle :is(#screens, .bg, .tabbar) :is(.bdg, .board, .bg, .deco, .face, .fx-lq, .fx-stream, .hold, .loading, .mini-burst, .pulse, .rv-black, .rv-face, .sheen, .skin-galaxy, .stud, .tw-bell, .an)::before,
+html.menu-idle :is(#screens, .bg, .tabbar) :is(.bdg, .board, .bg, .deco, .face, .fx-lq, .fx-stream, .hold, .loading, .mini-burst, .pulse, .rv-black, .rv-face, .sheen, .skin-galaxy, .stud, .tw-bell, .an)::after,
+html.menu-idle .bg, html.menu-idle .bg::before, html.menu-idle .bg::after { animation-play-state: paused !important; }
 
 /* ---------- wide and short screens (desktop, landscape phones): a sheet is a centred dialog up to 560px wide, in two columns ---------- */
 @media (min-width: 700px), (orientation: landscape) and (max-height: 560px) {

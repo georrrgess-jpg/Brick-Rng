@@ -141,7 +141,7 @@
     return `<section class="tw${BR.reducedMotion || BR.lowEnd ? ' calm' : ''}" aria-label="Moonwick Tower, ${sum.have} of ${sum.total} items found">
       <header class="tw-sum"><div class="tw-ring" role="img" aria-label="${sum.have} of ${sum.total} found">${ringSVG(sum.have / sum.total, 64, 6)}<b>${sum.have}<small>/${sum.total}</small></b></div>
         <div class="tw-st-txt"><h3>Moonwick Tower</h3><p>${sum.have} of ${sum.total} items · ${sum.floorsDone} of ${sum.floors} floors lit</p></div>${next}</header>
-      <div class="tw-sky"><i class="tw-moon"></i><i class="tw-cloud c1"></i><i class="tw-cloud c2"></i><i class="tw-cloud c3"></i><i class="tw-cloud c4"></i><span class="tw-stars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <div class="tw-sky"><i class="tw-moon"></i><i class="tw-cloud c1"></i><i class="tw-cloud c2"></i><i class="tw-cloud c3"></i><i class="tw-cloud c4"></i><span class="tw-stars"><i class="an"></i><i class="an"></i><i class="an"></i><i class="an"></i><i class="an"></i><i class="an"></i><i class="an"></i><i class="an"></i></span>
         <div class="tw-tower"><div class="tw-roof"></div>${belfry}<div class="tw-body">${body}</div></div><div class="tw-ground"></div></div>
       <p class="tw-hint">Tap a lit window to see the item. Tap a dark one to see where to find it.</p>
     </section>`;

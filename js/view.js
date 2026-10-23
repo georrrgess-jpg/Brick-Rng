@@ -36,7 +36,7 @@
       this.layer.appendChild(this.chip);
       this.hintEl = document.createElement('div');
       this.hintEl.className = 'tap-hint';
-      this.hintEl.innerHTML = '<i></i><i></i><b></b>';
+      this.hintEl.innerHTML = '<i class="an"></i><i class="an"></i><b class="an"></b>';   // .an: animated, so it is paused under an overlay (css/base.css)
       this.field.appendChild(this.hintEl);
 
       this.layout();

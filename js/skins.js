@@ -162,7 +162,7 @@
         return `<div class="mini-bricks ${item.cls}" data-shine="${shine}" style="${style}">${[0, 1, 3].map((c, i) => this.brickHTML(c, i)).join('')}</div>`;
       }
       if (item.type === 'pop') {
-        const dots = Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg"></i>`).join('');
+        const dots = Array.from({ length: 10 }, (_, i) => `<i class="an" style="--a:${i * 36}deg"></i>`).join('');
         return `<div class="mini-burst" style="--c:${item.color}">${dots}</div>`;
       }
       if (item.type === 'board') return `<div class="mini-board ${item.cls} ${o.live ? 'live' : ''}" data-ashine="${shine}">${o.live ? '<b class="scene-fx"></b><b class="scene-fx b"></b>' : ''}<i></i></div>`;

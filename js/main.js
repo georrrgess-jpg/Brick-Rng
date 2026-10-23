@@ -124,7 +124,7 @@
     /** Menus stop animating after 20 seconds without a touch (saves battery); any touch brings them back. */
     watchIdle() {
       let t = 0;
-      const wake = () => { clearTimeout(t); document.documentElement.classList.remove('idle'); t = setTimeout(() => { if (BR.Router.current !== 'run') document.documentElement.classList.add('idle'); }, 20000); };
+      const wake = () => { clearTimeout(t); document.documentElement.classList.remove('menu-idle'); t = setTimeout(() => { if (BR.Router.current !== 'run') document.documentElement.classList.add('menu-idle'); }, 20000); };
       ['pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach((ev) => window.addEventListener(ev, wake, { passive: true, capture: true }));
       wake();
     },

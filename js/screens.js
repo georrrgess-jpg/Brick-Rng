@@ -244,7 +244,7 @@
         <div class="logo stg" data-i="0" aria-label="Pop Rush">
           <div class="logo-pop" data-skin-host>${logo}</div>
           <div class="logo-rush"><span>RUSH</span></div>
-          <div class="fuse-line"><i></i><b></b></div>
+          <div class="fuse-line"><i class="an"></i><b class="an"></b></div>
         </div>
         <article class="hero stg" data-i="2" data-act="play-rush">
           <span class="hero-glow"></span>
@@ -814,7 +814,7 @@
         const state = stateOf(t);
         const near = t.tier >= T - 1 && t.tier <= T + 4;     // the tiers in view when the track centres on the next reward
         if (!near) this._passCards[t.tier] = card(t);
-        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}" role="button" tabindex="0" aria-label="Tier ${t.tier}: ${BR.rewardLabel(t)}, ${state === 'claimed' ? 'claimed' : state === 'next' ? 'up next' : 'locked'}"><span class="pt-n"><b>${t.tier}</b></span>
+        return `<div class="pt ${state} ${big(t) ? 'big' : ''}" data-tier="${t.tier}" role="button" tabindex="0" aria-label="Tier ${t.tier}: ${BR.rewardLabel(t)}, ${state === 'claimed' ? 'claimed' : state === 'next' ? 'up next' : 'locked'}"><span class="pt-n"><b class="an">${t.tier}</b></span>
           <div class="pt-card${near ? '' : ' ph'}">${near ? card(t) : ''}</div></div>`;
       }).join('');
       const head = seas.done
