@@ -360,7 +360,7 @@
    =================================================================== */
 /* U-1: the HUD rows take the column's full width; only the board follows the height budget (--bw) */
 :root { --hudw: min(calc(100vw - var(--sal) - var(--sar) - 24px), 540px); }
-.run > :not(.board-wrap) { width: var(--hudw); }
+@media (max-width: 599px) { .run > :not(.board-wrap) { width: var(--hudw); } }   /* (phones in portrait; tablets and desktop windows keep one column width) */
 /* U-6: Chill has no fuse, stage strip or Rush bar, so its board takes that height */
 .run.chill { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 344px), 540px); }
 /* U-13: HUD texts never wrap */
