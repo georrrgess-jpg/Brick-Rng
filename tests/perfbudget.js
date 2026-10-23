@@ -17,6 +17,7 @@ const B = {   // ms per frame unless noted
   tabSwitchFrame: 190, scrollCollection: 40, scrollShop: 36, sheetOpen: 55, tabSwitchJs: 50, runIdle: 24, popAvg: 55, popMax: 140,
   runIdleS4: 30, popAvgS4: 80, popMaxS4: 220,   // (the Spire set is the heaviest loadout: Sigil, Constellation, Moonwick Tower, Moonrise and a hat)
   reelFreeze: 420,   // (the first style pass over the opening and its reel: 180 to 370 here when the strip holds boards and heavy skins; was 250 before Moonwick's 30 items)
+  sheetFirstStyle: 800, idleWakeStyle: 250,   // (Update 7: elements restyled when the item sheet opens and an idle menu wakes: 612 and 118, were 1,347 and 474)
   hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 960, firstPaint: 240, nodesAfterCycle: 900, longTask: 80,   // (these sat inside the comment above until Update 6, so they were never checked)
 };
 const results = []; let failed = 0;
@@ -73,6 +74,21 @@ const check = (name, value, budget, unit = 'ms') => { const ok = value <= budget
   await go('collection'); await sleep(800);
   const sh = await rep(async () => { await page.evaluate(() => BR.itemSheet(BR.Storage.data.profile.vault[0].uid, BR.itemById[BR.Storage.data.profile.vault[0].itemId].type)); await sleep(700); const f = await frames(1200); await page.evaluate(() => BR.Back.closeTop()); await sleep(600); return f; });
   check('sheetOpen', med(sh.map((x) => x.avg)), B.sheetOpen);
+  // (Update 7) how many elements the browser restyles when a sheet opens and when an idle menu wakes up: element counts, so the
+  // machine's load does not move them. A pause rule with a bare * under a class on <html>, or `inert` set on the tap frame, restyled
+  // the whole app (1,347 elements for this sheet, 474 for the wake-up).
+  const styled = async (fn, ms) => {
+    await browser.startTracing(page, { categories: ['devtools.timeline'] });
+    await page.evaluate(fn); await sleep(ms);
+    const ev = JSON.parse((await browser.stopTracing()).toString()).traceEvents;
+    return Math.max(0, ...ev.filter((e) => e.name === 'UpdateLayoutTree' && e.ph === 'X').map((e) => (e.args && e.args.elementCount) || 0));
+  };
+  const shStyle = await rep(async () => { const n = await styled(() => BR.itemSheet(BR.Storage.data.profile.vault[0].uid, BR.itemById[BR.Storage.data.profile.vault[0].itemId].type), 250); await page.evaluate(() => BR.Back.closeTop()); await sleep(700); return n; });
+  check('sheetFirstStyle (elements)', med(shStyle), B.sheetFirstStyle, '');
+  await go('home'); await sleep(900);
+  const wake = await rep(async () => { await page.evaluate(() => document.documentElement.classList.add('menu-idle')); await sleep(500); return styled(() => document.documentElement.classList.remove('menu-idle'), 300); });
+  check('idleWakeStyle (elements)', med(wake), B.idleWakeStyle, '');
+  await go('collection'); await sleep(800);
   // ---- tab switch: time the script work of Router.go (forced layouts included)
   const sw = await page.evaluate(async () => { const out = {}; for (const id of ['shop', 'collection', 'missions', 'profile', 'home']) { const t = performance.now(); BR.Router.go(id); out[id] = performance.now() - t; await new Promise((r) => setTimeout(r, 700)); } return out; });
   check('tabSwitchJs (worst tab)', Math.max(...Object.values(sw)), B.tabSwitchJs);
