@@ -19,6 +19,7 @@ const log = (...a) => { const s = a.map((x) => (typeof x === 'string' ? x : JSON
   if (want('A')) {
     const { browser, page, cdp } = await launch({ width: 393, height: 852, dsf: 1 });
     await player(page, { resume: true });
+    await page.evaluate(() => { document.documentElement.classList.add('reduced'); });   // transitions finish at once, so a forced :active shows its end state
     await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
     const PROPS = ['transform', 'background-color', 'background-image', 'filter', 'box-shadow', 'opacity', 'color', 'border-color', 'scale'];
     const check = async (label) => {
@@ -44,7 +45,7 @@ const log = (...a) => { const s = a.map((x) => (typeof x === 'string' ? x : JSON
         const read = () => page.evaluate(([i, PROPS]) => { const e = document.querySelector(`[data-aud="${i}"]`); const all = [e, ...e.querySelectorAll('*')].slice(0, 12); return all.map((x) => { const cs = getComputedStyle(x); return PROPS.map((p) => cs.getPropertyValue(p)).join('|'); }).join('#'); }, [i, PROPS]);
         const before = await read();
         await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['active'] });
-        await wait(page, 260);
+        await wait(page, 140);   // (long enough for a 0.12 s press transition to finish)
         const after = await read();
         await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] });
         if (before === after) none.push(await page.evaluate((i) => { const e = document.querySelector(`[data-aud="${i}"]`); return e.tagName.toLowerCase() + '.' + (typeof e.className === 'string' ? e.className.trim().split(/\s+/).slice(0, 2).join('.') : '') + ' "' + (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 22) + '"'; }, i));

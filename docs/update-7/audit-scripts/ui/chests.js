@@ -15,7 +15,7 @@ const touch = (page, type, x, y) => page.__cdp.send('Input.dispatchTouchEvent', 
   const shot = async (n) => { found[n] = await audit(page, ins); await page.screenshot({ path: path.join(SHOTS, `chest-${tag}-${n}.png`) }); };
   for (const id of ['brick', 'pop', 'board', 'fuse', 'golden']) {
     await page.evaluate(() => BR.Router.go('shop')); await wait(page, 600);
-    await page.evaluate((id) => BR.App.openChest(id), id);
+    await page.evaluate((id) => { BR.App.openChest(id); }, id);   // (openChest's promise resolves only when the opening closes)
     if (id === 'golden') {
       await page.waitForSelector('.op-picker button', { timeout: 8000 }); await wait(page, 1900);
       await shot(id + '-0-pick');
