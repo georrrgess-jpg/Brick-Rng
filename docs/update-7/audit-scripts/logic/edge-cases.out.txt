@@ -1,0 +1,23 @@
+[resume-grace] fuse 0.5 s, Save and leave, Resume -> fuse 6 s (resumeGrace 6); the snapshot stays on the device, so this can be repeated
+[resume-spark] in the Last Spark (spark 2.40 s, fuse 0) Save and leave, Resume -> fuse 6 s, spark 0, sparkUsed true: the save that needs a pop of 4+ is given for nothing (sparkFuse is 6 s)
+[resume-grace] casual: normal runs reach stage 5.2 in 128 s; Save-and-leave whenever the fuse is under 2 s: stage 7.7 in 323 s (58 resumes a run, 0% hit the 25-minute bot limit)
+[resume-grace] average: normal runs reach stage 7.3 in 125 s; Save-and-leave whenever the fuse is under 2 s: stage 9.7 in 348 s (59 resumes a run, 0% hit the 25-minute bot limit)
+[resume-grace] sharp: normal runs reach stage 8.8 in 145 s; Save-and-leave whenever the fuse is under 2 s: stage 11.0 in 374 s (35 resumes a run, 0% hit the 25-minute bot limit)
+[resume-rush] Save and leave with 6 s of Rush left -> resumed Rush active false, meter 0
+[daily-resume] two Daily runs, same taps, one saved and resumed after 6 pops: boards after 6 more pops identical? false
+[chill-time] 8 pops and 16 s of ticks in Chill: summary().time = 0 (the results line prints Chill · Round n · 0:00)
+[chill-snapshot] Chill after 8 moves: movesLeft 12; snapshot -> restore: movesLeft 20 (movesLeft is not in the snapshot). run.js saveSnap() skips Chill, so the pause sheet's "Save and leave" in Chill drops the run: no Coins, no XP, no streak, and the Rush run that was saved before it was already cleared by start()
+[power-fusebrick] a Hammer on a Fuse brick: it is gone, defused counted 0, fuse 30.0 -> 30.0 (power bonus 2 only, no +3 defuse), and the other Fuse bricks do not tick
+[burst-count] 40 small pops at stage 5: 4 Fuse bricks burst and stats.bricks grew by 4 more than the bricks popped (a burst counts as a popped brick)
+[chill-shatter] average Chill run: 749 bricks counted, 233 of them (31%) from the end-of-round shatter (they count for "Pop N bricks", colour missions and Brick Breaker)
+[trophy-chill] checkTrophies uses max(bestStage.rush, daily, chill), so Hot Streak (stage 5, 75 Coins), Fuse Master (stage 10, 200) and Beyond the Fuse (stage 12, 250) can be won with Chill rounds. casual: round 5 in 100% of Chill runs, round 10 in 0%; average: round 5 in 100% of Chill runs, round 10 in 0%; sharp: round 5 in 100% of Chill runs, round 10 in 6%
+[missions-chill] daily mission kinds that can never move in Chill: stage, rushRun, defuse, dailyScore (4 of 9); weekly: weeklyStage
+[combo-offer] chance the next board offers a group of comboNeed or more, by current combo (sharp bot, Rush): combo 0 needs 4: 90% (1354), combo 1 needs 4: 71% (1226), combo 2 needs 5: 41% (1337), combo 3 needs 5: 53% (808), combo 4 needs 6: 23% (1250), combo 5 needs 6: 24% (894), combo 6 needs 7: 12% (1093), combo 7 needs 7: 13% (699), combo 8 needs 8: 5% (1148)
+[rush-start] casual: Rushes per run 2.31 -> 2.52 with Rush Start; first Rush at 26 s -> 12 s; Rush share 16% -> 17%; score 58k -> 60k
+[rush-start] average: Rushes per run 3.57 -> 3.91 with Rush Start; first Rush at 13 s -> 5 s; Rush share 26% -> 27%; score 142k -> 151k
+[rush-start] sharp: Rushes per run 4.84 -> 4.80 with Rush Start; first Rush at 8 s -> 3 s; Rush share 33% -> 35%; score 263k -> 246k
+[shuffle] reshuffles: 0.00 a Rush run over 180 runs (each pays +2 s)
+[dead-board] forced dead boards of 2 to 7 colours: 0 left without a move after ensureMove, 0 changed their colour counts (only the 60-try fallback may)
+[spark-stage] casual: Last Spark used and saved, by the stage the run ended on: stage 3 1/1, stage 4 6/10, stage 5 37/53, stage 6 26/34, stage 7 2/2
+[spark-stage] average: Last Spark used and saved, by the stage the run ended on: stage 6 8/15, stage 7 26/44, stage 8 18/39, stage 9 0/2
+[spark-stage] sharp: Last Spark used and saved, by the stage the run ended on: stage 8 16/30, stage 9 27/63, stage 10 3/7

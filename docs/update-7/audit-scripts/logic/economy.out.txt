@@ -1,0 +1,36 @@
+catalogue: 84 chest items (27 skin, 24 pop, 17 board, 16 fuse), 29100 Coins to buy one chest per item
+one-time Coins from trophies: 4700
+
+per Rush run (no first-of-day):  Update 5 Coins / Update 6 Coins / XP / minutes (+0.8 menus) / Coins per minute U5 -> U6
+  casual     27 /   59 / 288 XP / 3.04 min / 8.9 -> 19.4 Coins/min
+  average    49 /  105 / 468 XP / 2.99 min / 16.4 -> 35.3 Coins/min
+  sharp      62 /  133 / 620 XP / 3.29 min / 18.8 -> 40.6 Coins/min
+
+journey to own every chest item (real Progress code; trophies paid at once, 3 missions a day at 85%, the streak never broken, the weekly mission every week):
+  casual   5 runs a day: Update 5 42 days, 10.9 h, 210 runs (season tier 26) -> Update 6 33 days, 8.5 h, 165 runs (season tier 21, level 24); a chest every 6 min (U5 8); with missions, goals, streak and weekly Coins doubled too: 27 days, 6.9 h
+  average  10 runs a day: Update 5 21 days, 10.3 h, 210 runs (season tier 30) -> Update 6 14 days, 6.8 h, 140 runs (season tier 27, level 27); a chest every 5 min (U5 7); with missions, goals, streak and weekly Coins doubled too: 13 days, 6.4 h
+  sharp    15 runs a day: Update 5 14 days, 11.4 h, 210 runs (season tier 30) -> Update 6 8 days, 6.5 h, 120 runs (season tier 30, level 29); a chest every 5 min (U5 8); with missions, goals, streak and weekly Coins doubled too: 7 days, 5.7 h
+  runs to finish the season track: casual 245, average 152, sharp 115
+
+other sources, in runs of Coins (Update 5 -> Update 6):
+  casual   a mission (38 Coins) = 1.41 -> 0.65 runs; a run goal (10-20) = 0.53 -> 0.25; streak day 3 (120) = 4.4 -> 2.0; a level-up (about 70) = 2.57 -> 1.19; reroll (30) = 0.51 runs
+  average  a mission (47 Coins) = 0.96 -> 0.45 runs; a run goal (10-20) = 0.30 -> 0.14; streak day 3 (120) = 2.4 -> 1.1; a level-up (about 70) = 1.43 -> 0.66; reroll (30) = 0.28 runs
+  sharp    a mission (53 Coins) = 0.86 -> 0.40 runs; a run goal (10-20) = 0.23 -> 0.11; streak day 3 (120) = 1.9 -> 0.9; a level-up (about 70) = 1.13 -> 0.52; reroll (30) = 0.22 runs
+
+Boosts: Coins per run with the Boost minus without (same seeds), against its price:
+  casual   (stage 5.3) Long Fuse +8.0 for 25 (32% back; stage 5.7) | Head Start +0.0 for 15 (0% back; stage 5.3) | Rush Start +0.9 for 20 (4% back; stage 5.3)
+  average  (stage 7.4) Long Fuse +9.1 for 25 (36% back; stage 7.8) | Head Start +3.6 for 15 (24% back; stage 7.6) | Rush Start +0.5 for 20 (3% back; stage 7.4)
+  sharp    (stage 8.8) Long Fuse +8.0 for 25 (32% back; stage 9.2) | Head Start +-0.7 for 15 (-5% back; stage 8.8) | Rush Start +-3.1 for 20 (-16% back; stage 8.6)
+
+restart farming (Coins per minute; a restart costs about 0.15 min, a finished run 0.8 min of results and menus):
+  casual   full runs: 19.4 | quit after stage 1: 19.1 (9.8 with full menus) | quit after stage 2: 24.9 (14.6 with full menus) | quit after stage 3: 26.1 (17.6 with full menus) | quit after stage 4: 27.1 (19.9 with full menus) | quit after stage 5: 25.6 (19.8 with full menus) | the tail after the last stage-up: 31 s of 132 s
+  average  full runs: 35.3 | quit after stage 1: 28.2 (12.0 with full menus) | quit after stage 2: 37.2 (18.2 with full menus) | quit after stage 3: 42.6 (24.1 with full menus) | quit after stage 4: 49.5 (30.3 with full menus) | quit after stage 5: 51.4 (34.5 with full menus) | the tail after the last stage-up: 28 s of 128 s
+  sharp    full runs: 40.6 | quit after stage 1: 35.4 (13.3 with full menus) | quit after stage 2: 47.5 (20.6 with full menus) | quit after stage 3: 55.3 (27.6 with full menus) | quit after stage 4: 64.6 (35.4 with full menus) | quit after stage 5: 70.5 (42.2 with full menus) | the tail after the last stage-up: 34 s of 146 s
+
+the same, with stageCap 12 and a +15 Coin "run complete" bonus for a run the fuse ends (Restart and End run do not get it):
+  casual   full runs 29.6 Coins/min with 0.25 min between runs (24.3 with 0.8); 74 Coins a run | quit after stage 3: 26.1 | quit after stage 4: 27.1 | quit after stage 5: 25.6
+  average  full runs 49.4 Coins/min with 0.25 min between runs (40.3 with 0.8); 120 Coins a run | quit after stage 3: 42.6 | quit after stage 4: 49.5 | quit after stage 5: 51.4
+  sharp    full runs 59.0 Coins/min with 0.25 min between runs (49.1 with 0.8); 161 Coins a run | quit after stage 3: 55.3 | quit after stage 4: 64.6 | quit after stage 5: 70.5
+  today, casual: full runs 23.6 Coins/min with 0.25 min between runs
+  today, average: full runs 43.2 Coins/min with 0.25 min between runs
+  today, sharp: full runs 48.7 Coins/min with 0.25 min between runs

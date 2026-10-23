@@ -1,0 +1,34 @@
+Chill today (300 runs per bot). Goals by round: 1200, 1550, 2050, 2650, 3450, 4450, 5800, 7550, 9800, 12750, 16550, 21500
+
+== casual (rating 0.5)
+  rounds reached 7.14 (p10 6, median 7, p90 8); 78 moves, 4.37 min (p10 3.4, p90 5.4); score 29755
+  clear rate by round (%): 1:100 2:100 3:100 4:100 5:100 6:86 7:33 8:2 9:0
+  ends: 23% within 10% of the goal, 44% within 20%, 19% further than 40% away (mean 0.75 of the goal); one pop of 4 short: 7%
+  ended holding power-ups: 7.01 on average; 62% of runs ended "out of moves" with power-ups in hand that would have cleared the round
+  leftover moves at a clear 10.5 (by round {"1":15,"2":13.8,"3":12.8,"4":10.6,"5":7.4,"6":5,"7":3.1,"8":0}); stars per clear: 3* 73% 2* 16% 1* 11%; stars per run 16.1
+  max combo 4 (combo 3+ in 100% of runs), biggest pop 11.3, power-ups used 0, bricks 508
+  pays 70 Coins + 314 XP a run = 16 Coins/min, 72 XP/min   | Rush: stage 5.2, 2.24 min, 59 Coins + 286 XP = 26.3 Coins/min, 128 XP/min
+  an hour of play (0.8 min of menus per run): Chill 812 Coins, Rush 1164 Coins
+  score curve (cumulative at the end of each round): r1 3085, r2 6381, r3 10178, r4 14292, r5 18873, r6 24181, r7 30434, r8 38263
+
+== average (rating 0.73)
+  rounds reached 8.48 (p10 8, median 8, p90 9); 77 moves, 3.87 min (p10 3.2, p90 4.6); score 44477
+  clear rate by round (%): 1:100 2:100 3:100 4:100 5:100 6:100 7:100 8:46 9:5 10:0
+  ends: 20% within 10% of the goal, 45% within 20%, 14% further than 40% away (mean 0.77 of the goal); one pop of 4 short: 2%
+  ended holding power-ups: 0.14 on average; 1% of runs ended "out of moves" with power-ups in hand that would have cleared the round
+  leftover moves at a clear 12.4 (by round {"1":16.4,"2":15.9,"3":15.1,"4":14.1,"5":12.4,"6":9.5,"7":8.3,"8":2.9,"9":2.4}); stars per clear: 3* 84% 2* 10% 1* 6%; stars per run 20.8
+  max combo 5.5 (combo 3+ in 100% of runs), biggest pop 10.8, power-ups used 9.7, bricks 751
+  pays 88 Coins + 398 XP a run = 22.7 Coins/min, 103 XP/min   | Rush: stage 7.5, 2.22 min, 106 Coins + 473 XP = 47.7 Coins/min, 213 XP/min
+  an hour of play (0.8 min of menus per run): Chill 1131 Coins, Rush 2106 Coins
+  score curve (cumulative at the end of each round): r1 3262, r2 6808, r3 10953, r4 15470, r5 20697, r6 26582, r7 33839, r8 42343, r9 53016
+
+== sharp (rating 0.89)
+  rounds reached 8.7 (p10 8, median 9, p90 9); 74 moves, 3.1 min (p10 2.5, p90 3.6); score 47865
+  clear rate by round (%): 1:100 2:100 3:100 4:100 5:100 6:100 7:100 8:63 9:11 10:0
+  ends: 22% within 10% of the goal, 45% within 20%, 14% further than 40% away (mean 0.77 of the goal); one pop of 4 short: 5%
+  ended holding power-ups: 0.12 on average; 1% of runs ended "out of moves" with power-ups in hand that would have cleared the round
+  leftover moves at a clear 13 (by round {"1":17.1,"2":16.4,"3":15.7,"4":14.6,"5":13.3,"6":10.9,"7":9.9,"8":3.4,"9":2.1}); stars per clear: 3* 87% 2* 6% 1* 6%; stars per run 21.6
+  max combo 5.9 (combo 3+ in 100% of runs), biggest pop 11.6, power-ups used 10.2, bricks 771
+  pays 89 Coins + 418 XP a run = 28.7 Coins/min, 135 XP/min   | Rush: stage 8.7, 2.44 min, 132 Coins + 612 XP = 54.1 Coins/min, 251 XP/min
+  an hour of play (0.8 min of menus per run): Chill 1369 Coins, Rush 2444 Coins
+  score curve (cumulative at the end of each round): r1 3488, r2 7166, r3 11332, r4 15951, r5 21317, r6 27450, r7 34929, r8 43207, r9 54035

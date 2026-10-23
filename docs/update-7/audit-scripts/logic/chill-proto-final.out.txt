@@ -1,0 +1,25 @@
+Chill prototype, 200 runs per bot per variant (ratings casual 0.50, average 0.73, sharp 0.89)
+
+== today  (goals 1200 x 1.3, 20 moves: 1200 1550 2050 2650 3450 4450 5800 7550 9800 12750 16550 21500 27950 36350)
+  bot          rounds  p10/50/90         sd      score   score sd        min      moves   r1 moves  near<=15%    far>40%  wasted pw       wind     refund      lucky      carry      close   3*/2*/1*  stars/runbest beaten  round rec      Coins      C/min     XP/min      propC  propC/min
+  casual         7.18      6/7/8       0.66      29988       4109       4.41         79        5.1         34         22         60          0          0          0          0         12   63/21/16       15.3          3          1         71         16         72         86       19.5
+  average        8.48      8/8/9       0.53      44509       5035       3.86         77        3.6         32         14          2          0          0          0          0          6    76/16/8       20.1          3          2         88       22.7        103        115       29.8
+  sharp          8.71      8/9/9       0.59      47943       5600       3.11         74          3         36         14          2          0          0          0          0          6    81/12/7       21.1          3          1         89       28.6        135        120       38.6
+
+== proposal  (goals 2400 x 1.13, 20 moves: 2400 2700 3050 3450 3900 4400 5000 5650 6400 7200 8150 9200 10400 11750)
+  bot          rounds  p10/50/90         sd      score   score sd        min      moves   r1 moves  near<=15%    far>40%  wasted pw       wind     refund      lucky      carry      close   3*/2*/1*  stars/runbest beaten  round rec      Coins      C/min     XP/min      propC  propC/min
+  casual         9.36     9/9/10       0.62      47610       4579       7.88        143        8.6         13         19          0         35        2.9       10.7         31         20   32/27/41       15.9          5          3         89       11.3         58        124       15.7
+  average       10.16    9/10/11       0.86      57512       7476       5.96        122        6.2         17         13          0         38        1.7        8.7       40.3          9   61/19/20       22.1          7          3         92       15.5         85        144       24.2
+  sharp         11.03   10/11/12       1.02      67132       9353       5.17        128        4.8         18         15          0         46        2.4          9       42.9         11   63/14/22       24.1          5          3         95       18.4        111        161       31.1
+
+== proposal_b  (goals 2200 x 1.15, 20 moves: 2200 2550 2900 3350 3850 4400 5100 5850 6750 7750 8900 10250 11750 13550)
+  bot          rounds  p10/50/90         sd      score   score sd        min      moves   r1 moves  near<=15%    far>40%  wasted pw       wind     refund      lucky      carry      close   3*/2*/1*  stars/runbest beaten  round rec      Coins      C/min     XP/min      propC  propC/min
+  casual         9.15     9/9/10       0.58      46065       4226        7.5        136          8         10         25          0         31        2.9        9.9       30.8         19   36/25/39       16.1          1          0         88       11.8         59        121       16.1
+  average        9.87    9/10/11       0.67      55400       6012       5.68        116        5.7         15         18          0         31        1.7        8.4       39.8          8   62/19/19       21.6          7          1         91       16.1         86        139       24.5
+  sharp         10.57    9/11/12       0.95      64227       9115       4.83        119        4.5         23         13          0         44        2.3        8.2       41.8          9   66/14/20       23.6          3          1         94       19.5        113        154       31.9
+
+== pkg_2400x112  (goals 2400 x 1.12, 20 moves: 2400 2700 3000 3350 3800 4250 4750 5300 5950 6650 7450 8350 9350 10450)
+  bot          rounds  p10/50/90         sd      score   score sd        min      moves   r1 moves  near<=15%    far>40%  wasted pw       wind     refund      lucky      carry      close   3*/2*/1*  stars/runbest beaten  round rec      Coins      C/min     XP/min      propC  propC/min
+  casual         9.76    9/10/11       0.66      49029       4879       8.38        153        8.6         13         19          0         34        2.8       13.9       52.7         18   32/24/43       16.5          5          2         89       10.7         57        131       15.6
+  average       10.83   10/11/12       0.93      61097       8094       6.56        135        6.2         21         14          0         42        1.5         12       76.8          8   58/18/23       23.1          5          3         93       14.2         84        156       23.8
+  sharp         11.78   10/12/13       1.07      71556       9973       5.77        144        4.8         22         13          0         45        2.7       12.5       82.6         10   60/14/26       25.2          5          3         96       16.7        109        173         30
