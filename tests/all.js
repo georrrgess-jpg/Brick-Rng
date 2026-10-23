@@ -9,7 +9,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 
 const NODE = [
-  ['logic', ['tests/logic.js']], ['engine', ['tests/engine.js']], ['season', ['tests/season.js']], ['keyframes', ['tests/keyframes.js'], true], ['cssclash', ['tests/cssclash.js'], true],
+  ['logic', ['tests/logic.js']], ['engine', ['tests/engine.js']], ['season', ['tests/season.js']], ['keyframes', ['tests/keyframes.js'], true], ['cssclash', ['tests/cssclash.js'], true], ['u7-perf', ['tests/u7-perf.js'], true],
   ['director', ['tests/director.js', 'quick']], ['balance', ['tests/balance.js', '60']], ['sim', ['tests/sim.js', 'quick']],
 ];
 const BROWSER = [
