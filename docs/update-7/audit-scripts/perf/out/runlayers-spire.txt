@@ -1,0 +1,19 @@
+layers 94
+  21 b.sheen                                          5.34 M px
+  21 b.deco                                           0.23 M px
+  10 div.face                                         0.32 M px
+   7 div.brick (no paint)                             0.00 M px
+   3 div.brick                                        0.17 M px
+   2 i.fz-ball                                        0.01 M px
+   2 #document (no paint)                             0.00 M px
+   2 i (no paint)                                     0.00 M px
+   1 #document                                        3.01 M px
+   1 div#app.run-active                               3.01 M px
+   1 div.vignette                                     3.01 M px
+   1 i.fz-lid                                         3.01 M px
+   1 canvas#fx                                        3.01 M px
+   1 i.scene-fx                                       0.99 M px
+   1 ::before                                         0.40 M px
+   1 i.fz-ticks                                       0.39 M px
+   1 canvas#fuseFx.fz-cv                              0.39 M px
+   1 div.fz-in                                        0.13 M px

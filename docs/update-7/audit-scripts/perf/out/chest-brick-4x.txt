@@ -1,0 +1,29 @@
+chest brick RATE 4 PM 0
+boot           frames 2 avg 121 p90 193 max 193
+arrive         frames 9 avg 130 p90 446 max 446
+ready          frames 8 avg 135 p90 214 max 214
+holding        frames 13 avg 134 p90 175 max 320
+burst          frames 10 avg 133 p90 206 max 206
+spin           frames 164 avg 61 p90 127 max 338
+reveal/rv      frames 5 avg 246 p90 830 max 830
+done/rv        frames 9 avg 210 p90 451 max 451
+CPU boot         frames 2, main CPU/frame 125.6 ms (worst 183), wall/frame 121 | UpdateLayoutTree 52.1 | Paint 10.8 | EvaluateScript 10.1 | Layout 8.3 | ParseHTML 4.2 | FunctionCall 2.7 | PrePaint 2.3
+CPU arrive       frames 9, main CPU/frame 35.5 ms (worst 137), wall/frame 130 | Commit 7.4 | TimerFire 5.9 | FunctionCall 4.0 | Paint 3.8 | UpdateLayoutTree 3.0 | MajorGC 3.0 | V8.GC_MARK_COMPACTOR 3.0
+CPU ready        frames 8, main CPU/frame 28.2 ms (worst 61), wall/frame 135 | Commit 7.8 | UpdateLayoutTree 3.9 | FunctionCall 1.7 | TimerFire 1.2 | Layerize 1.1 | PrePaint 1.0 | FireAnimationFrame 0.9
+CPU holding      frames 13, main CPU/frame 37.4 ms (worst 71), wall/frame 134 | UpdateLayoutTree 8.8 | Commit 8.1 | FunctionCall 5.6 | FireAnimationFrame 3.8 | TimerFire 2.0 | Layerize 1.7 | Paint 1.4
+CPU burst        frames 10, main CPU/frame 30.9 ms (worst 46), wall/frame 133 | Commit 9.3 | FunctionCall 8.8 | FireAnimationFrame 8.2 | UpdateLayoutTree 4.5 | Paint 2.8 | PrePaint 1.5 | Layerize 1.5
+CPU spin         frames 164, main CPU/frame 27.7 ms (worst 170), wall/frame 61 | Layerize 6.5 | Paint 3.9 | Commit 3.9 | FireAnimationFrame 3.4 | UpdateLayoutTree 2.6 | FunctionCall 2.6 | PrePaint 0.6
+CPU reveal/rv    frames 5, main CPU/frame 127.4 ms (worst 312), wall/frame 246 | Paint 62.9 | UpdateLayoutTree 39.3 | TimerFire 18.7 | PaintImage 16.7 | Layout 5.4 | FunctionCall 5.4 | PrePaint 4.5
+CPU done/rv      frames 9, main CPU/frame 65.6 ms (worst 185), wall/frame 210 | Paint 16.6 | Commit 10.3 | FunctionCall 7.9 | UpdateLayoutTree 6.7 | PrePaint 5.6 | Layerize 5.0 | PaintImage 4.8
+total main: Paint 2570 | Commit 2368 | Layerize 2349 | UpdateLayoutTree 2013 | FunctionCall 1592 | FireAnimationFrame 1493 | TimerFire 651 | PaintImage 494 | PrePaint 413
+frame 830 reveal/rv : Paint 587 | UpdateLayoutTree el 380 | PaintImage 91 | PaintImage @svg%3E: 67 | Layout 34 | Commit 26
+frame 451 done/rv : FireAnimationFrame 51 | FunctionCall loop@fx.js:219 49 | UpdateLayoutTree el 32 | PrePaint 21 | Commit 11 | EventDispatch 9
+frame 446 arrive : TimerFire 93 | MajorGC 37 | V8.GC_MARK_COMPACTOR 37 | UpdateLayoutTree el 35 | EventDispatch 19 | FunctionCall @music.js:201 18
+frame 368 done/rv : Paint 463 | PaintImage 72 | Commit 43 | PaintImage @svg%3E: 24 | FireAnimationFrame 13 | FunctionCall loop@fx.js:219 12
+frame 338 spin : FireAnimationFrame 149 | UpdateLayoutTree el 122 | Paint 110 | PaintImage @svg%3E: 20 | Commit 15 | PrePaint 13
+ULT 118 els 870 (frame)
+ULT 75 els 161 (frame)
+ULT 114 els 514 (frame)
+ULT 91 els 159 (frame)
+ULT 332 els 527 (frame)
+errors none

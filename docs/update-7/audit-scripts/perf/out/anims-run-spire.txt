@@ -1,0 +1,20 @@
+run running 42 | main-thread (non-compositable property) 1 covering 1173 css px^2
+   1 MAIN waapi [width] i#rushFill.  area 1173
+  18 comp sgTurn [transform] b.deco  area 32685
+   8 comp hintPulse [transform] div.face  area 12072
+   2 comp s4Flicker [opacity] circle.bg::before  area 6783
+   2 comp fzBlink [scale] i.fz-ball  area 366
+   2 comp hintRing [opacity,transform] i.  area 6725
+   1 comp waapi [opacity] div.tap-hint.show  area 1903
+   1 comp s4Flicker [opacity] div#bg.bg::before  area 334836
+   1 comp s4Clouds [transform] i.scene-fx  area 109560
+   1 comp fzFlow [translate] i.fz-l.fz-flow  area 2721
+   1 comp fzHalo [opacity,transform] i.fz-halo  area 3371
+   1 comp fzTongue [transform] i.fz-tongue  area 1741
+   1 comp fzCore [transform] i.fz-core  area 1301
+   1 comp fzSpin [transform] i.fz-ringfx  area 3627
+   1 comp hintDot [transform] b.  area 260
+compositeFailed (trace):
+    41 ? fail=8224 ["width"]
+    8 ? fail=64 ""
+errors none

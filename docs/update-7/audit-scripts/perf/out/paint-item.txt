@@ -1,0 +1,22 @@
+item Paint events 36 wall 329 ms cpu 273 ms | PaintImage 297 events 42 ms
+  291 x   26.5 ms cpu   (no url)
+    3 x    4.8 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><filter id='a' x=
+    3 x    3.8 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='#ffe6a0'><circle cx='
+STYLE 522 ms wall 314 cpu, elements 1347 
+   10 StyleRecalc DIV class='brick mb' | Animation 
+   4 StyleRecalc DIV class='brick b3 mb' | Animation 
+   1 StyleRecalc DIV id='layer-sheets' | Inline CSS style declaration was mutated 
+   1 StyleRecalc DIV class='sheet-back' | Node was inserted into tree 
+   1 StyleRecalc DIV class='sheet detail-sheet' | Node was inserted into tree 
+   1 ScheduleStyle MAIN id='screens' |  
+   1 StyleInvalidat MAIN id='screens' | Invalidation set invalidates self [{"id":"0x2dac0001af40"}]
+   1 StyleRecalc MAIN id='screens' | Related style rule 
+STYLE 31 ms wall 26 cpu, elements 88 
+   45 Layout B class='deco' | Added to layout 
+   12 Layout circle | SVG changed 
+   9 Layout DIV class='face' | Added to layout 
+   9 Layout I class='stud' | Added to layout 
+   9 Layout B class='sheen' | Added to layout 
+   8 Layout #text | Added to layout 
+   8 Layout g | SVG changed 
+   6 Layout DIV class='brick' | Added to layout 

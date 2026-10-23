@@ -1,0 +1,30 @@
+chest golden RATE 6 PM 0
+boot           frames 4 avg 118 p90 175 max 175
+arrive         frames 19 avg 60 p90 110 max 143
+ready          frames 20 avg 50 p90 101 max 104
+holding        frames 23 avg 60 p90 101 max 156
+burst          frames 11 avg 115 p90 175 max 204
+spin           frames 184 avg 51 p90 108 max 452
+reveal/rv      frames 5 avg 166 p90 410 max 410
+done/rv        frames 20 avg 87 p90 160 max 251
+CPU boot         frames 4, main CPU/frame 65.7 ms (worst 96), wall/frame 118 | UpdateLayoutTree 12.6 | Paint 7.7 | V8.GC_MC_INCREMENTAL 6.7 | EvaluateScript 4.7 | V8.GC_MC_INCREMENTAL_EMBEDDER_TRACING 4.7 | ParseHTML 1.5 | Layout 0.8
+CPU arrive       frames 19, main CPU/frame 22.4 ms (worst 93), wall/frame 60 | FunctionCall 4.9 | TimerFire 4.4 | Commit 4.3 | FireAnimationFrame 4.2 | UpdateLayoutTree 3.2 | MajorGC 1.3 | V8.GC_MARK_COMPACTOR 1.3
+CPU ready        frames 20, main CPU/frame 20.0 ms (worst 57), wall/frame 50 | Commit 5.7 | FunctionCall 3.7 | FireAnimationFrame 2.8 | UpdateLayoutTree 1.7 | TimerFire 1.2 | PrePaint 1.1 | Paint 1.1
+CPU holding      frames 23, main CPU/frame 28.0 ms (worst 74), wall/frame 60 | Commit 6.3 | UpdateLayoutTree 3.9 | FunctionCall 3.7 | FireAnimationFrame 2.9 | Layerize 1.7 | Paint 0.7 | TimerFire 0.6
+CPU burst        frames 11, main CPU/frame 41.3 ms (worst 73), wall/frame 115 | Commit 15.3 | FunctionCall 10.4 | FireAnimationFrame 7.9 | TimerFire 3.2 | Paint 2.3 | UpdateLayoutTree 2.0 | Layerize 1.5
+CPU spin         frames 184, main CPU/frame 32.1 ms (worst 367), wall/frame 51 | Layerize 6.7 | Commit 6.0 | Paint 5.5 | UpdateLayoutTree 3.9 | FireAnimationFrame 3.8 | FunctionCall 3.6 | PaintImage 1.1
+CPU reveal/rv    frames 5, main CPU/frame 122.6 ms (worst 197), wall/frame 166 | Paint 69.3 | UpdateLayoutTree 33.0 | TimerFire 25.0 | PaintImage 18.7 | Commit 7.5 | FunctionCall 7.1 | Layout 6.7
+CPU done/rv      frames 20, main CPU/frame 46.2 ms (worst 104), wall/frame 87 | Commit 11.2 | FunctionCall 6.8 | UpdateLayoutTree 5.2 | FireAnimationFrame 4.2 | TimerFire 3.7 | Layerize 3.0 | PrePaint 2.6
+total main: Commit 2897 | Paint 1932 | Layerize 1897 | FunctionCall 1856 | UpdateLayoutTree 1754 | FireAnimationFrame 1674 | TimerFire 690 | PaintImage 375 | PrePaint 344
+frame 452 spin : Paint 331 | UpdateLayoutTree el 167 | PaintImage 53 | PaintImage @svg%3E: 52 | TimerFire 22 | Commit 20
+frame 433 spin : Paint 244 | UpdateLayoutTree el 236 | PaintImage 28 | PrePaint 27 | Layout 27 | PaintImage @svg%3E: 16
+frame 421 spin : UpdateLayoutTree el 221 | Paint 185 | PaintImage @svg%3E: 52 | PaintImage 23 | Commit 21 | FireAnimationFrame 15
+frame 410 reveal/rv : UpdateLayoutTree el 163 | Paint 129 | PaintImage 33 | Layout 33 | PrePaint 30 | PaintImage @svg%3E: 17
+frame 251 done/rv : Paint 9 | Commit 3 | UpdateLayoutTree el 2 | Layerize 1 | FireAnimationFrame 1 | PrePaint 1
+ULT 68 els 929 (frame)
+ULT 64 els 292 (frame)
+ULT 198 els 205 (frame)
+ULT 158 els 389 (frame)
+ULT 236 els 702 (frame)
+ULT 115 els 390 (frame)
+errors none

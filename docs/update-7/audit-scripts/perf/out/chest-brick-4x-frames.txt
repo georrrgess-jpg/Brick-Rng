@@ -1,0 +1,10 @@
+chest brick RATE 4 PM 0
+menu           frames 1 avg 8 p90 8 max 8
+boot           frames 4 avg 74 p90 211 max 211
+arrive         frames 15 avg 78 p90 206 max 262
+ready          frames 3 avg 190 p90 300 max 300
+holding        frames 14 avg 112 p90 187 max 213
+burst          frames 15 avg 85 p90 152 max 181
+spin           frames 188 avg 52 p90 116 max 508
+reveal/rv      frames 6 avg 148 p90 469 max 469
+done/rv        frames 33 avg 54 p90 105 max 258

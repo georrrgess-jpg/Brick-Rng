@@ -1,0 +1,39 @@
+selectors 54 | rightmost part has no class/id/tag (checked on every element): 0 | attribute-keyed 7 | ::pseudo rules 21 | @keyframes 0
+    inline           rules    28 selectors    35 universal-bucket 0
+    inline           rules     4 selectors    12 universal-bucket 0
+    inline           rules     7 selectors     7 universal-bucket 0
+   universal-bucket examples:
+     
+
+selector stats events 16, selectors seen 1115, total match time 42.7 ms, match attempts 91487
+   5.53 ms      33 tries      3 hits   .skin-circuit .face
+   4.53 ms     112 tries      0 hits   .tw-ring b
+   3.11 ms      33 tries     33 hits   .brick
+   3.07 ms     112 tries      0 hits   .op-title b
+   2.56 ms     740 tries     21 hits   .bdg.still :is(.skin-clock, .skin-slime, .skin-galaxy, .skin-icecube, .skin-bubble) :is(.deco, .stud)::before
+   1.90 ms     740 tries    214 hits   .bdg.still *
+   0.96 ms     114 tries      0 hits   .toggle i
+   0.96 ms     740 tries      0 hits   :is(.bdg-scene, .hero-board, .mini-board):is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit
+   0.96 ms      47 tries      0 hits   :is(.skin-lava, .skin-circuit, .skin-nova, .skin-aurora, .skin-chrome, .skin-heart) > .brick:not(.b3) .deco::before
+   0.87 ms     740 tries      0 hits   :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board
+   0.84 ms     740 tries      0 hits   html.idle .tabbar *
+   0.84 ms     740 tries    683 hits   ::before
+   0.79 ms      39 tries      0 hits   .shapes .stud
+   0.62 ms     112 tries      0 hits   .ready-total b
+   0.55 ms    1480 tries      0 hits   :is(.board-classic, .board-deepsea, .board-foundry, .board-market, .board-orbit, .board-greenhouse, .board-storm, .board
+   0.51 ms     114 tries      0 hits   html.perf-mode .rushbar.hot i
+   0.50 ms     740 tries      0 hits   html.low-end .bdg ::before
+   0.50 ms     740 tries    706 hits   ::after
+   0.42 ms     112 tries      0 hits   .tr-body b
+   0.38 ms     740 tries      0 hits   .run-active .bg-bricks .mb :is(.deco, .stud, .face)::before
+   0.35 ms    1480 tries      0 hits   :is(.board-library, .board-glade, .board-alchemy, .board-observatory, .board-isles, .board-tower)
+   0.35 ms      39 tries     33 hits   .stud
+   0.34 ms     114 tries      3 hits   .bar.green > i
+   0.34 ms      17 tries      7 hits   .sk-day small
+   0.29 ms     115 tries      1 hits   .tab-play span
+   0.23 ms     740 tries     18 hits   .bdg.still :is(.skin-clock, .skin-slime, .skin-galaxy, .skin-icecube, .skin-bubble) :is(.deco, .stud)::after
+   0.17 ms     480 tries    408 hits   div
+   0.16 ms     740 tries    235 hits   .bdg.still ::before
+   0.15 ms     740 tries    649 hits   *
+   0.15 ms     740 tries      3 hits   .col-body > *
+errors none

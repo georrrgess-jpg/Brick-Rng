@@ -1,0 +1,2 @@
+home  {"all":615,"bg":77,"screens":373,"tabbar":31,"layer-sheets":35,"layer-overlays":0,"layer-opening":0,"sprite":8,"fx":0,"s-home":160,"s-run":190,"hiddenSvgDefs":8,"board":5,"fuse":101}
+run   {"all":796,"bg":91,"screens":554,"tabbar":31,"layer-sheets":0,"layer-overlays":0,"layer-opening":0,"sprite":8,"fx":0,"s-run":531,"hiddenSvgDefs":8,"board":325,"fuse":110}

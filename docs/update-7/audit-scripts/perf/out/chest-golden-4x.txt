@@ -1,0 +1,33 @@
+chest golden RATE 4 PM 0
+menu           frames 1 avg 24 p90 24 max 24
+boot           frames 2 avg 371 p90 709 max 709
+arrive         frames 12 avg 105 p90 198 max 209
+ready          frames 19 avg 50 p90 97 max 105
+holding        frames 18 avg 73 p90 138 max 139
+burst          frames 13 avg 100 p90 172 max 227
+spin           frames 194 avg 51 p90 105 max 434
+reveal/rv      frames 7 avg 97 p90 282 max 282
+done/rv        frames 10 avg 179 p90 332 max 332
+CPU menu         frames 1, main CPU/frame 5.1 ms (worst 5), wall/frame 24 | FunctionCall 1.2 | FireAnimationFrame 1.2 | TimerFire 0.1
+CPU boot         frames 2, main CPU/frame 119.4 ms (worst 175), wall/frame 371 | UpdateLayoutTree 55.0 | Paint 20.6 | EvaluateScript 13.5 | PrePaint 4.7 | Layout 4.6 | PaintImage 1.8 | Layerize 1.3
+CPU arrive       frames 12, main CPU/frame 29.0 ms (worst 81), wall/frame 105 | TimerFire 5.9 | Commit 4.5 | FunctionCall 2.9 | Paint 2.8 | UpdateLayoutTree 2.3 | MajorGC 2.3 | V8.GC_MARK_COMPACTOR 2.3
+CPU ready        frames 19, main CPU/frame 17.4 ms (worst 60), wall/frame 50 | Commit 3.6 | FunctionCall 2.6 | UpdateLayoutTree 1.4 | FireAnimationFrame 1.3 | EventDispatch 1.1 | TimerFire 0.8 | PrePaint 0.7
+CPU holding      frames 18, main CPU/frame 28.6 ms (worst 54), wall/frame 73 | UpdateLayoutTree 5.8 | Commit 5.4 | FunctionCall 3.0 | FireAnimationFrame 2.2 | Paint 1.9 | Layerize 1.7 | EventDispatch 0.6
+CPU burst        frames 13, main CPU/frame 34.1 ms (worst 51), wall/frame 100 | Commit 12.9 | FunctionCall 11.4 | FireAnimationFrame 6.5 | TimerFire 5.4 | UpdateLayoutTree 2.4 | Paint 1.0 | PrePaint 0.9
+CPU spin         frames 194, main CPU/frame 27.3 ms (worst 361), wall/frame 51 | Layerize 6.3 | Commit 5.2 | Paint 4.8 | UpdateLayoutTree 3.4 | FireAnimationFrame 3.3 | FunctionCall 3.0 | PaintImage 0.9
+CPU reveal/rv    frames 7, main CPU/frame 67.1 ms (worst 149), wall/frame 97 | Paint 21.6 | UpdateLayoutTree 19.8 | TimerFire 11.6 | PaintImage 6.3 | Commit 3.9 | FunctionCall 3.2 | Layerize 2.0
+CPU done/rv      frames 10, main CPU/frame 49.4 ms (worst 125), wall/frame 179 | Commit 12.4 | FunctionCall 7.0 | Paint 3.6 | FireAnimationFrame 3.6 | Layerize 3.6 | TimerFire 3.5 | UpdateLayoutTree 3.1
+total main: Commit 2730 | Paint 2176 | UpdateLayoutTree 2130 | Layerize 1924 | FunctionCall 1711 | FireAnimationFrame 1580 | TimerFire 743 | PaintImage 387 | PrePaint 359
+frame 709 boot : UpdateLayoutTree el 369 | Paint 127 | EvaluateScript 95 | PrePaint 29 | Layout 28 | PaintImage 9
+frame 434 spin : FireAnimationFrame 304 | UpdateLayoutTree el 210 | Paint 105 | Layout 46 | Commit 28 | PaintImage @svg%3E: 17
+frame 416 spin : Paint 310 | UpdateLayoutTree el 177 | PaintImage 51 | PaintImage @svg%3E: 24 | Commit 23 | Layout 23
+frame 370 spin : Paint 278 | UpdateLayoutTree el 153 | Layout 64 | PaintImage 46 | PaintImage @svg%3E: 27 | Commit 16
+frame 332 done/rv : Commit 13 | UpdateLayoutTree el 1 | FireAnimationFrame 0 | TimerFire 0 | FunctionCall loop@fx.js:219 0 | PrePaint 0
+ULT 369 els 929 (frame)
+ULT 167 els 323 (frame)
+ULT 147 els 158 (frame)
+ULT 68 els 77 (frame)
+ULT 173 els 732 (frame)
+ULT 71 els 3 (frame)
+ULT 143 els 326 (frame)
+errors none

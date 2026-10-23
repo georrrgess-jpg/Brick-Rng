@@ -1,0 +1,61 @@
+RATE 6 PM 0
+TAB collection
+    go() js 30 ms, call->first frame 31 ms, then n 3 avg 260.5 p90 726 max 726 >50 1
+      frame 726  (styled 520): Paint 459 | UpdateLayoutTree 403 | Layout 154 | PrePaint 55 | PaintImage 53 | PaintImage @svg%3E: 7 | FireAnimationFrame 6
+    go() js 34 ms, call->first frame 40 ms, then n 6 avg 210.5 p90 432 max 432 >50 6
+      frame 432  (styled 424): Paint 599 | UpdateLayoutTree 140 | PaintImage 65 | Layout 51 | PaintImage @svg%3E: 21 | PrePaint 16 | FireAnimationFrame 13
+TAB shop
+    go() js 38 ms, call->first frame 47 ms, then n 26 avg 44.7 p90 87 max 210 >50 8
+      frame 210  (styled 556): Paint 98 | UpdateLayoutTree 91 | Layout 34 | PrePaint 27 | PaintImage 2 | Layerize 1 | Commit 0
+    go() js 138 ms, call->first frame 139 ms, then n 13 avg 105.1 p90 222 max 236 >50 8
+      frame 236  (styled 27): FireAnimationFrame 135 | Layerize 1 | FunctionCall f@:4 1 | UpdateLayoutTree 1 | Commit 0 | PrePaint 0 | UpdateLayer 0
+TAB home
+    go() js 36 ms, call->first frame 56 ms, then n 14 avg 86.1 p90 157 max 326 >50 10
+      frame 326  (styled 268): UpdateLayoutTree 184 | Paint 64 | Layout 52 | Layerize 10 | Commit 10 | PrePaint 9 | UpdateLayer 7
+    go() js 14 ms, call->first frame 15 ms, then n 10 avg 115.8 p90 267 max 267 >50 8
+      frame 267  (styled 352): UpdateLayoutTree 50 | MajorGC 49 | V8.GC_MARK_COMPACTOR 49 | Paint 43 | PrePaint 29 | Layout 26 | V8.GC_MC_MARK 22
+    go() js 34 ms, call->first frame 44 ms, then n 10 avg 112.0 p90 276 max 276 >50 7
+      frame 276  (styled 269): UpdateLayoutTree 135 | Layout 78 | Paint 54 | Layerize 12 | Commit 10 | UpdateLayer 5 | PrePaint 1
+    go() js 25 ms, call->first frame 26 ms, then n 13 avg 91.1 p90 165 max 206 >50 10
+      frame 206  (styled 268): UpdateLayoutTree 68 | Paint 65 | Layout 35 | PrePaint 9 | PaintImage 8 | IntersectionObserverController::computeIntersections 2 | Layerize 1
+TAB missions
+    go() js 23 ms, call->first frame 28 ms, then n 29 avg 45.4 p90 113 max 208 >50 8
+      frame 208  (styled 35): Layerize 65 | PrePaint 13 | Commit 11 | Paint 3 | FireAnimationFrame 2 | FunctionCall f@:4 2 | UpdateLayoutTree 2
+TAB profile
+    go() js 5 ms, call->first frame 19 ms, then n 18 avg 63.6 p90 187 max 238 >50 7
+      frame 238  (styled 262): UpdateLayoutTree 165 | Paint 51 | Commit 5 | Layout 3 | PrePaint 2 | Layerize 1 | FunctionCall f@:4 0
+IDLE home       n 69 avg 36.6 p90 78 max 182 >50 13 | running anims 26 | DOM 711
+      CrRendererMain           Commit 267 | UpdateLayoutTree 248 | Layerize 161 | FireAnimationFrame 82 | PrePaint 51 | UpdateLayer 44 | FunctionCall 38 | IntersectionObserverController::computeIntersections 14
+IDLE shop       n 95 avg 29.2 p90 51 max 85 >50 10 | running anims 27 | DOM 1230
+      CrRendererMain           UpdateLayoutTree 283 | Commit 239 | PrePaint 135 | FireAnimationFrame 124 | FunctionCall 86 | Layerize 5 | RunMicrotasks 3 | HitTest 2
+IDLE collection n 72 avg 34.8 p90 41 max 344 >50 7 | running anims 18 | DOM 1546
+      CrRendererMain           FireAnimationFrame 430 | FunctionCall 400 | UpdateLayoutTree 278 | Layerize 215 | Commit 98 | Paint 29 | PrePaint 28 | RunMicrotasks 16
+IDLE missions   n 78 avg 33.0 p90 82 max 208 >50 11 | running anims 17 | DOM 851
+      CrRendererMain           UpdateLayoutTree 297 | Commit 147 | FireAnimationFrame 145 | FunctionCall 120 | PrePaint 66 | RunMicrotasks 16 | HitTest 10 | Layerize 8
+IDLE profile    n 78 avg 32.7 p90 48 max 275 >50 6 | running anims 17 | DOM 795
+      CrRendererMain           UpdateLayoutTree 264 | FireAnimationFrame 252 | FunctionCall 228 | Commit 121 | PrePaint 59 | IntersectionObserverController::computeIntersections 11 | Layerize 1 | RunMicrotasks 0
+SCROLL collection n 61 avg 32.3 p90 51 max 201 >50 7
+      CrRendererMain           Paint 772 | UpdateLayoutTree 335 | Commit 156 | FireAnimationFrame 97 | FunctionCall 95 | PaintImage 90 | PrePaint 85 | Layerize 69
+      frame 201  (styled 150): Paint 96 | UpdateLayoutTree 22 | Layerize 11 | PaintImage @svg%3E: 10 | Layout 9 | PaintImage 8 | PrePaint 6
+      frame 155  (styled 162): Paint 23 | Layerize 17 | UpdateLayoutTree 16 | Commit 11 | PrePaint 10 | Layout 10 | IntersectionObserverController::computeIntersections 1
+SCROLL shop       n 60 avg 26.7 p90 43 max 101 >50 2
+      CrRendererMain           UpdateLayoutTree 208 | PrePaint 89 | Commit 66 | FireAnimationFrame 58 | FunctionCall 49 | HitTest 8 | EventDispatch 4 | Layerize 4
+      frame 101  (styled 27): UpdateLayoutTree 6 | PrePaint 0 | FireAnimationFrame 0 | FunctionCall f@:4 0 | Commit 0 | Layerize 0 | EventDispatch 0
+      frame 92  (styled 27): FunctionCall f@:4 3 | FireAnimationFrame 2 | UpdateLayoutTree 1 | PrePaint 0 | EventDispatch 0 | Commit 0 | FunctionCall listener@:7517 0
+SHEET item      n 3 avg 223.4 p90 432 max 432 >50 3 | DOM 1699
+      frame 432  (styled 1309): UpdateLayoutTree 389 | Paint 55 | Layout 7 | Layerize 7 | FireAnimationFrame 7 | PaintImage @svg%3E: 7 | FunctionCall @ui.js:271 6
+SHEET settings  n 7 avg 158.7 p90 676 max 676 >50 3 | DOM 871
+      frame 676  (styled 0): Commit 18 | FireAnimationFrame 1 | FunctionCall loop@fx.js:219 0 | PrePaint 0 | UpdateLayer 0 | FunctionCall f@:4 0 | IntersectionObserverController::computeIntersections 0
+SHEET odds      n 2 avg 525.7 p90 938 max 938 >50 2 | DOM 1530
+      frame 938  (styled 1102): UpdateLayoutTree 683 | Paint 225 | Layout 46 | Layerize 2 | FireAnimationFrame 2 | PrePaint 2 | Commit 1
+LAYERS home       layers 52 drawing 43 Mpx 40.6 ~MB 155 | DOM {"all":795,"screen":162,"svg":35,"bg":77} 
+       biggest: i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | #document 393x852 | div#app 393x852 | div.vignette 393x852 | nav#tabbar.tabbar 393x852 | canvas#fx 393x852
+LAYERS shop       layers 53 drawing 46 Mpx 44.2 ~MB 169 | DOM {"all":1314,"screen":519,"svg":52,"bg":77} 
+       biggest: i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | #document 393x852 | div#app 393x852 | div.vignette 393x852 | nav#tabbar.tabbar 393x852 | canvas#fx 393x852
+LAYERS collection layers 60 drawing 54 Mpx 57.4 ~MB 219 | DOM {"all":1630,"screen":835,"svg":65,"bg":77} 
+       biggest: div.scroll 393x2812 | div#colGrid.col-grid.stg 362x2316 | i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | #document 393x852 | div#app 393x852 | div.vignette 393x852
+LAYERS missions   layers 35 drawing 30 Mpx 33.9 ~MB 129 | DOM {"all":935,"screen":140,"svg":48,"bg":77} 
+       biggest: i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | #document 393x852 | div#app 393x852 | div.vignette 393x852 | nav#tabbar.tabbar 393x852 | canvas#fx 393x852
+LAYERS profile    layers 41 drawing 35 Mpx 41.3 ~MB 157 | DOM {"all":935,"screen":84,"svg":48,"bg":77} 
+       biggest: i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | div.scroll 393x1276 | #document 393x852 | div#app 393x852 | div.vignette 393x852 | nav#tabbar.tabbar 393x852
+errors none

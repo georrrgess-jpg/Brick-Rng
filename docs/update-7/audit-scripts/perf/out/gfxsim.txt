@@ -1,0 +1,5 @@
+60 Hz phone, smooth (16.7 ms avg) x10                      HHHHHHHHHH  (flips 0, lowEnd false)
+one slow 3 s window (30 ms) then smooth 60 Hz x20          LLLLLLLLLLLLLLLLLLLLL  (flips 1, lowEnd true)
+Low Power Mode, 30 fps cap (33.3 ms) x3 then 60 Hz x20     LLLLLLLLLLLLLLLLLLLLLLL  (flips 1, lowEnd true)
+120 Hz phone dips to 45 fps once, then 120 Hz x5           HLHHHHH  (flips 2, lowEnd false)
+borderline 36-40 fps (25-28 ms) alternating x10            HLLLLLLLLL  (flips 1, lowEnd true)

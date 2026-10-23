@@ -1,0 +1,9 @@
+chest golden RATE 4 PM 0
+boot           frames 2 avg 177 p90 180 max 180
+arrive         frames 9 avg 113 p90 339 max 339
+ready          frames 35 avg 44 p90 79 max 136
+holding        frames 16 avg 90 p90 132 max 179
+burst          frames 11 avg 109 p90 190 max 196
+spin           frames 166 avg 78 p90 202 max 517
+reveal/rv      frames 5 avg 368 p90 1471 max 1471
+done/rv        frames 5 avg 467 p90 925 max 925

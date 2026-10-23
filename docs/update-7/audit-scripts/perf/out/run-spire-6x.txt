@@ -1,0 +1,27 @@
+LOADOUT spire {"skin":"f_sigil","pop":"b_constellation","board":"a_tower","fuse":"u_moonrise","hat":"h_wizard","pm":false,"perf":"high"} RATE 6 | pop sizes 6,5,5,4,4,5
+   idle     n 28 avg 52.9 p90 76 max 103 >50 15
+   pop      n 74 avg 166.0 p90 333 max 453 >50 71
+   rush     n 23 avg 272.8 p90 603 max 777 >50 23
+   stage    n 15 avg 234.7 p90 392 max 485 >50 15
+   spark    n 16 avg 269.3 p90 349 max 776 >50 16
+   end      n 18 avg 150.2 p90 402 max 403 >50 18
+   results  n 70 avg 44.8 p90 88 max 187 >50 22
+   tap (pointerup -> next paint, Event Timing): 208, 608, 712, 576, 608, 424, 672, 2168, 1504, 800, 1600 | input delay 170,201,333,335,333,231,255,264,891,336,566 | handlers 0,27,100,33,23,36,16,451,55,47,173
+    CrRendererMain           Commit 8268 | Paint 5849 | UpdateLayoutTree 4943 | FunctionCall 4136 | FireAnimationFrame 2964 | Layerize 2614 | PrePaint 1714 | TimerFire 1257 | PaintImage 1152
+    cpu:CrRendererMain       Commit 5647 | Paint 4409 | UpdateLayoutTree 3817 | FunctionCall 2813 | Layerize 1986 | FireAnimationFrame 1824 | PrePaint 1294 | TimerFire 994 | EventDispatch 857
+   CPU idle     frames 28, main CPU/frame 46.2 ms (worst 88), wall/frame 53 | Commit 12.5 | Layerize 7.7 | UpdateLayoutTree 7.0 | FireAnimationFrame 4.5 | FunctionCall 4.0 | PrePaint 2.9 | Paint 0.9
+   CPU pop      frames 74, main CPU/frame 107.0 ms (worst 413), wall/frame 166 | Commit 24.6 | Paint 21.5 | UpdateLayoutTree 15.8 | FunctionCall 11.4 | Layerize 9.6 | FireAnimationFrame 7.8 | PrePaint 6.2
+   CPU rush     frames 23, main CPU/frame 190.8 ms (worst 1073), wall/frame 273 | Paint 44.8 | UpdateLayoutTree 39.1 | Commit 35.9 | FunctionCall 33.4 | EventDispatch 20.3 | Layerize 13.4 | FireAnimationFrame 12.0
+   CPU stage    frames 15, main CPU/frame 159.2 ms (worst 400), wall/frame 235 | Paint 31.5 | Commit 29.8 | UpdateLayoutTree 24.0 | FunctionCall 19.8 | TimerFire 18.3 | RunMicrotasks 14.3 | Layerize 13.4
+   CPU spark    frames 16, main CPU/frame 184.2 ms (worst 640), wall/frame 269 | Commit 44.0 | Paint 36.6 | UpdateLayoutTree 35.7 | FunctionCall 23.5 | Layerize 15.6 | FireAnimationFrame 15.3 | PrePaint 10.3
+   CPU end      frames 18, main CPU/frame 112.7 ms (worst 398), wall/frame 150 | Commit 28.1 | UpdateLayoutTree 27.4 | Paint 21.4 | TimerFire 17.3 | RunMicrotasks 16.8 | FunctionCall 8.0 | FireAnimationFrame 7.8
+   CPU results  frames 70, main CPU/frame 33.9 ms (worst 96), wall/frame 45 | Commit 13.6 | Paint 4.5 | FireAnimationFrame 3.8 | FunctionCall 3.7 | Layerize 2.3 | UpdateLayoutTree 1.6 | PrePaint 1.4
+     frame 453 pop (main CPU 107, styled 81): Paint 479 | PaintImage @svg%3E: 145 | Commit 62 | UpdateLayoutTree 37 | Layerize 33 | PrePaint 27 | PaintImage 22
+     frame 435 pop (main CPU 413, styled 78): MajorGC 118 | V8.GC_MARK_COMPACTOR 118 | Commit 87 | Paint 61 | UpdateLayoutTree 57 | HitTest 31 | Layerize 27
+     frame 387 pop (main CPU 244, styled 117): UpdateLayoutTree 113 | HitTest 42 | Paint 34 | Layerize 32 | Layout 32 | Commit 25 | EventDispatch 17
+     frame 777 rush (main CPU 284, styled 216): Paint 499 | UpdateLayoutTree 273 | PaintImage @svg%3E: 113 | PrePaint 74 | Commit 65 | FireAnimationFrame 42 | HitTest 38
+     frame 485 stage (main CPU 390, styled 186): TimerFire 238 | RunMicrotasks 229 | Paint 85 | UpdateLayoutTree 73 | Commit 35 | Layout 24 | Layerize 24
+     frame 776 spark (main CPU 640, styled 293): UpdateLayoutTree 255 | EventDispatch 195 | FunctionCall @run.js:77 170 | Paint 85 | HitTest 52 | Commit 50 | FireAnimationFrame 49
+     frame 403 end (main CPU 398, styled 844): TimerFire 338 | RunMicrotasks 338 | UpdateLayoutTree 232 | Layout 24 | Commit 23 | Layerize 11 | PrePaint 5
+     frame 187 results (main CPU 92, styled 3): Layerize 70 | Commit 28 | Paint 17 | FireAnimationFrame 14 | UpdateLayoutTree 12 | FunctionCall @run.js:247 2 | PrePaint 2
+errors none

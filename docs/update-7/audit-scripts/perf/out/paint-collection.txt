@@ -1,0 +1,33 @@
+collection Paint events 108 wall 860 ms cpu 533 ms | PaintImage 704 events 103 ms
+  668 x   36.9 ms cpu   (no url)
+    6 x    8.6 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x
+    3 x    2.0 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='-7 -7 114 114'><defs><linearGradient id='t' x1='0' y1='0'
+    3 x    1.6 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><filter id='a' x=
+    3 x    1.5 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='#ffe6a0'><circle cx='
+    6 x    1.2 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M15.5 3.2A9 9 0 1 0 20.8 15 7.4 7.4 0
+    3 x    1.2 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -5 112 118'><defs><linearGradient id='p' x1='0' y1='0'
+    3 x    1.0 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke-linejoin='round' strok
+    3 x    0.2 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -14 128 128'><defs><filter id='f' x='-30%' y='-30%' w
+    1 x    0.1 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 116 116'><defs><clipPath id='k'><path d='M50 0A50 5
+    1 x    0.1 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><clipPath id='c'><path d='M44 15H56V32
+    1 x    0.1 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 116 116'><defs><clipPath id='k'><path d='M50 6L100 
+    1 x    0.1 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><clipPath id='c'><path d='M42 15H58V30
+    1 x    0.1 ms cpu   svg:<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><clipPath id='c'><path d='M38 24H62V86
+STYLE 144 ms wall 83 cpu, elements 305 
+   20 StyleRecalc DIV class='brick mb' | Animation 
+   8 StyleRecalc DIV class='brick b3 mb' | Animation 
+   4 StyleRecalc DIV class='brick lb' | Animation 
+   3 Layout circle | SVG changed 
+   3 StyleRecalc SECTION id='s-home' class='screen' | Related style rule 
+   2 StyleRecalc I class='blob b1' | Animation 
+   2 StyleRecalc I class='blob b2' | Animation 
+   2 StyleRecalc I class='blob b3' | Animation 
+STYLE 63 ms wall 49 cpu, elements 189 
+   28 StyleRecalc DIV class='icard ph' | DisplayLock 
+   22 Layout #text | Added to layout 
+   20 StyleRecalc DIV class='brick mb' | Animation 
+   17 Layout DIV class='icard ph' | Added to layout 
+   10 Layout DIV class='lk ph' | Added to layout 
+   8 StyleRecalc DIV class='brick b3 mb' | Animation 
+   6 Layout circle | SVG changed 
+   6 StyleRecalc DIV class='icard' | DisplayLock 

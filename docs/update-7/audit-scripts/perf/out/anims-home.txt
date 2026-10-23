@@ -1,0 +1,16 @@
+home running 27 | main-thread (non-compositable property) 0 covering 0 css px^2
+  10 comp mbFloat [opacity,transform] div.brick.mb  area 37024
+   4 comp mbFloat [opacity,transform] div.brick.b3  area 18505
+   3 comp lbBounce [transform] div.brick.lb  area 13344
+   1 comp drift1 [transform] i.blob.b1  area 603102
+   1 comp drift2 [transform] i.blob.b2  area 580157
+   1 comp drift3 [transform] i.blob.b3  area 598356
+   1 comp fuseBurn [transform] i.  area 1557
+   1 comp fuseSpark [opacity,transform] b.  area 4527
+   1 comp heroPulse [opacity,transform] span.hero-glow  area 70471
+   1 comp bombFloat [transform] span.hero-art  area 11937
+   1 comp heroSparkFlick [transform] g.ba-spark  area 952
+   1 comp playPulse [transform] button.btn.btn-xl  area 21347
+   1 comp dotPop [transform] em#dotMissions.dot.show  area 223
+compositeFailed (trace):
+errors none

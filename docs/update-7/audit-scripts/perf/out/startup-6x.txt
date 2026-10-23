@@ -1,0 +1,14 @@
+STARTUP RATE 6: app ready 2184 ms (wall, from goto), splash gone 2214 ms, FCP 1232, DOMContentLoaded 1805, load 1877
+   main (wall): FunctionCall 681 | UpdateLayoutTree 551 | ParseHTML 501 | TimerFire 343 | EventDispatch 329 | ThrottlingURLLoader::OnReceiveResponse 272 | MojoURLLoaderClient::OnReceiveResponse 258 | ResourceRequestSender::OnReceivedResponse 254 | EvaluateScript 225 | URLLoader::Context::OnReceivedResponse 211
+   main (cpu):  FunctionCall 521 | ParseHTML 420 | UpdateLayoutTree 353 | EventDispatch 299 | TimerFire 219 | ThrottlingURLLoader::OnReceiveResponse 209 | MojoURLLoaderClient::OnReceiveResponse 196 | ResourceRequestSender::OnReceivedResponse 195 | EvaluateScript 191 | URLLoader::Context::OnReceivedResponse 164
+   style sheet parse by file (ms): s4-scenes.css 61 | u4-boards.css 21 | fonts.css 12 | tower.css 11 | base.css 10 | s3-skins.css 10 | fuse.css 9 | s3-scenes.css 9
+   script evaluate by file (ms): ui.js 52 | fuse-art.js 39 | ? 34 | storage.js 25 | s3-skins.js 17 | music.js 14 | hats.js 9 | pass.js 8
+   biggest style passes: 227 ms/407 el, 103 ms/366 el, 36 ms/5 el
+MEMORY home: JS heap 2.3 MB | DOM nodes 1027, listeners 70 | canvases 17 (2 on page) 3.1 MB: fx 590x1278, fuseFx 300x150, offscreen 24x24, offscreen 13x13, offscreen 13x13 | layers 56, drawing 47, 38.5 M device px (upper bound ~147 MB)
+      biggest layers: i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | #document 393x852 | div#app 393x852 | div.vignette 393x852 | button.tab 393x852 | article.hero.stg 493x423
+MEMORY home after visiting every tab: JS heap 2.6 MB | DOM nodes 1942, listeners 70 | canvases 17 (2 on page) 3.1 MB: fx 590x1278, fuseFx 300x150, offscreen 24x24, offscreen 13x13, offscreen 13x13 | layers 56, drawing 46, 38.3 M device px (upper bound ~146 MB)
+      biggest layers: i.blob.b1 767x767 | i.blob.b2 767x767 | i.blob.b3 767x767 | #document 393x852 | div#app 393x852 | div.vignette 393x852 | nav#tabbar.tabbar 393x852 | article.hero.stg 493x428
+MEMORY run (Spire set): JS heap 3.2 MB | DOM nodes 3191, listeners 64 | canvases 92 (2 on page) 3.4 MB: fx 590x1278, fuseFx 554x177, offscreen 112x112, offscreen 88x88, offscreen 64x64 | layers 70, drawing 59, 24.9 M device px (upper bound ~95 MB)
+      biggest layers: #document 393x852 | div#app.run-active 393x852 | div.vignette 393x852 | b.fz-chip 393x852 | canvas#fx 393x852 | b.sheen 393x809 | i.scene-fx 913x120 | ::before 393x112
+MEMORY run in Rush (Spire set): JS heap 3.4 MB | DOM nodes 3309, listeners 65 | canvases 92 (2 on page) 3.4 MB: fx 590x1278, fuseFx 554x177, offscreen 112x112, offscreen 88x88, offscreen 64x64 | layers 78, drawing 67, 33.8 M device px (upper bound ~129 MB)
+      biggest layers: #document 393x852 | div#app.run-active 393x852 | div.s4-sky 393x852 | div.vignette 393x852 | canvas#fx 393x852 | div#rushGlow.rush-glow 547x548 | div.brick 393x672 | div#fxlayer.fxlayer 388x579
