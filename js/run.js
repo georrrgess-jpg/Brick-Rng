@@ -676,6 +676,7 @@
       if (e.chill) {
         if (e.stageCleared()) { await this.chillClear(token); if (token !== this.token) return; }
         else if (e.outOfMoves()) { await this.endRun('moves'); return; }
+        else if (e.movesLeft <= 0 && !e.stageCleared()) this.callout('Out of moves: use your power-ups!', '#ffd66b', { pri: PRI.system });
       }
       this.renderPower(null);
       this.busy = false;
@@ -875,7 +876,7 @@
       if (e.movesLeft > 0) {
         const res = e.shatter();
         BR.audio.shatterBonus(); this.setScore(e.score);
-        this.callout(`Move bonus +${fmt(res.bonus)}`, '#7ee8ff', { pri: PRI.line, wait: 1600 }); this.fx.shake($('app'), 10, 420);
+        this.callout(`Move bonus +${fmt(res.bonus)}${res.banked ? `  ·  ${res.banked} move${res.banked > 1 ? 's' : ''} banked` : ''}`, '#7ee8ff', { pri: PRI.line, wait: 1600 }); this.fx.shake($('app'), 10, 420);
         const ok = await view.playResult(res);
         if (!ok || token !== this.token) return;
       }

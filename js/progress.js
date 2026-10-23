@@ -232,7 +232,7 @@
     /* ---------- Trophies ---------- */
     checkTrophies() {
       const p = P(), got = [];
-      const ctx = { profile: p, stats: p.stats, owned: new Set(p.vault.map((i) => i.itemId)), bestScore: Math.max(S().best.rush, S().best.daily), bestStage: Math.max(S().bestStage.rush, S().bestStage.daily, S().bestStage.chill) };
+      const ctx = { profile: p, stats: p.stats, owned: new Set(p.vault.map((i) => i.itemId)), bestScore: Math.max(S().best.rush, S().best.daily), bestStage: Math.max(S().bestStage.rush, S().bestStage.daily) };   // (Chill rounds are not stages: they no longer earn the stage trophies)
       for (const t of BR.TROPHIES) {
         if (p.trophies[t.id]) continue;
         if (t.test(ctx)) {

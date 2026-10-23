@@ -40,7 +40,9 @@
     // escalate: each Rush in a run needs this much more charge than the one before (+35%), so Rush stays a moment and not a state
     rush: { time: 8, mult: 3, gainBase: 9, gainPerExtra: 3, gainStreak: 2, escalate: 0.35, drain: 2.5, drainDelay: 1.5, popExtend: 0.3, maxTime: 12 },
     // ---- Chill mode (the original 20-move rounds) ----
-    chill: { moves: 20, goalBase: 1200, growth: 1.3, unlockLevel: 2, sixthColor: 4, seventhColor: 8, shatterPerMove: 100 },
+    // Update 7: a longer, gentler ladder (was 1200 x 1.3 a round: every run hit the same wall on round 7 to 9), and half the moves left
+    // at a clear (at most 5) are banked into the next round instead of shattering
+    chill: { moves: 20, goalBase: 2400, growth: 1.13, unlockLevel: 2, sixthColor: 4, seventhColor: 8, shatterPerMove: 100, bankShare: 0.5, bankMax: 5 },
     power: { cap: 3, charge: 100 },
     streak: { day3: 120, day7Coins: 200, day7Chest: 'golden' },   // the 7-day ring: day 3 pays Coins, day 7 pays Coins and a Golden Chest
     boostsFromRun: 3,      // the Boosts sheet appears before a Rush run once the player has finished this many runs

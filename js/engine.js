@@ -60,7 +60,8 @@
     get mult() { return (this.chill ? 1 : BR.stageMult(this.stage)) * (this.rush.active ? BR.CFG.rush.mult : 1); }
     get burn() { return this.chill ? 0 : BR.burnRate(this.stage) * (this.gentle && this.stage < 2 ? 0.85 : 1); }
     stageCleared() { return this.stageScore >= this.goal; }
-    outOfMoves() { return this.chill && this.movesLeft <= 0 && !this.stageCleared(); }
+    outOfMoves() { return this.chill && this.movesLeft <= 0 && !this.stageCleared() && !this.hasPower(); }   // power-ups cost no move in Chill: a run never ends with one in hand
+    hasPower() { return Object.keys(this.inv).some((k) => this.inv[k] > 0); }
     bestGroup() { return this.board.bestGroup(null); }
 
     /* ---------- the clock ---------- */
@@ -236,7 +237,10 @@
 
     /* ---------- Chill mode round flow ---------- */
     shatter() {
-      const left = Math.max(0, this.movesLeft);
+      // half the moves left (at most bankMax) are banked into the next round; the rest shatter for points
+      const moves = Math.max(0, this.movesLeft), C = BR.CFG.chill;
+      this.bank = Math.min(C.bankMax || 0, Math.floor(moves * (C.bankShare || 0)));
+      const left = moves - this.bank;
       const bonus = left * BR.CFG.chill.shatterPerMove;
       const all = [];
       for (let r = 0; r < this.board.rows; r++) for (let c = 0; c < this.board.cols; c++) all.push({ r, c });
@@ -244,7 +248,7 @@
       const cells = left > 0 ? all.slice(0, Math.min(36, left * 3)) : [];
       this.score += bonus;
       const res = this._clear(cells, { r: 3, c: 3 });
-      res.kind = 'shatter'; res.bonus = bonus; res.movesLeft = left;
+      res.kind = 'shatter'; res.bonus = bonus; res.movesLeft = left; res.banked = this.bank;
       res.plan = { kind: 'shatter', n: cells.length, points: bonus, r: 3, c: 3, primary: cells, combo: 1, line: false };
       return res;
     }
@@ -252,7 +256,7 @@
     nextRound() {
       this.stats.stagesCleared++;
       this.stage++;
-      this.movesLeft = BR.CFG.chill.moves;
+      this.movesLeft = BR.CFG.chill.moves + (this.bank || 0); this.bank = 0;
       this.goal = BR.chillGoal(this.stage);
       this.stageScore = 0;
       this.streak = 0;
