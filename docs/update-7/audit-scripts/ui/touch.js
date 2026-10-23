@@ -107,13 +107,13 @@ const log = (...a) => { const s = a.map((x) => (typeof x === 'string' ? x : JSON
     // mission swap
     await page.evaluate(() => { BR.Router.screens.missions.tab = 'daily'; BR.Router.go('missions'); BR.Router.rerender(); }); await wait(page, 1300);
     const c0 = await page.evaluate(() => BR.Progress.coins);
-    const sw = await page.evaluate(() => { const b = document.querySelector('[data-act="swap"], .swap-btn, [data-swap]'); if (b) b.setAttribute('data-aud-sw', '1'); return b && b.outerHTML.slice(0, 80); });
+    const sw = await page.evaluate(() => { const b = document.querySelector('[data-act="reroll"]:not(.off)'); if (b) b.setAttribute('data-aud-sw', '1'); return b && b.outerHTML.slice(0, 80); });
     if (sw) { await doubleTap(page, '[data-aud-sw]', 90); await wait(page, 1200); }
     log('B', 'double tap mission swap:', sw ? { spent: c0 - (await page.evaluate(() => BR.Progress.coins)) } : 'no swap button found');
     // a Shop chest buy button
     await page.evaluate(() => BR.Router.go('shop')); await wait(page, 1300);
     const c1 = await page.evaluate(() => BR.Progress.coins);
-    const buy = await page.evaluate(() => { const b = [...document.querySelectorAll('.screen.on button')].find((x) => x.dataset.chest === 'pop' || (x.closest('[data-chest="pop"]') && /\d/.test(x.textContent))); if (b) b.setAttribute('data-aud-buy', '1'); return b && b.textContent.trim(); });
+    const buy = await page.evaluate(() => { const b = document.querySelector('.screen.on [data-act="open"][data-chest="pop"]'); if (b) b.setAttribute('data-aud-buy', '1'); return b && b.textContent.trim(); });
     if (buy) { await doubleTap(page, '[data-aud-buy]', 90); await wait(page, 2500); }
     log('B', `double tap Shop chest "${buy}":`, await page.evaluate((c1) => ({ spent: c1 - BR.Progress.coins, opening: !!(BR.Openings.current && !BR.Openings.current.closed), state: BR.Openings.current && BR.Openings.current.state }), c1));
     await page.screenshot({ path: path.join(SHOTS, 'touch-dbl-buy.png') });

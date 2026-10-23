@@ -12,3 +12,11 @@ MEMORY run (Spire set): JS heap 3.2 MB | DOM nodes 3191, listeners 64 | canvases
       biggest layers: #document 393x852 | div#app.run-active 393x852 | div.vignette 393x852 | b.fz-chip 393x852 | canvas#fx 393x852 | b.sheen 393x809 | i.scene-fx 913x120 | ::before 393x112
 MEMORY run in Rush (Spire set): JS heap 3.4 MB | DOM nodes 3309, listeners 65 | canvases 92 (2 on page) 3.4 MB: fx 590x1278, fuseFx 554x177, offscreen 112x112, offscreen 88x88, offscreen 64x64 | layers 78, drawing 67, 33.8 M device px (upper bound ~129 MB)
       biggest layers: #document 393x852 | div#app.run-active 393x852 | div.s4-sky 393x852 | div.vignette 393x852 | canvas#fx 393x852 | div#rushGlow.rush-glow 547x548 | div.brick 393x672 | div#fxlayer.fxlayer 388x579
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.evaluate: Target page, context or browser has been closed
+    at /home/user/Brick-Rng/docs/update-7/audit-scripts/perf/startup.js:54:14
+
+Node.js v22.22.0
