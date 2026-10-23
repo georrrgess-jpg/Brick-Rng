@@ -10,8 +10,9 @@ html.perf-mode .blob { animation: none; will-change: auto; }
 
 /* menus: content is there at once, nothing loops */
 html.perf-mode .stg { opacity: 1; transform: none; animation: none !important; }
-html.perf-mode :is(.logo .lb, .fuse-line i, .fuse-line b, .hero-glow, .hero-art, .ba-spark, .hero-play, .resume, .cc-halo, .cc-art .chest, .dp-glow, .ch-glow, .ch-ico, .mb),
-html.perf-mode .pt.next .pt-n b::after { animation: none !important; }
+html.perf-mode .logo .lb, html.perf-mode .fuse-line i, html.perf-mode .fuse-line b, html.perf-mode .hero-glow, html.perf-mode .hero-art,
+html.perf-mode .ba-spark, html.perf-mode .hero-play, html.perf-mode .resume, html.perf-mode .cc-halo, html.perf-mode .cc-art .chest,
+html.perf-mode .dp-glow, html.perf-mode .ch-glow, html.perf-mode .ch-ico, html.perf-mode .mb, html.perf-mode .pt.next .pt-n b::after { animation: none !important; }
 
 /* bricks: the finish sheen (blended over every brick) and the skin decoration's motion go */
 html.perf-mode .sheen::before { display: none; }
@@ -27,7 +28,7 @@ html.perf-mode .rushbar.hot i, html.perf-mode .best-line.close i { animation: no
 html.perf-mode .rush-glow { animation: none !important; }
 
 /* chests: no light rays, dust, spotlight or stars; the chest, the shake, the burst and the card stay */
-html.perf-mode :is(.op-rays, .op-dust, .rv-rays, .rv-spot, .rv-stars) { display: none !important; }
+html.perf-mode .op-rays, html.perf-mode .op-dust, html.perf-mode .rv-rays, html.perf-mode .rv-spot, html.perf-mode .rv-stars { display: none !important; }
 html.perf-mode .rv-face::before { display: none; }
 html.perf-mode .op-chest.idle, html.perf-mode .op-chest.idle * { animation: none !important; }
 
