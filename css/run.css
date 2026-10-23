@@ -401,3 +401,5 @@
 @media (orientation: landscape) and (max-height: 560px) {
   .results .res-scroll, .res-actions { width: min(100%, calc(640px + var(--sal) + var(--sar))); margin-inline: auto; }
 }
+/* U-18, U-19: the results scroll without double-tap zoom or chaining into the page */
+.res-scroll, .res-rest { touch-action: manipulation; overscroll-behavior: contain; }

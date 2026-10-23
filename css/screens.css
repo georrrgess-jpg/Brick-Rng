@@ -507,3 +507,8 @@ button.trophy { width: 100%; text-align: left; color: inherit; cursor: pointer; 
 .code-box { font-size: max(16px, calc(13px * var(--ts))); }
 /* U-16: a Collection card plays its own entrance animation, which holds transform: its press uses the scale property */
 .icard:active { transform: none; scale: 0.96; }
+/* U-18, U-19: no double-tap zoom on the cards and tiles, and the Pass track and the filters never chain into back navigation */
+.track, .filters, .icard, .pt { touch-action: manipulation; }
+.track, .filters { overscroll-behavior-x: contain; }
+/* U-22: the lighter dim for small text (css/base.css --dim-text) */
+.claim-note, .ic-hint { color: var(--dim-text); }
