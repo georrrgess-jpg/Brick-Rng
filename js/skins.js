@@ -51,7 +51,23 @@
     /* ------------------------------------------------------------------ signature moments
        Each one is short (under 600ms) and only draws on the effects layer, so it never slows a tap. */
     popCount: 0,
+    /* The decorative side of a big moment (a Rush start, a stage clear, the Last Spark: skies, rune rings, set flourishes...) starts in
+       the next frame, under the flash: the tap frame keeps only what the player must feel at once (the pop, the Rush class and banner).
+       Those hooks read the board's size, and in the tap frame that forced the Rush restyle of the whole run screen in the middle of the
+       handler. A later moment (a Rush end, the Last Spark ending, the results...) first plays what is still waiting, so their order never
+       changes; the pop of the same tap does not wait for them. */
+    later(fn) {
+      (this._later = this._later || []).push(fn);
+      // (two frames: a tap is handled at the start of a frame, before its animation callbacks, so one would still run before its style)
+      if (!this._laterRaf) this._laterRaf = requestAnimationFrame(() => { this._laterRaf = requestAnimationFrame(() => { this._laterRaf = 0; this.flushLater(); }); });
+    },
+    flushLater() {
+      const q = this._later; this._later = null;
+      if (this._laterRaf) { cancelAnimationFrame(this._laterRaf); this._laterRaf = 0; }
+      if (q) q.forEach((f) => f());
+    },
     onEvent(type, d) {
+      if (this._later && type !== 'pop' && type !== 'line' && type !== 'demo') this.flushLater();
       const M = this.moments || {};
       if (BR.reducedMotion) return;
       if (!Object.keys(M).length && !this.handlers.length) return;   // moment-less loadouts still reach the Series 3 handlers (demos, skins without a moment)
@@ -100,7 +116,7 @@
         if (M.scan) this.scan(d.view.boardEl);
         if (M.thunder) this.lightning(d.view.boardEl, null);
       } else if (type === 'rushStart') {
-        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
+        this.later(() => this.handlers.forEach((h) => h(type, d, { M, fx, rnd })));
         const run = d.run.el;
         run.classList.toggle('tint-plasma', !!M.plasma);
         if (M.dragon) this.roar(d.run);
@@ -114,11 +130,12 @@
           BR.audio.glassBreak();
         }
       } else if (type === 'stageUp') {
-        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
+        this.later(() => this.handlers.forEach((h) => h(type, d, { M, fx, rnd })));
         if (M.dragon) fx.flash('#ff7a2a', 0.2, 320);
       } else if (type === 'spark' || type === 'sparkEnd' || type === 'results') {
         // the Last Spark starting and ending, and the results opening (Moonwick fuses, boards and sets react to them)
-        this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
+        if (type === 'spark') this.later(() => this.handlers.forEach((h) => h(type, d, { M, fx, rnd })));
+        else this.handlers.forEach((h) => h(type, d, { M, fx, rnd }));
       }
     },
     lightning(boardEl, at) {
