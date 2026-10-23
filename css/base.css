@@ -355,3 +355,26 @@ html.idle .bg, html.idle .bg *, html.idle .bg *::before, html.idle .bg *::after,
   .sheet.coach .coach-hero { grid-column: 1; grid-row: 1; justify-self: center; } .sheet.coach .coach-title { grid-column: 1; grid-row: 2; }
   .sheet.coach .coach-list { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
 }
+
+/* ===================================================================
+   Update 7: touch feel
+   =================================================================== */
+/* U-16: one shared press state for the controls that had none (the Golden picker's chosen type keeps its lift) */
+.seg button:active, .chip-btn:active, .pt:active, .reroll:active, .link-btn:active, .ph-edit:active, .op-see:active, .odds-more:active,
+.op-picker button:not(.on):active, .tb-x:active, .t-act:active { transform: scale(0.95); }
+/* the staggered cards (.stg) end their entrance animation holding transform: none, which beat their own :active transform (and
+   Reduce Motion pins transform to none): their press uses the separate scale property, so it shows in every case */
+.stg:is(button, a, [data-act], [role="button"]):active { scale: 0.98; }
+/* U-18: no double-tap zoom or tap delay inside the scrolling lists (touch-action does not reach past a scroll container) */
+.scroll, .sheet-body, .res-scroll, .res-rest, .track, .filters, [data-act], [data-tier], .icard, .pt { touch-action: manipulation; }
+/* U-19: no scroll chaining into the page (pull-to-refresh) or into back navigation */
+html, body { overscroll-behavior: none; }
+.scroll, .sheet-body, .res-scroll, .res-rest { overscroll-behavior: contain; }
+.track, .filters { overscroll-behavior-x: contain; }
+/* U-15: the sheet handle is a real grab target (the sheet follows a drag down on it or the head: js/ui.js Sheet) */
+.sheet-handle { position: relative; } .sheet-handle::before { content: ''; position: absolute; inset: -12px -72px -8px; }
+/* U-5: a keyboard that covers the page (iOS) lifts the sheet above it (js/ui.js sets --kb and html.kb) */
+html.kb .sheet:not(.center) { bottom: var(--kb, 0px); max-height: calc(100dvh - var(--sat) - 24px - var(--kb, 0px)); padding-bottom: 0; transition: transform 0.5s var(--ease-out), bottom 0.25s var(--ease-out); }
+/* U-22: small text on the dark cards gets a lighter dim (4.6:1); --dim stays for strokes and icons */
+:root { --dim-text: #8d82ad; }
+.tab, .claim-note, .ic-hint { color: var(--dim-text); }

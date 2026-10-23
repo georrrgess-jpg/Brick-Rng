@@ -925,9 +925,9 @@
     const vol = (key, gate) => `<label class="vol ${set[gate] ? '' : 'off'}"><span>Volume</span><input type="range" min="0" max="100" step="5" value="${Math.round((set[key] == null ? 1 : set[key]) * 100)}" data-vol="${key}" aria-label="${key === 'sfxVol' ? 'Sound effects' : 'Music'} volume"><b class="num">${Math.round((set[key] == null ? 1 : set[key]) * 100)}</b></label>`;
     const idx = ['auto', 'low', 'high'].indexOf(set.perf);
     return `<section class="set-grp" aria-label="Sound">${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}</section>
-      <section class="set-grp" aria-label="Play and display">${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
-        ${tog('perfMode', 'Performance mode', 'The fewest effects for the smoothest play on older phones')}
-        <div class="perf${set.perfMode ? ' off' : ''}"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--si:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}"${set.perfMode ? ' disabled' : ''}>${l}</button>`).join('')}<i class="thumb"></i></div></div></section>`;
+      <section class="set-grp" aria-label="Play and display">${tog('perfMode', 'Performance mode', 'The fewest effects for the smoothest play on older phones')}
+        <div class="perf${set.perfMode ? ' off' : ''}"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--si:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}"${set.perfMode ? ' disabled' : ''}>${l}</button>`).join('')}<i class="thumb"></i></div></div>
+        ${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}</section>`;
   };
   /** Settings change as they are touched and are saved at once; the Graphics thumb slides from where it was. */
   function bindSettings(root) {
@@ -971,7 +971,7 @@
       this.el.innerHTML = `<div class="scroll">
         ${BR.Coach.banner('profile')}
         <article class="card prof-hero stg"><div class="ph-ring">${ringSVG(P.xp / P.need, 96, 8)}<b class="display">${P.level}</b></div>
-          <div class="ph-info"><div class="ph-namerow"><label class="ph-name"><span class="sr-only">Your name</span><input class="display" type="text" maxlength="14" value="${esc(pr.name || 'Player')}" data-name autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Your name"></label><button class="ph-edit" data-act="rename" type="button" aria-label="Change your name">${BR.icon('edit')}</button></div><small>Level ${P.level}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.need - P.xp)} XP to level ${P.level + 1}</small></div></article>
+          <div class="ph-info"><div class="ph-namerow"><label class="ph-name"><span class="sr-only">Your name</span><input class="display" type="text" maxlength="14" value="${esc(pr.name || 'Player')}" data-name autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Your name"></label><button class="ph-edit" data-act="rename" type="button" aria-label="Change your name">${BR.icon('edit')}</button></div><small>Level ${P.level}</small><div class="bar cyan"><i style="width:${(P.xp / P.need) * 100}%"></i></div><small class="num">${fmt(P.need - P.xp)} XP to level ${P.level + 1}</small></div></article>
         <button class="card settings-row stg" data-act="open-settings" type="button"><span class="sr-ico">${BR.icon('gear')}</span><span class="sr-txt"><b class="display">Settings</b><small>Sound, music, vibration, text size, graphics</small></span><span class="rs-go">${BR.icon('arrow')}</span></button>
         <div class="stats-grid stg">${stat('Runs played', fmt(st.runs))}${stat('Bricks popped', fmt(pr.stats.bricks))}${stat('Best Daily', fmt(st.best.daily))}</div>
         ${recordsCard()}
@@ -1099,5 +1099,7 @@
     Profile.el.addEventListener('change', (e) => {
       if (e.target.dataset.name !== undefined) { const v = e.target.value.replace(/[<>&"]/g, '').trim().slice(0, 14) || 'Player'; e.target.value = v; S().profile.name = v; BR.Storage.save(); }
     });
+    // U-25: the keyboard's Done key saves the name and puts the keyboard away
+    Profile.el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset.name !== undefined) { e.preventDefault(); e.target.blur(); } });
   };
 })();
