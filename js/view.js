@@ -95,8 +95,10 @@
     _make(b, r, c, atR) {
       const el = document.createElement('div');
       // every third brick (by its id, so it never changes) wears the skin's idle animation: skins used to pick them with
-      // :nth-child(3n), which made each pop (bricks leave, new ones drop in) restyle every brick on the board
-      el.className = b.id % 3 === 2 ? 'brick b3' : 'brick';
+      // :nth-child(3n), which made each pop (bricks leave, new ones drop in) restyle every brick on the board.
+      // Never more than a third of the board at once (the animation budget); the live collection is counted, not styled.
+      if (!this.b3s) this.b3s = this.field.getElementsByClassName('b3');
+      el.className = b.id % 3 === 2 && this.b3s.length < Math.floor((this.rows * this.cols) / 3) ? 'brick b3' : 'brick';
       el.dataset.c = b.color;
       el.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
       const rec = { b: { id: b.id, color: b.color, fb: b.fb || 0 }, el, face: el.firstChild, r: atR, c };

@@ -16,7 +16,8 @@ const B = {   // ms per frame unless noted
   homeIdle: 30, shopIdle: 30, collectionIdle: 32, passIdle: 30, missionsIdle: 30, profileIdle: 30,
   tabSwitchFrame: 190, scrollCollection: 40, scrollShop: 36, sheetOpen: 55, tabSwitchJs: 50, runIdle: 24, popAvg: 55, popMax: 140,
   runIdleS4: 30, popAvgS4: 80, popMaxS4: 220,   // (the Spire set is the heaviest loadout: Sigil, Constellation, Moonwick Tower, Moonrise and a hat)
-  reelFreeze: 420,   // (the first style pass over the opening and its reel: 180 to 370 here when the strip holds boards and heavy skins; was 250 before Moonwick's 30 items) hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 960, firstPaint: 240, nodesAfterCycle: 900, longTask: 80,
+  reelFreeze: 420,   // (the first style pass over the opening and its reel: 180 to 370 here when the strip holds boards and heavy skins; was 250 before Moonwick's 30 items)
+  hiddenAnims: 0, animsPerScreen: 60, startupInteractive: 960, firstPaint: 240, nodesAfterCycle: 900, longTask: 80,   // (these sat inside the comment above until Update 6, so they were never checked)
 };
 const results = []; let failed = 0;
 const med = (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
