@@ -1,6 +1,6 @@
 # Pop Rush Update 6: smoother on phones
 
-**Status: built and verified on the test harness. The one step left is the owner's: play it on a real iPhone and a real Android
+**Status: built, verified on the test harness (all 42 suites pass) and published as version 10 of the game page. The one step left is the owner's: play it on a real iPhone and a real Android
 phone, with and without Performance mode.**
 
 **What the owner asked for.**
@@ -104,5 +104,9 @@ restyled elements to about 5,800, and the "whole board" invalidations are gone.
   thing in the game; a phone's GPU does much of that work faster than the harness.
 - The single worst frame of a chest is now the first frame of the spin, when the 44 reel cards are first painted (about 250 to
   310 ms on the harness, as before). The cards already draw their art a few at a time; the paint of the strip itself remains.
+- The test suite also found that seven of the performance budgets (running animations per screen, startup, first paint, nodes
+  after a full cycle and more) had sat inside a code comment since Update 5 and were never checked. They are checked again and
+  all pass. One run of `tests/u5-older.js` reported a single problem whose line was cut from the log; the suite passed on its own
+  rerun.
 - Auto still lowers effects when a run averages slower than about 38 frames a second; it does not switch on Performance mode
   by itself.
