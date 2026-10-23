@@ -393,3 +393,14 @@ html.low-end .rv-stars { animation: none; } html.reduced .rv.night .rv-stars { a
   /* U-23: the reel would cover its own caption's second line: the caption keeps only "Opening" */
   .op-reel-caption small { display: none; }
 }
+/* U-21: on short screens the reveal text sits on the busy "first look" board: a soft dark glow behind it keeps it readable */
+@media (max-height: 700px) and (orientation: portrait), (orientation: landscape) and (max-height: 560px) {
+  .rv-info { background: radial-gradient(closest-side, rgba(8, 5, 20, 0.78), rgba(8, 5, 20, 0.5) 60%, rgba(8, 5, 20, 0)); }
+}
+/* U-11, landscape: the Golden Chest gets the height a smaller hold button and a tighter footer leave (the label says what to do) */
+@media (orientation: landscape) and (max-height: 560px) {
+  .opening[data-chest="golden"] .hold { width: 80px; height: 80px; } .opening[data-chest="golden"] .hold-disc { width: 60px; height: 60px; }
+  .opening[data-chest="golden"] .op-foot { padding-top: 4px; padding-bottom: calc(var(--sab) + 8px); gap: 2px; } .opening[data-chest="golden"] .hold-label { font-size: 18px; }
+  .opening[data-chest="golden"] .hold-sub:empty { display: none; }
+  .opening[data-chest="golden"]:not(:has(.op-picker button.on)) .hold-sub { display: none; }
+}
