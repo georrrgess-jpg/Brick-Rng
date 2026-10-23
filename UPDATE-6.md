@@ -87,14 +87,14 @@ and sharp players.
 On Pretty with the default loadout, frames over 50 ms went from 18 to 10. The style passes during three pops went from about 7,100
 restyled elements to about 5,800, and the "whole board" invalidations are gone.
 
-**Brick Chest opening** (average frame, worst frame in brackets):
+**Chest openings** (average frame, worst frame in brackets; Brick Chest two runs per build, Golden Chest one):
 
-| Phase | Update 5 | Update 6 |
-|---|---|---|
-| Holding | 23 ms | 21 ms |
-| Spin | 24 to 25 ms (248 to 398) | 20 to 22 ms (167 to 276) |
-| Reveal, first frames | 62 to 95 ms (238 to 326) | 24 to 28 ms (110 to 127) |
-| After the reveal | 33 to 34 ms (158 to 170) | 17 to 18 ms (24 to 38) |
+| Phase | Brick Chest, Update 5 | Brick Chest, Update 6 | Golden Chest, Update 5 | Golden Chest, Update 6 |
+|---|---|---|---|---|
+| Holding | 23 ms | 22 to 25 ms | 21 ms | 22 ms |
+| Spin | 24 to 25 ms (248 to 398) | 21 to 22 ms (246 to 283) | 30 ms (223) | 24 ms (313) |
+| Reveal, first frames | 62 to 95 ms (238 to 326) | 26 to 34 ms (137 to 162) | 57 ms (292) | 35 ms (196) |
+| After the reveal | 33 to 34 ms (158 to 170) | 17 ms (30 to 32) | 36 ms (77) | 27 ms (75) |
 
 ## 4. Open items
 
@@ -102,5 +102,7 @@ restyled elements to about 5,800, and the "whole board" invalidations are gone.
   on an iPhone and an Android phone.
 - The remaining cost of a pop on the harness is spread over the browser's own work (style, layering, commit) rather than any one
   thing in the game; a phone's GPU does much of that work faster than the harness.
+- The single worst frame of a chest is now the first frame of the spin, when the 44 reel cards are first painted (about 250 to
+  310 ms on the harness, as before). The cards already draw their art a few at a time; the paint of the strip itself remains.
 - Auto still lowers effects when a run averages slower than about 38 frames a second; it does not switch on Performance mode
   by itself.
