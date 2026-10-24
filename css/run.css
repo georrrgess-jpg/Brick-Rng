@@ -364,7 +364,8 @@
 /* the full-width HUD moves the stage label to the screen's edge, where some scenes are brighter (Greenhouse): a soft dark plate
    behind it, as the boards already draw behind the score */
 @media (max-width: 599px) {
-  .stagestrip { isolation: isolate; }
+  .stagestrip, .fuse-time { isolation: isolate; }
+  .fuse-time::before { content: ''; position: absolute; z-index: -1; inset: -10px -14px; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 6, 24, 0.5), rgba(10, 6, 24, 0.25) 60%, transparent); pointer-events: none; }   /* (the fuse readout too: the Tower's sky is bright there) */
   .stagestrip::before { content: ''; position: absolute; z-index: -1; left: -14px; top: -8px; width: 150px; height: 40px; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 6, 24, 0.55), rgba(10, 6, 24, 0.3) 60%, transparent); pointer-events: none; }
 }
 /* U-6: Chill has no fuse, stage strip or Rush bar, so its board takes that height */
