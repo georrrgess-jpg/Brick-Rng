@@ -223,8 +223,14 @@ in total, about half of it on Phases 1 and 2, with a commit and push at the end 
 
 ## 7. What shipped
 
-Built in about two and a half hours: two workers in parallel (phone layout and touch, smoothness), with the bug fixes and the Chill
-boost done alongside, then merged and tested together.
+Built and published in about 3 hours 40 minutes against a 3-hour target: two workers in parallel (phone layout and touch,
+smoothness), with the bug fixes and the Chill boost done alongside. The work itself was merged within 1 hour 30 minutes; the overrun
+was the full test suite (about 90 minutes) and four regressions it found after the merge, fixed before publishing:
+- The full-width HUD moved the stage label and the fuse readout over bright parts of the Greenhouse and Tower scenes. The boards' dark
+  plate behind the score now follows the HUD, and on phones a soft plate sits behind the stage label and the fuse readout.
+- Two tests checked the set flourish in the same instant as the Rush start, which now begins its decoration two frames later; they wait.
+- A test expected Auto graphics to come back after one fast sample; it now follows the new 20-second rule.
+All 38 suites pass (`u5-fuses` was rerun after the last change to the fuse readout).
 
 ### 7.1 Phone layout and touch feel (23 of the 26 audit findings)
 - **Run screen on small phones:** the HUD rows take the full width and only the board follows the height. Bricks at 320x568 went from
