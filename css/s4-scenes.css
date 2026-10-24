@@ -36,7 +36,7 @@
 
 /* a soft dark plate behind the score (top right of the run column) and behind the message band: part of the run background so low-end
    phones get them too, and the score text keeps a shadow so it reads over any scene */
-:is(.board-library, .board-glade, .board-alchemy, .board-observatory, .board-isles, .board-tower) { --s4-hud: radial-gradient(ellipse 152px 72px at calc(50% + var(--bw) / 2 - 56px) calc(var(--s4-free) + 24px), var(--s4-plate) 0, var(--s4-plate) 38%, transparent 100%); }
+:is(.board-library, .board-glade, .board-alchemy, .board-observatory, .board-isles, .board-tower) { --s4-hud: radial-gradient(ellipse 152px 72px at calc(50% + var(--hudr, var(--bw)) / 2 - 56px) calc(var(--s4-free) + 24px), var(--s4-plate) 0, var(--s4-plate) 38%, transparent 100%); }
 :is(.board-library, .board-glade, .board-alchemy, .board-observatory, .board-isles, .board-tower) .run-active .bg { background: var(--s4-hud), var(--a-bg-run); }
 :is(.board-library, .board-glade, .board-alchemy, .board-observatory, .board-isles, .board-tower) .run-active .msgband::before { content: ''; position: absolute; inset: -4px -22px; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background: radial-gradient(ellipse closest-side at 50% 50%, var(--s4-plate) 0, var(--s4-plate) 60%, transparent 100%); }
 :is(.board-library, .board-glade, .board-alchemy, .board-observatory, .board-isles, .board-tower) .run-active .msgband:is([data-top="spark"], [data-top="aim"], [data-top="hint"], [data-top="combo"], [data-top="goal"])::before { opacity: 1; }

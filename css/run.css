@@ -360,7 +360,13 @@
    =================================================================== */
 /* U-1: the HUD rows take the column's full width; only the board follows the height budget (--bw) */
 :root { --hudw: min(calc(100vw - var(--sal) - var(--sar) - 24px), 540px); }
-@media (max-width: 599px) { .run > :not(.board-wrap) { width: var(--hudw); } }   /* (phones in portrait; tablets and desktop windows keep one column width) */
+@media (max-width: 599px) { .run > :not(.board-wrap) { width: var(--hudw); } :root { --hudr: var(--hudw); } }   /* (--hudr: where the score sits, so the boards' dark plate behind it follows) */   /* (phones in portrait; tablets and desktop windows keep one column width) */
+/* the full-width HUD moves the stage label to the screen's edge, where some scenes are brighter (Greenhouse): a soft dark plate
+   behind it, as the boards already draw behind the score */
+@media (max-width: 599px) {
+  .stagestrip { isolation: isolate; }
+  .stagestrip::before { content: ''; position: absolute; z-index: -1; left: -14px; top: -8px; width: 150px; height: 40px; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 6, 24, 0.55), rgba(10, 6, 24, 0.3) 60%, transparent); pointer-events: none; }
+}
 /* U-6: Chill has no fuse, stage strip or Rush bar, so its board takes that height */
 .run.chill { --bw: min(calc(100vw - var(--sal) - var(--sar) - 24px), calc(100dvh - var(--sat) - var(--sab) - 344px), 540px); }
 /* U-13: HUD texts never wrap */

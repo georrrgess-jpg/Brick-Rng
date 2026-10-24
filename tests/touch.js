@@ -56,8 +56,9 @@ const { launch } = require('./lib');
   ok(await page.evaluate((v) => BR.Run.engine.score > v, sk), 'Enter did not pop the group under the cursor');
   await page.waitForFunction(() => !BR.Run.busy, null, { timeout: 10000 });
   // graphics quality that looks after itself: a slow stretch steps effects down, a long fast one steps them back up
-  const gfx = await page.evaluate(() => { const G = BR.Gfx, keep = JSON.stringify(G.st); G.st = { low: false, flips: 0 }; const out = [];
-    G.sample(0.016); out.push(G.st.low); G.sample(0.034); out.push(G.st.low, !!BR.autoLow); G.sample(0.02); out.push(G.st.low); G.sample(0.008); out.push(G.st.low, !!BR.autoLow);
+  // (Update 7: judged against the screen's refresh rate, and effects come back after about 20 s of good frames, not one fast sample)
+  const gfx = await page.evaluate(() => { const G = BR.Gfx, keep = JSON.stringify(G.st), r = 1 / 60; G.st = { low: false, flips: 0, upNeed: 7 }; G.good = 0; G.lastUp = -1e9; const out = [];
+    G.sample(0.016, r); out.push(G.st.low); G.sample(0.034, r); out.push(G.st.low, !!BR.autoLow); G.sample(0.02, r); out.push(G.st.low); for (let i = 0; i < 7; i++) G.sample(0.0167, r); out.push(G.st.low, !!BR.autoLow);
     G.st = JSON.parse(keep); BR.autoLow = !!G.st.low; BR.App.applySettings(); return out; });
   ok(JSON.stringify(gfx) === JSON.stringify([false, true, true, true, false, false]), 'the graphics quality did not step down and back up', JSON.stringify(gfx));
   // touch targets

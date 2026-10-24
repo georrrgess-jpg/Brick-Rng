@@ -305,6 +305,8 @@ const info = (...a) => console.log(...a);
         const fx = BR.fx, base = { p: fx.parts.length, l: fx.links.length, r: fx.rings.length, live: BR.U4.live.length }, t0 = performance.now(), was = BR.Sets.last;
         BR.Run.clock = false; BR.Sets.rest();
         BR.Skins.onEvent(type, __D(type));
+        // (Update 7: the decorative side of a Rush start begins two frames after the tap, see BR.Skins.later)
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))));
         const played = BR.Sets.last !== was && BR.Sets.last.set === BR.Sets.worn();
         let n = 0; while ((document.querySelector('.sf-stage') || fx.parts.length > base.p || fx.links.length > base.l || fx.rings.length > base.r) && performance.now() - t0 < 3000) { await new Promise((r) => requestAnimationFrame(r)); n++; }
         await new Promise((r) => setTimeout(r, 100));
@@ -539,7 +541,9 @@ const info = (...a) => console.log(...a);
 
     // through the public path (BR.Skins.onEvent): the handler is wired
     await clockStep(page, 6100);
-    const wired = await page.evaluate(([type]) => { const was = BR.Sets.last; BR.Skins.onEvent(type, __D(type)); const p = BR.Sets.last !== was; return p; }, [type]);
+    await page.evaluate(([type]) => { window.__wasLast = BR.Sets.last; BR.Skins.onEvent(type, __D(type)); }, [type]);
+    await clockStep(page, 60);   // (Update 7: the decorative side of a Rush start begins two frames after the tap)
+    const wired = await page.evaluate(() => BR.Sets.last !== window.__wasLast);
     ok(wired, `${id}: BR.Skins.onEvent does not reach the set (the handler is not registered)`);
     await clockStep(page, 1100);
 
