@@ -15,7 +15,10 @@
     document.head.appendChild(el);
   };
 
-  class BoardView {
+    let FACE_T = null;
+  const faceTemplate = () => FACE_T || (FACE_T = (() => { const d = document.createElement('div'); d.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>'; return d.firstChild; })());
+
+class BoardView {
     constructor({ boardEl, field, wrap, layer, fx, audio }) {
       this.boardEl = boardEl;
       this.field = field;
@@ -92,20 +95,23 @@
     }
 
     /* ---------- brick lifecycle ---------- */
-    _make(b, r, c, atR) {
+    _make(b, r, c, atR, parent) {
       const el = document.createElement('div');
       // every third brick (by its id, so it never changes) wears the skin's idle animation: skins used to pick them with
       // :nth-child(3n), which made each pop (bricks leave, new ones drop in) restyle every brick on the board.
       // Never more than a third of the board at once (the animation budget); the live collection is counted, not styled.
       if (!this.b3s) this.b3s = this.field.getElementsByClassName('b3');
-      el.className = b.id % 3 === 2 && this.b3s.length < Math.floor((this.rows * this.cols) / 3) ? 'brick b3' : 'brick';
+      const pend = parent && parent !== this.field ? parent._b3 || 0 : 0;   // (b3 bricks already waiting in the same fragment)
+      const b3 = b.id % 3 === 2 && this.b3s.length + pend < Math.floor((this.rows * this.cols) / 3);
+      if (b3 && parent && parent !== this.field) parent._b3 = pend + 1;
+      el.className = b3 ? 'brick b3' : 'brick';
       el.dataset.c = b.color;
-      el.innerHTML = '<div class="face"><i class="stud"></i><b class="deco"></b><b class="sheen"></b></div>';
+      el.appendChild(faceTemplate().cloneNode(true));   // (a cloned template, not parsed HTML: a pop makes up to 30 of these)
       const rec = { b: { id: b.id, color: b.color, fb: b.fb || 0 }, el, face: el.firstChild, r: atR, c };
       // a Fuse brick keeps its colour (it still groups by it): the ring, the fuse stub and the countdown are drawn on top of the skin's brick
       if (b.fb) { el.classList.add('fusebrick'); el.firstChild.insertAdjacentHTML('beforeend', `<i class="fring"></i><i class="fcap"></i><em class="fcount">${b.fb}</em>`); }
       this._place(rec);
-      this.field.appendChild(el);
+      (parent || this.field).appendChild(el);
       this.bricks.set(b.id, rec);
       rec.r = r; this._rowcol(rec);
       return rec;
@@ -131,22 +137,32 @@
       const bounce = calm ? 0 : Math.min(0.11, 0.025 * d + 0.02) * cell;
       rec.el.style.transform = `translate(${x}px,${y1}px)`;
       if (!rec.el.animate) return { land: delay + fall, end: delay + total };
-      rec.el.animate([
-        { transform: `translate(${x}px,${y0}px)`, easing: QUAD, offset: 0 },
-        { transform: `translate(${x}px,${y1}px)`, easing: 'cubic-bezier(0.2,0.7,0.4,1)', offset: 0.8 },
-        { transform: `translate(${x}px,${y1 - sgn * bounce}px)`, easing: 'cubic-bezier(0.6,0,0.8,0.4)', offset: 0.9 },
-        { transform: `translate(${x}px,${y1}px)`, offset: 1 },
-      ], { duration: total, delay, fill: 'backwards' });
-      if (!this.reduced && !calm) {
-        const s = Math.min(1, 0.45 + d * 0.16);
-        rec.face.style.transformOrigin = dir === 'down' ? '50% 100%' : '50% 0%';
-        rec.face.animate([
-          { transform: 'scale(1,1)' },
-          { transform: `scale(${1 + 0.11 * s},${1 - 0.15 * s})`, offset: 0.3 },
-          { transform: `scale(${1 - 0.03 * s},${1 + 0.05 * s})`, offset: 0.65 },
-          { transform: 'scale(1,1)' },
-        ], { duration: 320, delay: delay + fall, easing: 'ease-out' });
+      if (this.reduced || calm) {
+        rec.el.animate([
+          { transform: `translate(${x}px,${y0}px)`, easing: QUAD, offset: 0 },
+          { transform: `translate(${x}px,${y1}px)`, easing: 'cubic-bezier(0.2,0.7,0.4,1)', offset: 0.8 },
+          { transform: `translate(${x}px,${y1 - sgn * bounce}px)`, easing: 'cubic-bezier(0.6,0,0.8,0.4)', offset: 0.9 },
+          { transform: `translate(${x}px,${y1}px)`, offset: 1 },
+        ], { duration: total, delay, fill: 'backwards' });
+        return { land: delay + fall, end: delay + total };
       }
+      // ONE animation per brick (the move, the little rebound and the squash on landing together): the squash used to be a second
+      // animation on the face, which gave every falling brick two compositor layers. The squash scales about the brick's bottom (top
+      // when rising), so the brick's own origin is set for the animation.
+      const s = Math.min(1, 0.45 + d * 0.16), L = fall, tA = L * 1.125, tE = L * 1.25, D = L + 320;
+      const sq = [[0, 1, 1], [96, 1 + 0.11 * s, 1 - 0.15 * s], [208, 1 - 0.03 * s, 1 + 0.05 * s], [320, 1, 1]];
+      const lerp = (pts, t, k) => { for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i], u = b[0] === a[0] ? 1 : (t - a[0]) / (b[0] - a[0]); return a[k] + (b[k] - a[k]) * u; } return pts[pts.length - 1][k]; };
+      const yk = [[L, y1], [tA, y1 - sgn * bounce], [tE, y1], [D, y1]];
+      const times = [...new Set([L, tA, tE, L + 96, L + 208, D].map((t) => Math.round(t * 10) / 10))].sort((p, q) => p - q);
+      const kf = [{ transform: `translate(${x}px,${y0}px) scale(1,1)`, easing: QUAD, offset: 0 }];
+      for (const t of times) {
+        const rel = t - L, y = lerp(yk, t, 1), sx = lerp(sq.map((q) => [q[0], q[1], q[2]]), rel, 1), sy = lerp(sq, rel, 2);
+        kf.push({ transform: `translate(${x}px,${y.toFixed(2)}px) scale(${sx.toFixed(3)},${sy.toFixed(3)})`, easing: t < tA ? 'ease-out' : 'ease-in-out', offset: Math.min(1, t / D) });
+      }
+      kf[kf.length - 1].offset = 1;
+      rec.el.style.transformOrigin = dir === 'down' ? '50% 100%' : '50% 0%';
+      const anim = rec.el.animate(kf, { duration: D, delay, fill: 'backwards' });
+      anim.onfinish = () => { rec.el.style.transformOrigin = ''; };
       return { land: delay + fall, end: delay + total };
     }
 
@@ -331,8 +347,11 @@
         rec.r = m.toR; this._rowcol(rec);
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
-      for (const s of res.spawns) {
-        const rec = this._make({ id: s.id, color: s.color, fb: s.fb || 0 }, s.r, s.c, s.fromR);
+      // the new bricks go into the page in one batch, then start falling
+      const frag = document.createDocumentFragment(), made = [];
+      for (const s of res.spawns) made.push([this._make({ id: s.id, color: s.color, fb: s.fb || 0 }, s.r, s.c, s.fromR, frag), s]);
+      if (made.length) this.field.appendChild(frag);
+      for (const [rec, s] of made) {
         const t = this._fall(rec, s.fromR, s.r, colDelay(s.c), res.dir, 172, calm);
         land = Math.max(land, t.land); end = Math.max(end, t.end); landedCount++;
       }
@@ -346,6 +365,21 @@
       return true;
     }
 
+    /** One schedule for all the effects of a pop (a timer per brick made a 24-brick pop wake the page 24 times): run each when it falls due,
+        on the next frame at or after its time. An effect that is long overdue (a tab that was in the background) is dropped. */
+    _later(ms, fn) {
+      (this._q = this._q || []).push({ at: performance.now() + ms, fn });
+      if (this._qOn) return;
+      this._qOn = true;
+      if (!this._qTick) this._qTick = () => {
+        const now = performance.now(), q = this._q; this._q = [];
+        for (const it of q) {
+          if (it.at <= now + 8) { if (now - it.at < 600) { try { it.fn(); } catch (e) { console.error(e); } } } else this._q.push(it);
+        }
+        if (this._q.length) requestAnimationFrame(this._qTick); else this._qOn = false;
+      };
+      requestAnimationFrame(this._qTick);
+    }
     _pop(rec, delay, p, shardCount, origin, fuseKind, held) {
       const pal = BR.PALETTE[p.color];
       const sgn = Math.random() < 0.5 ? -1 : 1;
@@ -360,14 +394,14 @@
       } else {
         setTimeout(() => rec.el.remove(), delay + 200);
       }
-      setTimeout(() => {
+      this._later(delay + 70, () => {
         const pt = this.pagePoint(p.r, p.c);
         const sk = BR.Skins;
         if (fuseKind === 'burst') { this.fx.explosion(pt.x, pt.y, '#ff4d6d', 0.9); this.fx.flash('#ff4d6d', 0.25, 400); this.fx.shake(document.getElementById('boardWrap'), 7, 380); BR.haptic('boom'); }
         else if (fuseKind === 'defuse') { this.fx.sparks(pt.x, pt.y, '#3ddc97', 18, 1.4, 0.7); this.fx.ring(pt.x, pt.y, '#3ddc97', 80, 0.5, 4); }
         this.fx.pop(sk.pop, pt.x, pt.y, pal.glow, pal.hi, shardCount, 0.9, sk.popShine);
         if (sk.pop === 'lightning' && origin && !this.reduced && Math.random() < 0.55) this.fx.bolt(origin.x, origin.y, pt.x, pt.y, pal.hi);
-      }, delay + 70);
+      });
     }
 
     /** A colour joined the board: every brick of that colour gives one bright pulse, so the player sees where the new colour landed. */

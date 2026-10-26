@@ -289,7 +289,8 @@
         label: q('[data-label]'), sub: q('[data-sub]'), reelWrap: q('.op-reel'), reelHost: q('.reel-host'), skipEl: q('[data-skip]'), rv: q('[data-rv]'),
       });
       // the few elements that read --hold; setting it on each of them (not on the root) keeps the rest of the scene out of every frame's restyle
-      this.holdUsers = [q('.op-glow'), q('.op-rays'), q('.op-pedestal'), this.chestBox, this.holdEl].filter(Boolean);
+      this.holdBase = [q('.op-glow'), q('.op-rays'), q('.op-pedestal'), q('.ring-fg')].filter(Boolean);
+      this.holdUsers = this.holdBase.slice();   // (+ the chest's own glow, leak, frost and needle once the art is drawn: see arrive)
       // toasts wait until the opening is over (js/ui.js holds them while `in-opening` is set) and none is left on screen to land on the header
       this.clearToasts(); BR.under(1);
       document.getElementById('layer-opening').appendChild(root);
@@ -349,6 +350,7 @@
       this.chestBox.className = 'op-chest';
       this.chestBox.innerHTML = BR.chestSVG(this.id);
       this.svg = this.chestBox.querySelector('.chest');
+      this.holdUsers = this.holdBase.concat(Array.from(this.chestBox.querySelectorAll('.cp-glow, .cp-leak, .cp-frost, .cp-needle')));   // not the whole chest: --hold inherits, and writing it on the chest restyled every part every frame
       this.ritual = Rituals[this.id];
       this.ritual.init(this.svg);
       this.refreshFoot();

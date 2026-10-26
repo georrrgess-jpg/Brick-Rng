@@ -96,10 +96,18 @@
     swEl.click();
     for (let k = 1; k < n; k++) setTimeout(() => swEl.click(), 55 * k);
   };
+  let lastSoft = 0;
   BR.haptic = function (kind) {
     const s = BR.Storage && BR.Storage.data.settings;
     if (!s || !s.haptics) return;
-    if (!navigator.vibrate) { if (IOS) { try { switchTick(typeof kind === 'string' ? TICKS[kind] || 1 : 1); } catch (e) { /* ignore */ } } return; }
+    if (!navigator.vibrate) {
+      if (IOS) {
+        // each fake tick is a click on a hidden switch (a style and layout pass on iPhone): plain pops and taps tick at most every 120 ms
+        if (kind === 'pop' || kind === 'tick' || kind === 'tap') { const t = performance.now(); if (t - lastSoft < 120) return; lastSoft = t; }
+        try { switchTick(typeof kind === 'string' ? TICKS[kind] || 1 : 1); } catch (e) { /* ignore */ }
+      }
+      return;
+    }
     try { navigator.vibrate(PAT[kind] != null ? PAT[kind] : kind); } catch (e) { /* ignore */ }
   };
   BR.hapticsAvailable = () => !!navigator.vibrate || IOS;
