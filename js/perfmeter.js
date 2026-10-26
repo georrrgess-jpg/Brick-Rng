@@ -174,7 +174,7 @@
       if (this.running) return;
       for (let i = 0; i < 6 && BR.Back && BR.Back.depth; i++) BR.Back.closeTop();
       BR.Router.go('home', { instant: true });
-      BR.toast('Lag meter running: about a minute. Please do not touch the screen.');
+      BR.toast('Lag meter running: about two minutes. Please do not touch the screen.');
       const res = await this.run((t) => { try { if (BR.Run && BR.Run.practice && BR.Run.hint) BR.Run.hint('<b>Lag meter</b>: ' + BR.esc(t), 0); } catch (e) { /* ignore */ } });
       if (!res) return;
       BR.Router.go('profile');

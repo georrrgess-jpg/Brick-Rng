@@ -67,6 +67,7 @@ const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } 
   ok(rep.labels.includes('Pop of 24') && rep.labels.includes('Rush start') && rep.labels.includes('Chest spin') && rep.labels.includes('Chest reveal'), 'the lag meter measures pops, Rush and the chest', rep.labels.join(', '));
   ok(rep.frames.every((n) => n > 0), 'every measured moment recorded frames', rep.frames.join(','));
   ok(/Pop Rush lag report/.test(rep.text) && /Mobile mode on/.test(rep.text), 'the report names the settings');
+  ok(/Where the time goes/.test(rep.text) && /no brick animation/.test(rep.text) && /effects canvases hidden/.test(rep.text), 'the report says where the time goes (the variants of one pop)');
   const after = await page.evaluate(() => { const D = BR.Storage.data; return JSON.stringify({ c: D.profile.coins, v: D.profile.vault.length, ch: D.profile.chests, op: D.profile.opened, st: D.profile.stats.chests, ld: D.profile.loadout, runs: D.runs }); });
   ok(before === after, 'the lag meter changes nothing in the save', before + ' / ' + after);
   ok(!(await page.evaluate(() => BR.Run.practice)), 'the practice board is gone after the test');
