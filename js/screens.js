@@ -927,7 +927,8 @@
     return `<section class="set-grp" aria-label="Sound">${tog('sound', 'Sound effects', 'Pops, chests and the fuse')}${vol('sfxVol', 'sound')}${tog('music', 'Music', 'The beat speeds up with the fuse')}${vol('musicVol', 'music')}${tog('haptics', 'Vibration', 'Buzz on pops and chest openings')}</section>
       <section class="set-grp" aria-label="Play and display">${tog('perfMode', 'Performance mode', 'The fewest effects for the smoothest play on older phones')}
         <div class="perf${set.perfMode ? ' off' : ''}"><div><b>Graphics</b><small>Auto lowers effects if your phone struggles and brings them back when it can. Smooth uses fewer effects. Pretty uses them all.</small></div><div class="seg mini" id="perfSeg" style="--n:3;--si:${idx}">${[['auto', 'Auto'], ['low', 'Smooth'], ['high', 'Pretty']].map(([v, l]) => `<button data-perf="${v}" class="${set.perf === v ? 'on' : ''}" type="button" aria-pressed="${set.perf === v}"${set.perfMode ? ' disabled' : ''}>${l}</button>`).join('')}<i class="thumb"></i></div></div>
-        ${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}</section>`;
+        ${tog('shake', 'Screen shake', 'Impact on big pops')}${tog('shapes', 'Shape hints', 'Symbols on bricks for color-blind play')}${tog('large', 'Larger text', 'Bigger text in menus')}${tog('reduced', 'Reduce motion', 'Calmer, shorter animations')}
+        <div class="perf perf-meter"><div><b>Check performance</b><small>A one-minute test of how smoothly pops and chests run on this phone. It makes a short report you can copy and send.</small></div><button class="btn btn-sm btn-dark" data-meter type="button">Start test</button></div></section>`;
   };
   /** Settings change as they are touched and are saved at once; the Graphics thumb slides from where it was. */
   function bindSettings(root) {
@@ -946,6 +947,7 @@
       if (k === 'sound' || k === 'music') { const row = root.querySelector(`[data-vol="${k === 'sound' ? 'sfxVol' : 'musicVol'}"]`); if (row) row.closest('.vol').classList.toggle('off', !e.target.checked); }
     });
     root.addEventListener('click', (e) => {
+      if (e.target.closest('[data-meter]')) { BR.audio.ui(); setTimeout(() => BR.PerfMeter && BR.PerfMeter.start(), 60); return; }
       const b = e.target.closest('[data-perf]'); if (!b) return;
       S().settings.perf = b.dataset.perf; BR.Storage.save(); BR.App.applySettings(); BR.audio.ui();
       const seg = b.closest('.seg'); seg.style.setProperty('--si', ['auto', 'low', 'high'].indexOf(b.dataset.perf));

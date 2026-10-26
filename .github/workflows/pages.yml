@@ -1,0 +1,33 @@
+# Publishes the game to GitHub Pages, so it has its own web address (and can be added to a phone's home screen) instead of living
+# inside another page. Switch it on once in the repository: Settings > Pages > Source: GitHub Actions.
+name: Publish the game
+on:
+  push:
+    branches: [claude/wonderful-franklin-9nexb9, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep only what the game needs
+        run: |
+          mkdir _site
+          cp -r index.html sw.js manifest.webmanifest css js icons fonts _site/ 2>/dev/null || true
+          ls _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

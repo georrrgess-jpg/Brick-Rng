@@ -1,12 +1,12 @@
 /* Pop Rush service worker: caches the whole game so it opens instantly and works offline.
    Bump VERSION whenever a file changes. Classic scripts only, no build step, so the file list is the build. */
-const VERSION = 'poprush-v7.0.0';
+const VERSION = 'poprush-v7.1.0';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/base.css', 'css/screens.css', 'css/run.css', 'css/chest.css', 'css/skins.css', 'css/s3-skins.css', 'css/s3-scenes.css', 'css/fuse.css', 'css/badges.css', 'css/coach.css', 'css/perf.css',
   'js/rng.js', 'js/board.js', 'js/config.js', 'js/boosters.js', 'js/items.js', 'js/chests.js', 'js/director.js', 'js/engine.js', 'js/storage.js', 'js/pass.js',
   'js/progress.js', 'js/missions.js', 'js/retention.js', 'js/audio.js', 'js/music.js', 'js/fx.js', 'js/skins.js', 'js/s3-skins.js', 'js/s3-pops.js', 'js/s3-scenes.js', 'js/fuse-art.js', 'js/fuse.js', 'js/badges.js', 'js/coach.js', 'js/view.js', 'js/ui.js', 'js/chestart.js',
-  'js/spin.js', 'js/openings.js', 'js/screens.js', 'js/run.js', 'js/main.js',
+  'js/spin.js', 'js/openings.js', 'js/screens.js', 'js/run.js', 'js/perfmeter.js', 'js/main.js',
   'css/u4-boards.css', 'css/u4-skins.css', 'js/u4-cosmetics.js',
   'css/s4-skins.css', 'css/s4-scenes.css', 'css/hats.css', 'js/hats.js', 'js/s4-skins.js', 'js/s4-pops.js', 'js/s4-scenes.js', 'js/s4-fuses.js', 'css/tower.css', 'js/tower.js', 'css/sets.css', 'js/sets.js',
   'fonts/fredoka.woff2', 'fonts/nunito.woff2',

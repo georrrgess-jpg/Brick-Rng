@@ -96,6 +96,11 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   covers the save-code box. Opening sheets, the Rush start, the results and the chest reveal do much less work, and Auto graphics
   brings effects back once the phone keeps up. Resuming a run keeps its fuse exactly (the clock waits for your first pop), and Chill
   runs can be saved. Chill climbs more gently and banks half your spare moves into the next round.
+- **Check performance (Update 8)**: Settings has a one-minute lag test. It plays pops of rising size, a Line Blast, a stage clear, a
+  Rush start and a trial chest on a board that saves nothing, and writes a short report (frame times per moment, the phone, the
+  settings) that can be copied and sent. **Play it from its own address**: `.github/workflows/pages.yml` publishes the game to GitHub
+  Pages (turn it on once under Settings > Pages > Source: GitHub Actions), so it opens in Safari or Chrome outside any other page and
+  can be added to the home screen (Share > Add to Home Screen).
 
 ## Layout
 ```

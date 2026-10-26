@@ -227,7 +227,8 @@
 
   /* ===================================================================== the opening */
   class Opening {
-    constructor(chestId) {
+    constructor(chestId, opts) {
+      opts = opts || {}; this.trial = !!opts.trial;   // a trial opening (the lag meter): nothing is spent, kept or counted
       this.id = chestId;
       this.chest = BR.CHESTS[chestId];
       this.type = this.chest.type;
@@ -469,15 +470,24 @@
       if (this.state === 'burst') return;
       this.state = 'burst'; cancelAnimationFrame(this.raf);
       this.pressed = false; this.holdEl.classList.remove('down');
-      const drop = P().openChest(this.id, this.type);
+      let drop;
+      if (this.trial) {
+        const c = BR.CHESTS[this.id];
+        drop = BR.rollChest(BR.makeRng((Date.now() ^ 0x2545f491) >>> 0), this.id, c.type || this.type || 'skin', [], {});
+        if (drop) { drop.chest = this.id; drop.inst = { uid: null, itemId: drop.itemId, shine: drop.shine, seed: drop.seed || 0 }; }
+      } else drop = P().openChest(this.id, this.type);
       if (!drop) { BR.toast('Could not open that chest', 'bad'); this.state = 'ready'; this.hold = 0; this.setHold(0); this.refreshFoot(); return; }
-      drop.inst = P().keep(drop);   // saved immediately: closing the screen can never lose the item
-      const cashed = P().cashStranded();   // a set you just finished turns spare chests of it into Coins
-      if (cashed) setTimeout(() => BR.toast(`Set complete! Spare chests became ${BR.fmt(cashed)} Coins`, 'good'), 1600);
+      if (!this.trial) {
+        drop.inst = P().keep(drop);   // saved immediately: closing the screen can never lose the item
+        const cashed = P().cashStranded();   // a set you just finished turns spare chests of it into Coins
+        if (cashed) setTimeout(() => BR.toast(`Set complete! Spare chests became ${BR.fmt(cashed)} Coins`, 'good'), 1600);
+      }
       this.drop = drop; this.count++;
-      const newly = P().checkTrophies();
-      if (newly.length) setTimeout(() => BR.toast(`Trophy: ${newly[0].name}`, 'good'), 1200);
-      this.root.querySelector('[data-coins]').textContent = BR.fmt(P().coins);
+      if (!this.trial) {
+        const newly = P().checkTrophies();
+        if (newly.length) setTimeout(() => BR.toast(`Trophy: ${newly[0].name}`, 'good'), 1200);
+        this.root.querySelector('[data-coins]').textContent = BR.fmt(P().coins);
+      }
       this.holdEl.classList.add('off');
       this.root.classList.add('bursting');
       this.setHold(1);
@@ -755,9 +765,9 @@
   BR.Openings = {
     current: null,
     /** Open a chest screen. Resolves with how many chests were opened in this visit. */
-    async open(chestId) {
+    async open(chestId, opts) {
       if (this.current && !this.current.closed) return this.current.done;
-      const o = new Opening(chestId);
+      const o = new Opening(chestId, opts);
       this.current = o;
       o.mount();
       await sleep(260);

@@ -188,7 +188,15 @@
       engine.tick = () => [];
       return this.begin(engine, { practice: this.practice, goal: null });
     },
+    /** The lag meter's board (js/perfmeter.js): a practice board that nothing is saved or paid from, with its own scripted taps. */
+    practiceMeter(meter) {
+      this.practice = { item: { name: 'the lag meter' }, type: null, meter, iv: 0 };
+      const engine = new BR.Engine({ mode: 'rush', seed: 4242, boosts: {} });
+      engine.tick = () => [];   // the fuse does not burn: the meter sets up each moment itself
+      return this.begin(engine, { practice: this.practice, goal: null });
+    },
     practiceTimer() {
+      if (this.practice && this.practice.meter) return;   // (the lag meter ends its own board)
       const pz = this.practice, end = performance.now() + 10000;
       if (pz.set && BR.Sets) [900, 5200].forEach((ms) => setTimeout(() => { if (this.practice === pz && !this.paused) BR.Sets.flourish(pz.set, { fx: this.fx, view: this.view }); }, ms));
       const tick = () => {
@@ -203,12 +211,12 @@
       const pz = this.practice; if (!pz) return;
       clearInterval(pz.iv); this.practice = null;
       const lo = BR.Storage.data.profile.loadout;   // the real loadout comes back before anything can save it
-      if (pz.prevs) Object.keys(pz.prevs).forEach((t) => { lo[t] = pz.prevs[t]; }); else lo[pz.type] = pz.prev;
+      if (pz.meter) { /* the lag meter changed nothing */ } else if (pz.prevs) Object.keys(pz.prevs).forEach((t) => { lo[t] = pz.prevs[t]; }); else lo[pz.type] = pz.prev;
       this.over = true; this.clock = false; this.token++; this.modal = false;
       this.hideHint(); this.clearHover(); this.view.hideHint();
       BR.Skins.apply();
       for (let i = 0; i < 10 && BR.Back && BR.Back.depth; i++) BR.Back.closeTop();
-      BR.Router.go('collection');
+      BR.Router.go(pz.meter ? 'profile' : 'collection');
     },
 
     /** The run goal sits in the message band when nothing more urgent is showing. */
