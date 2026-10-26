@@ -1,7 +1,9 @@
-# Pop Rush Update 8: Mobile mode (plan)
+# Pop Rush Update 8: Mobile mode
 
-**Status: plan. Nothing in the game has changed yet.** Written to be carried out step by step by a later session. Every item says where
-the code is, what to change, how to check it, and what must not change.
+**Status: built and verified on the test harness (section 7, "What shipped"). The one step that matters is the owner's: run Settings > Check
+performance on the phone and send the report.** The plan below is kept as it was written; section 7 says where the build differs from it.
+The plan was written to be carried out step by step: every item says where the code is, what to change, how to check it, and what must
+not change.
 
 **What the owner asked for.** The game still lags on phones, most of all when opening chests, when popping large groups, and during
 Rush. Improve playability on mobile with the best methods available; if it is viable, add a **Mobile mode** setting that makes
@@ -187,3 +189,67 @@ The plan proceeds with the recommendation in each case unless the owner says oth
 Phase 0 is small to medium (the lag meter and a workflow file). Phase 1 is medium, mostly `view.js` and `audio.js`. Phase 2 is the
 largest (the setting, the low-resolution layers, the particle budget and the chest reel). Phase 3 is small. Phase 4 depends on the
 phone reports. Expect a working session of several hours; the full test suite at the end adds about 90 minutes on its own.
+
+---
+
+## 7. What shipped
+
+### 7.1 What is in the build
+- **The lag meter** (Settings > Check performance, `js/perfmeter.js`). A one-minute scripted test on a practice board and a trial chest that
+  saves, pays and counts nothing (`tests/u8-mobile.js` checks the save is untouched): pops of 2, 6, 12, 20 and 24 bricks, a Line Blast, a
+  stage clear, the 12 and 24 pops again with sound and vibration off, a Rush start, and a chest's hold, burst, spin and reveal. It prints
+  median, worst and slow frames per moment, the script time of the tap, and the longest long task where the browser reports it
+  (Chrome), plus the device, screen, refresh rate, memory, whether the page is embedded, and the settings, with a Copy report button.
+- **A home outside the Claude app**: `.github/workflows/pages.yml` publishes the game to GitHub Pages. Owner step: Settings > Pages >
+  Source: GitHub Actions (a private repository needs a paid plan), then open the address in Safari or Chrome and Add to Home Screen.
+- **Mobile mode** (Settings, first row of "Play and display"; saved as `settings.mobile`; decided once on first launch: on for a touch
+  screen under 600 px on its short side, off otherwise; Performance mode includes it):
+  - no brightness filter in the brick bursts (the swell, spin, shrink and fade stay, with the particles doing the flash);
+  - bricks past the 14th of a big pop burst in small batches a few frames apart, with two fewer shards each;
+  - a particle budget that starts at 70% and moves between 50% and 100% with the measured frame time;
+  - the effects canvas and the fuse's spark canvas at 1x instead of 1.5x;
+  - Rush start and the Last Spark shake the board, a chest burst shakes the chest stage and a reveal shakes the card, instead of the whole
+    screen (one huge layer to redraw in the middle of the moment);
+  - the chest's light rays, the reveal's rays and the three colour blobs behind the menus are 256 px and 128 px canvases scaled up
+    (`js/lowres.js`), not 1,100 px and 767 px layers (about 20 to 50 MB of graphics memory each at 3x density);
+  - the heavy per-brick Rush looks of the Potion, Hourglass and Galaxy skins sit on the moving third of the bricks only (`.b3`), so a Rush
+    start no longer repaints all 64 faces.
+- **For everyone** (invisible changes):
+  - one animation per falling brick (the landing squash is folded into the move, on one layer);
+  - bricks are cloned from a template and a pop's new bricks are added in one batch;
+  - one schedule runs a pop's effects instead of one timer per brick;
+  - iPhone's fake vibration ticks at most every 120 ms for plain pops;
+  - the chest hold writes `--hold` only on the few elements that read it (it used to restyle every part of the chest each frame);
+  - the chest reel's 44 cards are made a few milliseconds a frame while the strip slides in, not all at once;
+  - the spent chest (230 pieces) leaves the page during the spin.
+
+### 7.2 Measured (harness: Chromium, no GPU, 393x852 at 3x, CPU slowed; `docs/update-8/scripts/bigpop.js`, `chestprof.js`)
+Pops on one fixed board, back to back on the same machine. A real phone will differ; the lag meter measures that.
+
+| | Update 7 | Mobile mode |
+|---|---|---|
+| Default skin, 4x: average frame over 9 big moments (pops of 6 to 24, Line Blast, stage clear, Rush start) | 22 to 33 ms | 21 to 28 ms |
+| Default skin, 4x: frames over 50 ms in those 9 moments | 52 | 28 |
+| Potion skin with Prism finish, 6x: average frame | 71 to 216 ms | 46 to 74 ms |
+| Brick Chest, 4x: spin, worst frame | 221 to 553 ms | 187 to 289 ms |
+| Brick Chest, 4x: reveal, average / worst frame | 40 to 72 / 158 to 247 ms | 18 to 28 / 49 to 116 ms |
+| Brick Chest, 4x: after the reveal, average frame | 21 to 75 ms | 17 ms |
+
+With Mobile mode off the build behaves about as Update 7 did on the default skin (the invisible changes are small there), and its gains are
+largest with heavy skins and finishes, Rush, and chests. What a chest's first spin frame costs is mostly the strip's first paint, which
+is not much changed.
+
+### 7.3 Not done, and why
+- **Pre-rendered pop sounds.** The synth already supports an offline graph, but rendering each pop layer to a buffer touches every
+  timbre, Series 4 flavor and the audio tests' node log, for a gain of about a quarter of the tap script. Left until the lag meter shows
+  sound is a problem on the owner's phone (its "sound and vibration off" rows measure exactly that).
+- **A dirty-rectangle clear for the effects canvas.** Mobile mode's 1x canvas takes most of the benefit.
+- **Preparing the Rush banner and reveal card earlier**, **the sheen/decoration double layer (H5)** and **the Rush bar as `scaleX` (H9)**
+  from the Update 7 audit.
+- **Building the reel during the hold or the burst.** Tried: it moved the cost into the hold and the burst (the hold's frames went from 27
+  to 40 to 50 ms), so the cards are made in slices during the strip's slide-in instead.
+
+### 7.4 The owner's steps
+1. Open Settings > Check performance on the phone and send the report: once with Mobile mode on and once with it off; once in the Claude
+   app and once from the GitHub Pages address if it is switched on. The "sound and vibration off" rows show how much those two cost.
+2. If the report shows a moment is still slow, the next change is aimed at that moment.

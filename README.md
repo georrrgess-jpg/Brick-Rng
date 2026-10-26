@@ -96,6 +96,9 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   covers the save-code box. Opening sheets, the Rush start, the results and the chest reveal do much less work, and Auto graphics
   brings effects back once the phone keeps up. Resuming a run keeps its fuse exactly (the clock waits for your first pop), and Chill
   runs can be saved. Chill climbs more gently and banks half your spare moves into the next round.
+- **Mobile mode (Update 8)**: Settings > Mobile mode (on by default on phones). The same effects, drawn more cheaply: no brightness
+  filter in brick bursts, a particle budget that follows the frame time, 1x effects canvases, shakes that move the board or the card
+  instead of the whole screen, and the chest rays and menu glows drawn as small canvases and scaled up. Performance mode includes it.
 - **Check performance (Update 8)**: Settings has a one-minute lag test. It plays pops of rising size, a Line Blast, a stage clear, a
   Rush start and a trial chest on a board that saves nothing, and writes a short report (frame times per moment, the phone, the
   settings) that can be copied and sent. **Play it from its own address**: `.github/workflows/pages.yml` publishes the game to GitHub
@@ -118,6 +121,9 @@ css/hats.css css/sets.css css/tower.css    Fizz Hat poses, set crests and flouri
 css/fuse.css        the fuse: Fizz, rope, flame, readout, chips, the urgency states (every fuse cosmetic is drawn from tokens)
 css/badges.css      item badges (rarity frame and art, the still version used in the reel)
 css/coach.css       the first-time tip cards
+css/mobile.css      Mobile mode (html.mobile-mode): the canvas glows; the rest of Mobile mode is in the scripts
+js/lowres.js        small canvases for soft glows (chest rays, menu blobs), scaled up by CSS
+js/perfmeter.js     the lag meter (Settings > Check performance)
 css/perf.css        Performance mode (html.perf-mode): what it switches off on top of Smooth; loaded last
 js/rng.js board.js config.js boosters.js items.js chests.js director.js engine.js storage.js pass.js progress.js missions.js retention.js
                     pure logic, runs in Node (tests use it); retention.js is the streak, run goals, records and next goal
@@ -181,6 +187,7 @@ node tests/u5-chests.js # chest openings: re-press, badge on every reveal card, 
 node tests/u5-skins.js u5-boards.js u5-fuses.js u5-older.js   # the Moonwick skins, boards and fuses (and hats), and the repainted older cosmetics: budgets, colour distances, contrast, bounds
 node tests/u5-collection.js   # the Hats tab, Try it and Try the set, the Shop's new chips and spotlight, the Tower, the what's-new card
 node tests/u5-sets.js u5-tower.js   # set crests and flourishes (particle and time caps, Reduce Motion), the Tower's counting, tap targets and bell
+node tests/u8-mobile.js # Update 8: Mobile mode default and switch, no filter in pop bursts, one animation per fall, one pop schedule, board shake, particle budget, canvas rays and blobs, the lag meter (save untouched), the reel
 node tests/u7-mobile.js # Update 7: run HUD, Pause, bricks, results, reveal and menus at 320x568 to landscape with insets, sheet swipe, press states
 node tests/u7-perf.js   # every animated rule is covered by the pause rules; no rule keyed on <html> ends in a bare *
 node tests/u7-gfx.js    # Auto graphics: refresh-rate detection, Low Power Mode, recovery, borderline phones
