@@ -92,6 +92,12 @@
       document.documentElement.classList.toggle('mobile-mode', BR.mobileMode);
       this.fx.settings.mobile = BR.mobileMode;
       if (wasMobile !== BR.mobileMode) { this.fx.resize(); this.lowResBlobs(); }
+      // each brick of Mobile mode keeps a layer of its own (so a fall or a burst is the phone's graphics chip moving a finished picture,
+      // not the page repainting 64 bricks), and Simple bricks (Settings) draws them plain
+      BR.brickLayers = BR.mobileMode;
+      BR.simpleBricks = !!s.simple;
+      document.documentElement.classList.toggle('brick-layers', BR.brickLayers);
+      document.documentElement.classList.toggle('simple-bricks', BR.simpleBricks);
       BR.lowEnd = BR.perfMode || s.perf === 'low' || (s.perf === 'auto' && !!BR.autoLow);
       BR.gfxFull = !BR.lowEnd && s.perf === 'high';
       document.documentElement.classList.toggle('low-end', BR.lowEnd);

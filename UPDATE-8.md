@@ -149,7 +149,7 @@ The Mobile mode work above is applied to everyone only where it is invisible. Do
 2. Fix what the reports show is still slow, smallest change first. If the embedded report is much worse than the Pages one, say so
    plainly and recommend playing from the home-screen app.
 3. Full test suite, `UPDATE-8.md` "What shipped" with before and after numbers (harness and phone), README, the service worker version
-   (`sw.js` `VERSION` to `poprush-v8.0.0`), the bundle (`python3 tools/bundle.py <scratchpad>/poprush-bundle.html`), and the
+   (`sw.js` `VERSION` to `poprush-v8.0.1`), the bundle (`python3 tools/bundle.py <scratchpad>/poprush-bundle.html`), and the
    Artifact (https://claude.ai/artifact/7HECjpgK6379tjHEq4uPDt, same file path and URL).
 
 ---
@@ -249,7 +249,29 @@ is not much changed.
 - **Building the reel during the hold or the burst.** Tried: it moved the cost into the hold and the burst (the hold's frames went from 27
   to 40 to 50 ms), so the cards are made in slices during the strip's slide-in instead.
 
-### 7.4 The owner's steps
-1. Open Settings > Check performance on the phone and send the report: once with Mobile mode on and once with it off; once in the Claude
-   app and once from the GitHub Pages address if it is switched on. The "sound and vibration off" rows show how much those two cost.
+### 7.4 After the first phone reports (iPhone 18.7, inside the Claude app)
+The lag meter and its "where the time goes" table (`js/perfdiag.js`) were run on the owner's phone. Findings: the tap script is 2 to 13 ms
+and turning sound and vibration off changes nothing; the chest's hold is smooth; every pop hitches 150 to 300 ms with 5 to 10 slow frames
+whatever its size; and drawing the bricks flat (colour only) takes the worst frame of a pop of 12 from 192 ms to 53 ms and the slow frames
+from 12 to 1. Taking away the effects canvases, the HUD, the background, the board glow, the sound, the particles or the fuse changes
+nothing, and even a pop with every brick animation removed still hitches. So the cost on that phone is painting bricks: with the bricks
+in the board's one layer, any change (a brick leaving, a column falling, a new brick dropping in) repaints all 64 of them.
+
+What was done about it (Mobile mode, and a new switch):
+- **Each brick keeps a layer of its own** (`html.brick-layers`, set with Mobile mode; `css/mobile.css`). A brick is painted once, when it is
+  made; a fall is then the graphics chip moving a finished picture, and the board's layer no longer holds bricks to repaint.
+- **The burst, the colour pulse and the Rush recolor run on the brick itself** (`View._target`), not on its face, so they scale and fade the
+  finished picture (the face used to need a layer and a repaint of its own). In Mobile mode the pulse and the recolor also drop their
+  brightness filter, as the burst already had.
+- **Simple bricks** (Settings, `settings.simple`, `html.simple-bricks`): plain tiles in the brick's own colours whatever the skin. Off by
+  default. It is the fallback if the layers are not enough on a given phone.
+- **The lag meter's table was reworked** to test exactly these: "Simple bricks switched on", "bricks not on layers of their own", "bricks
+  on layers, drawn flat", beside the flat, no-shadow and no-art rows. Each variant now has one unrecorded warm-up pop, so a variant is not
+  charged for switching itself on.
+- Harness (Chromium, no GPU): average frame over the nine big moments 25 to 21 ms and frames over 50 ms 35 to 19, against the Update 7
+  build, at 4x. The harness cannot reproduce iOS painting, so the phone's own report decides whether this was enough.
+
+### 7.5 The owner's steps
+1. Open Settings > Check performance on the phone and send the report, with Mobile mode on. Then switch Simple bricks on and send a second
+   one. Then, if it is switched on, the same from the GitHub Pages address (outside the Claude app).
 2. If the report shows a moment is still slow, the next change is aimed at that moment.

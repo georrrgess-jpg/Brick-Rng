@@ -7,26 +7,23 @@
   const BR = window.BR;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // `css` is added for the variant; `on` / `off` switch something in the game and put it back; `idle` records frames without a pop
-  const swap = (obj, key, val) => { const old = obj[key]; obj[key] = val; return () => { obj[key] = old; }; };
+  // `css` is added for the variant; `on` switches something in the game and returns the function that puts it back; `idle` records frames without a pop
+  const html = document.documentElement;
+  const flag = (cls, on, key) => () => { const was = html.classList.contains(cls), wasKey = BR[key]; html.classList.toggle(cls, on); BR[key] = on; return () => { html.classList.toggle(cls, was); BR[key] = wasKey; }; };
   const VARIANTS = [
     { id: 'no pop at all (frames of the idle board)', idle: true },
     { id: 'as it is' },
     { id: 'bricks drawn flat (colour only)', css: '.face { background: var(--lo) !important; box-shadow: none !important; filter: none !important; } .stud, .deco, .sheen { display: none !important; }' },
+    { id: 'Simple bricks switched on', on: flag('simple-bricks', true, 'simpleBricks') },
+    { id: 'bricks not on layers of their own', on: flag('brick-layers', false, 'brickLayers') },
+    { id: 'bricks on layers, drawn flat', css: '.face { background: var(--lo) !important; box-shadow: none !important; filter: none !important; } .stud, .deco, .sheen { display: none !important; }', on: flag('brick-layers', true, 'brickLayers') },
     { id: 'no shadows or filters on bricks', css: '.face, .stud { box-shadow: none !important; filter: none !important; }' },
     { id: 'no skin art on bricks', css: '.deco, .sheen, .stud { display: none !important; }' },
-    { id: 'board frame and glow flat', css: '.board, .board-wrap, .field { box-shadow: none !important; } .field::after, .board::before, .board::after { display: none !important; }' },
-    { id: 'music off', on: () => { const m = BR.Music; if (!m || !m.setEnabled) return () => {}; m.setEnabled(false); return () => m.setEnabled(BR.Storage.data.settings.music); } },
-    { id: 'all sound off (music and effects)', on: () => { const m = BR.Music, a = BR.audio; if (m && m.setEnabled) m.setEnabled(false); if (a && a.setEnabled) a.setEnabled(false); return () => { if (m && m.setEnabled) m.setEnabled(BR.Storage.data.settings.music); if (a && a.setEnabled) a.setEnabled(BR.Storage.data.settings.sound); }; } },
-    { id: 'particles not drawn', on: () => { const f = BR.fx, un = swap(f, '_kick', () => {}); const fz = BR.Fuse && BR.Fuse.parts; return () => { un(); f.parts.length = 0; }; } },
-    { id: 'fuse (rope, flame, sparks) not updated', on: () => (BR.Fuse ? swap(BR.Fuse, 'update', () => {}) : () => {}) },
     { id: 'effects canvases hidden', css: '#fx, .fz-cv { display: none !important; }' },
-    { id: 'HUD hidden', css: '.run-top, .fuse, .stagestrip, .rushbar, .powerups, .msgband, .chillbar { visibility: hidden !important; }' },
-    { id: 'background scene hidden', css: '.bg, .vignette { display: none !important; }' },
-    { id: 'bricks kept on their own layers', css: '.brick { will-change: transform; }' },
     { id: 'no brick animation (only the board changes)', stub: true },
     { id: 'as it is, again' },
   ];
+
 
   const median = (a) => { if (!a.length) return 0; const s = a.slice().sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 
@@ -83,6 +80,7 @@
             };
           }
           await sleep(120);
+          if (!v.idle) { await onePop(R); await sleep(200); }   // (a first pop pays for the switch itself: bricks gaining or losing their layers)
           const all = [], worsts = [];
           for (let i = 0; i < 2; i++) { const g = v.idle ? await idleFrames() : await onePop(R); all.push.apply(all, g); worsts.push(g.length ? Math.max.apply(null, g) : 0); }
           if (origAnimate) { Element.prototype.animate = origAnimate; origAnimate = null; }

@@ -98,7 +98,10 @@ Serve the folder as-is (for example GitHub Pages) and it also installs as an app
   runs can be saved. Chill climbs more gently and banks half your spare moves into the next round.
 - **Mobile mode (Update 8)**: Settings > Mobile mode (on by default on phones). The same effects, drawn more cheaply: no brightness
   filter in brick bursts, a particle budget that follows the frame time, 1x effects canvases, shakes that move the board or the card
-  instead of the whole screen, and the chest rays and menu glows drawn as small canvases and scaled up. Performance mode includes it.
+  instead of the whole screen, and the chest rays and menu glows drawn as small canvases and scaled up. Each brick keeps a layer of its
+  own, so a pop's falls and bursts move finished pictures instead of repainting the whole board. Performance mode includes it.
+- **Simple bricks (Update 8)**: Settings > Simple bricks. Plain tiles in the brick's own colours (a soft top light, a hard lip, a bare
+  stud), whatever the skin; the skin's art and the finishes are not drawn. The smoothest play on an older phone.
 - **Check performance (Update 8)**: Settings has a one-minute lag test. It plays pops of rising size, a Line Blast, a stage clear, a
   Rush start and a trial chest on a board that saves nothing, and writes a short report (frame times per moment, the phone, the
   settings) that can be copied and sent. **Play it from its own address**: `.github/workflows/pages.yml` publishes the game to GitHub
@@ -124,6 +127,7 @@ css/coach.css       the first-time tip cards
 css/mobile.css      Mobile mode (html.mobile-mode): the canvas glows; the rest of Mobile mode is in the scripts
 js/lowres.js        small canvases for soft glows (chest rays, menu blobs), scaled up by CSS
 js/perfmeter.js     the lag meter (Settings > Check performance)
+js/perfdiag.js      the lag meter's second part: the same pop with one suspect taken away at a time
 css/perf.css        Performance mode (html.perf-mode): what it switches off on top of Smooth; loaded last
 js/rng.js board.js config.js boosters.js items.js chests.js director.js engine.js storage.js pass.js progress.js missions.js retention.js
                     pure logic, runs in Node (tests use it); retention.js is the streak, run goals, records and next goal

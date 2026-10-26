@@ -19,6 +19,7 @@ const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } 
   await page.evaluate(() => BR.settingsSheet()); await page.waitForTimeout(500);
   ok(await page.$('[data-set="mobile"]'), 'Settings has a Mobile mode switch');
   ok(await page.$('[data-meter]'), 'Settings has the performance check');
+  ok(await page.$('[data-set="simple"]'), 'Settings has a Simple bricks switch');
   await page.evaluate(() => document.querySelector('[data-set="mobile"]').click()); await page.waitForTimeout(250);
   const off = await page.evaluate(() => ({ set: BR.Storage.data.settings.mobile, flag: BR.mobileMode, blobs: document.querySelectorAll('canvas.blob').length, fxScale: BR.fx.scale }));
   ok(off.set === false && !off.flag && off.blobs === 0, 'switching Mobile mode off restores the CSS blobs', JSON.stringify(off));
@@ -42,15 +43,30 @@ const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } 
     const shaken = []; const sh = BR.fx.shake; BR.fx.shake = function (el) { shaken.push(el && (el.id || el.className)); return sh.apply(this, arguments); };
     const p = R.tap(7, 0); await p; await new Promise((r) => setTimeout(r, 600));
     Element.prototype.animate = orig; window.setTimeout = st; BR.fx.shake = sh;
-    const popAnims = anims.filter((a) => /face/.test(a.cls) && a.kf.some((f) => f.opacity === 0));
+    const popAnims = anims.filter((a) => /brick|face/.test(a.cls) && a.kf.some((f) => f.opacity === 0));
     const falls = anims.filter((a) => /brick/.test(a.cls) && a.kf.length >= 4);
     const faceSquash = anims.filter((a) => /face/.test(a.cls) && a.kf.some((f) => /scale\(1\.1/.test(f.transform || '')));
-    return { pops: popAnims.length, filters: popAnims.filter((a) => a.kf.some((f) => f.filter)).length, falls: falls.length, faceSquash: faceSquash.length, timerCount, shaken };
+    return { pops: popAnims.length, onBrick: popAnims.filter((a) => /brick/.test(a.cls)).length, filters: popAnims.filter((a) => a.kf.some((f) => f.filter)).length, falls: falls.length, faceSquash: faceSquash.length, timerCount, shaken };
   });
   ok(pop.pops >= 20, 'a 20-brick pop bursts every brick', pop.pops);
   ok(pop.filters === 0, 'no brightness filter in the pop bursts in Mobile mode', pop.filters);
+  ok(pop.onBrick >= 20, 'the bursts run on the bricks themselves (their layers), not on a face', pop.onBrick);
   ok(pop.falls > 0 && pop.faceSquash === 0, 'one animation per falling brick (no separate squash on the face)', JSON.stringify({ falls: pop.falls, faceSquash: pop.faceSquash }));
   ok(pop.timerCount < 8, 'the pop effects run from one schedule, not one timer per brick', pop.timerCount);
+
+  // bricks keep a layer each in Mobile mode; Simple bricks draws them plain and leaves the Rainbow Core and the shapes alone
+  const lay = await page.evaluate(() => { const b = document.querySelector('.brick'); return b && getComputedStyle(b).willChange; });
+  ok(lay === 'transform', 'each brick has a layer of its own in Mobile mode', lay);
+  const simple = await page.evaluate(() => {
+    const S = BR.Storage.data.settings, face = () => getComputedStyle(document.querySelector('.brick:not(.wild) .face')), stud = () => getComputedStyle(document.querySelector('.brick:not(.wild) .stud'));
+    const normal = face().boxShadow.split('rgb').length - 1;
+    S.simple = true; BR.App.applySettings();
+    const on = { cls: document.documentElement.classList.contains('simple-bricks'), flag: BR.simpleBricks, shadows: face().boxShadow.split('rgb').length - 1, studShadow: stud().boxShadow, deco: getComputedStyle(document.querySelector('.brick .deco')).display, bg: face().backgroundImage.split('gradient').length - 1 };
+    S.simple = false; BR.App.applySettings();
+    return { normal, on, back: document.documentElement.classList.contains('simple-bricks') };
+  });
+  ok(simple.on.cls && simple.on.flag && simple.on.shadows === 2 && simple.on.studShadow === 'none' && simple.on.deco === 'none' && simple.on.bg === 2, 'Simple bricks draws a plain tile (two gradients, two shadows, a bare stud, no art)', JSON.stringify(simple));
+  ok(simple.normal > 2 && !simple.back, 'switching Simple bricks off brings the skin back', JSON.stringify(simple));
 
   // the particle budget stays between its limits
   const bud = await page.evaluate(() => { const f = BR.fx; const lo = []; f.mob = 0.7; for (let i = 0; i < 50; i++) { f.last = performance.now() - 80; f.loop(performance.now()); lo.push(f.budget); } const a = f.mob; f.mob = 0.7; for (let i = 0; i < 60; i++) { f.last = performance.now() - 8; f.loop(performance.now()); } return { slow: Math.min.apply(null, lo), fast: f.budget, a }; });
@@ -67,7 +83,7 @@ const ok = (c, ...a) => { if (!c) { problems++; console.log('PROBLEM', ...a); } 
   ok(rep.labels.includes('Pop of 24') && rep.labels.includes('Rush start') && rep.labels.includes('Chest spin') && rep.labels.includes('Chest reveal'), 'the lag meter measures pops, Rush and the chest', rep.labels.join(', '));
   ok(rep.frames.every((n) => n > 0), 'every measured moment recorded frames', rep.frames.join(','));
   ok(/Pop Rush lag report/.test(rep.text) && /Mobile mode on/.test(rep.text), 'the report names the settings');
-  ok(/Where the time goes/.test(rep.text) && /no brick animation/.test(rep.text) && /effects canvases hidden/.test(rep.text), 'the report says where the time goes (the variants of one pop)');
+  ok(/Where the time goes/.test(rep.text) && /no brick animation/.test(rep.text) && /Simple bricks switched on/.test(rep.text) && /not on layers of their own/.test(rep.text), 'the report says where the time goes (the variants of one pop)');
   const after = await page.evaluate(() => { const D = BR.Storage.data; return JSON.stringify({ c: D.profile.coins, v: D.profile.vault.length, ch: D.profile.chests, op: D.profile.opened, st: D.profile.stats.chests, ld: D.profile.loadout, runs: D.runs }); });
   ok(before === after, 'the lag meter changes nothing in the save', before + ' / ' + after);
   ok(!(await page.evaluate(() => BR.Run.practice)), 'the practice board is gone after the test');

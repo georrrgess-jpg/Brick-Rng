@@ -19,7 +19,7 @@
     boostsLast: null,               // the Boosts chosen at the last Rush start (ids), for the Home chip and Play again
     lastDay: '',
     installNudged: false,
-    settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, large: false, reduced: prefersReduced, perf: 'auto', perfMode: false, mobile: null, musicVol: 0.7, sfxVol: 1 },
+    settings: { sound: true, music: true, haptics: true, shake: true, shapes: false, large: false, reduced: prefersReduced, perf: 'auto', perfMode: false, mobile: null, simple: false, musicVol: 0.7, sfxVol: 1 },
     seen: {},                       // coach cards and one-time hints already shown
     recent: { rush: [], daily: [], chill: [] }, // last scores per mode (for the score to beat)
     daily: { day: '', score: 0, stage: 0 },

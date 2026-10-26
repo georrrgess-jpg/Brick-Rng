@@ -70,6 +70,13 @@ class BoardView {
       if (rec._pc !== rec.c) { rec._pc = rec.c; rec.el.style.setProperty('--c', rec.c); }
     }
 
+    /** Where a brick's own motion (its burst, its colour change) runs: on the brick itself when each brick keeps a layer of its own (Mobile
+        mode), because scaling a finished picture costs nothing and the face would need a layer and a repaint of its own; otherwise on the
+        face. `tr` is the brick's own position, which the animation on the brick has to carry. */
+    _target(rec) {
+      return BR.brickLayers ? { node: rec.el, tr: `translate(${rec.c * this.cell}px,${rec.r * this.cell}px) ` } : { node: rec.face, tr: '' };
+    }
+
     /** Where the board sits on the page. Measured once and kept (it only moves when the layout does), because reading
         it in the middle of a pop forces the browser to restyle the whole board. */
     _rects() {
@@ -389,13 +396,15 @@ class BoardView {
       const sgn = Math.random() < 0.5 ? -1 : 1;
       if (rec.face.animate) {
         // Mobile mode drops the brightness filter from the burst (a filter animation repaints every popped brick on every frame): the same
-        // lift, swell, spin and shrink, with the particles and the fade doing the flash
+        // lift, swell, spin and shrink, with the particles and the fade doing the flash. With the bricks on layers of their own the burst runs
+        // on the brick itself, so the finished picture is scaled and faded (the face would need a layer and a repaint of its own).
         const mob = BR.mobileMode, F = (v) => (mob ? {} : { filter: v });
-        const a = rec.face.animate([
+        const { node, tr } = this._target(rec);
+        const a = node.animate([
           // a big pop starts where the press left the bricks (lifted and bright), holds for the hit-stop, then bursts
-          held ? Object.assign({ transform: 'translateY(-5%) scale(1.045) rotate(0deg)', opacity: 1, offset: 0 }, F('brightness(1.12) saturate(1.12)')) : Object.assign({ transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0 }, F('brightness(1)')),
-          Object.assign({ transform: `scale(1.24) rotate(${sgn * 6}deg)`, opacity: 1, offset: 0.34, easing: 'ease-in' }, F('brightness(1.7)')),
-          Object.assign({ transform: `scale(0.05) rotate(${sgn * 22}deg)`, opacity: 0, offset: 1 }, F('brightness(2)')),
+          held ? Object.assign({ transform: tr + 'translateY(-5%) scale(1.045) rotate(0deg)', opacity: 1, offset: 0 }, F('brightness(1.12) saturate(1.12)')) : Object.assign({ transform: tr + 'scale(1) rotate(0deg)', opacity: 1, offset: 0 }, F('brightness(1)')),
+          Object.assign({ transform: tr + `scale(1.24) rotate(${sgn * 6}deg)`, opacity: 1, offset: 0.34, easing: 'ease-in' }, F('brightness(1.7)')),
+          Object.assign({ transform: tr + `scale(0.05) rotate(${sgn * 22}deg)`, opacity: 0, offset: 1 }, F('brightness(2)')),
         ], { duration: this.reduced ? 160 : 270, delay, fill: 'both', easing: 'ease-out' });
         a.onfinish = () => rec.el.remove();
       } else {
@@ -414,12 +423,14 @@ class BoardView {
     /** A colour joined the board: every brick of that colour gives one bright pulse, so the player sees where the new colour landed. */
     pulseColor(color) {
       if (this.reduced) return;
+      const mob = BR.mobileMode, F = (v) => (mob ? {} : { filter: v });
       this.bricks.forEach((rec) => {
         if (rec.b.color !== color || !rec.face.animate) return;
-        rec.face.animate([
-          { transform: 'scale(1)', filter: 'brightness(1)' },
-          { transform: 'scale(1.16)', filter: 'brightness(1.5) saturate(1.25)', offset: 0.35 },
-          { transform: 'scale(1)', filter: 'brightness(1)' },
+        const { node, tr } = this._target(rec);
+        node.animate([
+          Object.assign({ transform: tr + 'scale(1)' }, F('brightness(1)')),
+          Object.assign({ transform: tr + 'scale(1.16)', offset: 0.35 }, F('brightness(1.5) saturate(1.25)')),
+          Object.assign({ transform: tr + 'scale(1)' }, F('brightness(1)')),
         ], { duration: 640, delay: (rec.c + rec.r) * 22, easing: 'ease-out' });
       });
     }
@@ -443,10 +454,11 @@ class BoardView {
         const dur = 380;
         maxEnd = Math.max(maxEnd, delay + dur);
         if (rec.face.animate) {
-          rec.face.animate([
-            { transform: 'scaleX(1) scaleY(1)', filter: 'brightness(1)' },
-            { transform: 'scaleX(0.04) scaleY(1.1)', filter: 'brightness(1.8)', offset: 0.5 },
-            { transform: 'scaleX(1) scaleY(1)', filter: 'brightness(1)' },
+          const mob = BR.mobileMode, F = (v) => (mob ? {} : { filter: v }), { node, tr } = this._target(rec);
+          node.animate([
+            Object.assign({ transform: tr + 'scaleX(1) scaleY(1)' }, F('brightness(1)')),
+            Object.assign({ transform: tr + 'scaleX(0.04) scaleY(1.1)', offset: 0.5 }, F('brightness(1.8)')),
+            Object.assign({ transform: tr + 'scaleX(1) scaleY(1)' }, F('brightness(1)')),
           ], { duration: dur, delay, easing: 'ease-in-out' });
         }
         setTimeout(() => {

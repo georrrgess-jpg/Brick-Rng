@@ -10,3 +10,22 @@ html.mobile-mode i.blob { display: none; }
 html.mobile-mode canvas.blob { background: none !important; }
 html.mobile-mode canvas.op-rays, html.mobile-mode canvas.rv-rays { background: none !important; -webkit-mask-image: none !important; mask-image: none !important; }
 
+/* ---------- bricks on their own layers ----------
+   A brick at rest used to be painted into the board's one layer, so every pop (bricks leave, others fall, new ones drop in) repainted the whole
+   board: 64 bricks of gradients and soft shadows, which is what makes an iPhone hitch. Here each brick is painted once, when it is made, into a
+   layer of its own; a fall or a burst then just moves a finished picture. The burst runs on the brick itself (js/view.js). */
+html.brick-layers .brick { will-change: transform; }
+
+/* ---------- Simple bricks (Settings) ----------
+   Plain tiles in the brick's own colours: a soft top light, a hard lip under the tile and a simple stud, whatever the skin; the skin's own
+   art and the finishes are not drawn. The Rainbow Core, the pressed group and colour-blind shapes keep their own looks. */
+html.simple-bricks .brick:not(.hl):not(.wild) .face {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 46%), linear-gradient(var(--ang, 160deg), var(--hi), var(--lo)) !important;
+  box-shadow: inset 0 0.03em 0 rgba(255, 255, 255, 0.55), 0 0.06em 0 color-mix(in srgb, var(--lo) 55%, #000) !important;
+  filter: none;
+}
+html.simple-bricks:not(.shapes) .brick:not(.wild) .stud {
+  background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%), var(--hi) !important;
+  box-shadow: none !important;
+}
+html.simple-bricks .brick .deco, html.simple-bricks .brick .sheen { display: none !important; }
