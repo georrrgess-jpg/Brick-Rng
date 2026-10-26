@@ -84,6 +84,14 @@
       // Performance mode is Smooth and then some (css/perf.css): no moving backgrounds, sheens, rays or stars, fewer sparks
       const wasPerf = !!BR.perfMode;
       BR.perfMode = !!s.perfMode;
+      // Mobile mode (css/mobile.css and the scripts): the same effects drawn more cheaply. On by default on phones (a touch screen under
+      // 600 px on its short side), decided once; Performance mode includes it.
+      if (s.mobile == null) { s.mobile = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches && Math.min(screen.width || 9999, screen.height || 9999) < 600); BR.Storage.save(); }
+      const wasMobile = !!BR.mobileMode;
+      BR.mobileMode = !!s.mobile || BR.perfMode;
+      document.documentElement.classList.toggle('mobile-mode', BR.mobileMode);
+      this.fx.settings.mobile = BR.mobileMode;
+      if (wasMobile !== BR.mobileMode) { this.fx.resize(); this.lowResBlobs(); }
       BR.lowEnd = BR.perfMode || s.perf === 'low' || (s.perf === 'auto' && !!BR.autoLow);
       BR.gfxFull = !BR.lowEnd && s.perf === 'high';
       document.documentElement.classList.toggle('low-end', BR.lowEnd);
@@ -96,6 +104,18 @@
       if (wasLow !== BR.lowEnd || wasPerf !== BR.perfMode) this.fx.resize();
       if (wasPerf !== BR.perfMode && $('bgBricks') && $('bgBricks').childElementCount !== this.bgCount()) this.spawnBgBricks();
       if (BR.Run && BR.Run.view) { BR.Run.view.reduced = s.reduced; }
+    },
+
+    /** Mobile mode: the three colour blobs behind the menus are small canvases scaled up (js/lowres.js). Back to the originals when it is off. */
+    lowResBlobs() {
+      const host = document.querySelector('.bg'); if (!host || !BR.LowRes) return;
+      const cols = { b1: '#ff3d8b', b2: '#6a3dff', b3: '#ff7a4d' };
+      if (BR.mobileMode) {
+        host.querySelectorAll('i.blob').forEach((el) => {
+          const k = ['b1', 'b2', 'b3'].find((c) => el.classList.contains(c));
+          if (!host.querySelector('canvas.blob.' + k)) { const cv = document.createElement('canvas'); cv.className = el.className; cv.setAttribute('aria-hidden', 'true'); BR.LowRes.blob(cv, cols[k], 128); el.after(cv); }
+        });
+      } else host.querySelectorAll('canvas.blob').forEach((cv) => cv.remove());
     },
 
     /* ---------- background bricks (wear the equipped Skin) ---------- */

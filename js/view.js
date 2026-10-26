@@ -324,14 +324,18 @@ class BoardView {
       // a group of 8 holds about 50 ms, 24 bricks about 85 ms, and a Line Blast, a Rush start or a cleared stage add a little more.
       const big = total >= 8 || (res.plan && res.plan.line) || res.stageUp || res.rushStart;
       const hitStop = big && !this.reduced ? Math.min(120, 40 + total * 1.3 + (res.plan && res.plan.line ? 24 : 0) + (res.stageUp ? 16 : 0) + (res.rushStart ? 16 : 0)) : 0;
+      let popIdx = 0;
       for (const p of res.removed) {
         const rec = this.bricks.get(p.id);
         if (!rec) continue;
         this.bricks.delete(p.id);
         const dist = Math.abs(p.r - tap.r) + Math.abs(p.c - tap.c);
-        const delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop + hitStop;
+        let delay = this.reduced ? 0 : Math.min(dist * 17, 150) * this.tune.pop + hitStop;
+        // Mobile mode: every brick still bursts, but those past the 14th follow in small batches a few frames apart, with fewer shards each
+        const late = BR.mobileMode && !this.reduced && ++popIdx > 14;
+        if (late) delay += Math.floor((popIdx - 14) / 4) * 16;
         maxDelay = Math.max(maxDelay, delay);
-        this._pop(rec, delay, p, perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null, hitStop > 0);
+        this._pop(rec, delay, p, late ? Math.max(1, perBrick - 2) : perBrick, originPt, p.fb ? (burstIds.has(p.id) ? 'burst' : 'defuse') : null, hitStop > 0);
       }
       await sleep(this.reduced ? 100 : (maxDelay + 90) * this.tune.pop);
       if (!alive()) return false;
@@ -384,11 +388,14 @@ class BoardView {
       const pal = BR.PALETTE[p.color];
       const sgn = Math.random() < 0.5 ? -1 : 1;
       if (rec.face.animate) {
+        // Mobile mode drops the brightness filter from the burst (a filter animation repaints every popped brick on every frame): the same
+        // lift, swell, spin and shrink, with the particles and the fade doing the flash
+        const mob = BR.mobileMode, F = (v) => (mob ? {} : { filter: v });
         const a = rec.face.animate([
           // a big pop starts where the press left the bricks (lifted and bright), holds for the hit-stop, then bursts
-          held ? { transform: 'translateY(-5%) scale(1.045) rotate(0deg)', opacity: 1, filter: 'brightness(1.12) saturate(1.12)', offset: 0 } : { transform: 'scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)', offset: 0 },
-          { transform: `scale(1.24) rotate(${sgn * 6}deg)`, opacity: 1, filter: 'brightness(1.7)', offset: 0.34, easing: 'ease-in' },
-          { transform: `scale(0.05) rotate(${sgn * 22}deg)`, opacity: 0, filter: 'brightness(2)', offset: 1 },
+          held ? Object.assign({ transform: 'translateY(-5%) scale(1.045) rotate(0deg)', opacity: 1, offset: 0 }, F('brightness(1.12) saturate(1.12)')) : Object.assign({ transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0 }, F('brightness(1)')),
+          Object.assign({ transform: `scale(1.24) rotate(${sgn * 6}deg)`, opacity: 1, offset: 0.34, easing: 'ease-in' }, F('brightness(1.7)')),
+          Object.assign({ transform: `scale(0.05) rotate(${sgn * 22}deg)`, opacity: 0, offset: 1 }, F('brightness(2)')),
         ], { duration: this.reduced ? 160 : 270, delay, fill: 'both', easing: 'ease-out' });
         a.onfinish = () => rec.el.remove();
       } else {

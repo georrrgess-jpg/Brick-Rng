@@ -13,7 +13,7 @@
       this.rockets = [];
       this.running = false;
       this.last = 0;
-      this.scale = 1;
+      this.scale = 1; this.mob = 0.7;
       this.settings = { shake: true, reduced: false };
       this.resize = this.resize.bind(this);
       window.addEventListener('resize', this.resize);
@@ -23,7 +23,7 @@
 
     resize() {
       // particles are small and short-lived: a lower-resolution canvas is hard to tell apart and much cheaper to present every frame
-      const dpr = Math.min(window.devicePixelRatio || 1, this.settings.low ? 1 : 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, this.settings.low || this.settings.mobile ? 1 : 1.5);   // (Mobile mode: 1x, soft particles do not need more)
       this.scale = dpr;
       this.w = window.innerWidth;
       this.h = window.innerHeight;
@@ -31,7 +31,8 @@
       this.canvas.height = Math.round(this.h * dpr);
     }
 
-    get budget() { return this.settings.reduced ? 0.35 : this.settings.perf ? 0.4 : this.settings.low ? 0.6 : 1; }   // Performance mode keeps a few sparks so a pop still reads
+    // Mobile mode: 70% of the particles to start with, moving between 50% and 100% with the measured frame time (see loop)
+    get budget() { return this.settings.reduced ? 0.35 : this.settings.perf ? 0.4 : this.settings.low ? 0.6 : this.settings.mobile ? this.mob : 1; }   // Performance mode keeps a few sparks so a pop still reads
 
     _kick() {
       if (this.running) return;
@@ -219,6 +220,7 @@
     loop(now) {
       const dt = Math.max(0, Math.min(0.05, (now - this.last) / 1000));
       this.last = now;
+      if (this.settings.mobile && dt > 0) this.mob = Math.max(0.5, Math.min(1, this.mob + (dt > 0.034 ? -0.04 : dt < 0.02 ? 0.01 : 0)));   // slow frames: fewer sparks; easy frames: more
       const { ctx, scale } = this;
       ctx.setTransform(scale, 0, 0, scale, 0, 0);
       ctx.clearRect(0, 0, this.w, this.h);
@@ -347,6 +349,12 @@
     /** Decaying random camera shake on an element. */
     shake(el, intensity = 6, dur = 360) {
       if (!this.settings.shake || this.settings.reduced || !el || !el.animate) return;
+      // Mobile mode: shaking the whole screen makes it one huge layer to redraw in the middle of the moment, so the board shakes in a
+      // run, and in a chest opening the card (the reveal) or the chest stage
+      if (this.settings.mobile) {
+        if (el.id === 'app') el = document.getElementById('boardWrap') || el;
+        else if (el.classList && el.classList.contains('opening')) el = (el.classList.contains('revealing') ? el.querySelector('.rv-card') : el.querySelector('.op-stage')) || el;
+      }
       const steps = Math.max(4, Math.round(dur / 40));
       const frames = [];
       for (let i = 0; i <= steps; i++) {

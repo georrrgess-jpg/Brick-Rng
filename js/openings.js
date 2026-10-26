@@ -6,6 +6,7 @@
   const P = () => BR.Progress;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const chestIdOf = (root) => root.getAttribute('data-chest');
   const ORIENT = { skin: 'h', fuse: 'h', pop: 'v', board: 'v' };
   const HOLD_TIME = 1.2;
   const TYPES = [['skin', 'Skins'], ['pop', 'Pops'], ['board', 'Boards'], ['fuse', 'Fuses']];
@@ -284,6 +285,8 @@
       </div>`);
       this.root = root;
       const q = (s) => root.querySelector(s);
+      if (BR.mobileMode && BR.LowRes) { const r0 = q('.op-rays'); if (r0) BR.LowRes.replace(r0, (cv) => BR.LowRes.rays(cv, (BR.CHESTS[chestIdOf(root)] || {}).accent || '#ff6a4d', 0.3, 5, 18)); }   // the rays: a 256 px canvas, not a 1,100 px layer
+      const rvR = q('.rv-rays'); if (BR.mobileMode && BR.LowRes && rvR) { const cv = BR.LowRes.replace(rvR, (c) => BR.LowRes.rays(c, '#ffffff', 0.55, 4, 15)); this.rvRays = cv; }
       Object.assign(this, {
         chestBox: q('.op-chest'), shake: q('.op-shake'), wrap: q('.op-chest-wrap'), svg: q('.chest'), holdEl: q('[data-hold]'),
         label: q('[data-label]'), sub: q('[data-sub]'), reelWrap: q('.op-reel'), reelHost: q('.reel-host'), skipEl: q('[data-skip]'), rv: q('[data-rv]'),
@@ -347,7 +350,7 @@
       this.rv.className = 'rv'; this.rv.querySelector('.rv-look').innerHTML = '';   // (the night, the dim and the look of the last reveal)
       this.skipEl.classList.remove('on');
       // fresh chest art every time
-      this.chestBox.className = 'op-chest';
+      this.chestBox.className = 'op-chest'; this.chestBox.style.display = '';
       this.chestBox.innerHTML = BR.chestSVG(this.id);
       this.svg = this.chestBox.querySelector('.chest');
       this.holdUsers = this.holdBase.concat(Array.from(this.chestBox.querySelectorAll('.cp-glow, .cp-leak, .cp-frost, .cp-needle')));   // not the whole chest: --hold inherits, and writing it on the chest restyled every part every frame
@@ -511,27 +514,30 @@
     /* ---------- the spin ---------- */
     async spin(drop) {
       this.state = 'spin';
+      // the burst is over and the chest has flown away: its 230 pieces stop taking part in every frame's style pass (arrive draws a new chest)
+      setTimeout(() => { if (this.chestBox && this.state !== 'ready') this.chestBox.style.display = 'none'; }, 300);
       this.root.classList.remove('bursting'); this.root.classList.add('spinning');
       const type = drop.type;
       const orient = ORIENT[type] || 'h';
-      const { cards, target } = BR.buildStrip(BR.makeRng((Date.now() ^ (drop.seed || 0) * 977) >>> 0), this.id, type, drop, 44);
-      this.reelWrap.classList.add('on');
-      const frame = this.root.querySelector('.op-reel-frame');
-      frame.dataset.orient = orient;
       let lastHaptic = 0;
-      this.reelHost.className = 'reel-host';
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const reel = new BR.Reel(this.reelHost, {
-        orient, cards, target, jitter: rnd(-0.34, 0.34), reduced: reduced(),
+      const handlers = {
         onTick: (spd, idx, skipping) => {
           BR.audio.tick(spd);
           const now = performance.now();
           if (now - lastHaptic > (spd > 0.6 ? 90 : 55)) { lastHaptic = now; BR.haptic(spd < 0.2 ? 14 : 6); }
         },
         onLand: () => this.landed(drop),
-      });
+      };
+      const { cards, target } = BR.buildStrip(BR.makeRng((Date.now() ^ (drop.seed || 0) * 977) >>> 0), this.id, type, drop, 44);
+      this.reelWrap.classList.add('on');
+      const frame = this.root.querySelector('.op-reel-frame');
+      frame.dataset.orient = orient;
+      this.reelHost.className = 'reel-host';
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      // the cards are made a few milliseconds a frame while the strip slides in (all 44 at once was the worst frame of an opening)
+      const reel = new BR.Reel(this.reelHost, Object.assign({ orient, cards, target, jitter: rnd(-0.34, 0.34), reduced: reduced(), lazy: !reduced(), parkAt: 3 }, handlers));
       this.reel = reel;
-      reel.measure(); reel.park(3);
+      if (!reel.o.lazy) { reel.measure(); reel.park(3); }
       BR.audio.whoosh();
       await Promise.all([sleep(reduced() ? 120 : 520), reel.ready]);   // the cards draw themselves in while the strip slides in
       if (this.closed) return;
@@ -583,6 +589,7 @@
       // Series 4's Legendary and Mythic items get the "Midnight" reveal (the Mythic in full, the Legendary as moon and corona)
       const night = item.series === 4 && level >= 3, fullNight = night && level >= 4;
       rv.style.setProperty('--rc', R.color);
+      if (this.rvRays) { night ? BR.LowRes.rays(this.rvRays, [232, 238, 255], 0.5, 4, 15) : BR.LowRes.rays(this.rvRays, R.color, 0.55, 4, 15); }   // (Mobile mode: the canvas takes the colour the CSS rays would)
       rv.className = 'rv' + (level >= 3 ? ' has-banner' : '') + (night ? ' night' : '');   // the banner already names a Legendary or Mythic, so the card does not repeat it
       if (this.demo) { this.demo.stop(); this.demo = null; }
       const shineTag = inst.shine && inst.shine !== 'plain' ? `<span class="tag shine-${inst.shine}">${BR.shineById[inst.shine].name}</span>` : '';

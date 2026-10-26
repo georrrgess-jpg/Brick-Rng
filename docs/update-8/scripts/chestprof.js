@@ -20,7 +20,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await page.waitForSelector('.opening.on .hold:not(.off)', { timeout: 15000 });
   const box = await page.locator('.hold').boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
-  await page.waitForFunction(() => document.querySelector('.reel'), null, { timeout: 30000 }).catch(() => {}); await page.mouse.up();
+  await page.waitForFunction(() => document.querySelector('.opening.bursting, .opening.spinning'), null, { timeout: 30000 }).catch(() => {}); await page.mouse.up();
   await page.waitForFunction(() => document.querySelector('.rv-actions.on'), null, { timeout: 60000 }).catch(() => console.log('no actions'));
   await page.waitForTimeout(1500);
   const g = await page.evaluate(() => { window.__stop = true; return { g: window.__g, t0: performance.getEntriesByName('t0')[0].startTime }; });

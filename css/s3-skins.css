@@ -274,7 +274,8 @@
 .run.rushing.galaxy-rush .skin-galaxy::before { opacity: 0.95; animation: s3-nebula 6s ease-in-out infinite alternate; }
 .run.rushing.galaxy-rush .skin-galaxy .deco { animation-duration: 7s; }
 .run.rushing.galaxy-rush .skin-galaxy .stud { animation-duration: 1.4s; }
-.run.rushing.galaxy-rush .skin-galaxy .face { box-shadow: inset 0 0 0 0.03em #fff, inset 0 0 0.24em color-mix(in srgb, var(--glow) 80%, transparent), 0 0.055em 0 #05020f, 0 0 0.3em var(--glow), 0 0.12em 0.14em rgba(0, 0, 0, 0.45); }
+html:not(.mobile-mode) .run.rushing.galaxy-rush .skin-galaxy .face { box-shadow: inset 0 0 0 0.03em #fff, inset 0 0 0.24em color-mix(in srgb, var(--glow) 80%, transparent), 0 0.055em 0 #05020f, 0 0 0.3em var(--glow), 0 0.12em 0.14em rgba(0, 0, 0, 0.45); }
+html.mobile-mode .run.rushing.galaxy-rush .skin-galaxy .brick.b3 .face { box-shadow: inset 0 0 0 0.03em #fff, inset 0 0 0.24em color-mix(in srgb, var(--glow) 80%, transparent), 0 0.055em 0 #05020f, 0 0 0.3em var(--glow), 0 0.12em 0.14em rgba(0, 0, 0, 0.45); }
 @keyframes s3-nebula { from { transform: translate3d(-1.5%, -1%, 0) scale(1); } to { transform: translate3d(1.5%, 1.2%, 0) scale(1.04); } }
 
 /* ---------------------------------------------------------------- Shape hints (color-blind mode) keep the symbol readable */

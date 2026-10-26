@@ -1,0 +1,12 @@
+/* ===================================================================
+   Mobile mode (Settings; on by default on phones): the same game, drawn more cheaply. html.mobile-mode, set by BR.App.applySettings.
+   The rest of Mobile mode is in scripts: no brightness filter in the pop, shakes on the board instead of the whole screen, a particle
+   budget that follows the frame time, a 1x effects canvas, the chest's reel built during the hold. Loaded after the skin files.
+   =================================================================== */
+
+/* the soft glows are small canvases scaled up (js/lowres.js): they keep the classes of the element they replace, so only the painted
+   background and mask of that element go (the canvas is the picture) */
+html.mobile-mode i.blob { display: none; }
+html.mobile-mode canvas.blob { background: none !important; }
+html.mobile-mode canvas.op-rays, html.mobile-mode canvas.rv-rays { background: none !important; -webkit-mask-image: none !important; mask-image: none !important; }
+

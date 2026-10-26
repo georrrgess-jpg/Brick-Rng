@@ -114,20 +114,36 @@
       host.classList.add('reel', this.h ? 'reel-h' : 'reel-v');
       this.strip = document.createElement('div');
       this.strip.className = 'reel-strip';
-      const frag = document.createDocumentFragment();
-      this.cardEls = o.cards.map((c) => {
+      const make = (c) => {
         const it = c.item, R = BR.rarityById[it.rarity];
         const el = document.createElement('div');
         el.className = 'rc';
         el.style.setProperty('--rc', R.color);
         const sz = this.h ? 104 : 84;
         el.innerHTML = `<div class="rc-art" style="width:${sz}px;height:${sz}px"></div><div class="rc-txt"><b class="rc-name">${it.name}</b><span class="rc-rar">${R.name}</span></div>`;
-        frag.appendChild(el);
         return el;
-      });
-      this.ready = this.fillArt();
-      this.strip.appendChild(frag);
-      host.appendChild(this.strip);
+      };
+      if (o.lazy) {
+        // a reel built ahead of the spin (while the player holds): the card shells are made a few milliseconds at a time, then their art
+        this.cardEls = []; host.appendChild(this.strip);
+        let i = 0, parked = false; const total = o.cards.length;
+        this.ready = new Promise((resolve) => {
+          const step = () => {
+            if (this.done || !this.host.isConnected) { resolve(); return; }
+            const t0 = performance.now();
+            while (i < total && (i === 0 || performance.now() - t0 < 8)) { const el = make(o.cards[i]); this.cardEls.push(el); this.strip.appendChild(el); i++; }
+            if (!parked && i >= 8 && o.parkAt != null) { this.measure(); this.park(o.parkAt); parked = true; }   // the strip is in place before it is seen
+            if (i < total) requestAnimationFrame(step); else this.fillArt().then(resolve);
+          };
+          step();
+        });
+      } else {
+        const frag = document.createDocumentFragment();
+        this.cardEls = o.cards.map((c) => { const el = make(c); frag.appendChild(el); return el; });
+        this.ready = this.fillArt();
+        this.strip.appendChild(frag);
+        host.appendChild(this.strip);
+      }
       this.speedFx = document.createElement('i');
       this.speedFx.className = 'reel-speed';
       host.appendChild(this.speedFx);
@@ -160,7 +176,19 @@
         step();
       });
     }
+    /** Put another item on card `i` (a reel built before the drop is known gets its winner here). The art may not be drawn yet: it then draws
+        the new card when its turn comes. */
+    setCard(i, c) {
+      const it = c.item, R = BR.rarityById[it.rarity], el = this.cardEls[i];
+      this.o.cards[i] = c;
+      if (!el) return;   // (not made yet: it is made from the new card)
+      el.style.setProperty('--rc', R.color);
+      const nm = el.querySelector('.rc-name'), rr = el.querySelector('.rc-rar');
+      if (nm) nm.textContent = it.name; if (rr) rr.textContent = R.name;
+      if (el.firstChild && el.firstChild.firstChild) el.firstChild.innerHTML = BR.Badge.html(it, c.inst || null, { size: this.h ? 104 : 84, still: true });
+    }
     measure() {
+      if (!this.cardEls[0]) return;   // (a lazy reel has no cards yet)
       const r = this.host.getBoundingClientRect();
       this.vp = this.h ? r.width : r.height;
       const first = this.cardEls[0], second = this.cardEls[1];
